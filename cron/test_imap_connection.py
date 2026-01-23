@@ -8,6 +8,7 @@ import sys
 import os
 import json
 
+# Agregar directorio actual al path (igual que email_reader.py)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from cron.database import Database
