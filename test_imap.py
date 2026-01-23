@@ -23,7 +23,7 @@ sys.path.insert(0, project_root)
 os.chdir(cron_dir)
 
 # Ahora importar módulos
-from cron.database import Database
+from cron.database import Database, USE_PYMYSQL
 from cron.repositories import EmailAccountRepository
 
 def test_imap():

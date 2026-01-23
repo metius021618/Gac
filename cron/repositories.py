@@ -3,8 +3,16 @@ GAC - Repositorios para Scripts Python
 """
 
 import logging
-from cron.database import Database
-from mysql.connector import Error
+from cron.database import Database, USE_PYMYSQL
+
+# Compatibilidad con PyMySQL y mysql-connector
+if USE_PYMYSQL:
+    import pymysql.cursors
+    DictCursor = pymysql.cursors.DictCursor
+    Error = Exception
+else:
+    from mysql.connector import Error
+    DictCursor = None  # mysql-connector usa dictionary=True
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +25,10 @@ class EmailAccountRepository:
         """Obtener todas las cuentas de email habilitadas"""
         try:
             db = Database.get_connection()
-            cursor = db.cursor(dictionary=True)
+            if USE_PYMYSQL:
+                cursor = db.cursor(DictCursor)
+            else:
+                cursor = db.cursor(dictionary=True)
             
             cursor.execute("""
                 SELECT 
@@ -49,7 +60,10 @@ class EmailAccountRepository:
         """Obtener cuentas por tipo"""
         try:
             db = Database.get_connection()
-            cursor = db.cursor(dictionary=True)
+            if USE_PYMYSQL:
+                cursor = db.cursor(DictCursor)
+            else:
+                cursor = db.cursor(dictionary=True)
             
             cursor.execute("""
                 SELECT 
@@ -110,7 +124,10 @@ class PlatformRepository:
         """Obtener plataforma por nombre"""
         try:
             db = Database.get_connection()
-            cursor = db.cursor(dictionary=True)
+            if USE_PYMYSQL:
+                cursor = db.cursor(DictCursor)
+            else:
+                cursor = db.cursor(dictionary=True)
             
             cursor.execute("""
                 SELECT 
@@ -140,7 +157,10 @@ class SettingsRepository:
         """Obtener un setting"""
         try:
             db = Database.get_connection()
-            cursor = db.cursor(dictionary=True)
+            if USE_PYMYSQL:
+                cursor = db.cursor(DictCursor)
+            else:
+                cursor = db.cursor(dictionary=True)
             
             cursor.execute("""
                 SELECT value, type
@@ -165,7 +185,10 @@ class SettingsRepository:
         """Obtener asuntos de email para una plataforma"""
         try:
             db = Database.get_connection()
-            cursor = db.cursor(dictionary=True)
+            if USE_PYMYSQL:
+                cursor = db.cursor(DictCursor)
+            else:
+                cursor = db.cursor(dictionary=True)
             
             platform_upper = platform.upper()
             pattern = f"{platform_upper}_%"

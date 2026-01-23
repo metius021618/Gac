@@ -6,8 +6,9 @@ google-api-python-client==2.70.0
 google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.8.0
 
-# MySQL Connector
-mysql-connector-python==8.0.33
+# MySQL Connector (compatible con Python 3.6)
+# mysql-connector-python==8.0.33  # Requiere Python 3.7+
+PyMySQL==1.0.2  # Compatible con Python 3.6
 
 # Variables de entorno
 python-dotenv==1.0.0
