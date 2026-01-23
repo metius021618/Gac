@@ -296,13 +296,13 @@
             // Construir mensaje dividido en 2 secciones: arriba rojo, abajo amarillo
             let messageHTML = `
                 <div style="margin-bottom: 16px; padding: 14px; background: rgba(220, 53, 69, 0.15); border-left: 4px solid #dc3545; border-radius: 6px; text-align: left;">
-                    <div style="color: #721c24; font-weight: 600; font-size: 1em;">${message}</div>
+                    <div style="color: #ff4444; font-weight: 600; font-size: 1em;">${message}</div>
                 </div>
                 <div style="padding: 14px; background: rgba(255, 193, 7, 0.15); border-left: 4px solid #ffc107; border-radius: 6px; text-align: left;">
-                    <div style="color: #856404; font-size: 0.9em; margin-bottom: 10px; font-weight: 500;">
+                    <div style="color: #ffd700; font-size: 0.9em; margin-bottom: 10px; font-weight: 500;">
                         Último código recibido ${data.last_consumed.time_ago_text}:
                     </div>
-                    <div style="font-size: 1.3em; font-weight: 700; color: #856404; font-family: 'Courier New', monospace; letter-spacing: 2px; background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 4px; text-align: center;">
+                    <div style="font-size: 1.3em; font-weight: 700; color: #ffd700; font-family: 'Courier New', monospace; letter-spacing: 2px; background: rgba(0, 0, 0, 0.3); padding: 10px; border-radius: 4px; text-align: center;">
                         ${data.last_consumed.code}
                     </div>
                 </div>
