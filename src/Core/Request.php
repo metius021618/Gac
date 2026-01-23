@@ -22,23 +22,20 @@ class Request
      */
     public function path(): string
     {
-        $path = $_SERVER['REQUEST_URI'] ?? '/';
-        $parsedPath = parse_url($path, PHP_URL_PATH);
+        // Obtener REQUEST_URI
+        $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+        
+        // Extraer solo el path (sin query string)
+        $path = parse_url($requestUri, PHP_URL_PATH);
         
         // Si parse_url falla, usar el path original
-        $path = $parsedPath !== null ? $parsedPath : $path;
-        
-        // Si hay un SCRIPT_NAME, removerlo del path
-        // En producción con Document Root en /public, SCRIPT_NAME podría ser /index.php
-        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
-        if ($scriptName && $scriptName !== '/' && !empty($path) && strpos($path, $scriptName) === 0) {
-            $path = substr($path, strlen($scriptName));
+        if ($path === null || $path === false) {
+            $path = $requestUri;
         }
         
-        // Si el path está vacío después de remover SCRIPT_NAME, usar '/'
-        if (empty($path)) {
-            $path = '/';
-        }
+        // Si el Document Root está en /public, el SCRIPT_NAME podría ser /index.php
+        // En ese caso, no necesitamos remover nada porque Apache ya lo maneja
+        // Solo necesitamos normalizar el path
         
         // Normalizar: remover trailing slash excepto para root
         $path = rtrim($path, '/');

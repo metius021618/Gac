@@ -77,22 +77,28 @@ class Router
         // 404 Not Found
         http_response_code(404);
         
-        // Si es una petición AJAX o API, devolver JSON
+        // Siempre devolver JSON para peticiones API o AJAX
         if ($request->isAjax() || strpos($path, '/api/') === 0) {
             header('Content-Type: application/json');
             $routesList = [];
             foreach ($this->routes as $route) {
                 $routesList[] = $route['method'] . ' ' . $route['path'];
             }
+            
+            // Información adicional de debug
+            $debugInfo = [
+                'method' => $method,
+                'path' => $path,
+                'request_uri' => $_SERVER['REQUEST_URI'] ?? 'N/A',
+                'script_name' => $_SERVER['SCRIPT_NAME'] ?? 'N/A',
+                'routes' => $routesList
+            ];
+            
             echo json_encode([
                 'success' => false,
                 'message' => '404 - Endpoint no encontrado',
-                'debug' => [
-                    'method' => $method,
-                    'path' => $path,
-                    'routes' => $routesList
-                ]
-            ]);
+                'debug' => $debugInfo
+            ], JSON_PRETTY_PRINT);
         } else {
             echo "404 - Página no encontrada";
         }
