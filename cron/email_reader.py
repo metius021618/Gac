@@ -9,8 +9,13 @@ import os
 import logging
 from datetime import datetime
 
-# Agregar directorio actual al path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Agregar directorio padre al path para que encuentre el módulo cron
+script_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(script_dir)
+sys.path.insert(0, parent_dir)
+
+# Cambiar al directorio del script para que los imports funcionen
+os.chdir(script_dir)
 
 from cron.config import CRON_CONFIG, LOG_CONFIG
 from cron.database import Database
