@@ -1,27 +1,32 @@
 <?php
 /**
  * GAC - Router para servidor PHP built-in
- * Este archivo se usa cuando se ejecuta: php -S localhost:8000 -t public router.php
+ * Este archivo se usa cuando se ejecuta: php -S localhost:8001 -t public router.php
  * 
  * @package Gac\Core
  */
 
-// Si el archivo solicitado existe, servirlo directamente
-if (file_exists(__DIR__ . $_SERVER['REQUEST_URI']) && !is_dir(__DIR__ . $_SERVER['REQUEST_URI'])) {
-    return false;
+$requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+$requestPath = parse_url($requestUri, PHP_URL_PATH) ?: '/';
+
+// Si el archivo solicitado existe físicamente, servirlo directamente
+$filePath = __DIR__ . $requestPath;
+if ($requestPath !== '/' && file_exists($filePath) && !is_dir($filePath)) {
+    return false; // Dejar que el servidor lo sirva
 }
 
 // Si es un directorio, intentar servir index.php o index.html
-if (is_dir(__DIR__ . $_SERVER['REQUEST_URI'])) {
+if ($requestPath !== '/' && is_dir($filePath)) {
     $indexFiles = ['index.php', 'index.html'];
     foreach ($indexFiles as $indexFile) {
-        $indexPath = __DIR__ . $_SERVER['REQUEST_URI'] . '/' . $indexFile;
+        $indexPath = $filePath . '/' . $indexFile;
         if (file_exists($indexPath)) {
             return false; // Dejar que el servidor lo sirva
         }
     }
 }
 
-// Para todas las demás rutas, redirigir a index.php
+// Para todas las demás rutas (incluyendo "/"), redirigir a index.php
 $_SERVER['SCRIPT_NAME'] = '/index.php';
+$_SERVER['REQUEST_URI'] = $requestPath;
 require __DIR__ . '/index.php';
