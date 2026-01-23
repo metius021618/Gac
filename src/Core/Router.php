@@ -56,6 +56,11 @@ class Router
             $path = '/';
         }
         
+        // Log para debug (solo en desarrollo)
+        if (defined('APP_DEBUG') && APP_DEBUG) {
+            error_log("Router Dispatch: Method={$method}, Path={$path}, REQUEST_URI=" . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
+        }
+        
         foreach ($this->routes as $route) {
             $routePath = rtrim($route['path'], '/');
             if (empty($routePath)) {
@@ -63,6 +68,11 @@ class Router
             }
             
             if ($route['method'] === $method && $this->matchPath($routePath, $path)) {
+                // Log para debug
+                if (defined('APP_DEBUG') && APP_DEBUG) {
+                    error_log("Router Match: {$method} {$path} -> {$route['handler']}");
+                }
+                
                 // Ejecutar middleware
                 foreach ($route['middleware'] as $middlewareName) {
                     $this->executeMiddleware($middlewareName, $request);
@@ -137,11 +147,47 @@ class Router
         [$controller, $method] = explode('@', $handler);
         $controllerClass = "Gac\\Controllers\\{$controller}";
         
-        if (class_exists($controllerClass)) {
-            $controllerInstance = new $controllerClass();
-            if (method_exists($controllerInstance, $method)) {
-                $controllerInstance->$method($request);
-            }
+        if (!class_exists($controllerClass)) {
+            error_log("Router: Clase no encontrada: {$controllerClass}");
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error interno: Controlador no encontrado',
+                'debug' => ['controller' => $controllerClass]
+            ]);
+            return;
+        }
+        
+        $controllerInstance = new $controllerClass();
+        
+        if (!method_exists($controllerInstance, $method)) {
+            error_log("Router: Método no encontrado: {$controllerClass}::{$method}");
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error interno: Método no encontrado',
+                'debug' => [
+                    'controller' => $controllerClass,
+                    'method' => $method
+                ]
+            ]);
+            return;
+        }
+        
+        // Ejecutar el método
+        try {
+            $controllerInstance->$method($request);
+        } catch (\Exception $e) {
+            error_log("Router: Error al ejecutar handler: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error interno del servidor',
+                'error' => $e->getMessage()
+            ]);
         }
     }
 }

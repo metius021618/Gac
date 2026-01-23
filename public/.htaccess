@@ -5,13 +5,12 @@
     RewriteEngine On
     RewriteBase /
 
-    # Si el archivo o directorio existe, servir directamente
+    # Excluir archivos y directorios que existen físicamente
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
 
     # Redirigir todo a index.php
-    # Establecer SCRIPT_NAME para que el router funcione correctamente
-    RewriteRule ^(.*)$ index.php [QSA,L,E=SCRIPT_NAME:/index.php]
+    RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>
 
 # Prevenir acceso a archivos sensibles
