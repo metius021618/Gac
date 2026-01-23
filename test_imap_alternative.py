@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GAC - Test de Conexión IMAP con Configuraciones Alternativas
+GAC - Test de Conexión IMAP con Métodos Alternativos
 Prueba diferentes puertos y métodos de conexión
 """
 
@@ -11,11 +11,9 @@ import imaplib
 import socket
 from dotenv import load_dotenv
 
-# Encontrar el directorio raíz del proyecto
+# Cargar .env
 script_path = os.path.abspath(__file__)
 project_root = os.path.dirname(script_path)
-
-# Cargar .env desde el directorio raíz
 env_path = os.path.join(project_root, '.env')
 if os.path.exists(env_path):
     load_dotenv(env_path)
@@ -27,27 +25,18 @@ os.chdir(cron_dir)
 from cron.database import Database, USE_PYMYSQL
 from cron.repositories import EmailAccountRepository
 
-def test_port(host, port, use_ssl=True):
-    """Probar si un puerto está accesible"""
+def test_imap_connection(server, port, encryption, username, password, timeout=10):
+    """Probar conexión IMAP con diferentes métodos"""
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
-        result = sock.connect_ex((host, port))
-        sock.close()
-        return result == 0
-    except:
-        return False
-
-def test_imap_connection(server, port, encryption, username, password):
-    """Probar conexión IMAP con diferentes configuraciones"""
-    try:
+        print(f"    Intentando {encryption} en puerto {port}...", end=" ")
+        
         if encryption == 'ssl':
-            mail = imaplib.IMAP4_SSL(server, port)
+            mail = imaplib.IMAP4_SSL(server, port, timeout=timeout)
         elif encryption == 'tls':
-            mail = imaplib.IMAP4(server, port)
+            mail = imaplib.IMAP4(server, port, timeout=timeout)
             mail.starttls()
         else:
-            mail = imaplib.IMAP4(server, port)
+            mail = imaplib.IMAP4(server, port, timeout=timeout)
         
         mail.login(username, password)
         mail.select('INBOX')
@@ -60,31 +49,39 @@ def test_imap_connection(server, port, encryption, username, password):
             return True, len(email_ids)
         
         mail.logout()
-        return False, 0
+        return False, "Error al buscar emails"
+        
+    except socket.timeout:
+        return False, "Timeout"
+    except socket.error as e:
+        return False, f"Error de red: {e}"
+    except imaplib.IMAP4.error as e:
+        return False, f"Error IMAP: {e}"
     except Exception as e:
         return False, str(e)
 
 def main():
     print("=" * 60)
-    print("GAC - Test de Conexión IMAP (Configuraciones Alternativas)")
+    print("GAC - Test de Conexión IMAP (Métodos Alternativos)")
     print("=" * 60 + "\n")
     
     try:
-        # Obtener una cuenta de prueba
         accounts = EmailAccountRepository.find_by_type('imap')
         
         if not accounts:
             print("✗ No hay cuentas IMAP configuradas")
             return False
         
+        # Probar solo la primera cuenta con diferentes métodos
         account = accounts[0]
         account_email = account['email']
         provider_config = account.get('provider_config', '{}')
         
-        print(f"Probando cuenta: {account_email}\n")
+        print(f"Probando cuenta: {account_email}")
+        print("-" * 60)
         
-        # Parsear configuración
         config = json.loads(provider_config) if provider_config else {}
+        server = config.get('imap_server') or 'imap.gmail.com'
         username = config.get('imap_user') or account_email
         password = config.get('imap_password') or ''
         
@@ -92,52 +89,44 @@ def main():
             print("✗ Contraseña no configurada")
             return False
         
-        # Probar diferentes configuraciones
-        configs_to_test = [
-            ("Gmail IMAP SSL (993)", "imap.gmail.com", 993, "ssl"),
-            ("Gmail IMAP STARTTLS (143)", "imap.gmail.com", 143, "tls"),
-            ("Gmail IMAP sin SSL (143)", "imap.gmail.com", 143, "none"),
+        print(f"Servidor: {server}")
+        print(f"Usuario: {username}\n")
+        
+        # Probar diferentes métodos
+        methods = [
+            ('ssl', 993, 'SSL en puerto 993 (estándar)'),
+            ('tls', 143, 'STARTTLS en puerto 143'),
+            ('ssl', 465, 'SSL en puerto 465 (alternativo)'),
         ]
         
-        print("Probando conectividad de puertos:")
-        print("-" * 60)
-        for name, server, port, _ in configs_to_test:
-            accessible = test_port(server, port)
-            status = "✓ ACCESIBLE" if accessible else "✗ BLOQUEADO"
-            print(f"  {name}: {status}")
-        print()
-        
-        print("Probando conexiones IMAP:")
-        print("-" * 60)
-        
         success = False
-        for name, server, port, encryption in configs_to_test:
-            print(f"\n{name}...")
-            try:
-                result, data = test_imap_connection(server, port, encryption, username, password)
-                if result:
-                    print(f"  ✓ CONEXIÓN EXITOSA")
-                    print(f"  ✓ Emails en INBOX: {data}")
-                    success = True
-                    print(f"\n  ⚠ RECOMENDACIÓN: Actualiza el provider_config para usar:")
-                    print(f"     imap_server: {server}")
-                    print(f"     imap_port: {port}")
-                    print(f"     imap_encryption: {encryption}")
-                    break
-                else:
-                    print(f"  ✗ FALLO: {data}")
-            except Exception as e:
-                print(f"  ✗ ERROR: {e}")
+        
+        for encryption, port, description in methods:
+            print(f"  {description}:")
+            result, data = test_imap_connection(server, port, encryption, username, password)
+            
+            if result:
+                print(f"    ✓ CONECTADO - {data} emails encontrados")
+                success = True
+                print(f"\n  ✓ Método exitoso: {encryption} en puerto {port}")
+                break
+            else:
+                print(f"    ✗ FALLO - {data}")
         
         print("\n" + "=" * 60)
+        
         if success:
-            print("✓ Se encontró una configuración que funciona")
+            print("✓ Se encontró un método de conexión funcional")
+            print("\nRecomendación: Actualiza el provider_config para usar")
+            print("el método que funcionó.")
         else:
-            print("✗ Ninguna configuración funcionó")
+            print("✗ No se pudo conectar con ningún método")
             print("\nPosibles soluciones:")
-            print("1. Contactar al hosting para desbloquear puerto 993")
-            print("2. Verificar credenciales de Gmail")
-            print("3. Usar Gmail API en lugar de IMAP")
+            print("1. Contacta al hosting para desbloquear el puerto 993")
+            print("2. Verifica si hay un proxy configurado")
+            print("3. Verifica la configuración del firewall en cPanel")
+            print("4. Considera usar un servidor IMAP diferente")
+        
         print("=" * 60)
         
         return success
