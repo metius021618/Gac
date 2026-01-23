@@ -7,7 +7,8 @@
     <title><?= isset($title) ? htmlspecialchars($title) . ' - ' : '' ?><?= gac_name() ?></title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+    <link rel="icon" type="image/png" href="/assets/images/logo.png">
+    <link rel="apple-touch-icon" href="/assets/images/logo.png">
     
     <!-- CSS -->
     <link rel="stylesheet" href="/assets/css/main.css">
