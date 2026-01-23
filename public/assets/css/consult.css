@@ -306,6 +306,11 @@
     background: rgba(220, 53, 69, 0.1);
 }
 
+.result-card.info {
+    border-color: #6c757d;
+    background: rgba(108, 117, 125, 0.1);
+}
+
 .result-icon {
     width: 64px;
     height: 64px;
@@ -325,6 +330,11 @@
 .result-card.error .result-icon {
     background: rgba(220, 53, 69, 0.2);
     color: var(--color-danger);
+}
+
+.result-card.info .result-icon {
+    background: rgba(108, 117, 125, 0.2);
+    color: #6c757d;
 }
 
 .result-title {

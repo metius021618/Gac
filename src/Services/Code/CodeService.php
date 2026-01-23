@@ -83,10 +83,18 @@ class CodeService
         $code = $this->codeRepository->findLatestAvailable($platform['id'], $userEmail, 5);
 
         if (!$code) {
+            // Si no hay códigos disponibles, buscar el último código consumido para mostrar información
+            $lastConsumed = $this->codeRepository->findLastConsumed($platform['id'], $userEmail);
+            
             return [
                 'success' => false,
                 'message' => 'No hay códigos disponibles para esta plataforma en este momento. Por favor intenta más tarde.',
-                'code' => null
+                'code' => null,
+                'last_consumed' => $lastConsumed ? [
+                    'code' => $lastConsumed['code'],
+                    'time_ago_text' => $lastConsumed['time_ago_text'] ?? 'hace tiempo',
+                    'received_at' => $lastConsumed['received_at']
+                ] : null
             ];
         }
 

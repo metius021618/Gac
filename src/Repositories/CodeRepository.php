@@ -177,6 +177,73 @@ class CodeRepository
     }
 
     /**
+     * Buscar el último código consumido para un email y plataforma
+     * 
+     * @param int $platformId ID de la plataforma
+     * @param string $recipientEmail Email del destinatario
+     * @return array|null Datos del código consumido con tiempo transcurrido
+     */
+    public function findLastConsumed(int $platformId, string $recipientEmail): ?array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                SELECT 
+                    c.id,
+                    c.email_account_id,
+                    c.platform_id,
+                    c.code,
+                    c.email_from,
+                    c.subject,
+                    c.received_at,
+                    c.consumed_at,
+                    c.origin,
+                    c.status,
+                    c.created_at,
+                    c.recipient_email,
+                    p.name as platform_name,
+                    p.display_name as platform_display_name,
+                    ea.email as account_email,
+                    TIMESTAMPDIFF(MINUTE, c.received_at, NOW()) as minutes_ago
+                FROM codes c
+                INNER JOIN platforms p ON c.platform_id = p.id
+                INNER JOIN email_accounts ea ON c.email_account_id = ea.id
+                WHERE c.platform_id = :platform_id
+                  AND c.recipient_email = :recipient_email
+                  AND c.status = 'consumed'
+                ORDER BY c.received_at DESC, c.id DESC
+                LIMIT 1
+            ");
+            
+            $stmt->execute([
+                'platform_id' => $platformId,
+                'recipient_email' => strtolower($recipientEmail)
+            ]);
+            
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($result) {
+                // Calcular tiempo transcurrido en formato legible
+                $minutesAgo = (int) ($result['minutes_ago'] ?? 0);
+                if ($minutesAgo < 60) {
+                    $result['time_ago_text'] = "hace {$minutesAgo} min";
+                } elseif ($minutesAgo < 1440) {
+                    $hoursAgo = floor($minutesAgo / 60);
+                    $result['time_ago_text'] = "hace {$hoursAgo} hora(s)";
+                } else {
+                    $daysAgo = floor($minutesAgo / 1440);
+                    $result['time_ago_text'] = "hace {$daysAgo} día(s)";
+                }
+            }
+            
+            return $result ?: null;
+        } catch (PDOException $e) {
+            error_log("Error al buscar último código consumido: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Buscar código por ID
      * 
      * @param int $id

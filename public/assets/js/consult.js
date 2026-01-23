@@ -99,15 +99,15 @@
             // Si es un 404, mostrar información de debug
             if (response.status === 404 && data.debug) {
                 console.error('404 Debug Info:', data.debug);
-                showError(`Error 404: ${data.message || 'Endpoint no encontrado'}. Revisa la consola para más detalles.`);
+                showError(`Error 404: ${data.message || 'Endpoint no encontrado'}. Revisa la consola para más detalles.`, data);
             } else if (data.success) {
                 showSuccess(data);
             } else {
-                showError(data.message || 'Error al consultar el código');
+                showError(data.message || 'Error al consultar el código', data);
             }
         } catch (error) {
             console.error('Error:', error);
-            showError('Error de conexión. Por favor intenta nuevamente.');
+            showError('Error de conexión. Por favor intenta nuevamente.', null);
         } finally {
             setLoadingState(false);
         }
@@ -283,16 +283,43 @@
     }
 
     /**
-     * Mostrar error
+     * Mostrar error o información de no disponible
      */
-    function showError(message) {
-        // Configurar resultado de error
-        resultCard.className = 'result-card error';
-        resultIcon.innerHTML = '✕';
-        resultTitle.textContent = 'Error';
-        resultMessage.textContent = message;
-        resultCode.classList.add('hidden');
-        copyBtn.classList.add('hidden');
+    function showError(message, data = null) {
+        // Si hay información del último código consumido, mostrar diseño especial
+        if (data && data.last_consumed && data.last_consumed.code) {
+            // Configurar como información (no error) - mismo estilo visual que error pero sin el título "Error"
+            resultCard.className = 'result-card info';
+            resultIcon.innerHTML = 'ℹ️';
+            resultTitle.textContent = 'Información';
+            
+            // Construir mensaje dividido en 2 secciones: arriba rojo, abajo amarillo
+            let messageHTML = `
+                <div style="margin-bottom: 16px; padding: 14px; background: rgba(220, 53, 69, 0.15); border-left: 4px solid #dc3545; border-radius: 6px; text-align: left;">
+                    <div style="color: #721c24; font-weight: 600; font-size: 1em;">${message}</div>
+                </div>
+                <div style="padding: 14px; background: rgba(255, 193, 7, 0.15); border-left: 4px solid #ffc107; border-radius: 6px; text-align: left;">
+                    <div style="color: #856404; font-size: 0.9em; margin-bottom: 10px; font-weight: 500;">
+                        Último código recibido ${data.last_consumed.time_ago_text}:
+                    </div>
+                    <div style="font-size: 1.3em; font-weight: 700; color: #856404; font-family: 'Courier New', monospace; letter-spacing: 2px; background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 4px; text-align: center;">
+                        ${data.last_consumed.code}
+                    </div>
+                </div>
+            `;
+            
+            resultMessage.innerHTML = messageHTML;
+            resultCode.classList.add('hidden');
+            copyBtn.classList.add('hidden');
+        } else {
+            // Error normal sin información adicional
+            resultCard.className = 'result-card error';
+            resultIcon.innerHTML = '✕';
+            resultTitle.textContent = 'Error';
+            resultMessage.textContent = message;
+            resultCode.classList.add('hidden');
+            copyBtn.classList.add('hidden');
+        }
 
         // Mostrar sección de resultado
         resultSection.classList.remove('hidden');
