@@ -44,7 +44,7 @@ class ImapService:
             mail.login(username, password)
             mail.select('INBOX')
             
-            # Buscar emails (últimos 50)
+            # Buscar emails (últimos 300)
             status, messages = mail.search(None, 'ALL')
             
             if status != 'OK':
@@ -52,9 +52,9 @@ class ImapService:
             
             email_ids = messages[0].split()
             
-            # Leer desde el más reciente (últimos 50)
+            # Leer desde el más reciente (últimos 300)
             emails = []
-            start = max(0, len(email_ids) - 50)
+            start = max(0, len(email_ids) - 300)
             
             for email_id in reversed(email_ids[start:]):
                 try:
