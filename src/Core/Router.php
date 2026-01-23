@@ -50,8 +50,24 @@ class Router
         $method = $request->method();
         $path = $request->path();
         
+        // Normalizar path: remover trailing slash y asegurar que empiece con /
+        $path = rtrim($path, '/');
+        if (empty($path)) {
+            $path = '/';
+        }
+        
+        // Debug en desarrollo (remover en producción)
+        if (defined('APP_DEBUG') && APP_DEBUG) {
+            error_log("Router: Method={$method}, Path={$path}");
+        }
+        
         foreach ($this->routes as $route) {
-            if ($route['method'] === $method && $this->matchPath($route['path'], $path)) {
+            $routePath = rtrim($route['path'], '/');
+            if (empty($routePath)) {
+                $routePath = '/';
+            }
+            
+            if ($route['method'] === $method && $this->matchPath($routePath, $path)) {
                 // Ejecutar middleware
                 foreach ($route['middleware'] as $middlewareName) {
                     $this->executeMiddleware($middlewareName, $request);
@@ -65,7 +81,18 @@ class Router
         
         // 404 Not Found
         http_response_code(404);
-        echo "404 - Página no encontrada";
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => '404 - Endpoint no encontrado',
+            'debug' => [
+                'method' => $method,
+                'path' => $path,
+                'routes' => array_map(function($r) {
+                    return $r['method'] . ' ' . $r['path'];
+                }, $this->routes)
+            ]
+        ]);
     }
     
     /**

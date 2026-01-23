@@ -10,7 +10,8 @@
     RewriteCond %{REQUEST_FILENAME} !-d
 
     # Redirigir todo a index.php
-    RewriteRule ^(.*)$ index.php [QSA,L]
+    # Establecer SCRIPT_NAME para que el router funcione correctamente
+    RewriteRule ^(.*)$ index.php [QSA,L,E=SCRIPT_NAME:/index.php]
 </IfModule>
 
 # Prevenir acceso a archivos sensibles

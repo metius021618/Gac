@@ -41,6 +41,11 @@ if (!defined('GAC_NAME')) {
 // Cargar helpers
 require_once BASE_PATH . '/src/Helpers/functions.php';
 
+// Asegurar que SCRIPT_NAME esté configurado correctamente para el router
+if (!isset($_SERVER['SCRIPT_NAME']) || empty($_SERVER['SCRIPT_NAME'])) {
+    $_SERVER['SCRIPT_NAME'] = '/index.php';
+}
+
 // Inicializar aplicación
 use Gac\Core\Application;
 

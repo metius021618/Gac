@@ -24,7 +24,31 @@ class Request
     {
         $path = $_SERVER['REQUEST_URI'] ?? '/';
         $path = parse_url($path, PHP_URL_PATH);
-        return $path ?: '/';
+        
+        // Si hay un SCRIPT_NAME, removerlo del path
+        // En producción con Document Root en /public, SCRIPT_NAME podría ser /index.php
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+        if ($scriptName && $scriptName !== '/' && strpos($path, $scriptName) === 0) {
+            $path = substr($path, strlen($scriptName));
+        }
+        
+        // Si el path está vacío después de remover SCRIPT_NAME, usar '/'
+        if (empty($path)) {
+            $path = '/';
+        }
+        
+        // Normalizar: remover trailing slash excepto para root
+        $path = rtrim($path, '/');
+        if (empty($path)) {
+            $path = '/';
+        }
+        
+        // Debug en desarrollo
+        if (defined('APP_DEBUG') && APP_DEBUG) {
+            error_log("Request path: URI={$_SERVER['REQUEST_URI'] ?? 'N/A'}, SCRIPT_NAME={$scriptName}, Final path={$path}");
+        }
+        
+        return $path;
     }
     
     /**
