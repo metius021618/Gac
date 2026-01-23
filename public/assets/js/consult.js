@@ -81,10 +81,26 @@
                 body: JSON.stringify(formData)
             });
 
-            const data = await response.json();
+            // Verificar si la respuesta es JSON
+            const contentType = response.headers.get('content-type');
+            let data;
+            
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                // Si no es JSON, intentar leer como texto
+                const text = await response.text();
+                console.error('Respuesta no JSON:', text);
+                showError('Error: El servidor no devolvió una respuesta válida');
+                setLoadingState(false);
+                return;
+            }
 
-            // Manejar respuesta
-            if (data.success) {
+            // Si es un 404, mostrar información de debug
+            if (response.status === 404 && data.debug) {
+                console.error('404 Debug Info:', data.debug);
+                showError(`Error 404: ${data.message || 'Endpoint no encontrado'}. Revisa la consola para más detalles.`);
+            } else if (data.success) {
                 showSuccess(data);
             } else {
                 showError(data.message || 'Error al consultar el código');

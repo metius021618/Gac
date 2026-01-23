@@ -46,8 +46,26 @@ if (!isset($_SERVER['SCRIPT_NAME']) || empty($_SERVER['SCRIPT_NAME'])) {
     $_SERVER['SCRIPT_NAME'] = '/index.php';
 }
 
+// Debug: Log del request (solo si APP_DEBUG está activado)
+if (defined('APP_DEBUG') && APP_DEBUG) {
+    error_log("Index.php: REQUEST_URI=" . ($_SERVER['REQUEST_URI'] ?? 'N/A') . 
+              ", SCRIPT_NAME=" . ($_SERVER['SCRIPT_NAME'] ?? 'N/A') . 
+              ", METHOD=" . ($_SERVER['REQUEST_METHOD'] ?? 'N/A'));
+}
+
 // Inicializar aplicación
 use Gac\Core\Application;
 
-$app = new Application();
-$app->run();
+try {
+    $app = new Application();
+    $app->run();
+} catch (\Exception $e) {
+    error_log("Error fatal en Application: " . $e->getMessage());
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error interno del servidor',
+        'error' => defined('APP_DEBUG') && APP_DEBUG ? $e->getMessage() : 'Error desconocido'
+    ]);
+}
