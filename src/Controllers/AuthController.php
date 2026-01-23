@@ -9,9 +9,16 @@
 namespace Gac\Controllers;
 
 use Gac\Core\Request;
+use Gac\Repositories\UserRepository;
 
 class AuthController
 {
+    private UserRepository $userRepository;
+
+    public function __construct()
+    {
+        $this->userRepository = new UserRepository();
+    }
     private const MAX_LOGIN_ATTEMPTS = 5;
     private const LOCKOUT_TIME = 900; // 15 minutos en segundos
     private const SESSION_LIFETIME = 7200; // 2 horas
@@ -132,21 +139,24 @@ class AuthController
      */
     private function validateCredentials(string $username, string $password): ?array
     {
-        // TODO: Implementar consulta real a BD cuando esté lista
-        // Por ahora, validación mock para desarrollo
+        // Buscar usuario por username o email
+        $user = $this->userRepository->findByUsername($username);
         
-        // Simulación de usuario admin
-        if ($username === 'admin' && password_verify($password, password_hash('admin123', PASSWORD_BCRYPT))) {
-            return [
-                'id' => 1,
-                'username' => 'admin',
-                'email' => 'admin@gac.com',
-                'role_id' => 1,
-                'active' => true
-            ];
+        if (!$user) {
+            // Intentar buscar por email
+            $user = $this->userRepository->findByEmail($username);
         }
 
-        return null;
+        if (!$user) {
+            return null;
+        }
+
+        // Verificar contraseña
+        if (!password_verify($password, $user['password'])) {
+            return null;
+        }
+
+        return $user;
     }
 
     /**
@@ -330,7 +340,7 @@ class AuthController
      */
     private function updateLastLogin(int $userId): void
     {
-        // TODO: Implementar actualización en BD cuando esté lista
+        $this->userRepository->updateLastLogin($userId);
     }
 
     /**

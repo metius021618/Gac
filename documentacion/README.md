@@ -26,6 +26,7 @@ Esta carpeta contiene toda la documentación del sistema GAC (Gestor Automatizad
 - **[INSTALLATION.md](INSTALLATION.md)** - Guía completa de instalación
 - **[ESTRUCTURA_CARPETAS.md](ESTRUCTURA_CARPETAS.md)** - Estructura completa de carpetas
 - **[PARAMETROS_DEFINIDOS.md](PARAMETROS_DEFINIDOS.md)** - Parámetros y configuraciones del sistema
+- **[CONFIGURACION_ENV.md](CONFIGURACION_ENV.md)** - Configuración completa del archivo .env
 
 ### 🏗️ Arquitectura y Desarrollo
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Arquitectura técnica completa

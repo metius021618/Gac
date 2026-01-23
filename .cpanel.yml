@@ -1,0 +1,9 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/pocoavbb/gac.pocoyoni.com
+    - /bin/cp -R * $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/cp -R .[^.]* $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/chmod -R 755 $DEPLOYPATH
+    - /bin/find $DEPLOYPATH -type f -exec chmod 644 {} \;
+    - /bin/find $DEPLOYPATH -type d -exec chmod 755 {} \;
