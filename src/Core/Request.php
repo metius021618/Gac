@@ -23,12 +23,15 @@ class Request
     public function path(): string
     {
         $path = $_SERVER['REQUEST_URI'] ?? '/';
-        $path = parse_url($path, PHP_URL_PATH);
+        $parsedPath = parse_url($path, PHP_URL_PATH);
+        
+        // Si parse_url falla, usar el path original
+        $path = $parsedPath !== null ? $parsedPath : $path;
         
         // Si hay un SCRIPT_NAME, removerlo del path
         // En producción con Document Root en /public, SCRIPT_NAME podría ser /index.php
         $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
-        if ($scriptName && $scriptName !== '/' && strpos($path, $scriptName) === 0) {
+        if ($scriptName && $scriptName !== '/' && !empty($path) && strpos($path, $scriptName) === 0) {
             $path = substr($path, strlen($scriptName));
         }
         
@@ -41,11 +44,6 @@ class Request
         $path = rtrim($path, '/');
         if (empty($path)) {
             $path = '/';
-        }
-        
-        // Debug en desarrollo
-        if (defined('APP_DEBUG') && APP_DEBUG) {
-            error_log("Request path: URI={$_SERVER['REQUEST_URI'] ?? 'N/A'}, SCRIPT_NAME={$scriptName}, Final path={$path}");
         }
         
         return $path;

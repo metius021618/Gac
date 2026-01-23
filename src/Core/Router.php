@@ -56,11 +56,6 @@ class Router
             $path = '/';
         }
         
-        // Debug en desarrollo (remover en producción)
-        if (defined('APP_DEBUG') && APP_DEBUG) {
-            error_log("Router: Method={$method}, Path={$path}");
-        }
-        
         foreach ($this->routes as $route) {
             $routePath = rtrim($route['path'], '/');
             if (empty($routePath)) {
@@ -81,18 +76,26 @@ class Router
         
         // 404 Not Found
         http_response_code(404);
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => false,
-            'message' => '404 - Endpoint no encontrado',
-            'debug' => [
-                'method' => $method,
-                'path' => $path,
-                'routes' => array_map(function($r) {
-                    return $r['method'] . ' ' . $r['path'];
-                }, $this->routes)
-            ]
-        ]);
+        
+        // Si es una petición AJAX o API, devolver JSON
+        if ($request->isAjax() || strpos($path, '/api/') === 0) {
+            header('Content-Type: application/json');
+            $routesList = [];
+            foreach ($this->routes as $route) {
+                $routesList[] = $route['method'] . ' ' . $route['path'];
+            }
+            echo json_encode([
+                'success' => false,
+                'message' => '404 - Endpoint no encontrado',
+                'debug' => [
+                    'method' => $method,
+                    'path' => $path,
+                    'routes' => $routesList
+                ]
+            ]);
+        } else {
+            echo "404 - Página no encontrada";
+        }
     }
     
     /**
