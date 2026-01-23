@@ -225,22 +225,22 @@
         resultIcon.innerHTML = '✓';
         resultTitle.textContent = '¡Código encontrado!';
         
-        // Mostrar mensaje personalizado si existe, o mensaje por defecto
-        if (data.message && data.message !== 'Código encontrado') {
-            // Si el mensaje indica que no es reciente, mostrar advertencia
-            if (data.is_recent === false || data.minutes_ago !== undefined) {
-                resultMessage.innerHTML = `
-                    <div>Tu código para ${getPlatformName(data.platform)} está listo:</div>
-                    <div style="margin-top: 8px; font-size: 0.9em; color: #ffc107; font-weight: 500;">
-                        ⚠ ${data.message}
+        // Construir mensaje principal
+        let messageHTML = `<div>Tu código para ${getPlatformName(data.platform)} está listo:</div>`;
+        
+        // Si hay advertencia (código no reciente), agregarla
+        if (data.warning) {
+            messageHTML += `
+                <div style="margin-top: 12px; padding: 10px; background: rgba(255, 193, 7, 0.1); border-left: 3px solid #ffc107; border-radius: 4px; font-size: 0.9em; color: #856404;">
+                    <div style="display: flex; align-items: flex-start; gap: 8px;">
+                        <span style="font-size: 1.2em;">ℹ️</span>
+                        <span>${data.warning}</span>
                     </div>
-                `;
-            } else {
-                resultMessage.textContent = data.message;
-            }
-        } else {
-            resultMessage.textContent = `Tu código para ${getPlatformName(data.platform)} está listo:`;
+                </div>
+            `;
         }
+        
+        resultMessage.innerHTML = messageHTML;
         
         if (data.code) {
             resultCode.textContent = data.code;

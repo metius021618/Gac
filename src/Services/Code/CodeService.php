@@ -115,21 +115,28 @@ class CodeService
         // Preparar mensaje según si es reciente o no
         if ($isRecent) {
             $message = 'Código encontrado';
+            $warningMessage = null;
         } else {
+            // Código no es reciente, mostrar advertencia amigable
+            $message = 'Código encontrado';
+            
             if ($minutesAgo !== null) {
                 if ($minutesAgo < 60) {
-                    $message = "Código encontrado (último recibido hace {$minutesAgo} minutos)";
-                } else {
+                    $warningMessage = "Este código fue recibido hace {$minutesAgo} minutos. Si prefieres esperar un código más reciente, intenta en unos minutos.";
+                } elseif ($minutesAgo < 1440) { // Menos de 24 horas
                     $hoursAgo = floor($minutesAgo / 60);
-                    $message = "Código encontrado (último recibido hace {$hoursAgo} hora(s))";
+                    $warningMessage = "Este código fue recibido hace {$hoursAgo} hora(s). Aún es válido, pero si prefieres uno más reciente, intenta más tarde.";
+                } else {
+                    $daysAgo = floor($minutesAgo / 1440);
+                    $warningMessage = "Este código fue recibido hace {$daysAgo} día(s). Aún es válido, pero te recomendamos esperar un código más reciente.";
                 }
             } else {
-                $message = 'Código encontrado (no hay códigos nuevos en los últimos 5 minutos)';
+                $warningMessage = "No se recibieron códigos nuevos en los últimos 5 minutos. Este es el último código disponible para tu cuenta.";
             }
         }
 
         // Retornar código
-        return [
+        $response = [
             'success' => true,
             'message' => $message,
             'code' => $code['code'],
@@ -138,6 +145,13 @@ class CodeService
             'is_recent' => $isRecent,
             'minutes_ago' => $minutesAgo
         ];
+        
+        // Agregar mensaje de advertencia si el código no es reciente
+        if (!$isRecent && isset($warningMessage)) {
+            $response['warning'] = $warningMessage;
+        }
+        
+        return $response;
     }
 
     /**
