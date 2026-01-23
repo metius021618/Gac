@@ -10,10 +10,20 @@ import json
 import imaplib
 import email
 from email.header import decode_header
+from dotenv import load_dotenv
 
 # Encontrar el directorio raíz del proyecto
 script_path = os.path.abspath(__file__)
 project_root = os.path.dirname(script_path)
+
+# Cargar .env desde el directorio raíz
+env_path = os.path.join(project_root, '.env')
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+    print(f"[DEBUG] Cargando .env desde: {env_path}")
+else:
+    print(f"[WARNING] No se encontró .env en: {env_path}")
+
 cron_dir = os.path.join(project_root, 'cron')
 
 # Agregar directorio raíz al path
@@ -31,6 +41,14 @@ def test_imap():
     print("=" * 60)
     print("GAC - Test de Conexión IMAP")
     print("=" * 60 + "\n")
+    
+    # Verificar configuración de BD
+    from cron.config import DB_CONFIG
+    print(f"[DEBUG] DB Config:")
+    print(f"  Host: {DB_CONFIG['host']}")
+    print(f"  Database: {DB_CONFIG['database']}")
+    print(f"  User: {DB_CONFIG['user']}")
+    print(f"  Password: {'***' if DB_CONFIG['password'] else 'VACÍA'}\n")
     
     try:
         # Obtener cuentas
