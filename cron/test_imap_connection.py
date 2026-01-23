@@ -8,12 +8,13 @@ import sys
 import os
 import json
 
-# Agregar directorio actual al path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, current_dir)
+# Agregar directorio padre al path para que encuentre el módulo cron
+script_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(script_dir)
+sys.path.insert(0, parent_dir)
 
 # Cambiar al directorio del script para que los imports funcionen
-os.chdir(current_dir)
+os.chdir(script_dir)
 
 from cron.database import Database
 from cron.repositories import EmailAccountRepository
