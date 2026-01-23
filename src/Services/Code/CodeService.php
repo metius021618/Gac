@@ -79,7 +79,8 @@ class CodeService
 
         // Buscar código disponible para este email específico
         // El sistema filtra por el email del destinatario del correo
-        $code = $this->codeRepository->findLatestAvailable($platform['id'], $userEmail);
+        // Primero busca códigos recientes (últimos 5 minutos), si no hay, busca el último disponible
+        $code = $this->codeRepository->findLatestAvailable($platform['id'], $userEmail, 5);
 
         if (!$code) {
             return [
@@ -88,6 +89,10 @@ class CodeService
                 'code' => null
             ];
         }
+
+        // Verificar si el código es reciente
+        $isRecent = isset($code['is_recent']) && $code['is_recent'] == 1;
+        $minutesAgo = $code['minutes_ago'] ?? null;
 
         // Marcar como consumido
         $marked = $this->codeRepository->markAsConsumed(
@@ -107,13 +112,31 @@ class CodeService
         // $code['consumed_at'] = date('Y-m-d H:i:s');
         // $this->codeRepository->saveToWarehouse($code);
 
+        // Preparar mensaje según si es reciente o no
+        if ($isRecent) {
+            $message = 'Código encontrado';
+        } else {
+            if ($minutesAgo !== null) {
+                if ($minutesAgo < 60) {
+                    $message = "Código encontrado (último recibido hace {$minutesAgo} minutos)";
+                } else {
+                    $hoursAgo = floor($minutesAgo / 60);
+                    $message = "Código encontrado (último recibido hace {$hoursAgo} hora(s))";
+                }
+            } else {
+                $message = 'Código encontrado (no hay códigos nuevos en los últimos 5 minutos)';
+            }
+        }
+
         // Retornar código
         return [
             'success' => true,
-            'message' => 'Código encontrado',
+            'message' => $message,
             'code' => $code['code'],
             'platform' => $platform['display_name'],
-            'received_at' => $code['received_at']
+            'received_at' => $code['received_at'],
+            'is_recent' => $isRecent,
+            'minutes_ago' => $minutesAgo
         ];
     }
 

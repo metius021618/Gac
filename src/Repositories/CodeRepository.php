@@ -72,76 +72,104 @@ class CodeRepository
      * 
      * @param int $platformId ID de la plataforma
      * @param string|null $recipientEmail Email del destinatario (opcional, para filtrar)
-     * @return array|null Datos del código o null si no hay disponible
+     * @param int $recentMinutes Minutos para considerar "reciente" (default: 5)
+     * @return array|null Datos del código con flag 'is_recent' o null si no hay disponible
      */
-    public function findLatestAvailable(int $platformId, ?string $recipientEmail = null): ?array
+    public function findLatestAvailable(int $platformId, ?string $recipientEmail = null, int $recentMinutes = 5): ?array
     {
         try {
             $db = Database::getConnection();
+            
+            // Construir condición WHERE base
+            $whereConditions = [
+                'c.platform_id = :platform_id',
+                'c.status = \'available\''
+            ];
+            $params = ['platform_id' => $platformId];
+            
             // Si se proporciona recipient_email, filtrar por ese email
-            // Si no, buscar cualquier código disponible (comportamiento anterior)
             if ($recipientEmail) {
-                $stmt = $db->prepare("
-                    SELECT 
-                        c.id,
-                        c.email_account_id,
-                        c.platform_id,
-                        c.code,
-                        c.email_from,
-                        c.subject,
-                        c.received_at,
-                        c.origin,
-                        c.status,
-                        c.created_at,
-                        c.recipient_email,
-                        p.name as platform_name,
-                        p.display_name as platform_display_name,
-                        ea.email as account_email
-                    FROM codes c
-                    INNER JOIN platforms p ON c.platform_id = p.id
-                    INNER JOIN email_accounts ea ON c.email_account_id = ea.id
-                    WHERE c.platform_id = :platform_id
-                      AND c.status = 'available'
-                      AND c.recipient_email = :recipient_email
-                    ORDER BY c.received_at DESC, c.id DESC
-                    LIMIT 1
-                ");
-                
-                $stmt->execute([
-                    'platform_id' => $platformId,
-                    'recipient_email' => strtolower($recipientEmail)
-                ]);
-            } else {
-                $stmt = $db->prepare("
-                    SELECT 
-                        c.id,
-                        c.email_account_id,
-                        c.platform_id,
-                        c.code,
-                        c.email_from,
-                        c.subject,
-                        c.received_at,
-                        c.origin,
-                        c.status,
-                        c.created_at,
-                        c.recipient_email,
-                        p.name as platform_name,
-                        p.display_name as platform_display_name,
-                        ea.email as account_email
-                    FROM codes c
-                    INNER JOIN platforms p ON c.platform_id = p.id
-                    INNER JOIN email_accounts ea ON c.email_account_id = ea.id
-                    WHERE c.platform_id = :platform_id
-                      AND c.status = 'available'
-                    ORDER BY c.received_at DESC, c.id DESC
-                    LIMIT 1
-                ");
-                
-                $stmt->execute(['platform_id' => $platformId]);
+                $whereConditions[] = 'c.recipient_email = :recipient_email';
+                $params['recipient_email'] = strtolower($recipientEmail);
             }
+            
+            $whereClause = implode(' AND ', $whereConditions);
+            
+            // Primero buscar códigos recientes (últimos N minutos)
+            $stmt = $db->prepare("
+                SELECT 
+                    c.id,
+                    c.email_account_id,
+                    c.platform_id,
+                    c.code,
+                    c.email_from,
+                    c.subject,
+                    c.received_at,
+                    c.origin,
+                    c.status,
+                    c.created_at,
+                    c.recipient_email,
+                    p.name as platform_name,
+                    p.display_name as platform_display_name,
+                    ea.email as account_email,
+                    1 as is_recent
+                FROM codes c
+                INNER JOIN platforms p ON c.platform_id = p.id
+                INNER JOIN email_accounts ea ON c.email_account_id = ea.id
+                WHERE {$whereClause}
+                  AND c.received_at >= DATE_SUB(NOW(), INTERVAL :recent_minutes MINUTE)
+                ORDER BY c.received_at DESC, c.id DESC
+                LIMIT 1
+            ");
+            
+            $params['recent_minutes'] = $recentMinutes;
+            $stmt->execute($params);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            return $result ?: null;
+            // Si encontramos un código reciente, retornarlo
+            if ($result) {
+                return $result;
+            }
+            
+            // Si no hay código reciente, buscar el último disponible (sin restricción de tiempo)
+            $stmt = $db->prepare("
+                SELECT 
+                    c.id,
+                    c.email_account_id,
+                    c.platform_id,
+                    c.code,
+                    c.email_from,
+                    c.subject,
+                    c.received_at,
+                    c.origin,
+                    c.status,
+                    c.created_at,
+                    c.recipient_email,
+                    p.name as platform_name,
+                    p.display_name as platform_display_name,
+                    ea.email as account_email,
+                    0 as is_recent,
+                    TIMESTAMPDIFF(MINUTE, c.received_at, NOW()) as minutes_ago
+                FROM codes c
+                INNER JOIN platforms p ON c.platform_id = p.id
+                INNER JOIN email_accounts ea ON c.email_account_id = ea.id
+                WHERE {$whereClause}
+                ORDER BY c.received_at DESC, c.id DESC
+                LIMIT 1
+            ");
+            
+            // Remover el parámetro recent_minutes que ya no se usa
+            unset($params['recent_minutes']);
+            $stmt->execute($params);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($result) {
+                // Agregar flag is_recent = false
+                $result['is_recent'] = 0;
+                return $result;
+            }
+            
+            return null;
         } catch (PDOException $e) {
             error_log("Error al buscar código disponible: " . $e->getMessage());
             return null;

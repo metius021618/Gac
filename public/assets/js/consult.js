@@ -224,7 +224,23 @@
         resultCard.className = 'result-card success';
         resultIcon.innerHTML = '✓';
         resultTitle.textContent = '¡Código encontrado!';
-        resultMessage.textContent = `Tu código para ${getPlatformName(data.platform)} está listo:`;
+        
+        // Mostrar mensaje personalizado si existe, o mensaje por defecto
+        if (data.message && data.message !== 'Código encontrado') {
+            // Si el mensaje indica que no es reciente, mostrar advertencia
+            if (data.is_recent === false || data.minutes_ago !== undefined) {
+                resultMessage.innerHTML = `
+                    <div>Tu código para ${getPlatformName(data.platform)} está listo:</div>
+                    <div style="margin-top: 8px; font-size: 0.9em; color: #ffc107; font-weight: 500;">
+                        ⚠ ${data.message}
+                    </div>
+                `;
+            } else {
+                resultMessage.textContent = data.message;
+            }
+        } else {
+            resultMessage.textContent = `Tu código para ${getPlatformName(data.platform)} está listo:`;
+        }
         
         if (data.code) {
             resultCode.textContent = data.code;
