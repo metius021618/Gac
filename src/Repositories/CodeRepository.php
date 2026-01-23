@@ -153,23 +153,26 @@ class CodeRepository
         try {
             $db = Database::getConnection();
             
-            // Por ahora consumed_by será NULL, pero guardamos info en un campo adicional si es necesario
-            // En el futuro se puede crear un sistema de usuarios para tracking
+            // Actualizar código con información del usuario que lo consume
             $stmt = $db->prepare("
                 UPDATE codes
                 SET status = 'consumed',
                     consumed_at = NOW(),
+                    consumed_by_email = :email,
+                    consumed_by_username = :username,
                     updated_at = NOW()
                 WHERE id = :id
                   AND status = 'available'
             ");
             
-            $result = $stmt->execute(['id' => $codeId]);
+            $result = $stmt->execute([
+                'id' => $codeId,
+                'email' => $userEmail ?: null,
+                'username' => $username ?: null
+            ]);
             
-            // Si se necesita guardar información del usuario que consume,
-            // se puede agregar un campo adicional o tabla de tracking
             if ($result && ($userEmail || $username)) {
-                // Log de consumo (opcional, para auditoría)
+                // Log de consumo para auditoría
                 error_log("Código #{$codeId} consumido por: email={$userEmail}, username={$username}");
             }
             

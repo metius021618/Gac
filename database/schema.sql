@@ -134,6 +134,8 @@ CREATE TABLE IF NOT EXISTS codes (
     status ENUM('available', 'consumed') DEFAULT 'available',
     consumed_at TIMESTAMP NULL,
     consumed_by INT NULL,
+    consumed_by_email VARCHAR(255) NULL,
+    consumed_by_username VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (email_account_id) REFERENCES email_accounts(id) ON DELETE CASCADE,
@@ -144,7 +146,8 @@ CREATE TABLE IF NOT EXISTS codes (
     INDEX idx_status (status),
     INDEX idx_received_at (received_at),
     INDEX idx_origin (origin),
-    INDEX idx_code_lookup (email_account_id, platform_id, status)
+    INDEX idx_code_lookup (email_account_id, platform_id, status),
+    INDEX idx_consumed_by_email (consumed_by_email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
 
 -- ============================================
