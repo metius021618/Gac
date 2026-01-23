@@ -244,12 +244,19 @@
         // Construir mensaje principal
         let messageHTML = `<div>Tu código para ${getPlatformName(data.platform)} está listo:</div>`;
         
-        // Si hay advertencia (código no reciente), agregarla
+        // Si hay mensaje de estado (reciente o no reciente), agregarlo
         if (data.warning) {
+            // Determinar estilo según si es reciente o no
+            const isRecent = data.is_recent_message === true || data.is_recent === true;
+            const bgColor = isRecent ? 'rgba(40, 167, 69, 0.1)' : 'rgba(255, 193, 7, 0.1)';
+            const borderColor = isRecent ? '#28a745' : '#ffc107';
+            const textColor = isRecent ? '#155724' : '#856404';
+            const icon = isRecent ? '✓' : 'ℹ️';
+            
             messageHTML += `
-                <div style="margin-top: 12px; padding: 10px; background: rgba(255, 193, 7, 0.1); border-left: 3px solid #ffc107; border-radius: 4px; font-size: 0.9em; color: #856404;">
+                <div style="margin-top: 12px; padding: 10px; background: ${bgColor}; border-left: 3px solid ${borderColor}; border-radius: 4px; font-size: 0.9em; color: ${textColor};">
                     <div style="display: flex; align-items: flex-start; gap: 8px;">
-                        <span style="font-size: 1.2em;">ℹ️</span>
+                        <span style="font-size: 1.2em; font-weight: bold;">${icon}</span>
                         <span>${data.warning}</span>
                     </div>
                 </div>

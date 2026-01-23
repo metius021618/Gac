@@ -113,25 +113,26 @@ class CodeService
         // $this->codeRepository->saveToWarehouse($code);
 
         // Preparar mensaje según si es reciente o no
+        $message = 'Código encontrado';
+        $warningMessage = null;
+        
         if ($isRecent) {
-            $message = 'Código encontrado';
-            $warningMessage = null;
+            // Código reciente (últimos 5 minutos)
+            $warningMessage = "✓ Código reciente recibido en los últimos 5 minutos.";
         } else {
             // Código no es reciente, mostrar advertencia amigable
-            $message = 'Código encontrado';
-            
             if ($minutesAgo !== null) {
                 if ($minutesAgo < 60) {
-                    $warningMessage = "Este código fue recibido hace {$minutesAgo} minutos. Si prefieres esperar un código más reciente, intenta en unos minutos.";
+                    $warningMessage = "⚠ Este código fue recibido hace {$minutesAgo} minutos. Si prefieres esperar un código más reciente, intenta en unos minutos.";
                 } elseif ($minutesAgo < 1440) { // Menos de 24 horas
                     $hoursAgo = floor($minutesAgo / 60);
-                    $warningMessage = "Este código fue recibido hace {$hoursAgo} hora(s). Aún es válido, pero si prefieres uno más reciente, intenta más tarde.";
+                    $warningMessage = "⚠ Este código fue recibido hace {$hoursAgo} hora(s). Aún es válido, pero si prefieres uno más reciente, intenta más tarde.";
                 } else {
                     $daysAgo = floor($minutesAgo / 1440);
-                    $warningMessage = "Este código fue recibido hace {$daysAgo} día(s). Aún es válido, pero te recomendamos esperar un código más reciente.";
+                    $warningMessage = "⚠ Este código fue recibido hace {$daysAgo} día(s). Aún es válido, pero te recomendamos esperar un código más reciente.";
                 }
             } else {
-                $warningMessage = "No se recibieron códigos nuevos en los últimos 5 minutos. Este es el último código disponible para tu cuenta.";
+                $warningMessage = "⚠ No se recibieron códigos nuevos en los últimos 5 minutos. Este es el último código disponible para tu cuenta.";
             }
         }
 
@@ -146,9 +147,10 @@ class CodeService
             'minutes_ago' => $minutesAgo
         ];
         
-        // Agregar mensaje de advertencia si el código no es reciente
-        if (!$isRecent && isset($warningMessage)) {
+        // Agregar mensaje de advertencia (siempre mostrar si es reciente o no)
+        if (isset($warningMessage)) {
             $response['warning'] = $warningMessage;
+            $response['is_recent_message'] = $isRecent;
         }
         
         return $response;
