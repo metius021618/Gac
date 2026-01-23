@@ -86,12 +86,12 @@ def main():
         
         # Procesar cuenta maestra
         account = master_account
-            account_id = account['id']
-            account_email = account['email']
-            
-            logger.info(f"Procesando cuenta: {account_email} (ID: {account_id})")
-            
-            try:
+        account_id = account['id']
+        account_email = account['email']
+        
+        logger.info(f"Procesando cuenta: {account_email} (ID: {account_id})")
+        
+        try:
                 # Leer emails
                 emails = imap_service.read_account(account)
                 logger.info(f"  - Emails leídos: {len(emails)}")
@@ -173,17 +173,16 @@ def main():
                     else:
                         logger.error(f"  - ✗ Error al guardar código: {code_data['code']}")
                 
-                total_codes_saved += codes_saved
-                logger.info(f"  - Códigos guardados en esta cuenta: {codes_saved}")
-                
-                # Actualizar estado de sincronización
-                EmailAccountRepository.update_sync_status(account_id, 'success')
-                
-            except Exception as e:
-                error_msg = str(e)
-                logger.error(f"  - ✗ Error al procesar cuenta {account_email}: {error_msg}")
-                EmailAccountRepository.update_sync_status(account_id, 'error', error_msg)
-                continue
+            total_codes_saved += codes_saved
+            logger.info(f"  - Códigos guardados en esta cuenta: {codes_saved}")
+            
+            # Actualizar estado de sincronización
+            EmailAccountRepository.update_sync_status(account_id, 'success')
+            
+        except Exception as e:
+            error_msg = str(e)
+            logger.error(f"  - ✗ Error al procesar cuenta {account_email}: {error_msg}")
+            EmailAccountRepository.update_sync_status(account_id, 'error', error_msg)
         
         logger.info("=" * 60)
         logger.info(f"Proceso completado. Total de códigos guardados: {total_codes_saved}")
