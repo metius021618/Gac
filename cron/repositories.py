@@ -282,20 +282,33 @@ class CodeRepository:
             return None
     
     @staticmethod
-    def code_exists(code, platform_id, email_account_id):
-        """Verificar si código existe"""
+    def code_exists(code, platform_id, email_account_id, recipient_email=None):
+        """Verificar si código existe para esta combinación"""
         try:
             db = Database.get_connection()
             cursor = db.cursor()
             
-            cursor.execute("""
-                SELECT COUNT(*) as count
-                FROM codes
-                WHERE code = %s
-                  AND platform_id = %s
-                  AND email_account_id = %s
-                  AND status = 'available'
-            """, (code, platform_id, email_account_id))
+            # Si se proporciona recipient_email, verificar duplicados incluyendo ese campo
+            if recipient_email:
+                cursor.execute("""
+                    SELECT COUNT(*) as count
+                    FROM codes
+                    WHERE code = %s
+                      AND platform_id = %s
+                      AND email_account_id = %s
+                      AND recipient_email = %s
+                      AND status = 'available'
+                """, (code, platform_id, email_account_id, recipient_email.lower()))
+            else:
+                # Si no se proporciona, verificar solo por código, plataforma y cuenta
+                cursor.execute("""
+                    SELECT COUNT(*) as count
+                    FROM codes
+                    WHERE code = %s
+                      AND platform_id = %s
+                      AND email_account_id = %s
+                      AND status = 'available'
+                """, (code, platform_id, email_account_id))
             
             result = cursor.fetchone()
             cursor.close()

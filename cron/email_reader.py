@@ -139,13 +139,14 @@ def main():
                     logger.warning(f"  - Email sin destinatario, saltando código: {code_data.get('code', 'N/A')}")
                     continue
                 
-                # Verificar duplicados (usando account_id de la cuenta maestra)
+                # Verificar duplicados (incluyendo recipient_email para permitir el mismo código para diferentes usuarios)
                 if CodeRepository.code_exists(
                     code_data['code'],
                     platform_obj['id'],
-                    account_id
+                    account_id,
+                    recipient_email  # Incluir recipient_email en la verificación
                 ):
-                    logger.info(f"  - Código duplicado: {code_data['code']} para {platform}")
+                    logger.info(f"  - Código duplicado: {code_data['code']} para {platform} y destinatario {recipient_email}")
                     continue
                 
                 # Preparar datos para guardar
