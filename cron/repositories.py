@@ -255,9 +255,10 @@ class CodeRepository:
                     subject,
                     received_at,
                     origin,
-                    status
+                    status,
+                    recipient_email
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, 'available'
+                    %s, %s, %s, %s, %s, %s, %s, 'available', %s
                 )
             """, (
                 code_data['email_account_id'],
@@ -266,7 +267,8 @@ class CodeRepository:
                 code_data.get('email_from'),
                 code_data.get('subject'),
                 code_data.get('received_at'),
-                code_data.get('origin', 'imap')
+                code_data.get('origin', 'imap'),
+                code_data.get('recipient_email')
             ))
             
             code_id = cursor.lastrowid

@@ -77,8 +77,9 @@ class CodeService
             ];
         }
 
-        // Buscar código disponible
-        $code = $this->codeRepository->findLatestAvailable($platform['id']);
+        // Buscar código disponible para este email específico
+        // El sistema filtra por el email del destinatario del correo
+        $code = $this->codeRepository->findLatestAvailable($platform['id'], $userEmail);
 
         if (!$code) {
             return [

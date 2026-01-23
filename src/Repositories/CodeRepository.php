@@ -34,7 +34,8 @@ class CodeRepository
                     subject,
                     received_at,
                     origin,
-                    status
+                    status,
+                    recipient_email
                 ) VALUES (
                     :email_account_id,
                     :platform_id,
@@ -43,7 +44,8 @@ class CodeRepository
                     :subject,
                     :received_at,
                     :origin,
-                    'available'
+                    'available',
+                    :recipient_email
                 )
             ");
             
@@ -54,7 +56,8 @@ class CodeRepository
                 'email_from' => $codeData['email_from'] ?? null,
                 'subject' => $codeData['subject'] ?? null,
                 'received_at' => $codeData['received_at'] ?? date('Y-m-d H:i:s'),
-                'origin' => $codeData['origin'] ?? 'imap'
+                'origin' => $codeData['origin'] ?? 'imap',
+                'recipient_email' => $codeData['recipient_email'] ?? null
             ]);
             
             return (int) $db->lastInsertId();
@@ -68,37 +71,74 @@ class CodeRepository
      * Buscar el código más reciente disponible para una plataforma
      * 
      * @param int $platformId ID de la plataforma
+     * @param string|null $recipientEmail Email del destinatario (opcional, para filtrar)
      * @return array|null Datos del código o null si no hay disponible
      */
-    public function findLatestAvailable(int $platformId): ?array
+    public function findLatestAvailable(int $platformId, ?string $recipientEmail = null): ?array
     {
         try {
             $db = Database::getConnection();
-            $stmt = $db->prepare("
-                SELECT 
-                    c.id,
-                    c.email_account_id,
-                    c.platform_id,
-                    c.code,
-                    c.email_from,
-                    c.subject,
-                    c.received_at,
-                    c.origin,
-                    c.status,
-                    c.created_at,
-                    p.name as platform_name,
-                    p.display_name as platform_display_name,
-                    ea.email as account_email
-                FROM codes c
-                INNER JOIN platforms p ON c.platform_id = p.id
-                INNER JOIN email_accounts ea ON c.email_account_id = ea.id
-                WHERE c.platform_id = :platform_id
-                  AND c.status = 'available'
-                ORDER BY c.received_at DESC, c.id DESC
-                LIMIT 1
-            ");
-            
-            $stmt->execute(['platform_id' => $platformId]);
+            // Si se proporciona recipient_email, filtrar por ese email
+            // Si no, buscar cualquier código disponible (comportamiento anterior)
+            if ($recipientEmail) {
+                $stmt = $db->prepare("
+                    SELECT 
+                        c.id,
+                        c.email_account_id,
+                        c.platform_id,
+                        c.code,
+                        c.email_from,
+                        c.subject,
+                        c.received_at,
+                        c.origin,
+                        c.status,
+                        c.created_at,
+                        c.recipient_email,
+                        p.name as platform_name,
+                        p.display_name as platform_display_name,
+                        ea.email as account_email
+                    FROM codes c
+                    INNER JOIN platforms p ON c.platform_id = p.id
+                    INNER JOIN email_accounts ea ON c.email_account_id = ea.id
+                    WHERE c.platform_id = :platform_id
+                      AND c.status = 'available'
+                      AND c.recipient_email = :recipient_email
+                    ORDER BY c.received_at DESC, c.id DESC
+                    LIMIT 1
+                ");
+                
+                $stmt->execute([
+                    'platform_id' => $platformId,
+                    'recipient_email' => strtolower($recipientEmail)
+                ]);
+            } else {
+                $stmt = $db->prepare("
+                    SELECT 
+                        c.id,
+                        c.email_account_id,
+                        c.platform_id,
+                        c.code,
+                        c.email_from,
+                        c.subject,
+                        c.received_at,
+                        c.origin,
+                        c.status,
+                        c.created_at,
+                        c.recipient_email,
+                        p.name as platform_name,
+                        p.display_name as platform_display_name,
+                        ea.email as account_email
+                    FROM codes c
+                    INNER JOIN platforms p ON c.platform_id = p.id
+                    INNER JOIN email_accounts ea ON c.email_account_id = ea.id
+                    WHERE c.platform_id = :platform_id
+                      AND c.status = 'available'
+                    ORDER BY c.received_at DESC, c.id DESC
+                    LIMIT 1
+                ");
+                
+                $stmt->execute(['platform_id' => $platformId]);
+            }
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             
             return $result ?: null;
