@@ -30,13 +30,20 @@ def test_imap_connection(server, port, encryption, username, password, timeout=1
     try:
         print(f"    Intentando {encryption} en puerto {port}...", end=" ")
         
-        if encryption == 'ssl':
-            mail = imaplib.IMAP4_SSL(server, port, timeout=timeout)
-        elif encryption == 'tls':
-            mail = imaplib.IMAP4(server, port, timeout=timeout)
-            mail.starttls()
-        else:
-            mail = imaplib.IMAP4(server, port, timeout=timeout)
+        # Python 3.6 no acepta timeout en el constructor, usar socket.setdefaulttimeout
+        old_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(timeout)
+        
+        try:
+            if encryption == 'ssl':
+                mail = imaplib.IMAP4_SSL(server, port)
+            elif encryption == 'tls':
+                mail = imaplib.IMAP4(server, port)
+                mail.starttls()
+            else:
+                mail = imaplib.IMAP4(server, port)
+        finally:
+            socket.setdefaulttimeout(old_timeout)
         
         mail.login(username, password)
         mail.select('INBOX')
