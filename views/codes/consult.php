@@ -13,7 +13,7 @@ $content = ob_start();
     <div class="consult-wrapper">
         <!-- Logo Section -->
         <div class="logo-section">
-            <img src="/assets/images/logo.png" alt="<?= gac_name() ?>" class="consult-logo">
+            <img src="/assets/images/logocamb.png" alt="<?= gac_name() ?>" class="consult-logo">
         </div>
 
         <!-- Main Card -->

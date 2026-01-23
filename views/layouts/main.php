@@ -7,8 +7,8 @@
     <title><?= isset($title) ? htmlspecialchars($title) . ' - ' : '' ?><?= gac_name() ?></title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/assets/images/logo.png">
-    <link rel="apple-touch-icon" href="/assets/images/logo.png">
+    <link rel="icon" type="image/png" href="/assets/images/logocamb.png">
+    <link rel="apple-touch-icon" href="/assets/images/logocamb.png">
     
     <!-- CSS -->
     <link rel="stylesheet" href="/assets/css/main.css">
@@ -33,7 +33,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo-container">
-                    <img src="/assets/images/logo.png" alt="<?= gac_name() ?>" class="logo">
+                    <img src="/assets/images/logocamb.png" alt="<?= gac_name() ?>" class="logo">
                 </div>
                 <?php if (isset($show_nav) && $show_nav): ?>
                 <nav class="main-nav">

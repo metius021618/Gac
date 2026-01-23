@@ -11,7 +11,7 @@ $content = ob_start();
     <div class="login-wrapper">
         <!-- Logo Section -->
         <div class="login-logo-section">
-            <img src="/assets/images/logo.png" alt="<?= gac_name() ?>" class="login-logo">
+            <img src="/assets/images/logocamb.png" alt="<?= gac_name() ?>" class="login-logo">
         </div>
 
         <!-- Login Card -->
