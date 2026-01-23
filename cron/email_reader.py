@@ -48,19 +48,39 @@ def main():
         filter_service = EmailFilterService()
         extractor_service = CodeExtractorService()
         
-        # Obtener cuentas IMAP habilitadas
+        # Obtener cuenta maestra IMAP
+        # Buscar cuenta con is_master = true en provider_config
         accounts = EmailAccountRepository.find_by_type('imap')
         
-        if not accounts:
-            logger.info("No hay cuentas IMAP habilitadas")
+        # Buscar cuenta maestra
+        master_account = None
+        for account in accounts:
+            try:
+                import json
+                config = json.loads(account.get('provider_config', '{}'))
+                if config.get('is_master', False):
+                    master_account = account
+                    break
+            except:
+                continue
+        
+        # Si no hay cuenta maestra, usar la primera cuenta o buscar streaming@pocoyoni.com
+        if not master_account:
+            for account in accounts:
+                if account['email'] == 'streaming@pocoyoni.com':
+                    master_account = account
+                    break
+        
+        if not master_account:
+            logger.info("No se encontró cuenta maestra IMAP (streaming@pocoyoni.com)")
             return
         
-        logger.info(f"Procesando {len(accounts)} cuenta(s) IMAP")
+        logger.info(f"Procesando cuenta maestra: {master_account['email']}")
         
         total_codes_saved = 0
         
-        # Procesar cada cuenta
-        for account in accounts:
+        # Procesar cuenta maestra
+        account = master_account
             account_id = account['id']
             account_email = account['email']
             
@@ -92,6 +112,7 @@ def main():
                     continue
                 
                 # Guardar códigos
+                # IMPORTANTE: Cada código se asocia con el destinatario del email, no con la cuenta maestra
                 codes_saved = 0
                 for code_data in codes:
                     platform = code_data['platform']
@@ -106,7 +127,14 @@ def main():
                         logger.info(f"  - Plataforma '{platform}' deshabilitada, saltando código")
                         continue
                     
-                    # Verificar duplicados
+                    # Obtener destinatario del email (el usuario que consultará el código)
+                    recipient_email = code_data.get('to_primary', '') or (code_data.get('to', [])[0] if code_data.get('to') else '')
+                    
+                    if not recipient_email:
+                        logger.warning(f"  - Email sin destinatario, saltando código: {code_data.get('code', 'N/A')}")
+                        continue
+                    
+                    # Verificar duplicados (usando account_id de la cuenta maestra)
                     if CodeRepository.code_exists(
                         code_data['code'],
                         platform_obj['id'],
@@ -117,13 +145,14 @@ def main():
                     
                     # Preparar datos para guardar
                     save_data = {
-                        'email_account_id': account_id,
+                        'email_account_id': account_id,  # ID de la cuenta maestra
                         'platform_id': platform_obj['id'],
                         'code': code_data['code'],
                         'email_from': code_data.get('from'),
                         'subject': code_data.get('subject'),
                         'received_at': code_data.get('date'),
-                        'origin': 'imap'
+                        'origin': 'imap',
+                        'recipient_email': recipient_email  # Email del destinatario (usuario)
                     }
                     
                     # Guardar código
@@ -131,7 +160,7 @@ def main():
                     
                     if code_id:
                         codes_saved += 1
-                        logger.info(f"  - ✓ Código guardado: {code_data['code']} ({platform})")
+                        logger.info(f"  - ✓ Código guardado: {code_data['code']} ({platform}) para {recipient_email}")
                         
                         # Guardar en warehouse - Deshabilitado temporalmente
                         # save_data['id'] = code_id

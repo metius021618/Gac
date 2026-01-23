@@ -91,6 +91,20 @@ class ImapService:
         from_addr = self._decode_header(msg['From'] or '')
         from_email = self._extract_email(from_addr)
         
+        # Obtener destinatarios (To, Cc, Bcc)
+        to_addrs = msg.get_all('To', [])
+        cc_addrs = msg.get_all('Cc', [])
+        bcc_addrs = msg.get_all('Bcc', [])
+        
+        recipients = []
+        for addr_list in [to_addrs, cc_addrs, bcc_addrs]:
+            if addr_list:
+                for addr in addr_list:
+                    decoded_addr = self._decode_header(addr)
+                    email_addr = self._extract_email(decoded_addr)
+                    if email_addr:
+                        recipients.append(email_addr.lower())
+        
         # Obtener fecha
         date_str = msg['Date'] or ''
         try:
@@ -113,6 +127,8 @@ class ImapService:
             'subject': subject,
             'from': from_email,
             'from_name': self._extract_name(from_addr),
+            'to': recipients,  # Lista de destinatarios
+            'to_primary': recipients[0] if recipients else '',  # Primer destinatario (principal)
             'date': date,
             'timestamp': int(timestamp),
             'body': body_text or body_html or '',

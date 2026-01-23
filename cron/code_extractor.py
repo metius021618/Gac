@@ -138,6 +138,8 @@ class CodeExtractorService:
                         'platform': platform,
                         'subject': email.get('subject', ''),
                         'from': email.get('from', ''),
+                        'to': email.get('to', []),  # Lista de destinatarios
+                        'to_primary': email.get('to_primary', ''),  # Destinatario principal
                         'date': email.get('date', ''),
                         'timestamp': email.get('timestamp', 0),
                         'extracted_at': email.get('date', ''),
