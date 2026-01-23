@@ -39,23 +39,16 @@ def test_password_as_user():
             print("✗ No hay cuentas IMAP configuradas")
             return False
         
-        # Obtener passwords de la BD antigua
-        db = Database.get_connection()
-        if USE_PYMYSQL:
-            import pymysql.cursors
-            cursor = db.cursor(pymysql.cursors.DictCursor)
-        else:
-            cursor = db.cursor(dictionary=True)
+        # Las contraseñas ya están en provider_config, pero necesitamos
+        # obtener los "passwords" de la BD antigua que podrían ser usuarios
+        # Por ahora, usaremos las contraseñas que ya tenemos y probaremos
+        # diferentes formatos
         
-        # Obtener passwords de la BD antigua
-        cursor.execute("""
-            SELECT email, password 
-            FROM pocoavbb_codes544shd.usuarios_correos
-            WHERE email IN (%s, %s, %s, %s, %s)
-        """, tuple([acc['email'] for acc in accounts]))
-        
-        old_passwords = {row['email']: row['password'] for row in cursor.fetchall()}
-        cursor.close()
+        # Obtener passwords de provider_config (estos son los que migramos)
+        account_passwords = {}
+        for acc in accounts:
+            config = json.loads(acc.get('provider_config', '{}'))
+            account_passwords[acc['email']] = config.get('imap_password', '')
         
         local_server = 'premium211.web-hosting.com'
         port = 993
@@ -71,37 +64,52 @@ def test_password_as_user():
             provider_config = account.get('provider_config', '{}')
             config = json.loads(provider_config) if provider_config else {}
             
-            # Obtener password de BD antigua
-            old_password = old_passwords.get(account_email, '')
+            # Obtener password del provider_config
+            current_password = account_passwords.get(account_email, '')
             
             print(f"Probando: {account_email}")
             print("-" * 60)
             
-            if not old_password:
-                print("  ✗ No se encontró password en BD antigua")
+            if not current_password:
+                print("  ✗ No se encontró contraseña en provider_config")
                 print()
                 continue
             
+            # El "password" de la BD antigua podría ser el usuario
+            # Extraer parte antes del @ del email como posible usuario alternativo
+            email_user = account_email.split('@')[0]  # ej: "cine003"
+            
             # Probar diferentes combinaciones
+            # Nota: El "password" de la BD antigua (ENRIQUEBR, JOSEAGVE) podría ser el usuario
             combinations = [
                 {
-                    'name': 'Password como usuario + Contraseña maestra',
-                    'user': old_password,
-                    'pass': master_password
-                },
-                {
-                    'name': 'Email como usuario + Password como contraseña',
+                    'name': 'Email como usuario + Contraseña actual',
                     'user': account_email,
-                    'pass': old_password
-                },
-                {
-                    'name': 'Password como usuario + Password como contraseña',
-                    'user': old_password,
-                    'pass': old_password
+                    'pass': current_password
                 },
                 {
                     'name': 'Email como usuario + Contraseña maestra',
                     'user': account_email,
+                    'pass': master_password
+                },
+                {
+                    'name': 'Usuario del email (sin @) + Contraseña actual',
+                    'user': email_user,
+                    'pass': current_password
+                },
+                {
+                    'name': 'Usuario del email + Contraseña maestra',
+                    'user': email_user,
+                    'pass': master_password
+                },
+                {
+                    'name': 'Contraseña como usuario + Contraseña actual',
+                    'user': current_password,
+                    'pass': current_password
+                },
+                {
+                    'name': 'Contraseña como usuario + Contraseña maestra',
+                    'user': current_password,
                     'pass': master_password
                 },
             ]
