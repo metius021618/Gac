@@ -27,7 +27,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
-<body>
+<body<?= isset($body_class) ? ' class="' . htmlspecialchars($body_class) . '"' : '' ?>>
     <!-- Header -->
     <header class="main-header">
         <div class="container">
@@ -86,6 +86,7 @@
     </main>
 
     <!-- Footer -->
+    <?php if (!isset($show_footer) || $show_footer): ?>
     <footer class="main-footer">
         <div class="container">
             <div class="footer-content">
@@ -117,6 +118,7 @@
             </div>
         </div>
     </footer>
+    <?php endif; ?>
 
     <!-- JavaScript -->
     <script src="/assets/js/components/modal.js"></script>

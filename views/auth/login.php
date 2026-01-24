@@ -103,8 +103,10 @@ $content = ob_get_clean();
 
 $title = $title ?? 'Iniciar Sesión';
 $show_nav = false;
+$show_footer = false;
 $footer_text = '';
 $footer_whatsapp = false;
+$body_class = 'login-page';
 $additional_css = ['/assets/css/auth/login.css'];
 $additional_js = ['/assets/js/auth/login.js'];
 

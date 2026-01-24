@@ -10,7 +10,7 @@
     justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
-    padding-top: var(--spacing-md);
+    padding-top: 0;
     padding-bottom: var(--spacing-md);
     padding-left: var(--spacing-md);
     padding-right: var(--spacing-md);
@@ -19,6 +19,16 @@
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+}
+
+/* Reducir padding del main-content en login page */
+body.login-page .main-content {
+    padding: 0 !important;
+}
+
+/* Reducir padding del header en login page */
+body.login-page .main-header {
+    padding: var(--spacing-xs) 0 !important;
 }
 
 .login-wrapper {
@@ -43,12 +53,12 @@
    ============================================ */
 .login-logo-section {
     text-align: center;
-    margin-bottom: var(--spacing-sm);
-    margin-top: 0;
+    margin-bottom: var(--spacing-xs);
+    margin-top: var(--spacing-xs);
 }
 
 .login-logo {
-    max-width: 180px;
+    max-width: 160px;
     height: auto;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
@@ -60,21 +70,21 @@
     background: rgba(26, 35, 50, 0.95);
     backdrop-filter: blur(20px);
     border-radius: var(--border-radius-lg);
-    padding: var(--spacing-xl);
+    padding: var(--spacing-md);
     box-shadow: var(--shadow-xl), var(--shadow-glow);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .login-header {
     text-align: center;
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-sm);
 }
 
 .login-title {
-    font-size: var(--font-size-3xl);
+    font-size: var(--font-size-2xl);
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
     background: linear-gradient(135deg, #ffffff 0%, #b8c5d6 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -92,7 +102,7 @@
 .login-form {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-md);
 }
 
 .form-group {
@@ -202,8 +212,8 @@
     align-items: center;
     justify-content: center;
     gap: var(--spacing-sm);
-    margin-top: var(--spacing-xl);
-    padding-top: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
     border-top: 1px solid var(--border-color);
     color: var(--text-muted);
     font-size: var(--font-size-xs);
