@@ -1,61 +1,136 @@
 /**
  * GAC - Estilos del Dashboard
+ * Diseño adaptado del sistema original (code.pocoyoni.com)
+ * Manteniendo arquitectura limpia y separación de estilos
  */
+
+/* ============================================
+   DASHBOARD CONTAINER
+   ============================================ */
+.dashboard-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-lg) var(--spacing-md);
+}
 
 /* ============================================
    DASHBOARD HEADER
    ============================================ */
-/* Los estilos del header están en main.css */
-
-/* ============================================
-   DASHBOARD CONTENT
-   ============================================ */
-.dashboard-content {
-    margin-top: var(--spacing-lg);
-}
-
-/* ============================================
-   STATS GRID
-   ============================================ */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--spacing-xl);
+.dashboard-header {
     margin-bottom: var(--spacing-xl);
 }
 
+.dashboard-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.dashboard-title-icon {
+    color: var(--color-primary-light);
+}
+
 /* ============================================
-   STAT CARDS
+   ACTION CARDS (ROJOS)
    ============================================ */
-.stat-card {
-    background: rgba(26, 35, 50, 0.95);
+.dashboard-actions {
+    margin-bottom: var(--spacing-2xl);
+}
+
+.action-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.action-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    background: rgba(26, 35, 50, 0.95); /* Mismo fondo que los cards del sistema */
     backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 4px solid var(--color-primary); /* Borde azul a la izquierda */
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-lg);
+    min-height: 140px;
+}
+
+.action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl), var(--shadow-glow);
+    border-color: var(--color-primary);
+    background: var(--bg-card-hover);
+    border-left-width: 6px;
+}
+
+.action-card-icon {
+    color: var(--color-primary-light);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: rgba(0, 102, 255, 0.1);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-sm);
+}
+
+.action-card:hover .action-card-icon {
+    color: var(--color-primary);
+    background: rgba(0, 102, 255, 0.2);
+}
+
+.action-card-text {
+    color: var(--text-primary);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ============================================
+   STATS CARDS (GRISES)
+   ============================================ */
+.dashboard-stats {
+    margin-top: var(--spacing-xl);
+}
+
+.stats-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.stat-card {
+    background: rgba(26, 35, 50, 0.95); /* Gris oscuro del sistema original */
+    backdrop-filter: blur(10px);
     border-radius: var(--border-radius-lg);
     padding: var(--spacing-xl);
     box-shadow: var(--shadow-lg);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all var(--transition-base);
     display: flex;
+    align-items: center;
     gap: var(--spacing-lg);
-    align-items: flex-start;
+    transition: all var(--transition-base);
 }
 
 .stat-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-xl);
-    border-color: var(--color-primary);
-}
-
-.stat-card-primary {
-    border-left: 4px solid var(--color-primary);
-}
-
-.stat-card-success {
-    border-left: 4px solid var(--color-success);
-}
-
-.stat-card-info {
-    border-left: 4px solid var(--color-info);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .stat-card-icon {
@@ -66,106 +141,92 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.1);
 }
 
-.stat-card-primary .stat-card-icon {
-    background: rgba(0, 102, 255, 0.1);
-    color: var(--color-primary);
+.stat-icon-blue {
+    color: #17a2b8; /* Azul claro para base de datos */
+    background: rgba(23, 162, 184, 0.15);
 }
 
-.stat-card-success .stat-card-icon {
-    background: rgba(40, 167, 69, 0.1);
-    color: var(--color-success);
+.stat-icon-yellow {
+    color: #ffc107; /* Amarillo para monitor/plataformas */
+    background: rgba(255, 193, 7, 0.15);
 }
 
-.stat-card-info .stat-card-icon {
-    background: rgba(23, 162, 184, 0.1);
-    color: var(--color-info);
+.stat-icon-green {
+    color: #28a745; /* Verde para administradores */
+    background: rgba(40, 167, 69, 0.15);
 }
 
 .stat-card-content {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
-}
-
-.stat-card-title {
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    color: var(--text-secondary);
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    gap: var(--spacing-xs);
 }
 
 .stat-card-value {
     font-size: var(--font-size-4xl);
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0;
     line-height: 1;
 }
 
-.stat-card-link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    color: var(--color-primary-light);
-    text-decoration: none;
-    font-size: var(--font-size-sm);
+.stat-card-label {
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
     font-weight: 500;
-    margin-top: var(--spacing-sm);
-    transition: color var(--transition-base);
-}
-
-.stat-card-link:hover {
-    color: var(--color-primary);
-}
-
-.stat-card-link svg {
-    transition: transform var(--transition-base);
-}
-
-.stat-card-link:hover svg {
-    transform: translateX(4px);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* ============================================
    RESPONSIVE
    ============================================ */
 @media (max-width: 768px) {
-    .stats-grid {
+    .dashboard-container {
+        padding: var(--spacing-md) var(--spacing-sm);
+    }
+
+    .action-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-sm);
+    }
+
+    .action-card {
+        min-height: 120px;
+        padding: var(--spacing-lg);
+    }
+
+    .stats-cards-grid {
         grid-template-columns: 1fr;
         gap: var(--spacing-md);
     }
-    
+
     .stat-card {
         padding: var(--spacing-lg);
     }
-    
+
     .stat-card-value {
         font-size: var(--font-size-3xl);
-    }
-    
-    .admin-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .admin-actions {
-        width: 100%;
-        justify-content: space-between;
     }
 }
 
 @media (max-width: 480px) {
+    .action-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-title {
+        font-size: var(--font-size-xl);
+    }
+
     .stat-card {
         flex-direction: column;
         text-align: center;
     }
-    
+
     .stat-card-icon {
         margin: 0 auto;
     }

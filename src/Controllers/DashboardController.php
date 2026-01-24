@@ -8,19 +8,35 @@
 namespace Gac\Controllers;
 
 use Gac\Core\Request;
+use Gac\Repositories\EmailAccountRepository;
+use Gac\Repositories\PlatformRepository;
+use Gac\Repositories\UserRepository;
+use Gac\Repositories\CodeRepository;
 
 class DashboardController
 {
+    private EmailAccountRepository $emailAccountRepo;
+    private PlatformRepository $platformRepo;
+    private UserRepository $userRepo;
+    private CodeRepository $codeRepo;
+
+    public function __construct()
+    {
+        $this->emailAccountRepo = new EmailAccountRepository();
+        $this->platformRepo = new PlatformRepository();
+        $this->userRepo = new UserRepository();
+        $this->codeRepo = new CodeRepository();
+    }
+
     /**
      * Mostrar dashboard principal
      */
     public function index(Request $request): void
     {
-        // TODO: Obtener datos reales cuando esté la BD lista
         $stats = [
             'email_accounts' => $this->getEmailAccountsCount(),
-            'codes_received' => $this->getCodesReceivedCount(),
-            'clients' => $this->getClientsCount()
+            'platforms_active' => $this->getPlatformsActiveCount(),
+            'administrators' => $this->getAdministratorsCount()
         ];
 
         $this->renderView('admin/dashboard/index', [
@@ -34,26 +50,49 @@ class DashboardController
      */
     private function getEmailAccountsCount(): int
     {
-        // TODO: Consultar BD real
-        return 0;
+        try {
+            return $this->emailAccountRepo->countAll();
+        } catch (\Exception $e) {
+            error_log("Error al contar correos: " . $e->getMessage());
+            return 0;
+        }
     }
 
     /**
-     * Obtener cantidad de códigos recibidos
+     * Obtener cantidad de plataformas activas
      */
-    private function getCodesReceivedCount(): int
+    private function getPlatformsActiveCount(): int
     {
-        // TODO: Consultar BD real
-        return 0;
+        try {
+            $platforms = $this->platformRepo->findAllEnabled();
+            return count($platforms);
+        } catch (\Exception $e) {
+            error_log("Error al contar plataformas: " . $e->getMessage());
+            return 0;
+        }
     }
 
     /**
-     * Obtener cantidad de clientes
+     * Obtener cantidad de administradores
      */
-    private function getClientsCount(): int
+    private function getAdministratorsCount(): int
     {
-        // TODO: Consultar BD real
-        return 0;
+        try {
+            $db = \Gac\Helpers\Database::getConnection();
+            $stmt = $db->prepare("
+                SELECT COUNT(*) as count 
+                FROM users u
+                INNER JOIN roles r ON u.role_id = r.id
+                WHERE u.active = 1 
+                AND (r.name = 'SUPER_ADMIN' OR r.name = 'ADMIN')
+            ");
+            $stmt->execute();
+            $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+            return (int) ($result['count'] ?? 0);
+        } catch (\Exception $e) {
+            error_log("Error al contar administradores: " . $e->getMessage());
+            return 0;
+        }
     }
 
     /**

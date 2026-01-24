@@ -121,6 +121,24 @@ class EmailAccountRepository
     }
 
     /**
+     * Contar todas las cuentas de email (habilitadas y deshabilitadas)
+     * 
+     * @return int
+     */
+    public function countAll(): int
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("SELECT COUNT(*) as count FROM email_accounts");
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int) ($result['count'] ?? 0);
+        } catch (PDOException $e) {
+            error_log("Error al contar cuentas de email: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * Actualizar última sincronización
      * 
      * @param int $id
