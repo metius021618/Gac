@@ -125,6 +125,7 @@
     align-items: center;
     gap: var(--spacing-lg);
     transition: all var(--transition-base);
+    position: relative;
 }
 
 .stat-card:hover {
@@ -179,6 +180,58 @@
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+/* Estilos para stat-card que es un enlace */
+.stat-card-link {
+    text-decoration: none;
+    cursor: pointer;
+    position: relative;
+}
+
+.stat-card-link:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl), 0 0 20px rgba(0, 102, 255, 0.2);
+    border-color: var(--color-primary);
+    background: rgba(26, 35, 50, 1);
+}
+
+.stat-card-link::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: var(--border-radius-lg);
+    pointer-events: none;
+}
+
+.stat-card-link:hover .stat-card-value {
+    color: var(--color-primary-light);
+}
+
+.stat-card-link:hover .stat-card-label {
+    color: var(--text-primary);
+}
+
+.stat-card-arrow {
+    position: absolute;
+    right: var(--spacing-lg);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    opacity: 0;
+    transition: all var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-card-link:hover .stat-card-arrow {
+    opacity: 1;
+    color: var(--color-primary);
+    transform: translateY(-50%) translateX(4px);
 }
 
 /* ============================================

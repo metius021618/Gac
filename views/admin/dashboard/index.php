@@ -77,7 +77,7 @@ $content = ob_start();
     <div class="dashboard-stats">
         <div class="stats-cards-grid">
             <!-- Correos Registrados -->
-            <div class="stat-card stat-card-grey">
+            <a href="/admin/email-accounts" class="stat-card stat-card-grey stat-card-link" title="Ver correos registrados">
                 <div class="stat-card-icon stat-icon-blue">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
@@ -89,7 +89,12 @@ $content = ob_start();
                     <div class="stat-card-value"><?= number_format($stats['email_accounts']) ?></div>
                     <div class="stat-card-label">Correos registrados</div>
                 </div>
-            </div>
+                <div class="stat-card-arrow">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+            </a>
 
             <!-- Plataformas Activas -->
             <div class="stat-card stat-card-grey">

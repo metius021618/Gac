@@ -1,5 +1,6 @@
 /**
  * GAC - JavaScript para Gestión de Cuentas de Email
+ * Con búsqueda, paginación y funcionalidades mejoradas
  */
 
 (function() {
@@ -8,6 +9,15 @@
     // Elementos del DOM
     const emailAccountForm = document.getElementById('emailAccountForm');
     const emailAccountsTable = document.getElementById('emailAccountsTable');
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearch');
+    const perPageSelect = document.getElementById('perPageSelect');
+    const tableBody = document.getElementById('tableBody');
+    const tableContainer = document.querySelector('.table-container');
+    
+    // Estado
+    let searchTimeout = null;
+    let isLoading = false;
 
     /**
      * Inicialización
@@ -19,6 +29,8 @@
         
         if (emailAccountsTable) {
             initTable();
+            initSearch();
+            initPagination();
         }
     }
 
@@ -41,16 +53,111 @@
      */
     function initTable() {
         // Botones de toggle status
-        const toggleButtons = emailAccountsTable.querySelectorAll('.btn-toggle');
-        toggleButtons.forEach(btn => {
+        const toggleButtons = emailAccountsTable?.querySelectorAll('.btn-toggle');
+        toggleButtons?.forEach(btn => {
             btn.addEventListener('click', handleToggleStatus);
         });
 
         // Botones de eliminar
-        const deleteButtons = emailAccountsTable.querySelectorAll('.btn-delete');
-        deleteButtons.forEach(btn => {
+        const deleteButtons = emailAccountsTable?.querySelectorAll('.btn-delete');
+        deleteButtons?.forEach(btn => {
             btn.addEventListener('click', handleDelete);
         });
+    }
+
+    /**
+     * Inicializar búsqueda
+     */
+    function initSearch() {
+        if (!searchInput) return;
+
+        // Mostrar/ocultar botón de limpiar
+        searchInput.addEventListener('input', function() {
+            if (this.value.trim()) {
+                clearSearchBtn.style.display = 'flex';
+            } else {
+                clearSearchBtn.style.display = 'none';
+            }
+        });
+
+        // Búsqueda con debounce
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                performSearch();
+            }, 500); // Esperar 500ms después de que el usuario deje de escribir
+        });
+
+        // Limpiar búsqueda
+        clearSearchBtn?.addEventListener('click', function() {
+            searchInput.value = '';
+            clearSearchBtn.style.display = 'none';
+            performSearch();
+        });
+
+        // Búsqueda al presionar Enter
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                performSearch();
+            }
+        });
+    }
+
+    /**
+     * Inicializar paginación
+     */
+    function initPagination() {
+        if (!perPageSelect) return;
+
+        // Cambiar cantidad por página
+        perPageSelect.addEventListener('change', function() {
+            const url = new URL(window.location);
+            url.searchParams.set('per_page', this.value);
+            url.searchParams.set('page', '1'); // Resetear a página 1
+            window.location.href = url.toString();
+        });
+
+        // Botones de paginación
+        const paginationBtns = document.querySelectorAll('.pagination-btn, .pagination-page');
+        paginationBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.disabled || this.classList.contains('active')) return;
+                
+                const page = this.dataset.page;
+                if (page) {
+                    const url = new URL(window.location);
+                    url.searchParams.set('page', page);
+                    window.location.href = url.toString();
+                }
+            });
+        });
+    }
+
+    /**
+     * Realizar búsqueda
+     */
+    function performSearch() {
+        if (isLoading) return;
+
+        const search = searchInput.value.trim();
+        const url = new URL(window.location);
+        
+        if (search) {
+            url.searchParams.set('search', search);
+        } else {
+            url.searchParams.delete('search');
+        }
+        
+        // Resetear a página 1 al buscar
+        url.searchParams.set('page', '1');
+        
+        // Mantener per_page
+        const currentPerPage = perPageSelect?.value || '15';
+        url.searchParams.set('per_page', currentPerPage);
+
+        window.location.href = url.toString();
     }
 
     /**
@@ -158,7 +265,9 @@
      * Establecer estado de carga
      */
     function setLoadingState(loading) {
-        const submitBtn = emailAccountForm.querySelector('button[type="submit"]');
+        const submitBtn = emailAccountForm?.querySelector('button[type="submit"]');
+        if (!submitBtn) return;
+        
         const btnText = submitBtn.querySelector('.btn-text');
         const btnLoader = submitBtn.querySelector('.btn-loader');
         

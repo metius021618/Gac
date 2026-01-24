@@ -26,15 +26,41 @@ class EmailAccountController
     }
 
     /**
-     * Listar todas las cuentas de email
+     * Listar todas las cuentas de email con búsqueda y paginación
      */
     public function index(Request $request): void
     {
-        $emailAccounts = $this->emailAccountRepository->findAll();
+        $search = $request->get('search', '');
+        $page = max(1, (int)$request->get('page', 1));
+        $perPage = $request->get('per_page', '15');
+        
+        // Validar per_page
+        $allowedPerPage = ['15', '30', '60', '100', 'all'];
+        if (!in_array($perPage, $allowedPerPage)) {
+            $perPage = '15';
+        }
+        
+        $perPageInt = $perPage === 'all' ? 0 : (int)$perPage;
+        
+        $result = $this->emailAccountRepository->searchAndPaginate($search, $page, $perPageInt);
+        
+        // Si es petición AJAX, devolver JSON
+        if ($request->isAjax()) {
+            json_response($result);
+            return;
+        }
         
         $this->renderView('admin/email_accounts/index', [
             'title' => 'Gestión de Cuentas de Email',
-            'email_accounts' => $emailAccounts
+            'email_accounts' => $result['data'],
+            'pagination' => [
+                'total' => $result['total'],
+                'page' => $result['page'],
+                'per_page' => $result['per_page'],
+                'total_pages' => $result['total_pages']
+            ],
+            'search' => $search,
+            'per_page' => $perPage
         ]);
     }
 
