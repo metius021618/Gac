@@ -58,7 +58,7 @@ class Router
         
         // Log para debug (solo en desarrollo)
         if (defined('APP_DEBUG') && APP_DEBUG) {
-            error_log("Router Dispatch: Method={$method}, Path={$path}, REQUEST_URI=" . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
+            error_log("Router Dispatch: Method={$method}, Path={$path}, REQUEST_URI=" . ($_SERVER['REQUEST_URI'] ?? 'N/A') . ", SCRIPT_NAME=" . ($_SERVER['SCRIPT_NAME'] ?? 'N/A'));
         }
         
         foreach ($this->routes as $route) {

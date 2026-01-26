@@ -33,14 +33,25 @@ class Request
             $path = $requestUri;
         }
         
-        // Si el Document Root está en /public, el SCRIPT_NAME podría ser /index.php
-        // En ese caso, no necesitamos remover nada porque Apache ya lo maneja
-        // Solo necesitamos normalizar el path
+        // Si estamos usando el servidor PHP built-in con router.php
+        // El SCRIPT_NAME podría ser /router.php o /index.php
+        // Necesitamos asegurarnos de que el path sea correcto
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+        
+        // Si el path comienza con el script_name, removerlo
+        if ($scriptName && $scriptName !== '/' && strpos($path, $scriptName) === 0) {
+            $path = substr($path, strlen($scriptName));
+        }
         
         // Normalizar: remover trailing slash excepto para root
         $path = rtrim($path, '/');
         if (empty($path)) {
             $path = '/';
+        }
+        
+        // Asegurar que empiece con /
+        if ($path[0] !== '/') {
+            $path = '/' . $path;
         }
         
         return $path;
