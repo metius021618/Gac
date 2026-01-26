@@ -12,7 +12,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../src/Config/AppConfig.php';
 require_once __DIR__ . '/../src/Helpers/functions.php';
 
-use Gac\Core\Database;
+use Gac\Helpers\Database;
 
 // Obtener ID del correo
 $codeId = $_GET['id'] ?? null;
