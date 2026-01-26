@@ -543,7 +543,7 @@
 .email-modal-container {
     position: relative;
     width: 100%;
-    max-width: 800px;
+    max-width: 95%;
     max-height: 90vh;
     background: var(--bg-card);
     border-radius: var(--border-radius-lg);
@@ -552,6 +552,12 @@
     flex-direction: column;
     animation: slideUp 0.3s ease;
     overflow: hidden;
+}
+
+@media (min-width: 1200px) {
+    .email-modal-container {
+        max-width: 1200px;
+    }
 }
 
 @keyframes slideUp {
@@ -647,12 +653,47 @@
     padding: var(--spacing-lg);
     max-height: 500px;
     overflow-y: auto;
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 
 .email-body {
     color: var(--text-primary);
     line-height: 1.6;
     font-size: var(--font-size-base);
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* Centrar contenido HTML del email */
+.email-body > * {
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Para tablas y otros elementos del email */
+.email-body table {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+}
+
+/* Centrar divs y contenedores del email */
+.email-body > div {
+    margin: 0 auto;
+    text-align: left;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Asegurar que todos los elementos del email ocupen el ancho completo */
+.email-body * {
+    max-width: 100% !important;
+    box-sizing: border-box;
 }
 
 .email-body img {
