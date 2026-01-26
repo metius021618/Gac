@@ -19,13 +19,7 @@
     const usernameError = document.getElementById('usernameError');
     const platformError = document.getElementById('platformError');
     
-    const resultSection = document.getElementById('resultSection');
-    const resultCard = document.getElementById('resultCard');
-    const resultIcon = document.getElementById('resultIcon');
-    const resultTitle = document.getElementById('resultTitle');
-    const resultMessage = document.getElementById('resultMessage');
-    const resultCode = document.getElementById('resultCode');
-    const copyBtn = document.getElementById('copyBtn');
+    // Ya no se usan estos elementos - solo se muestra el modal
 
     // API Endpoint
     const API_ENDPOINT = '/api/v1/codes/consult';
@@ -36,11 +30,6 @@
     function init() {
         if (!consultForm) return;
 
-        // Ocultar botón de ver email inicialmente
-        const viewEmailBtn = document.getElementById('viewEmailBtn');
-        if (viewEmailBtn) {
-            viewEmailBtn.classList.add('hidden');
-        }
 
         // Event listeners
         consultForm.addEventListener('submit', handleSubmit);
@@ -50,9 +39,6 @@
         usernameInput?.addEventListener('input', clearError.bind(null, usernameError));
         platformSelect?.addEventListener('change', clearError.bind(null, platformError));
         
-        if (copyBtn) {
-            copyBtn.addEventListener('click', handleCopy);
-        }
     }
 
     /**
@@ -107,7 +93,12 @@
                 console.error('404 Debug Info:', data.debug);
                 showError(`Error 404: ${data.message || 'Endpoint no encontrado'}. Revisa la consola para más detalles.`, data);
             } else if (data.success) {
-                showSuccess(data);
+                // Abrir automáticamente el modal con el email completo
+                if (data.email_body) {
+                    showEmailModal(data);
+                } else {
+                    showError('No se encontró el contenido del email', data);
+                }
             } else {
                 showError(data.message || 'Error al consultar el código', data);
             }
@@ -235,72 +226,6 @@
         }
     }
 
-    /**
-     * Mostrar resultado exitoso
-     */
-    function showSuccess(data) {
-        // Ocultar formulario (opcional)
-        // consultForm.style.display = 'none';
-
-        // Configurar resultado
-        resultCard.className = 'result-card success';
-        resultIcon.innerHTML = '✓';
-        resultTitle.textContent = '¡Código encontrado!';
-        
-        // Construir mensaje principal
-        let messageHTML = `<div>Tu código para ${getPlatformName(data.platform)} está listo:</div>`;
-        
-        // Si hay mensaje de estado (reciente o no reciente), agregarlo
-        if (data.warning) {
-            // Determinar estilo según si es reciente o no
-            const isRecent = data.is_recent_message === true || data.is_recent === true;
-            const bgColor = isRecent ? 'rgba(40, 167, 69, 0.1)' : 'rgba(255, 193, 7, 0.1)';
-            const borderColor = isRecent ? '#28a745' : '#ffc107';
-            const textColor = isRecent ? '#155724' : '#856404';
-            const icon = isRecent ? '✓' : 'ℹ️';
-            
-            messageHTML += `
-                <div style="margin-top: 12px; padding: 10px; background: ${bgColor}; border-left: 3px solid ${borderColor}; border-radius: 4px; font-size: 0.9em; color: ${textColor};">
-                    <div style="display: flex; align-items: flex-start; gap: 8px;">
-                        <span style="font-size: 1.2em; font-weight: bold;">${icon}</span>
-                        <span>${data.warning}</span>
-                    </div>
-                </div>
-            `;
-        }
-        
-        resultMessage.innerHTML = messageHTML;
-        
-        if (data.code) {
-            resultCode.textContent = data.code;
-            resultCode.classList.remove('hidden');
-            copyBtn.classList.remove('hidden');
-            copyBtn.dataset.code = data.code;
-            
-            // Agregar botón para ver email completo si está disponible
-            if (data.email_body) {
-                const viewEmailBtn = document.getElementById('viewEmailBtn');
-                if (viewEmailBtn) {
-                    viewEmailBtn.classList.remove('hidden');
-                    viewEmailBtn.onclick = () => showEmailModal(data);
-                }
-            }
-        } else {
-            resultCode.classList.add('hidden');
-            copyBtn.classList.add('hidden');
-            const viewEmailBtn = document.getElementById('viewEmailBtn');
-            if (viewEmailBtn) viewEmailBtn.classList.add('hidden');
-        }
-
-        // Guardar datos del email para el modal
-        window.currentEmailData = data;
-
-        // Mostrar sección de resultado
-        resultSection.classList.remove('hidden');
-        
-        // Scroll suave al resultado
-        resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
     
     /**
      * Mostrar modal con el email completo
@@ -380,83 +305,14 @@
     }
 
     /**
-     * Mostrar error o información de no disponible
+     * Mostrar error
      */
     function showError(message, data = null) {
-        // Si hay información del último código consumido, mostrar diseño especial
-        if (data && data.last_consumed && data.last_consumed.code) {
-            // Configurar como información (no error) - mismo estilo visual que error pero sin el título "Error"
-            resultCard.className = 'result-card info';
-            resultIcon.innerHTML = 'ℹ️';
-            resultTitle.textContent = 'Información';
-            
-            // Construir mensaje dividido en 2 secciones: arriba rojo, abajo amarillo
-            let messageHTML = `
-                <div style="margin-bottom: 16px; padding: 14px; background: rgba(220, 53, 69, 0.15); border-left: 4px solid #dc3545; border-radius: 6px; text-align: left;">
-                    <div style="color: #ff4444; font-weight: 600; font-size: 1em;">${message}</div>
-                </div>
-                <div style="padding: 14px; background: rgba(255, 193, 7, 0.15); border-left: 4px solid #ffc107; border-radius: 6px; text-align: left;">
-                    <div style="color: #ffd700; font-size: 0.9em; margin-bottom: 10px; font-weight: 500;">
-                        Último código recibido ${data.last_consumed.time_ago_text}:
-                    </div>
-                    <div style="font-size: 1.3em; font-weight: 700; color: #ffd700; font-family: 'Courier New', monospace; letter-spacing: 2px; background: rgba(0, 0, 0, 0.3); padding: 10px; border-radius: 4px; text-align: center;">
-                        ${data.last_consumed.code}
-                    </div>
-                </div>
-            `;
-            
-            resultMessage.innerHTML = messageHTML;
-            resultCode.classList.add('hidden');
-            copyBtn.classList.add('hidden');
+        // Mostrar error simple - el cliente solo quiere ver el email, no códigos
+        if (window.GAC && window.GAC.error) {
+            window.GAC.error(message, 'Error');
         } else {
-            // Error normal sin información adicional
-            resultCard.className = 'result-card error';
-            resultIcon.innerHTML = '✕';
-            resultTitle.textContent = 'Error';
-            resultMessage.textContent = message;
-            resultCode.classList.add('hidden');
-            copyBtn.classList.add('hidden');
-        }
-
-        // Mostrar sección de resultado
-        resultSection.classList.remove('hidden');
-        
-        // Scroll suave al resultado
-        resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    /**
-     * Manejar copia de código
-     */
-    async function handleCopy() {
-        const code = copyBtn.dataset.code;
-        
-        if (!code) return;
-
-        try {
-            const success = await window.GAC?.copyToClipboard(code);
-            
-            if (success) {
-                // Feedback visual
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = `
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    ¡Copiado!
-                `;
-                copyBtn.style.color = '#28a745';
-                
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalText;
-                    copyBtn.style.color = '';
-                }, 2000);
-            } else {
-                await window.GAC.warning('No se pudo copiar el código. Por favor cópialo manualmente.', 'Advertencia');
-            }
-        } catch (error) {
-            console.error('Error al copiar:', error);
-            await window.GAC.warning('Error al copiar el código. Por favor cópialo manualmente.', 'Advertencia');
+            alert(message);
         }
     }
 

@@ -103,32 +103,6 @@ $content = ob_start();
                     </span>
                 </button>
             </form>
-
-            <!-- Result Section -->
-            <div id="resultSection" class="result-section hidden">
-                <div class="result-card" id="resultCard">
-                    <div class="result-icon" id="resultIcon"></div>
-                    <h3 class="result-title" id="resultTitle"></h3>
-                    <p class="result-message" id="resultMessage"></p>
-                    <div class="result-code" id="resultCode"></div>
-                    <div class="result-actions">
-                        <button type="button" class="btn btn-secondary btn-copy hidden" id="copyBtn">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                            </svg>
-                            Copiar Código
-                        </button>
-                        <button type="button" class="btn btn-outline btn-view-email hidden" id="viewEmailBtn">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                <polyline points="22,6 12,13 2,6"></polyline>
-                            </svg>
-                            Ver Email Completo
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
         
         <!-- Modal de Email Completo -->
@@ -174,7 +148,7 @@ $content = ob_start();
                     <line x1="12" y1="16" x2="12" y2="12"></line>
                     <line x1="12" y1="8" x2="12.01" y2="8"></line>
                 </svg>
-                Los códigos son de un solo uso y se marcan como consumidos al consultarlos
+                Ingresa tu correo, usuario y selecciona la plataforma para ver el email completo
             </p>
         </div>
     </div>
