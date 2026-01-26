@@ -5,12 +5,31 @@
  * Uso: http://localhost:8001/view_email_preview.php?id=47
  */
 
+// Iniciar sesión (si es necesario)
+session_start();
+
 // Cargar autoloader
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// Cargar configuración
-require_once __DIR__ . '/../src/Config/AppConfig.php';
-require_once __DIR__ . '/../src/Helpers/functions.php';
+// Cargar variables de entorno
+try {
+    if (class_exists('Dotenv\Dotenv')) {
+        $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+        $dotenv->load();
+    }
+} catch (\Exception $e) {
+    // Si no existe .env, continuar (puede estar en producción con variables de entorno del servidor)
+}
+
+// Definir constantes de rutas
+define('BASE_PATH', dirname(__DIR__));
+define('PUBLIC_PATH', __DIR__);
+
+// Cargar configuración (esto definirá DB_HOST, DB_NAME, etc.)
+require_once BASE_PATH . '/src/Config/AppConfig.php';
+
+// Cargar helpers
+require_once BASE_PATH . '/src/Helpers/functions.php';
 
 use Gac\Helpers\Database;
 
