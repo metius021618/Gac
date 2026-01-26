@@ -111,13 +111,57 @@ $content = ob_start();
                     <h3 class="result-title" id="resultTitle"></h3>
                     <p class="result-message" id="resultMessage"></p>
                     <div class="result-code" id="resultCode"></div>
-                    <button type="button" class="btn btn-secondary btn-copy hidden" id="copyBtn">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    <div class="result-actions">
+                        <button type="button" class="btn btn-secondary btn-copy hidden" id="copyBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copiar Código
+                        </button>
+                        <button type="button" class="btn btn-outline btn-view-email hidden" id="viewEmailBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                            Ver Email Completo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal de Email Completo -->
+        <div id="emailModal" class="email-modal hidden">
+            <div class="email-modal-overlay"></div>
+            <div class="email-modal-container">
+                <div class="email-modal-header">
+                    <h2 class="email-modal-title">Email Completo</h2>
+                    <button type="button" class="email-modal-close" id="closeEmailModal" aria-label="Cerrar">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
                         </svg>
-                        Copiar Código
                     </button>
+                </div>
+                <div class="email-modal-content">
+                    <div class="email-info">
+                        <div class="email-info-row">
+                            <span class="email-info-label">De:</span>
+                            <span class="email-info-value" id="emailModalFrom">-</span>
+                        </div>
+                        <div class="email-info-row">
+                            <span class="email-info-label">Asunto:</span>
+                            <span class="email-info-value" id="emailModalSubject">-</span>
+                        </div>
+                        <div class="email-info-row">
+                            <span class="email-info-label">Fecha:</span>
+                            <span class="email-info-value" id="emailModalDate">-</span>
+                        </div>
+                    </div>
+                    <div class="email-body-container">
+                        <div class="email-body" id="emailModalBody"></div>
+                    </div>
                 </div>
             </div>
         </div>

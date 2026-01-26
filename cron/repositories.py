@@ -253,12 +253,13 @@ class CodeRepository:
                     code,
                     email_from,
                     subject,
+                    email_body,
                     received_at,
                     origin,
                     status,
                     recipient_email
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, 'available', %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, 'available', %s
                 )
             """, (
                 code_data['email_account_id'],
@@ -266,6 +267,7 @@ class CodeRepository:
                 code_data['code'],
                 code_data.get('email_from'),
                 code_data.get('subject'),
+                code_data.get('email_body'),  # Cuerpo del email (HTML o texto)
                 code_data.get('received_at'),
                 code_data.get('origin', 'imap'),
                 code_data.get('recipient_email')

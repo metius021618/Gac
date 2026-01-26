@@ -475,3 +475,275 @@
     color: var(--text-primary);
     background: var(--bg-card);
 }
+
+/* ============================================
+   BOTÓN VER EMAIL Y ACCIONES
+   ============================================ */
+.result-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.btn-view-email {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background: transparent;
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.btn-view-email:hover {
+    background: var(--color-primary);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+}
+
+/* ============================================
+   MODAL DE EMAIL COMPLETO
+   ============================================ */
+.email-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-md);
+    animation: fadeIn 0.3s ease;
+}
+
+.email-modal.hidden {
+    display: none;
+}
+
+.email-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+}
+
+.email-modal-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    background: var(--bg-card);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+    overflow: hidden;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.email-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.email-modal-title {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.email-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.email-modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    transform: rotate(90deg);
+}
+
+.email-modal-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-lg);
+}
+
+.email-info {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.email-info-row {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    align-items: flex-start;
+}
+
+.email-info-row:last-child {
+    margin-bottom: 0;
+}
+
+.email-info-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 80px;
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.email-info-value {
+    color: var(--text-primary);
+    flex: 1;
+    word-break: break-word;
+}
+
+.email-body-container {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.email-body {
+    color: var(--text-primary);
+    line-height: 1.6;
+    font-size: var(--font-size-base);
+}
+
+.email-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--border-radius-sm);
+    margin: var(--spacing-sm) 0;
+}
+
+.email-body a {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.email-body a:hover {
+    color: var(--color-primary-light);
+}
+
+.email-body pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    overflow-x: auto;
+    font-family: 'Courier New', monospace;
+}
+
+.email-body code {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+/* Scrollbar personalizado para el modal */
+.email-modal-content::-webkit-scrollbar,
+.email-body-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.email-modal-content::-webkit-scrollbar-track,
+.email-body-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.email-modal-content::-webkit-scrollbar-thumb,
+.email-body-container::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 4px;
+}
+
+.email-modal-content::-webkit-scrollbar-thumb:hover,
+.email-body-container::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-light);
+}
+
+/* Responsive para modal */
+@media (max-width: 768px) {
+    .email-modal {
+        padding: var(--spacing-sm);
+    }
+    
+    .email-modal-container {
+        max-height: 95vh;
+    }
+    
+    .email-modal-header {
+        padding: var(--spacing-md);
+    }
+    
+    .email-modal-content {
+        padding: var(--spacing-md);
+    }
+    
+    .email-info-row {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+    
+    .email-info-label {
+        min-width: auto;
+    }
+    
+    .result-actions {
+        flex-direction: column;
+    }
+    
+    .btn-view-email,
+    .btn-copy {
+        width: 100%;
+        justify-content: center;
+    }
+}

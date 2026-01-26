@@ -150,12 +150,16 @@ def main():
                     continue
                 
                 # Preparar datos para guardar
+                # Obtener el cuerpo del email (preferir HTML, sino texto)
+                email_body = code_data.get('body_html') or code_data.get('body_text') or code_data.get('body') or ''
+                
                 save_data = {
                     'email_account_id': account_id,  # ID de la cuenta maestra
                     'platform_id': platform_obj['id'],
                     'code': code_data['code'],
                     'email_from': code_data.get('from'),
                     'subject': code_data.get('subject'),
+                    'email_body': email_body,  # Cuerpo completo del email
                     'received_at': code_data.get('date'),
                     'origin': 'imap',
                     'recipient_email': recipient_email  # Email del destinatario (usuario)

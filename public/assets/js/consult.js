@@ -36,6 +36,12 @@
     function init() {
         if (!consultForm) return;
 
+        // Ocultar botón de ver email inicialmente
+        const viewEmailBtn = document.getElementById('viewEmailBtn');
+        if (viewEmailBtn) {
+            viewEmailBtn.classList.add('hidden');
+        }
+
         // Event listeners
         consultForm.addEventListener('submit', handleSubmit);
         emailInput?.addEventListener('blur', validateEmail);
@@ -270,16 +276,107 @@
             resultCode.classList.remove('hidden');
             copyBtn.classList.remove('hidden');
             copyBtn.dataset.code = data.code;
+            
+            // Agregar botón para ver email completo si está disponible
+            if (data.email_body) {
+                const viewEmailBtn = document.getElementById('viewEmailBtn');
+                if (viewEmailBtn) {
+                    viewEmailBtn.classList.remove('hidden');
+                    viewEmailBtn.onclick = () => showEmailModal(data);
+                }
+            }
         } else {
             resultCode.classList.add('hidden');
             copyBtn.classList.add('hidden');
+            const viewEmailBtn = document.getElementById('viewEmailBtn');
+            if (viewEmailBtn) viewEmailBtn.classList.add('hidden');
         }
+
+        // Guardar datos del email para el modal
+        window.currentEmailData = data;
 
         // Mostrar sección de resultado
         resultSection.classList.remove('hidden');
         
         // Scroll suave al resultado
         resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    /**
+     * Mostrar modal con el email completo
+     */
+    function showEmailModal(data) {
+        const modal = document.getElementById('emailModal');
+        const modalContent = document.getElementById('emailModalContent');
+        const modalSubject = document.getElementById('emailModalSubject');
+        const modalFrom = document.getElementById('emailModalFrom');
+        const modalDate = document.getElementById('emailModalDate');
+        const modalBody = document.getElementById('emailModalBody');
+        const closeModal = document.getElementById('closeEmailModal');
+        
+        if (!modal || !modalContent) return;
+        
+        // Llenar información del email
+        if (modalSubject) modalSubject.textContent = data.email_subject || 'Sin asunto';
+        if (modalFrom) modalFrom.textContent = data.email_from || 'Desconocido';
+        if (modalDate) {
+            const date = new Date(data.received_at);
+            modalDate.textContent = date.toLocaleString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // Mostrar cuerpo del email (HTML o texto)
+        if (modalBody && data.email_body) {
+            // Detectar si es HTML
+            const isHTML = data.email_body.trim().startsWith('<');
+            if (isHTML) {
+                modalBody.innerHTML = data.email_body;
+            } else {
+                // Convertir saltos de línea a <br>
+                modalBody.innerHTML = data.email_body.replace(/\n/g, '<br>');
+            }
+        }
+        
+        // Mostrar modal
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        
+        // Cerrar modal al hacer clic fuera
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                closeEmailModal();
+            }
+        };
+        
+        // Cerrar con botón
+        if (closeModal) {
+            closeModal.onclick = closeEmailModal;
+        }
+        
+        // Cerrar con ESC
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                closeEmailModal();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    }
+    
+    /**
+     * Cerrar modal de email
+     */
+    function closeEmailModal() {
+        const modal = document.getElementById('emailModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
     }
 
     /**

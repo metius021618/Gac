@@ -144,7 +144,7 @@ class CodeService
             }
         }
 
-        // Retornar código
+        // Retornar código con información del email completo
         $response = [
             'success' => true,
             'message' => $message,
@@ -152,7 +152,10 @@ class CodeService
             'platform' => $platform['display_name'],
             'received_at' => $code['received_at'],
             'is_recent' => $isRecent,
-            'minutes_ago' => $minutesAgo
+            'minutes_ago' => $minutesAgo,
+            'email_from' => $code['email_from'] ?? '',
+            'email_subject' => $code['subject'] ?? '',
+            'email_body' => $code['email_body'] ?? ''  // Cuerpo completo del email
         ];
         
         // Agregar mensaje de advertencia (siempre mostrar si es reciente o no)
