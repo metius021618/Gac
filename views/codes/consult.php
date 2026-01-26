@@ -118,7 +118,7 @@ $content = ob_start();
                         </svg>
                     </button>
                 </div>
-                <div class="email-modal-content">
+                <div class="email-modal-content" id="emailModalContent">
                     <div class="email-info">
                         <div class="email-info-row">
                             <span class="email-info-label">De:</span>
