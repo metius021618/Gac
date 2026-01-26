@@ -77,92 +77,34 @@ class CodeService
             ];
         }
 
-        // Buscar código disponible para este email específico
-        // El sistema filtra por el email del destinatario del correo
-        // Primero busca códigos recientes (últimos 5 minutos), si no hay, busca el último disponible
-        $code = $this->codeRepository->findLatestAvailable($platform['id'], $userEmail, 5);
+        // Buscar el último correo recibido (sin importar si está disponible o consumido)
+        // El sistema filtra por el email del destinatario del correo y la plataforma
+        $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $userEmail);
 
-        if (!$code) {
-            // Si no hay códigos disponibles, buscar el último código consumido para mostrar información
-            $lastConsumed = $this->codeRepository->findLastConsumed($platform['id'], $userEmail);
-            
+        if (!$lastEmail) {
+            // Si realmente no hay ningún correo, retornar error
             return [
                 'success' => false,
-                'message' => 'No hay códigos disponibles para esta plataforma en este momento. Por favor intenta más tarde.',
-                'code' => null,
-                'last_consumed' => $lastConsumed ? [
-                    'code' => $lastConsumed['code'],
-                    'time_ago_text' => $lastConsumed['time_ago_text'] ?? 'hace tiempo',
-                    'received_at' => $lastConsumed['received_at']
-                ] : null
+                'message' => 'No se encontraron correos para esta plataforma. Por favor intenta más tarde.'
             ];
         }
 
-        // Verificar si el código es reciente
-        $isRecent = isset($code['is_recent']) && $code['is_recent'] == 1;
-        $minutesAgo = $code['minutes_ago'] ?? null;
+        // Calcular tiempo transcurrido
+        $minutesAgo = $lastEmail['minutes_ago'] ?? 0;
+        $timeAgoText = $lastEmail['time_ago_text'] ?? 'hace tiempo';
 
-        // Marcar como consumido
-        $marked = $this->codeRepository->markAsConsumed(
-            $code['id'],
-            $userEmail,
-            $username
-        );
-
-        if (!$marked) {
-            return [
-                'success' => false,
-                'message' => 'Error al procesar el código. Por favor intenta nuevamente.'
-            ];
-        }
-
-        // Guardar en warehouse (histórico) - Deshabilitado temporalmente
-        // $code['consumed_at'] = date('Y-m-d H:i:s');
-        // $this->codeRepository->saveToWarehouse($code);
-
-        // Preparar mensaje según si es reciente o no
-        $message = 'Código encontrado';
-        $warningMessage = null;
-        
-        if ($isRecent) {
-            // Código reciente (últimos 5 minutos)
-            $warningMessage = "✓ Código reciente recibido en los últimos 5 minutos.";
-        } else {
-            // Código no es reciente, mostrar advertencia amigable
-            if ($minutesAgo !== null) {
-                if ($minutesAgo < 60) {
-                    $warningMessage = "⚠ Este código fue recibido hace {$minutesAgo} minutos. Si prefieres esperar un código más reciente, intenta en unos minutos.";
-                } elseif ($minutesAgo < 1440) { // Menos de 24 horas
-                    $hoursAgo = floor($minutesAgo / 60);
-                    $warningMessage = "⚠ Este código fue recibido hace {$hoursAgo} hora(s). Aún es válido, pero si prefieres uno más reciente, intenta más tarde.";
-                } else {
-                    $daysAgo = floor($minutesAgo / 1440);
-                    $warningMessage = "⚠ Este código fue recibido hace {$daysAgo} día(s). Aún es válido, pero te recomendamos esperar un código más reciente.";
-                }
-            } else {
-                $warningMessage = "⚠ No se recibieron códigos nuevos en los últimos 5 minutos. Este es el último código disponible para tu cuenta.";
-            }
-        }
-
-        // Retornar código con información del email completo
+        // Retornar el correo completo (sin marcar como consumido, solo mostrar)
         $response = [
             'success' => true,
-            'message' => $message,
-            'code' => $code['code'],
+            'message' => 'Correo encontrado',
             'platform' => $platform['display_name'],
-            'received_at' => $code['received_at'],
-            'is_recent' => $isRecent,
+            'received_at' => $lastEmail['received_at'],
             'minutes_ago' => $minutesAgo,
-            'email_from' => $code['email_from'] ?? '',
-            'email_subject' => $code['subject'] ?? '',
-            'email_body' => $code['email_body'] ?? ''  // Cuerpo completo del email
+            'time_ago_text' => $timeAgoText,
+            'email_from' => $lastEmail['email_from'] ?? '',
+            'email_subject' => $lastEmail['subject'] ?? 'Sin asunto',
+            'email_body' => $lastEmail['email_body'] ?? ''  // Cuerpo completo del email
         ];
-        
-        // Agregar mensaje de advertencia (siempre mostrar si es reciente o no)
-        if (isset($warningMessage)) {
-            $response['warning'] = $warningMessage;
-            $response['is_recent_message'] = $isRecent;
-        }
         
         return $response;
     }

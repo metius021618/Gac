@@ -94,13 +94,20 @@
                 showError(`Error 404: ${data.message || 'Endpoint no encontrado'}. Revisa la consola para más detalles.`, data);
             } else if (data.success) {
                 // Abrir automáticamente el modal con el email completo
+                // Siempre debería haber email_body si hay un correo
                 if (data.email_body) {
                     showEmailModal(data);
+                } else if (data.email_subject) {
+                    // Si hay asunto pero no cuerpo, mostrar el modal con mensaje
+                    showEmailModal({
+                        ...data,
+                        email_body: '<p>El contenido del email no está disponible en este momento.</p>'
+                    });
                 } else {
                     showError('No se encontró el contenido del email', data);
                 }
             } else {
-                showError(data.message || 'Error al consultar el código', data);
+                showError(data.message || 'No se encontraron correos para esta plataforma', data);
             }
         } catch (error) {
             console.error('Error:', error);

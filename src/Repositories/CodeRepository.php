@@ -182,6 +182,59 @@ class CodeRepository
     }
 
     /**
+     * Buscar el último correo recibido (sin importar estado) para un email y plataforma
+     * 
+     * @param int $platformId ID de la plataforma
+     * @param string $recipientEmail Email del destinatario
+     * @return array|null Datos del último correo con tiempo transcurrido
+     */
+    public function findLastEmail(int $platformId, string $recipientEmail): ?array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                SELECT 
+                    c.id,
+                    c.code,
+                    c.email_from,
+                    c.subject,
+                    c.email_body,
+                    c.received_at,
+                    c.status,
+                    TIMESTAMPDIFF(MINUTE, c.received_at, NOW()) as minutes_ago
+                FROM codes c
+                WHERE c.platform_id = :platform_id
+                  AND c.recipient_email = :recipient_email
+                ORDER BY c.received_at DESC, c.id DESC
+                LIMIT 1
+            ");
+            
+            $stmt->execute([
+                'platform_id' => $platformId,
+                'recipient_email' => strtolower($recipientEmail)
+            ]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($result) {
+                $minutesAgo = $result['minutes_ago'];
+                if ($minutesAgo < 60) {
+                    $result['time_ago_text'] = "hace {$minutesAgo} minuto(s)";
+                } elseif ($minutesAgo < 1440) { // Less than 24 hours
+                    $hoursAgo = floor($minutesAgo / 60);
+                    $result['time_ago_text'] = "hace {$hoursAgo} hora(s)";
+                } else {
+                    $daysAgo = floor($minutesAgo / 1440);
+                    $result['time_ago_text'] = "hace {$daysAgo} día(s)";
+                }
+            }
+            return $result ?: null;
+        } catch (PDOException $e) {
+            error_log("Error al buscar último correo: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Buscar el último código consumido para un email y plataforma
      * 
      * @param int $platformId ID de la plataforma
