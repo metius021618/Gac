@@ -88,25 +88,37 @@
                 return;
             }
 
+            // Debug: Log de la respuesta
+            console.log('Respuesta del servidor:', data);
+            console.log('Status:', response.status);
+            
             // Si es un 404, mostrar información de debug
             if (response.status === 404 && data.debug) {
                 console.error('404 Debug Info:', data.debug);
                 showError(`Error 404: ${data.message || 'Endpoint no encontrado'}. Revisa la consola para más detalles.`, data);
             } else if (data.success) {
+                console.log('Respuesta exitosa, abriendo modal...');
+                console.log('Datos completos:', data);
+                console.log('Email body existe:', !!data.email_body);
+                console.log('Email body length:', data.email_body ? data.email_body.length : 0);
+                console.log('Email subject:', data.email_subject);
+                
                 // Abrir automáticamente el modal con el email completo
-                // Siempre debería haber email_body si hay un correo
-                if (data.email_body) {
-                    showEmailModal(data);
-                } else if (data.email_subject) {
-                    // Si hay asunto pero no cuerpo, mostrar el modal con mensaje
-                    showEmailModal({
-                        ...data,
-                        email_body: '<p>El contenido del email no está disponible en este momento.</p>'
-                    });
-                } else {
-                    showError('No se encontró el contenido del email', data);
-                }
+                // Si no hay email_body, mostrar un mensaje indicando que el contenido no está disponible
+                const emailBody = data.email_body || '<p style="color: #ffc107; padding: 20px; text-align: center;">El contenido del email no está disponible en este momento. Por favor intenta más tarde.</p>';
+                
+                console.log('Abriendo modal con datos:', {
+                    email_from: data.email_from,
+                    email_subject: data.email_subject,
+                    email_body_length: emailBody.length
+                });
+                
+                showEmailModal({
+                    ...data,
+                    email_body: emailBody
+                });
             } else {
+                console.error('Respuesta no exitosa:', data);
                 showError(data.message || 'No se encontraron correos para esta plataforma', data);
             }
         } catch (error) {
@@ -238,6 +250,8 @@
      * Mostrar modal con el email completo
      */
     function showEmailModal(data) {
+        console.log('showEmailModal llamado con:', data);
+        
         const modal = document.getElementById('emailModal');
         const modalContent = document.getElementById('emailModalContent');
         const modalSubject = document.getElementById('emailModalSubject');
@@ -246,7 +260,26 @@
         const modalBody = document.getElementById('emailModalBody');
         const closeModal = document.getElementById('closeEmailModal');
         
-        if (!modal || !modalContent) return;
+        console.log('Elementos del modal:', {
+            modal: !!modal,
+            modalContent: !!modalContent,
+            modalSubject: !!modalSubject,
+            modalFrom: !!modalFrom,
+            modalDate: !!modalDate,
+            modalBody: !!modalBody,
+            closeModal: !!closeModal
+        });
+        
+        if (!modal) {
+            console.error('Modal no encontrado en el DOM');
+            alert('Error: No se pudo abrir el modal. Por favor recarga la página.');
+            return;
+        }
+        
+        if (!modalContent) {
+            console.error('ModalContent no encontrado en el DOM');
+            return;
+        }
         
         // Llenar información del email
         if (modalSubject) modalSubject.textContent = data.email_subject || 'Sin asunto';
@@ -275,8 +308,12 @@
         }
         
         // Mostrar modal
+        console.log('Removiendo clase hidden del modal');
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        
+        console.log('Modal visible:', !modal.classList.contains('hidden'));
+        console.log('Modal display style:', window.getComputedStyle(modal).display);
         
         // Cerrar modal al hacer clic fuera
         modal.onclick = (e) => {
