@@ -91,15 +91,26 @@ try {
             color: #e0e0e0;
             padding: 20px;
             line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
         }
         
         .container {
-            max-width: 900px;
+            max-width: 100%;
+            width: 100%;
             margin: 0 auto;
             background: #2a2a2a;
             border-radius: 12px;
             padding: 30px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        @media (min-width: 1200px) {
+            .container {
+                max-width: 1200px;
+            }
         }
         
         .header {
@@ -155,11 +166,36 @@ try {
             margin-top: 20px;
             max-height: 600px;
             overflow-y: auto;
+            width: 100%;
         }
         
         .email-body {
             color: #e0e0e0;
             line-height: 1.6;
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        /* Centrar contenido HTML del email */
+        .email-body > * {
+            max-width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* Para tablas y otros elementos del email */
+        .email-body table {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+        }
+        
+        .email-body img {
+            max-width: 100% !important;
+            height: auto !important;
+            display: block;
+            margin: 10px auto;
         }
         
         .email-body img {
