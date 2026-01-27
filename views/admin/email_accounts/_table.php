@@ -9,7 +9,7 @@
     <table class="admin-table" id="emailAccountsTable">
         <thead>
             <tr>
-                <th style="width: 40px;">
+                <th style="width: 40px;" class="checkbox-column" style="display: none;">
                     <input type="checkbox" id="selectAll" title="Seleccionar todos">
                 </th>
                 <th>ID</th>
@@ -29,7 +29,7 @@
             <?php else: ?>
                 <?php foreach ($email_accounts as $account): ?>
                     <tr data-id="<?= $account['id'] ?>" class="table-row">
-                        <td>
+                        <td class="checkbox-column" style="display: none;">
                             <input type="checkbox" class="row-checkbox" value="<?= $account['id'] ?>">
                         </td>
                         <td><?= $account['id'] ?></td>

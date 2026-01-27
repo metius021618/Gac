@@ -71,57 +71,124 @@
      * Inicializar selección múltiple para eliminación masiva
      */
     function initBulkSelection() {
+        const multiSelectBtn = document.getElementById('multiSelectBtn');
         const selectAllCheckbox = document.getElementById('selectAll');
-        const rowCheckboxes = emailAccountsTable?.querySelectorAll('.row-checkbox');
         const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
         const selectedCountSpan = document.getElementById('selectedCount');
+        const checkboxColumns = emailAccountsTable?.querySelectorAll('.checkbox-column');
 
-        if (!selectAllCheckbox || !rowCheckboxes || !bulkDeleteBtn) return;
+        if (!multiSelectBtn) return;
 
-        // Seleccionar/deseleccionar todos
-        selectAllCheckbox.addEventListener('change', function() {
-            rowCheckboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
-            });
-            updateBulkDeleteButton();
-        });
+        let multiSelectMode = false;
 
-        // Actualizar botón cuando cambian los checkboxes individuales
-        rowCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                updateSelectAllState();
-                updateBulkDeleteButton();
-            });
-        });
-
-        // Manejar eliminación masiva
-        bulkDeleteBtn.addEventListener('click', handleBulkDelete);
-
-        /**
-         * Actualizar estado del checkbox "Seleccionar todos"
-         */
-        function updateSelectAllState() {
-            const checkedCount = Array.from(rowCheckboxes).filter(cb => cb.checked).length;
-            selectAllCheckbox.checked = checkedCount === rowCheckboxes.length && rowCheckboxes.length > 0;
-            selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < rowCheckboxes.length;
-        }
-
-        /**
-         * Actualizar visibilidad y contador del botón de eliminación masiva
-         */
-        function updateBulkDeleteButton() {
-            const selectedIds = Array.from(rowCheckboxes)
-                .filter(cb => cb.checked)
-                .map(cb => parseInt(cb.value));
-
-            if (selectedIds.length > 0) {
-                bulkDeleteBtn.style.display = 'flex';
-                if (selectedCountSpan) {
-                    selectedCountSpan.textContent = selectedIds.length;
+        // Toggle modo selección múltiple
+        multiSelectBtn.addEventListener('click', function() {
+            multiSelectMode = !multiSelectMode;
+            
+            if (multiSelectMode) {
+                // Activar modo selección múltiple
+                this.classList.add('active');
+                this.classList.remove('btn-secondary');
+                this.classList.add('btn-primary');
+                
+                // Mostrar checkboxes
+                if (checkboxColumns) {
+                    checkboxColumns.forEach(col => {
+                        col.style.display = '';
+                    });
                 }
+                
+                // Inicializar eventos de checkboxes
+                initCheckboxEvents();
             } else {
+                // Desactivar modo selección múltiple
+                this.classList.remove('active');
+                this.classList.remove('btn-primary');
+                this.classList.add('btn-secondary');
+                
+                // Ocultar checkboxes
+                if (checkboxColumns) {
+                    checkboxColumns.forEach(col => {
+                        col.style.display = 'none';
+                    });
+                }
+                
+                // Desmarcar todos
+                const rowCheckboxes = emailAccountsTable?.querySelectorAll('.row-checkbox');
+                if (rowCheckboxes) {
+                    rowCheckboxes.forEach(cb => cb.checked = false);
+                }
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = false;
+                }
+                
+                // Ocultar botón eliminar
                 bulkDeleteBtn.style.display = 'none';
             }
+        });
+
+        /**
+         * Inicializar eventos de checkboxes
+         */
+        function initCheckboxEvents() {
+            const rowCheckboxes = emailAccountsTable?.querySelectorAll('.row-checkbox');
+            if (!rowCheckboxes || !selectAllCheckbox) return;
+
+            // Limpiar eventos previos
+            const newSelectAll = selectAllCheckbox.cloneNode(true);
+            selectAllCheckbox.parentNode.replaceChild(newSelectAll, selectAllCheckbox);
+            
+            // Seleccionar/deseleccionar todos
+            newSelectAll.addEventListener('change', function() {
+                rowCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateBulkDeleteButton();
+            });
+
+            // Actualizar botón cuando cambian los checkboxes individuales
+            rowCheckboxes.forEach(checkbox => {
+                // Limpiar eventos previos
+                const newCheckbox = checkbox.cloneNode(true);
+                checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+                
+                newCheckbox.addEventListener('change', function() {
+                    updateSelectAllState();
+                    updateBulkDeleteButton();
+                });
+            });
+
+            /**
+             * Actualizar estado del checkbox "Seleccionar todos"
+             */
+            function updateSelectAllState() {
+                const checkedCount = Array.from(rowCheckboxes).filter(cb => cb.checked).length;
+                newSelectAll.checked = checkedCount === rowCheckboxes.length && rowCheckboxes.length > 0;
+                newSelectAll.indeterminate = checkedCount > 0 && checkedCount < rowCheckboxes.length;
+            }
+
+            /**
+             * Actualizar visibilidad y contador del botón de eliminación masiva
+             */
+            function updateBulkDeleteButton() {
+                const selectedIds = Array.from(rowCheckboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => parseInt(cb.value));
+
+                if (selectedIds.length > 0 && multiSelectMode) {
+                    bulkDeleteBtn.style.display = 'flex';
+                    if (selectedCountSpan) {
+                        selectedCountSpan.textContent = selectedIds.length;
+                    }
+                } else {
+                    bulkDeleteBtn.style.display = 'none';
+                }
+            }
+        }
+
+        // Manejar eliminación masiva
+        if (bulkDeleteBtn) {
+            bulkDeleteBtn.addEventListener('click', handleBulkDelete);
         }
     }
 
@@ -131,6 +198,7 @@
     async function handleBulkDelete() {
         const rowCheckboxes = emailAccountsTable?.querySelectorAll('.row-checkbox:checked');
         if (!rowCheckboxes || rowCheckboxes.length === 0) {
+            await window.GAC.warning('Por favor selecciona al menos una cuenta para eliminar', 'Advertencia');
             return;
         }
 

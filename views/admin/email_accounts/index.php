@@ -10,15 +10,6 @@ $content = ob_start();
 <div class="admin-container">
     <div class="admin-header">
         <h1 class="admin-title">Correos Registrados</h1>
-        <div class="admin-header-actions">
-            <button id="bulkDeleteBtn" class="btn btn-danger" style="display: none;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-                Eliminar Masivo (<span id="selectedCount">0</span>)
-            </button>
-        </div>
     </div>
 
     <div class="admin-content">
@@ -45,22 +36,40 @@ $content = ob_start();
                 </button>
             </div>
             
-            <div class="per-page-selector">
-                <label for="perPageSelect" class="per-page-label">Mostrar:</label>
-                <select id="perPageSelect" class="form-select">
-                    <?php 
-                    $validPerPage = $valid_per_page ?? [15, 30, 60, 100, 0];
-                    $currentPerPage = $per_page ?? 15;
-                    foreach ($validPerPage as $option): 
-                        $optionValue = $option === 0 ? 'all' : $option;
-                        $optionLabel = $option === 0 ? 'Todos' : $option;
-                        $isSelected = ($currentPerPage == $option || ($option === 0 && ($currentPerPage === 'all' || $currentPerPage === 0)));
-                    ?>
-                        <option value="<?= $optionValue ?>" <?= $isSelected ? 'selected' : '' ?>>
-                            <?= $optionLabel ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+            <div class="table-controls-right">
+                <button id="multiSelectBtn" class="btn btn-secondary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 11 12 14 22 4"></polyline>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                    Selección Múltiple
+                </button>
+                
+                <button id="bulkDeleteBtn" class="btn btn-danger" style="display: none;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Eliminar (<span id="selectedCount">0</span>)
+                </button>
+                
+                <div class="per-page-selector">
+                    <label for="perPageSelect" class="per-page-label">Mostrar:</label>
+                    <select id="perPageSelect" class="form-select">
+                        <?php 
+                        $validPerPage = $valid_per_page ?? [15, 30, 60, 100, 0];
+                        $currentPerPage = $per_page ?? 15;
+                        foreach ($validPerPage as $option): 
+                            $optionValue = $option === 0 ? 'all' : $option;
+                            $optionLabel = $option === 0 ? 'Todos' : $option;
+                            $isSelected = ($currentPerPage == $option || ($option === 0 && ($currentPerPage === 'all' || $currentPerPage === 0)));
+                        ?>
+                            <option value="<?= $optionValue ?>" <?= $isSelected ? 'selected' : '' ?>>
+                                <?= $optionLabel ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
         </div>
 

@@ -75,6 +75,44 @@ class UserAccessController
             return;
         }
 
+        // Crear el correo en email_accounts si no existe
+        $emailAccount = $this->emailAccountRepository->findByEmail($email);
+        if (!$emailAccount) {
+            // Obtener configuración del correo maestro para usar la misma configuración
+            $masterAccount = $this->emailAccountRepository->findByEmail('streaming@pocoyoni.com');
+            $masterConfig = [];
+            
+            if ($masterAccount && !empty($masterAccount['provider_config'])) {
+                $masterConfig = json_decode($masterAccount['provider_config'], true);
+            }
+            
+            // Crear cuenta de email con configuración básica
+            $accountData = [
+                'email' => $email,
+                'type' => 'imap',
+                'provider_config' => [
+                    'imap_server' => $masterConfig['imap_server'] ?? 'premium211.web-hosting.com',
+                    'imap_port' => $masterConfig['imap_port'] ?? 993,
+                    'imap_encryption' => $masterConfig['imap_encryption'] ?? 'ssl',
+                    'imap_user' => $email,
+                    'imap_password' => $password,
+                    'is_master' => false,
+                    'filter_by_recipient' => true
+                ],
+                'enabled' => 1,
+                'sync_status' => 'pending'
+            ];
+            
+            $accountId = $this->emailAccountRepository->save($accountData);
+            if (!$accountId) {
+                json_response([
+                    'success' => false,
+                    'message' => 'Error al crear la cuenta de email'
+                ], 500);
+                return;
+            }
+        }
+
         // Crear o actualizar acceso
         $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId);
 
