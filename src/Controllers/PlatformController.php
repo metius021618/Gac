@@ -35,6 +35,26 @@ class PlatformController
 
         $paginationData = $this->platformRepository->searchAndPaginate($page, $perPage, $search);
         
+        // Si es petición AJAX, devolver solo la tabla y paginación
+        if ($request->isAjax()) {
+            ob_start();
+            extract([
+                'platforms' => $paginationData['data'],
+                'total_records' => $paginationData['total'],
+                'current_page' => $paginationData['page'],
+                'per_page' => $paginationData['per_page'],
+                'total_pages' => $paginationData['total_pages'],
+                'search_query' => $search,
+                'valid_per_page' => $validPerPage
+            ]);
+            require base_path('views/admin/platforms/_table.php');
+            $tableHtml = ob_get_clean();
+            
+            // Envolver en admin-content para que SearchAJAX.updateTableContent funcione
+            echo '<div class="admin-content">' . $tableHtml . '</div>';
+            return;
+        }
+        
         $this->renderView('admin/platforms/index', [
             'title' => 'Plataformas Activas',
             'platforms' => $paginationData['data'],
