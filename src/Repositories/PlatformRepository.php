@@ -122,9 +122,9 @@ class PlatformRepository
             $whereClause = '';
 
             if (!empty($search)) {
-                $searchLower = '%' . strtolower($search) . '%';
-                $whereClause = "WHERE LOWER(name) LIKE :search OR LOWER(display_name) LIKE :search";
-                $params['search'] = $searchLower;
+                $searchLower = '%' . strtolower(trim($search)) . '%';
+                $whereClause = "WHERE (LOWER(name) LIKE :search OR LOWER(display_name) LIKE :search)";
+                $params[':search'] = $searchLower;
             }
 
             // Contar total de registros

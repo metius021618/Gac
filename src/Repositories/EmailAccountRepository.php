@@ -157,13 +157,13 @@ class EmailAccountRepository
             
             if (!empty($search)) {
                 // Buscar por email o por usuario (imap_user en provider_config JSON)
-                // Usar JSON_UNQUOTE para compatibilidad y CAST para asegurar string
+                $searchLower = '%' . strtolower(trim($search)) . '%';
                 $whereConditions[] = "(
-                    email LIKE :search 
-                    OR JSON_UNQUOTE(JSON_EXTRACT(provider_config, '$.imap_user')) LIKE :search
-                    OR CAST(JSON_EXTRACT(provider_config, '$.imap_user') AS CHAR) LIKE :search
+                    LOWER(email) LIKE :search_email 
+                    OR LOWER(JSON_UNQUOTE(JSON_EXTRACT(provider_config, '$.imap_user'))) LIKE :search_imap_user
                 )";
-                $params['search'] = "%{$search}%";
+                $params[':search_email'] = $searchLower;
+                $params[':search_imap_user'] = $searchLower;
             }
             
             $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
