@@ -11,6 +11,7 @@ namespace Gac\Services\Code;
 
 use Gac\Repositories\CodeRepository;
 use Gac\Repositories\PlatformRepository;
+use Gac\Repositories\UserAccessRepository;
 
 class CodeService
 {
@@ -25,12 +26,18 @@ class CodeService
     private PlatformRepository $platformRepository;
 
     /**
+     * Repositorio de accesos de usuario
+     */
+    private UserAccessRepository $userAccessRepository;
+
+    /**
      * Constructor
      */
     public function __construct()
     {
         $this->codeRepository = new CodeRepository();
         $this->platformRepository = new PlatformRepository();
+        $this->userAccessRepository = new UserAccessRepository();
     }
 
     /**
@@ -74,6 +81,14 @@ class CodeService
             return [
                 'success' => false,
                 'message' => 'Esta plataforma no está disponible actualmente'
+            ];
+        }
+
+        // Verificar que el usuario tenga acceso registrado para esta plataforma
+        if (!$this->userAccessRepository->verifyAccess($userEmail, $username, $platform['id'])) {
+            return [
+                'success' => false,
+                'message' => 'No tienes acceso registrado para esta plataforma. Contacta al administrador.'
             ];
         }
 

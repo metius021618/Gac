@@ -121,6 +121,43 @@ class EmailAccountRepository
     }
 
     /**
+     * Obtener una cuenta de email por email
+     * 
+     * @param string $email
+     * @return array|null
+     */
+    public function findByEmail(string $email): ?array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                SELECT 
+                    id,
+                    email,
+                    type,
+                    provider_config,
+                    oauth_token,
+                    oauth_refresh_token,
+                    enabled,
+                    last_sync_at,
+                    sync_status,
+                    error_message
+                FROM email_accounts
+                WHERE email = :email
+                LIMIT 1
+            ");
+            
+            $stmt->execute(['email' => $email]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            return $result ?: null;
+        } catch (PDOException $e) {
+            error_log("Error al obtener cuenta de email por email: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Actualizar última sincronización
      * 
      * @param int $id
