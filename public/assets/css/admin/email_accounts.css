@@ -379,6 +379,50 @@ select.per-page-select {
     width: 150px;
 }
 
+/* ============================================
+   PLATAFORMAS (BADGES)
+   ============================================ */
+.platform-cell {
+    padding: var(--spacing-md) !important;
+}
+
+.platform-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    margin: 2px 4px 2px 0;
+    background: rgba(var(--color-primary-rgb, 59, 130, 246), 0.2);
+    color: var(--color-primary-light, #60a5fa);
+    border: 1px solid rgba(var(--color-primary-rgb, 59, 130, 246), 0.3);
+    border-radius: 12px;
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all var(--transition-base);
+}
+
+.platform-badge:hover {
+    background: rgba(var(--color-primary-rgb, 59, 130, 246), 0.3);
+    transform: translateY(-1px);
+}
+
+.platform-badge.empty {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.platforms-display {
+    padding: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    min-height: 50px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
 .email-cell {
     color: var(--text-primary);
     font-weight: 500;

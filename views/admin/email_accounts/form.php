@@ -50,63 +50,12 @@ $content = ob_start();
                 </div>
 
                 <div class="form-group">
-                    <label for="imap_server" class="form-label">
-                        <svg class="form-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                            <line x1="8" y1="21" x2="16" y2="21"></line>
-                            <line x1="12" y1="17" x2="12" y2="21"></line>
-                        </svg>
-                        Servidor IMAP <span class="required">*</span>
-                    </label>
-                    <input 
-                        type="text" 
-                        id="imap_server" 
-                        name="imap_server" 
-                        class="form-input" 
-                        placeholder="imap.dominio.com"
-                        value="<?= $isEdit ? htmlspecialchars($email_account['imap_server']) : '' ?>"
-                        required
-                    >
-                    <span class="form-error" id="imapServerError"></span>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="imap_port" class="form-label">
-                            Puerto IMAP <span class="required">*</span>
-                        </label>
-                        <input 
-                            type="number" 
-                            id="imap_port" 
-                            name="imap_port" 
-                            class="form-input" 
-                            placeholder="993"
-                            value="<?= $isEdit ? htmlspecialchars($email_account['imap_port']) : '993' ?>"
-                            min="1"
-                            max="65535"
-                            required
-                        >
-                        <span class="form-error" id="imapPortError"></span>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="enabled" class="form-label">
-                            Estado
-                        </label>
-                        <select id="enabled" name="enabled" class="form-select">
-                            <option value="1" <?= ($isEdit && $email_account['enabled']) ? 'selected' : '' ?>>Activa</option>
-                            <option value="0" <?= ($isEdit && !$email_account['enabled']) ? 'selected' : '' ?>>Inactiva</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
                     <label for="imap_user" class="form-label">
                         <svg class="form-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
-                        Usuario IMAP <span class="required">*</span>
+                        Acceso (Usuario IMAP) <span class="required">*</span>
                     </label>
                     <input 
                         type="text" 
@@ -118,29 +67,40 @@ $content = ob_start();
                         required
                     >
                     <span class="form-error" id="imapUserError"></span>
+                    <small class="form-help">Usuario o contraseña para acceder al buzón IMAP</small>
                 </div>
 
-                <div class="form-group">
-                    <label for="imap_password" class="form-label">
-                        <svg class="form-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                        </svg>
-                        Contraseña IMAP <span class="required">*</span>
-                    </label>
-                    <input 
-                        type="password" 
-                        id="imap_password" 
-                        name="imap_password" 
-                        class="form-input" 
-                        placeholder="••••••••"
-                        <?= $isEdit ? '' : 'required' ?>
-                    >
-                    <span class="form-error" id="imapPasswordError"></span>
-                    <?php if ($isEdit): ?>
-                        <small class="form-help">Dejar en blanco para mantener la contraseña actual</small>
-                    <?php endif; ?>
-                </div>
+                <?php if ($isEdit): ?>
+                    <?php
+                    // Obtener plataformas asignadas a este correo
+                    use Gac\Repositories\UserAccessRepository;
+                    $userAccessRepo = new UserAccessRepository();
+                    $platforms = [];
+                    if (!empty($email_account['email'])) {
+                        $platforms = $userAccessRepo->getPlatformsByEmail($email_account['email']);
+                    }
+                    ?>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <svg class="form-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
+                            Plataformas Asignadas
+                        </label>
+                        <div class="platforms-display">
+                            <?php if (!empty($platforms)): ?>
+                                <?php foreach ($platforms as $platform): ?>
+                                    <span class="platform-badge"><?= htmlspecialchars($platform) ?></span>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <span class="platform-badge empty">Sin plataformas asignadas</span>
+                            <?php endif; ?>
+                        </div>
+                        <small class="form-help">Las plataformas se asignan desde "Registro de Accesos"</small>
+                    </div>
+                <?php endif; ?>
 
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">

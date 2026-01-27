@@ -13,16 +13,17 @@
                     <input type="checkbox" id="selectAll" title="Seleccionar todos">
                 </th>
                 <th style="width: 60px;">ID</th>
-                <th style="width: 30%;">Correo</th>
-                <th style="width: 20%;">Usuario</th>
-                <th style="width: 25%;">Última Sincronización</th>
+                <th style="width: 25%;">Correo</th>
+                <th style="width: 15%;">Usuario</th>
+                <th style="width: 20%;">Plataforma</th>
+                <th style="width: 18%;">Última Sincronización</th>
                 <th style="width: 150px;">Acciones</th>
             </tr>
         </thead>
         <tbody id="tableBody">
             <?php if (empty($email_accounts)): ?>
                 <tr>
-                    <td colspan="6" class="text-center">
+                    <td colspan="7" class="text-center">
                         <p class="empty-message">No hay cuentas de email registradas</p>
                     </td>
                 </tr>
@@ -35,6 +36,15 @@
                         <td><?= $account['id'] ?></td>
                         <td class="email-cell"><?= htmlspecialchars($account['email']) ?></td>
                         <td class="user-cell"><?= htmlspecialchars($account['imap_user'] ?? 'N/A') ?></td>
+                        <td class="platform-cell">
+                            <?php if (!empty($account['platforms']) && is_array($account['platforms'])): ?>
+                                <?php foreach ($account['platforms'] as $platform): ?>
+                                    <span class="platform-badge"><?= htmlspecialchars($platform) ?></span>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <span class="platform-badge empty">Sin asignar</span>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <?php if ($account['last_sync_at']): ?>
                                 <span class="sync-time" title="Última vez que el sistema procesó correos de esta cuenta: <?= htmlspecialchars($account['last_sync_at']) ?>">

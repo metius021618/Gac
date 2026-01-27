@@ -234,33 +234,61 @@ class EmailAccountRepository
             $offset = ($page - 1) * $perPage;
             $limitClause = $perPage > 0 ? "LIMIT {$perPage} OFFSET {$offset}" : '';
             
-            // Obtener datos
+            // Obtener datos con plataformas asignadas
             if (!empty($search)) {
                 $stmt = $db->prepare("
-                    SELECT id, email, type, provider_config, enabled, last_sync_at, sync_status, error_message, created_at
-                    FROM email_accounts
-                    WHERE email LIKE ? OR JSON_UNQUOTE(JSON_EXTRACT(provider_config, '$.imap_user')) LIKE ?
-                    ORDER BY created_at DESC
+                    SELECT 
+                        ea.id, 
+                        ea.email, 
+                        ea.type, 
+                        ea.provider_config, 
+                        ea.enabled, 
+                        ea.last_sync_at, 
+                        ea.sync_status, 
+                        ea.error_message, 
+                        ea.created_at,
+                        GROUP_CONCAT(DISTINCT p.display_name ORDER BY p.display_name SEPARATOR ', ') as platforms
+                    FROM email_accounts ea
+                    LEFT JOIN user_access ua ON ea.email = ua.email AND ua.enabled = 1
+                    LEFT JOIN platforms p ON ua.platform_id = p.id
+                    WHERE ea.email LIKE ? OR JSON_UNQUOTE(JSON_EXTRACT(ea.provider_config, '$.imap_user')) LIKE ?
+                    GROUP BY ea.id
+                    ORDER BY ea.created_at DESC
                     {$limitClause}
                 ");
                 $stmt->execute([$searchTerm, $searchTerm]);
             } else {
                 $stmt = $db->query("
-                    SELECT id, email, type, provider_config, enabled, last_sync_at, sync_status, error_message, created_at
-                    FROM email_accounts
-                    ORDER BY created_at DESC
+                    SELECT 
+                        ea.id, 
+                        ea.email, 
+                        ea.type, 
+                        ea.provider_config, 
+                        ea.enabled, 
+                        ea.last_sync_at, 
+                        ea.sync_status, 
+                        ea.error_message, 
+                        ea.created_at,
+                        GROUP_CONCAT(DISTINCT p.display_name ORDER BY p.display_name SEPARATOR ', ') as platforms
+                    FROM email_accounts ea
+                    LEFT JOIN user_access ua ON ea.email = ua.email AND ua.enabled = 1
+                    LEFT JOIN platforms p ON ua.platform_id = p.id
+                    GROUP BY ea.id
+                    ORDER BY ea.created_at DESC
                     {$limitClause}
                 ");
             }
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Parsear provider_config
+            // Parsear provider_config y plataformas
             foreach ($data as &$row) {
                 $config = json_decode($row['provider_config'] ?? '{}', true);
                 $row['imap_server'] = $config['imap_server'] ?? '';
                 $row['imap_port'] = $config['imap_port'] ?? 993;
                 $row['imap_user'] = $config['imap_user'] ?? '';
                 $row['imap_password'] = '';
+                // Convertir plataformas de string a array
+                $row['platforms'] = !empty($row['platforms']) ? explode(', ', $row['platforms']) : [];
             }
             
             return [

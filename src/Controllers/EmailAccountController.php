@@ -103,17 +103,13 @@ class EmailAccountController
         }
 
         $email = $request->input('email', '');
-        $imap_server = $request->input('imap_server', '');
-        $imap_port = $request->input('imap_port', 993);
         $imap_user = $request->input('imap_user', '');
-        $imap_password = $request->input('imap_password', '');
-        $enabled = $request->input('enabled', 1);
 
         // Validación
-        if (empty($email) || empty($imap_server) || empty($imap_user) || empty($imap_password)) {
+        if (empty($email) || empty($imap_user)) {
             json_response([
                 'success' => false,
-                'message' => 'Todos los campos son requeridos'
+                'message' => 'Correo y acceso son requeridos'
             ], 400);
             return;
         }
@@ -126,19 +122,33 @@ class EmailAccountController
             return;
         }
 
-        // Preparar datos para guardar
+        // Obtener cuenta maestra para replicar configuración
+        $masterAccount = $this->emailAccountRepository->findMasterAccount();
+        if (!$masterAccount) {
+            json_response([
+                'success' => false,
+                'message' => 'No se encontró la cuenta maestra'
+            ], 500);
+            return;
+        }
+
+        $masterConfig = json_decode($masterAccount['provider_config'] ?? '{}', true);
+        
+        // Preparar datos para guardar (usar configuración de cuenta maestra)
         $data = [
             'email' => $email,
             'type' => 'imap',
             'provider_config' => [
-                'imap_server' => $imap_server,
-                'imap_port' => (int)$imap_port,
-                'imap_encryption' => (int)$imap_port === 993 ? 'ssl' : 'tls',
+                'imap_server' => $masterConfig['imap_server'] ?? '',
+                'imap_port' => $masterConfig['imap_port'] ?? 993,
+                'imap_encryption' => $masterConfig['imap_encryption'] ?? 'ssl',
                 'imap_user' => $imap_user,
-                'imap_password' => $imap_password,
-                'imap_validate_cert' => true
+                'imap_password' => $masterConfig['imap_password'] ?? '',
+                'imap_validate_cert' => $masterConfig['imap_validate_cert'] ?? true,
+                'is_master' => false,
+                'filter_by_recipient' => true
             ],
-            'enabled' => (int)$enabled,
+            'enabled' => 1,
             'sync_status' => 'pending'
         ];
 
@@ -176,10 +186,7 @@ class EmailAccountController
 
         // Parsear provider_config
         $config = json_decode($emailAccount['provider_config'] ?? '{}', true);
-        $emailAccount['imap_server'] = $config['imap_server'] ?? '';
-        $emailAccount['imap_port'] = $config['imap_port'] ?? 993;
         $emailAccount['imap_user'] = $config['imap_user'] ?? '';
-        $emailAccount['imap_password'] = $config['imap_password'] ?? '';
 
         $this->renderView('admin/email_accounts/form', [
             'title' => 'Editar Cuenta de Email',
@@ -212,22 +219,18 @@ class EmailAccountController
         }
 
         $email = $request->input('email', '');
-        $imap_server = $request->input('imap_server', '');
-        $imap_port = $request->input('imap_port', 993);
         $imap_user = $request->input('imap_user', '');
-        $imap_password = $request->input('imap_password', '');
-        $enabled = $request->input('enabled', 1);
 
         // Validación
-        if (empty($email) || empty($imap_server) || empty($imap_user)) {
+        if (empty($email) || empty($imap_user)) {
             json_response([
                 'success' => false,
-                'message' => 'Todos los campos son requeridos'
+                'message' => 'Correo y acceso son requeridos'
             ], 400);
             return;
         }
 
-        // Obtener cuenta existente para preservar password si no se cambia
+        // Obtener cuenta existente para preservar configuración
         $existingAccount = $this->emailAccountRepository->findById($id);
         if (!$existingAccount) {
             json_response([
@@ -239,24 +242,21 @@ class EmailAccountController
 
         $existingConfig = json_decode($existingAccount['provider_config'] ?? '{}', true);
         
-        // Si no se proporciona password, usar el existente
-        if (empty($imap_password)) {
-            $imap_password = $existingConfig['imap_password'] ?? '';
-        }
-
-        // Preparar datos
+        // Preparar datos (preservar configuración del servidor, solo actualizar usuario)
         $data = [
             'email' => $email,
             'type' => 'imap',
             'provider_config' => [
-                'imap_server' => $imap_server,
-                'imap_port' => (int)$imap_port,
-                'imap_encryption' => (int)$imap_port === 993 ? 'ssl' : 'tls',
+                'imap_server' => $existingConfig['imap_server'] ?? '',
+                'imap_port' => $existingConfig['imap_port'] ?? 993,
+                'imap_encryption' => $existingConfig['imap_encryption'] ?? 'ssl',
                 'imap_user' => $imap_user,
-                'imap_password' => $imap_password,
-                'imap_validate_cert' => true
+                'imap_password' => $existingConfig['imap_password'] ?? '',
+                'imap_validate_cert' => $existingConfig['imap_validate_cert'] ?? true,
+                'is_master' => $existingConfig['is_master'] ?? false,
+                'filter_by_recipient' => $existingConfig['filter_by_recipient'] ?? true
             ],
-            'enabled' => (int)$enabled,
+            'enabled' => $existingAccount['enabled'] ?? 1,
             'sync_status' => $existingAccount['sync_status'] ?? 'pending'
         ];
 
