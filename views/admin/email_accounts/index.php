@@ -47,13 +47,14 @@ $content = ob_start();
                 <label for="perPageSelect" class="per-page-label">Mostrar:</label>
                 <select id="perPageSelect" class="form-select">
                     <?php 
-                    $validPerPage = [15, 30, 60, 100, 0];
+                    $validPerPage = $valid_per_page ?? [15, 30, 60, 100, 0];
                     $currentPerPage = $per_page ?? 15;
                     foreach ($validPerPage as $option): 
                         $optionValue = $option === 0 ? 'all' : $option;
                         $optionLabel = $option === 0 ? 'Todos' : $option;
+                        $isSelected = ($currentPerPage == $option || ($option === 0 && ($currentPerPage === 'all' || $currentPerPage === 0)));
                     ?>
-                        <option value="<?= $optionValue ?>" <?= ($currentPerPage == $option || ($option === 0 && $currentPerPage === 'all')) ? 'selected' : '' ?>>
+                        <option value="<?= $optionValue ?>" <?= $isSelected ? 'selected' : '' ?>>
                             <?= $optionLabel ?>
                         </option>
                     <?php endforeach; ?>
