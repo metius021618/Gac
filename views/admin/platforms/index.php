@@ -1,6 +1,6 @@
 <?php
 /**
- * GAC - Vista de Registro de Accesos (Códigos Consumidos)
+ * GAC - Vista de Lista de Plataformas Activas
  */
 
 $content = ob_start();
@@ -8,14 +8,14 @@ $content = ob_start();
 
 <div class="admin-container">
     <div class="admin-header">
-        <h1 class="admin-title">Registro de Accesos</h1>
-        <p class="admin-subtitle">Historial de códigos consultados y consumidos</p>
+        <h1 class="admin-title">Plataformas Activas</h1>
+        <p class="admin-subtitle">Gestiona las plataformas disponibles en el sistema</p>
     </div>
 
     <div class="admin-content">
         <div class="table-controls">
             <div class="search-input-wrapper">
-                <input type="text" id="searchInput" class="form-control search-input" placeholder="Buscar por código, usuario, email o plataforma..." value="<?= htmlspecialchars($search_query) ?>">
+                <input type="text" id="searchInput" class="form-control search-input" placeholder="Buscar por nombre o slug..." value="<?= htmlspecialchars($search_query) ?>">
                 <span class="search-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </span>
@@ -38,46 +38,44 @@ $content = ob_start();
         </div>
 
         <div class="table-container">
-            <table class="admin-table" id="accessLogTable">
+            <table class="admin-table" id="platformsTable">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Código</th>
-                        <th>Plataforma</th>
-                        <th>Usuario</th>
-                        <th>Email Consultado</th>
-                        <th>Destinatario</th>
-                        <th>Fecha Consulta</th>
-                        <th>Fecha Recepción</th>
+                        <th>Nombre</th>
+                        <th>Slug</th>
+                        <th>Estado</th>
+                        <th>Fecha Creación</th>
+                        <th>Última Actualización</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (empty($codes)): ?>
+                    <?php if (empty($platforms)): ?>
                         <tr>
-                            <td colspan="8" class="text-center">
-                                <p class="empty-message">No hay registros de accesos</p>
+                            <td colspan="6" class="text-center">
+                                <p class="empty-message">No hay plataformas registradas</p>
                             </td>
                         </tr>
                     <?php else: ?>
-                        <?php foreach ($codes as $code): ?>
-                            <tr data-id="<?= $code['id'] ?>">
-                                <td><?= htmlspecialchars($code['id']) ?></td>
+                        <?php foreach ($platforms as $platform): ?>
+                            <tr data-id="<?= $platform['id'] ?>">
+                                <td><?= htmlspecialchars($platform['id']) ?></td>
                                 <td>
-                                    <code style="font-family: 'Courier New', monospace; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 4px;">
-                                        <?= htmlspecialchars($code['code']) ?>
-                                    </code>
+                                    <strong><?= htmlspecialchars($platform['display_name']) ?></strong>
                                 </td>
                                 <td>
-                                    <span class="badge badge-info"><?= htmlspecialchars($code['platform_display_name']) ?></span>
-                                </td>
-                                <td><?= htmlspecialchars($code['consumed_by_username'] ?? '-') ?></td>
-                                <td><?= htmlspecialchars($code['consumed_by_email'] ?? '-') ?></td>
-                                <td><?= htmlspecialchars($code['recipient_email'] ?? '-') ?></td>
-                                <td>
-                                    <?= $code['consumed_at'] ? date('d/m/Y H:i', strtotime($code['consumed_at'])) : '-' ?>
+                                    <code><?= htmlspecialchars($platform['name']) ?></code>
                                 </td>
                                 <td>
-                                    <?= $code['received_at'] ? date('d/m/Y H:i', strtotime($code['received_at'])) : '-' ?>
+                                    <span class="status-badge status-<?= $platform['enabled'] ? 'active' : 'inactive' ?>">
+                                        <?= $platform['enabled'] ? 'Activa' : 'Inactiva' ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?= $platform['created_at'] ? date('d/m/Y H:i', strtotime($platform['created_at'])) : '-' ?>
+                                </td>
+                                <td>
+                                    <?= $platform['updated_at'] ? date('d/m/Y H:i', strtotime($platform['updated_at'])) : '-' ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -111,13 +109,13 @@ $content = ob_start();
 <?php
 $content = ob_get_clean();
 
-$title = $title ?? 'Registro de Accesos';
+$title = $title ?? 'Plataformas Activas';
 $show_nav = true;
 $show_footer = true;
 $footer_text = '';
 $footer_whatsapp = false;
 $additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/email_accounts.css'];
-$additional_js = ['/assets/js/admin/codes.js'];
+$additional_js = ['/assets/js/admin/platforms.js'];
 
 require base_path('views/layouts/main.php');
 ?>

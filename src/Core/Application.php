@@ -59,6 +59,15 @@ class Application
         $router->get('/admin/users', 'UserController@index', ['auth']);
         $router->get('/admin/settings', 'SettingsController@index', ['auth']);
         
+        // Rutas de plataformas
+        $router->get('/admin/platforms', 'PlatformController@index', ['auth']);
+        
+        // Rutas de administradores
+        $router->get('/admin/administrators', 'AdminController@index', ['auth']);
+        $router->get('/admin/administrators/edit', 'AdminController@edit', ['auth']);
+        $router->post('/admin/administrators/update', 'AdminController@update', ['auth']);
+        $router->post('/admin/administrators/update-password', 'AdminController@updatePassword', ['auth']);
+        
         // Rutas Gmail
         $router->get('/gmail/connect', 'GmailController@connect', ['auth']);
         $router->get('/gmail/callback', 'GmailController@callback');

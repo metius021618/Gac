@@ -514,4 +514,88 @@ class CodeRepository
             return false;
         }
     }
+
+    /**
+     * Buscar y paginar códigos consumidos (registro de accesos)
+     * 
+     * @param int $page
+     * @param int $perPage
+     * @param string $search
+     * @return array
+     */
+    public function searchConsumedCodes(int $page = 1, int $perPage = 15, string $search = ''): array
+    {
+        try {
+            $db = Database::getConnection();
+            $params = [];
+            $whereClause = "WHERE c.status = 'consumed'";
+
+            if (!empty($search)) {
+                $searchLower = '%' . strtolower($search) . '%';
+                $whereClause .= " AND (
+                    LOWER(c.code) LIKE :search 
+                    OR LOWER(c.consumed_by_username) LIKE :search 
+                    OR LOWER(c.consumed_by_email) LIKE :search
+                    OR LOWER(c.recipient_email) LIKE :search
+                    OR LOWER(p.display_name) LIKE :search
+                )";
+                $params['search'] = $searchLower;
+            }
+
+            // Contar total
+            $countStmt = $db->prepare("
+                SELECT COUNT(*) as total 
+                FROM codes c
+                INNER JOIN platforms p ON c.platform_id = p.id
+                {$whereClause}
+            ");
+            $countStmt->execute($params);
+            $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+            
+            // Calcular paginación
+            $totalPages = $perPage > 0 ? ceil($total / $perPage) : 1;
+            $offset = ($page - 1) * $perPage;
+            
+            // Obtener datos paginados
+            $limitClause = $perPage > 0 ? "LIMIT {$perPage} OFFSET {$offset}" : '';
+            
+            $stmt = $db->prepare("
+                SELECT 
+                    c.id,
+                    c.code,
+                    c.consumed_by_username,
+                    c.consumed_by_email,
+                    c.recipient_email,
+                    c.consumed_at,
+                    c.received_at,
+                    p.name as platform_name,
+                    p.display_name as platform_display_name
+                FROM codes c
+                INNER JOIN platforms p ON c.platform_id = p.id
+                {$whereClause}
+                ORDER BY c.consumed_at DESC, c.id DESC
+                {$limitClause}
+            ");
+            
+            $stmt->execute($params);
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            return [
+                'data' => $data,
+                'total' => $total,
+                'page' => $page,
+                'per_page' => $perPage,
+                'total_pages' => $totalPages
+            ];
+        } catch (PDOException $e) {
+            error_log("Error al buscar códigos consumidos: " . $e->getMessage());
+            return [
+                'data' => [],
+                'total' => 0,
+                'page' => $page,
+                'per_page' => $perPage,
+                'total_pages' => 1
+            ];
+        }
+    }
 }

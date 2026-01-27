@@ -64,8 +64,7 @@ class DashboardController
     private function getPlatformsActiveCount(): int
     {
         try {
-            $platforms = $this->platformRepo->findAllEnabled();
-            return count($platforms);
+            return $this->platformRepo->countActive();
         } catch (\Exception $e) {
             error_log("Error al contar plataformas: " . $e->getMessage());
             return 0;
@@ -78,17 +77,7 @@ class DashboardController
     private function getAdministratorsCount(): int
     {
         try {
-            $db = \Gac\Helpers\Database::getConnection();
-            $stmt = $db->prepare("
-                SELECT COUNT(*) as count 
-                FROM users u
-                INNER JOIN roles r ON u.role_id = r.id
-                WHERE u.active = 1 
-                AND (r.name = 'SUPER_ADMIN' OR r.name = 'ADMIN')
-            ");
-            $stmt->execute();
-            $result = $stmt->fetch(\PDO::FETCH_ASSOC);
-            return (int) ($result['count'] ?? 0);
+            return $this->userRepo->countAdministrators();
         } catch (\Exception $e) {
             error_log("Error al contar administradores: " . $e->getMessage());
             return 0;

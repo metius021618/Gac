@@ -11,9 +11,24 @@ class SettingsController
 {
     public function index(Request $request): void
     {
+        $settingsRepository = new \Gac\Repositories\SettingsRepository();
+        $allSubjects = $settingsRepository->getAllEmailSubjects();
+        
+        // Organizar por plataforma
+        $platforms = ['netflix', 'disney', 'prime', 'spotify', 'crunchyroll', 'paramount', 'chatgpt', 'canva'];
+        $subjectsByPlatform = [];
+        
+        foreach ($platforms as $platform) {
+            $subjects = $settingsRepository->getEmailSubjectsForPlatform($platform);
+            if (!empty($subjects)) {
+                $subjectsByPlatform[$platform] = $subjects;
+            }
+        }
+        
         $this->renderView('admin/settings/index', [
-            'title' => 'Configuración',
-            'message' => 'Esta sección de configuración está en construcción.'
+            'title' => 'Registro de Asuntos',
+            'subjects_by_platform' => $subjectsByPlatform,
+            'platforms' => $platforms
         ]);
     }
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * GAC - Vista de Configuración (En Construcción)
+ * GAC - Vista de Registro de Asuntos
  */
 
 $content = ob_start();
@@ -8,78 +8,48 @@ $content = ob_start();
 
 <div class="admin-container">
     <div class="admin-header">
-        <div class="building-header">
-            <a href="/admin/dashboard" class="building-back-button">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="19" y1="12" x2="5" y2="12"></line>
-                    <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-                Volver al Dashboard
-            </a>
-        </div>
-        <h1 class="admin-title">Configuración</h1>
+        <h1 class="admin-title">Registro de Asuntos</h1>
+        <p class="admin-subtitle">Asuntos de emails configurados por plataforma</p>
     </div>
 
     <div class="admin-content">
-        <div class="building-container">
-            <div class="building-icon">
-                <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3m15.364 6.364l-4.243-4.243m-4.242 0L5.636 17.364m12.728 0l-4.243-4.243m-4.242 0L5.636 6.636"></path>
-                </svg>
+        <?php if (empty($subjects_by_platform)): ?>
+            <div class="empty-message">
+                <p>No hay asuntos configurados</p>
             </div>
-            <h2 class="building-title">Configuración en Construcción</h2>
-            <p class="building-description">
-                Esta sección está siendo desarrollada. Pronto podrás gestionar la configuración del sistema, ajustes de seguridad y preferencias de usuario.
-            </p>
-            <div class="building-features">
-                <div class="feature-item">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                    <span>Configuración de seguridad</span>
+        <?php else: ?>
+            <?php foreach ($subjects_by_platform as $platform => $subjects): ?>
+                <div class="platform-subjects-card" style="margin-bottom: var(--spacing-xl);">
+                    <div class="card-header" style="background: rgba(255, 255, 255, 0.05); padding: var(--spacing-md); border-radius: var(--border-radius) var(--border-radius) 0 0; border-bottom: 1px solid var(--border-color);">
+                        <h3 style="margin: 0; color: var(--text-primary); text-transform: capitalize;">
+                            <?= htmlspecialchars(ucfirst($platform)) ?>
+                        </h3>
+                    </div>
+                    <div class="card-body" style="background: rgba(255, 255, 255, 0.02); padding: var(--spacing-lg); border-radius: 0 0 var(--border-radius) var(--border-radius);">
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <?php foreach ($subjects as $index => $subject): ?>
+                                <li style="padding: var(--spacing-sm) 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: var(--text-secondary);">
+                                    <span style="color: var(--color-primary); font-weight: 600; margin-right: var(--spacing-sm);"><?= $index + 1 ?>.</span>
+                                    <?= htmlspecialchars($subject) ?>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
                 </div>
-                <div class="feature-item">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                    <span>Perfil de usuario</span>
-                </div>
-                <div class="feature-item">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                    </svg>
-                    <span>Configuración del sistema</span>
-                </div>
-                <div class="feature-item">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span>Notificaciones</span>
-                </div>
-            </div>
-            <div class="building-progress">
-                <div class="progress-bar">
-                    <div class="progress-fill progress-30"></div>
-                </div>
-                <p class="progress-text">30% completado</p>
-            </div>
-        </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 </div>
 
 <?php
 $content = ob_get_clean();
 
-$title = $title ?? 'Configuración';
+$title = $title ?? 'Registro de Asuntos';
 $show_nav = true;
+$show_footer = true;
 $footer_text = '';
 $footer_whatsapp = false;
-$additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/building.css'];
-$additional_js = [];
+$additional_css = ['/assets/css/admin/main.css'];
 
 require base_path('views/layouts/main.php');
 ?>

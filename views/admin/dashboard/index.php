@@ -97,7 +97,7 @@ $content = ob_start();
             </a>
 
             <!-- Plataformas Activas -->
-            <div class="stat-card stat-card-grey">
+            <a href="/admin/platforms" class="stat-card stat-card-grey stat-card-link" title="Ver plataformas activas">
                 <div class="stat-card-icon stat-icon-yellow">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
@@ -109,10 +109,15 @@ $content = ob_start();
                     <div class="stat-card-value"><?= number_format($stats['platforms_active']) ?></div>
                     <div class="stat-card-label">Plataformas activas</div>
                 </div>
-            </div>
+                <div class="stat-card-arrow">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+            </a>
 
             <!-- Administradores -->
-            <div class="stat-card stat-card-grey">
+            <a href="/admin/administrators" class="stat-card stat-card-grey stat-card-link" title="Ver administradores">
                 <div class="stat-card-icon stat-icon-green">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -123,7 +128,12 @@ $content = ob_start();
                     <div class="stat-card-value"><?= number_format($stats['administrators']) ?></div>
                     <div class="stat-card-label">Administradores</div>
                 </div>
-            </div>
+                <div class="stat-card-arrow">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+            </a>
         </div>
     </div>
 </div>

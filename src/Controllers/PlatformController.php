@@ -1,6 +1,6 @@
 <?php
 /**
- * GAC - Controlador de Usuarios/Clientes
+ * GAC - Controlador de Plataformas
  * 
  * @package Gac\Controllers
  */
@@ -8,11 +8,19 @@
 namespace Gac\Controllers;
 
 use Gac\Core\Request;
+use Gac\Repositories\PlatformRepository;
 
-class UserController
+class PlatformController
 {
+    private PlatformRepository $platformRepository;
+
+    public function __construct()
+    {
+        $this->platformRepository = new PlatformRepository();
+    }
+
     /**
-     * Listar todos los clientes/usuarios (Registro Masivo)
+     * Listar plataformas activas
      */
     public function index(Request $request): void
     {
@@ -20,17 +28,16 @@ class UserController
         $perPage = (int)$request->get('per_page', 15);
         $search = $request->get('search', '');
 
-        $validPerPage = [15, 30, 60, 100, 0];
+        $validPerPage = [15, 30, 60, 100, 0]; // 0 para "Todos"
         if (!in_array($perPage, $validPerPage)) {
-            $perPage = 15;
+            $perPage = 15; // Default
         }
 
-        $userRepository = new \Gac\Repositories\UserRepository();
-        $paginationData = $userRepository->searchAndPaginate($page, $perPage, $search);
+        $paginationData = $this->platformRepository->searchAndPaginate($page, $perPage, $search);
         
-        $this->renderView('admin/users/index', [
-            'title' => 'Registro Masivo',
-            'users' => $paginationData['data'],
+        $this->renderView('admin/platforms/index', [
+            'title' => 'Plataformas Activas',
+            'platforms' => $paginationData['data'],
             'total_records' => $paginationData['total'],
             'current_page' => $paginationData['page'],
             'per_page' => $paginationData['per_page'],
