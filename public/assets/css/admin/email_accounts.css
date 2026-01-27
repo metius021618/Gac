@@ -24,6 +24,7 @@
     max-width: 400px;
 }
 
+/* Icono de búsqueda - debe estar antes del input en el HTML */
 .search-box .search-icon,
 .search-input-wrapper .search-icon {
     position: absolute;
@@ -36,6 +37,7 @@
     z-index: 1;
 }
 
+/* Input de búsqueda */
 .search-box .search-input,
 .search-input-wrapper .search-input {
     width: 100%;
@@ -50,6 +52,14 @@
     outline: none;
 }
 
+/* Placeholder con color correcto */
+.search-box .search-input::placeholder,
+.search-input-wrapper .search-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+/* Focus en input */
 .search-box .search-input:focus,
 .search-input-wrapper .search-input:focus {
     border-color: var(--color-primary);
@@ -57,6 +67,7 @@
     box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
 }
 
+/* Cambiar color del icono cuando el input tiene focus o contenido */
 .search-box .search-input:focus ~ .search-icon,
 .search-input-wrapper .search-input:focus ~ .search-icon,
 .search-box .search-input:not(:placeholder-shown) ~ .search-icon,
@@ -103,11 +114,14 @@
 }
 
 .per-page-select,
-.form-select {
+.form-select,
+select.form-select,
+select.per-page-select {
     padding: var(--spacing-sm) var(--spacing-md);
     padding-right: calc(var(--spacing-md) + 20px);
     background: rgba(255, 255, 255, 0.05) !important;
-    border: 2px solid var(--border-color);
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 2px solid var(--border-color) !important;
     border-radius: var(--border-radius);
     color: var(--text-primary) !important;
     font-size: var(--font-size-base);
