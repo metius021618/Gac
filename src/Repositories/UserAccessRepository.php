@@ -195,6 +195,78 @@ class UserAccessRepository
     }
 
     /**
+     * Crear múltiples accesos de usuario masivamente
+     * 
+     * @param array $emails Array de correos electrónicos
+     * @param string $password Contraseña/acceso común para todos
+     * @param int $platformId ID de la plataforma
+     * @return array ['success' => int, 'duplicates' => int, 'errors' => array]
+     */
+    public function bulkCreate(array $emails, string $password, int $platformId): array
+    {
+        $success = 0;
+        $duplicates = 0;
+        $errors = [];
+        
+        try {
+            $db = Database::getConnection();
+            $db->beginTransaction();
+            
+            $sql = "
+                INSERT INTO user_access (email, password, platform_id, enabled)
+                VALUES (:email, :password, :platform_id, 1)
+                ON DUPLICATE KEY UPDATE
+                    password = :password_update,
+                    enabled = 1,
+                    updated_at = NOW()
+            ";
+            
+            $stmt = $db->prepare($sql);
+            
+            foreach ($emails as $email) {
+                $email = trim($email);
+                if (empty($email)) {
+                    continue;
+                }
+                
+                try {
+                    $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+                    $stmt->bindValue(':password', $password, PDO::PARAM_STR);
+                    $stmt->bindValue(':platform_id', $platformId, PDO::PARAM_INT);
+                    $stmt->bindValue(':password_update', $password, PDO::PARAM_STR);
+                    
+                    if ($stmt->execute()) {
+                        // Verificar si fue insert o update
+                        if ($stmt->rowCount() > 0) {
+                            $success++;
+                        } else {
+                            $duplicates++;
+                        }
+                    }
+                } catch (PDOException $e) {
+                    $errors[] = "Error con {$email}: " . $e->getMessage();
+                }
+            }
+            
+            $db->commit();
+            
+            return [
+                'success' => $success,
+                'duplicates' => $duplicates,
+                'errors' => $errors
+            ];
+        } catch (PDOException $e) {
+            $db->rollBack();
+            error_log("Error al crear accesos masivamente: " . $e->getMessage());
+            return [
+                'success' => 0,
+                'duplicates' => 0,
+                'errors' => ['Error general: ' . $e->getMessage()]
+            ];
+        }
+    }
+
+    /**
      * Eliminar acceso
      */
     public function delete(int $id): bool
