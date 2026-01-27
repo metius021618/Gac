@@ -2,6 +2,16 @@
  * GAC - Estilos para Registro de Accesos
  */
 
+/* Quitar bg y borde del admin-content en esta vista */
+.admin-content {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
 .form-card {
     max-width: 600px;
     margin: 0 auto;
