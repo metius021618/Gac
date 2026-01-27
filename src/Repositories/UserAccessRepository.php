@@ -172,6 +172,29 @@ class UserAccessRepository
     }
 
     /**
+     * Obtener plataformas asignadas a un email
+     */
+    public function getPlatformsByEmail(string $email): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                SELECT p.display_name as platform_name
+                FROM user_access ua
+                JOIN platforms p ON ua.platform_id = p.id
+                WHERE ua.email = :email AND ua.enabled = 1
+                ORDER BY p.display_name ASC
+            ");
+            $stmt->execute([':email' => $email]);
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return array_column($results, 'platform_name');
+        } catch (PDOException $e) {
+            error_log("Error al obtener plataformas por email: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Eliminar acceso
      */
     public function delete(int $id): bool
