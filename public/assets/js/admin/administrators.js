@@ -60,12 +60,12 @@
             const confirmPassword = confirmPasswordInput.value;
 
             if (newPassword !== confirmPassword) {
-                alert('Las contraseñas no coinciden');
+                await window.GAC.error('Las contraseñas no coinciden', 'Error de Validación');
                 return;
             }
 
             if (newPassword.length < 6) {
-                alert('La contraseña debe tener al menos 6 caracteres');
+                await window.GAC.error('La contraseña debe tener al menos 6 caracteres', 'Error de Validación');
                 return;
             }
 
@@ -84,14 +84,14 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Contraseña actualizada correctamente');
+                    await window.GAC.success('Contraseña actualizada correctamente', 'Éxito');
                     closeModal();
                 } else {
-                    alert(data.message || 'Error al actualizar contraseña');
+                    await window.GAC.error(data.message || 'Error al actualizar contraseña', 'Error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error de conexión. Por favor intenta nuevamente.');
+                await window.GAC.error('Error de conexión. Por favor intenta nuevamente.', 'Error de Conexión');
             }
         });
     }
