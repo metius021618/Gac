@@ -44,8 +44,8 @@ $content = ob_start();
                 <div class="action-card-text">Registro de accesos</div>
             </a>
 
-            <!-- Registro Masiva -->
-            <a href="/admin/users" class="action-card">
+            <!-- Registro Masivo -->
+            <a href="/admin/email-accounts/bulk-register" class="action-card">
                 <div class="action-card-icon">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -54,7 +54,7 @@ $content = ob_start();
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
                 </div>
-                <div class="action-card-text">Registro masiva</div>
+                <div class="action-card-text">Registro masivo</div>
             </a>
 
             <!-- Registro de Asuntos -->
