@@ -15,14 +15,17 @@
     flex-wrap: wrap;
 }
 
-.search-box {
+/* Unificar estilos de búsqueda */
+.search-box,
+.search-input-wrapper {
     position: relative;
     flex: 1;
     min-width: 250px;
     max-width: 400px;
 }
 
-.search-icon {
+.search-box .search-icon,
+.search-input-wrapper .search-icon {
     position: absolute;
     left: var(--spacing-md);
     top: 50%;
@@ -30,9 +33,11 @@
     color: var(--text-muted);
     pointer-events: none;
     transition: color var(--transition-base);
+    z-index: 1;
 }
 
-.search-input {
+.search-box .search-input,
+.search-input-wrapper .search-input {
     width: 100%;
     padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) calc(var(--spacing-xl) + var(--spacing-sm));
     background: rgba(255, 255, 255, 0.05);
@@ -45,18 +50,22 @@
     outline: none;
 }
 
-.search-input:focus {
+.search-box .search-input:focus,
+.search-input-wrapper .search-input:focus {
     border-color: var(--color-primary);
     background: rgba(255, 255, 255, 0.08);
     box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
 }
 
-.search-input:focus + .search-icon,
-.search-input:not(:placeholder-shown) ~ .search-icon {
+.search-box .search-input:focus ~ .search-icon,
+.search-input-wrapper .search-input:focus ~ .search-icon,
+.search-box .search-input:not(:placeholder-shown) ~ .search-icon,
+.search-input-wrapper .search-input:not(:placeholder-shown) ~ .search-icon {
     color: var(--color-primary-light);
 }
 
-.search-clear {
+.search-clear,
+.clear-search-btn {
     position: absolute;
     right: var(--spacing-sm);
     top: 50%;
@@ -71,9 +80,11 @@
     justify-content: center;
     border-radius: var(--border-radius-sm);
     transition: all var(--transition-base);
+    z-index: 2;
 }
 
-.search-clear:hover {
+.search-clear:hover,
+.clear-search-btn:hover {
     color: var(--text-primary);
     background: rgba(255, 255, 255, 0.1);
 }
@@ -91,28 +102,73 @@
     white-space: nowrap;
 }
 
-.per-page-select {
+.per-page-select,
+.form-select {
     padding: var(--spacing-sm) var(--spacing-md);
-    background: rgba(255, 255, 255, 0.05);
+    padding-right: calc(var(--spacing-md) + 20px);
+    background: rgba(255, 255, 255, 0.05) !important;
     border: 2px solid var(--border-color);
     border-radius: var(--border-radius);
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
     font-size: var(--font-size-base);
     font-family: var(--font-family);
     cursor: pointer;
     transition: all var(--transition-base);
     outline: none;
     min-width: 80px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
-.per-page-select:focus {
+.per-page-select:focus,
+.form-select:focus {
     border-color: var(--color-primary);
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
 }
 
-.per-page-select:hover {
+.per-page-select:hover,
+.form-select:hover {
     border-color: var(--color-primary-light);
+}
+
+/* Opciones del select con tema oscuro */
+.per-page-select option,
+.form-select option {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    padding: var(--spacing-sm);
+}
+
+/* Wrapper para select con flecha personalizada */
+.per-page-selector {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.per-page-selector label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.per-page-selector::after {
+    content: '';
+    position: absolute;
+    right: calc(var(--spacing-md) + 2px);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid var(--text-secondary);
+    pointer-events: none;
+    z-index: 1;
 }
 
 /* ============================================

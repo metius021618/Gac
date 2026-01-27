@@ -15,7 +15,7 @@ $content = ob_start();
     <div class="admin-content">
         <div class="table-controls">
             <div class="search-input-wrapper">
-                <input type="text" id="searchInput" class="form-control search-input" placeholder="Buscar por nombre o slug..." value="<?= htmlspecialchars($search_query) ?>">
+                <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nombre o slug..." value="<?= htmlspecialchars($search_query) ?>">
                 <span class="search-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </span>

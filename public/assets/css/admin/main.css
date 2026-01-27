@@ -194,6 +194,9 @@
     color: var(--text-primary);
     font-size: var(--font-size-base);
     transition: all var(--transition-base);
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 .form-input:focus,
@@ -201,6 +204,33 @@
     outline: none;
     border-color: var(--color-primary);
     background: rgba(255, 255, 255, 0.08);
+}
+
+/* Estilos para options del select */
+.form-select option {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    padding: var(--spacing-sm);
+}
+
+/* Selector wrapper para icono de flecha */
+.form-select-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.form-select-wrapper::after {
+    content: '';
+    position: absolute;
+    right: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid var(--text-secondary);
+    pointer-events: none;
 }
 
 .form-actions {
@@ -217,6 +247,61 @@
 .btn-password:hover {
     color: var(--color-warning);
     background: rgba(255, 193, 7, 0.1);
+}
+
+/* ============================================
+   BOTONES
+   ============================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 2px solid transparent;
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    outline: none;
+    text-decoration: none;
+    font-family: var(--font-family);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-sm {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-sm);
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: #ffffff;
+    border-color: var(--color-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-light);
+    border-color: var(--color-primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
 }
 
 /* ============================================
