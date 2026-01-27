@@ -111,53 +111,170 @@
     function initPagination() {
         if (!perPageSelect) return;
 
-        // Cambiar cantidad por página
-        perPageSelect.addEventListener('change', function() {
-            const url = new URL(window.location);
-            url.searchParams.set('per_page', this.value);
-            url.searchParams.set('page', '1'); // Resetear a página 1
-            window.location.href = url.toString();
+        // Cambiar cantidad por página (AJAX)
+        perPageSelect.addEventListener('change', async function() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            const params = {
+                search: searchInput?.value.trim() || '',
+                page: 1,
+                per_page: this.value
+            };
+
+            try {
+                const url = new URL(window.location.pathname, window.location.origin);
+                Object.keys(params).forEach(key => {
+                    if (params[key] !== null && params[key] !== '') {
+                        url.searchParams.set(key, params[key]);
+                    }
+                });
+
+                const response = await fetch(url.toString(), {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html'
+                    }
+                });
+
+                if (response.ok) {
+                    const html = await response.text();
+                    window.history.pushState({}, '', url.toString());
+                    updateTableContent(html);
+                    initTable();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            } finally {
+                isLoading = false;
+            }
         });
 
-        // Botones de paginación
-        const paginationBtns = document.querySelectorAll('.pagination-btn, .pagination-page');
-        paginationBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                if (this.disabled || this.classList.contains('active')) return;
+        // Botones de paginación (AJAX con delegación de eventos)
+        document.addEventListener('click', async function(e) {
+            const paginationBtn = e.target.closest('.pagination-btn, .pagination-page, .pagination-controls button[data-page]');
+            if (paginationBtn && paginationBtn.dataset.page && !paginationBtn.disabled && !paginationBtn.classList.contains('active')) {
+                e.preventDefault();
+                if (isLoading) return;
                 
-                const page = this.dataset.page;
-                if (page) {
-                    const url = new URL(window.location);
-                    url.searchParams.set('page', page);
-                    window.location.href = url.toString();
+                isLoading = true;
+                const page = paginationBtn.dataset.page;
+                const params = {
+                    search: searchInput?.value.trim() || '',
+                    page: page,
+                    per_page: perPageSelect?.value || '15'
+                };
+
+                try {
+                    const url = new URL(window.location.pathname, window.location.origin);
+                    Object.keys(params).forEach(key => {
+                        if (params[key] !== null && params[key] !== '') {
+                            url.searchParams.set(key, params[key]);
+                        }
+                    });
+
+                    const response = await fetch(url.toString(), {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'text/html'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const html = await response.text();
+                        window.history.pushState({}, '', url.toString());
+                        updateTableContent(html);
+                        initTable();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                } finally {
+                    isLoading = false;
                 }
-            });
+            }
         });
     }
 
     /**
-     * Realizar búsqueda
+     * Realizar búsqueda AJAX
      */
-    function performSearch() {
+    async function performSearch() {
         if (isLoading) return;
 
+        isLoading = true;
         const search = searchInput.value.trim();
-        const url = new URL(window.location);
-        
-        if (search) {
-            url.searchParams.set('search', search);
-        } else {
-            url.searchParams.delete('search');
-        }
-        
-        // Resetear a página 1 al buscar
-        url.searchParams.set('page', '1');
-        
-        // Mantener per_page
-        const currentPerPage = perPageSelect?.value || '15';
-        url.searchParams.set('per_page', currentPerPage);
+        const params = {
+            search: search,
+            page: 1,
+            per_page: perPageSelect?.value || '15'
+        };
 
-        window.location.href = url.toString();
+        try {
+            const url = new URL(window.location.pathname, window.location.origin);
+            Object.keys(params).forEach(key => {
+                if (params[key] !== null && params[key] !== '') {
+                    url.searchParams.set(key, params[key]);
+                }
+            });
+
+            const response = await fetch(url.toString(), {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+
+            const html = await response.text();
+            
+            // Actualizar URL sin recargar
+            window.history.pushState({}, '', url.toString());
+            
+            // Actualizar contenido
+            updateTableContent(html);
+            
+            // Re-inicializar eventos de la tabla
+            initTable();
+            
+        } catch (error) {
+            console.error('Error en búsqueda:', error);
+            // Fallback: recargar página
+            window.location.href = url.toString();
+        } finally {
+            isLoading = false;
+        }
+    }
+
+    /**
+     * Actualizar contenido de la tabla
+     */
+    function updateTableContent(html) {
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+
+        const newTable = temp.querySelector('.table-container');
+        const newPagination = temp.querySelector('.pagination-container');
+
+        if (newTable && tableContainer) {
+            tableContainer.innerHTML = newTable.innerHTML;
+        }
+
+        if (newPagination) {
+            const currentPagination = document.querySelector('.pagination-container');
+            if (currentPagination) {
+                currentPagination.innerHTML = newPagination.innerHTML;
+            }
+        }
+
+        // Re-inicializar paginación
+        initPagination();
     }
 
     /**
