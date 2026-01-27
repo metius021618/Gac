@@ -64,7 +64,7 @@ class DashboardController
     private function getPlatformsActiveCount(): int
     {
         try {
-            return $this->platformRepo->countActive();
+            return $this->platformRepo->countAllEnabled();
         } catch (\Exception $e) {
             error_log("Error al contar plataformas: " . $e->getMessage());
             return 0;
