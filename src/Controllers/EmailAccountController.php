@@ -44,23 +44,29 @@ class EmailAccountController
         
         $result = $this->emailAccountRepository->searchAndPaginate($search, $page, $perPageInt);
         
-        // Si es petición AJAX, devolver JSON
+        // Si es petición AJAX, devolver solo la tabla y paginación
         if ($request->isAjax()) {
-            json_response($result);
+            echo $this->renderPartial('admin/email_accounts/_table', [
+                'email_accounts' => $result['data'],
+                'total_records' => $result['total'],
+                'current_page' => $result['page'],
+                'per_page' => $result['per_page'],
+                'total_pages' => $result['total_pages'],
+                'search_query' => $search,
+                'valid_per_page' => [15, 30, 60, 100, 0]
+            ]);
             return;
         }
         
         $this->renderView('admin/email_accounts/index', [
             'title' => 'Gestión de Cuentas de Email',
             'email_accounts' => $result['data'],
-            'pagination' => [
-                'total' => $result['total'],
-                'page' => $result['page'],
-                'per_page' => $result['per_page'],
-                'total_pages' => $result['total_pages']
-            ],
-            'search' => $search,
-            'per_page' => $perPage
+            'total_records' => $result['total'],
+            'current_page' => $result['page'],
+            'per_page' => $result['per_page'],
+            'total_pages' => $result['total_pages'],
+            'search_query' => $search,
+            'valid_per_page' => [15, 30, 60, 100, 0]
         ]);
     }
 

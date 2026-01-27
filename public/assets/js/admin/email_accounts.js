@@ -1,6 +1,6 @@
 /**
  * GAC - JavaScript para Gestión de Cuentas de Email
- * Con búsqueda, paginación y funcionalidades mejoradas
+ * Con búsqueda AJAX en tiempo real y paginación
  */
 
 (function() {
@@ -12,11 +12,9 @@
     const searchInput = document.getElementById('searchInput');
     const clearSearchBtn = document.getElementById('clearSearch');
     const perPageSelect = document.getElementById('perPageSelect');
-    const tableBody = document.getElementById('tableBody');
     const tableContainer = document.querySelector('.table-container');
     
     // Estado
-    let searchTimeout = null;
     let isLoading = false;
 
     /**
@@ -30,7 +28,6 @@
         if (emailAccountsTable) {
             initTable();
             initSearch();
-            initPagination();
         }
     }
 
@@ -55,226 +52,47 @@
         // Botones de toggle status
         const toggleButtons = emailAccountsTable?.querySelectorAll('.btn-toggle');
         toggleButtons?.forEach(btn => {
+            btn.removeEventListener('click', handleToggleStatus); // Evitar duplicados
             btn.addEventListener('click', handleToggleStatus);
         });
 
         // Botones de eliminar
         const deleteButtons = emailAccountsTable?.querySelectorAll('.btn-delete');
         deleteButtons?.forEach(btn => {
+            btn.removeEventListener('click', handleDelete); // Evitar duplicados
             btn.addEventListener('click', handleDelete);
         });
     }
 
     /**
-     * Inicializar búsqueda
+     * Inicializar búsqueda AJAX
      */
     function initSearch() {
-        if (!searchInput) return;
+        if (!searchInput || !perPageSelect) return;
 
-        // Mostrar/ocultar botón de limpiar
-        searchInput.addEventListener('input', function() {
-            if (this.value.trim()) {
-                clearSearchBtn.style.display = 'flex';
-            } else {
-                clearSearchBtn.style.display = 'none';
-            }
-        });
-
-        // Búsqueda con debounce
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                performSearch();
-            }, 500); // Esperar 500ms después de que el usuario deje de escribir
-        });
-
-        // Limpiar búsqueda
-        clearSearchBtn?.addEventListener('click', function() {
-            searchInput.value = '';
-            clearSearchBtn.style.display = 'none';
-            performSearch();
-        });
-
-        // Búsqueda al presionar Enter
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                clearTimeout(searchTimeout);
-                performSearch();
-            }
-        });
-    }
-
-    /**
-     * Inicializar paginación
-     */
-    function initPagination() {
-        if (!perPageSelect) return;
-
-        // Cambiar cantidad por página (AJAX)
-        perPageSelect.addEventListener('change', async function() {
-            if (isLoading) return;
-            
-            isLoading = true;
-            const params = {
-                search: searchInput?.value.trim() || '',
-                page: 1,
-                per_page: this.value
-            };
-
-            try {
-                const url = new URL(window.location.pathname, window.location.origin);
-                Object.keys(params).forEach(key => {
-                    if (params[key] !== null && params[key] !== '') {
-                        url.searchParams.set(key, params[key]);
+        // Inicializar búsqueda AJAX usando la utilidad común
+        if (window.SearchAJAX) {
+            window.SearchAJAX.init({
+                searchInput: searchInput,
+                perPageSelect: perPageSelect,
+                clearSearchBtn: clearSearchBtn,
+                endpoint: window.location.pathname,
+                renderCallback: function(html) {
+                    window.SearchAJAX.updateTableContent(html);
+                    initTable(); // Re-inicializar eventos de la tabla después de la actualización
+                },
+                onSearchComplete: function() {
+                    // Mostrar/ocultar botón de limpiar
+                    if (clearSearchBtn && searchInput.value.trim()) {
+                        clearSearchBtn.style.display = 'flex';
+                    } else if (clearSearchBtn) {
+                        clearSearchBtn.style.display = 'none';
                     }
-                });
-
-                const response = await fetch(url.toString(), {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'text/html'
-                    }
-                });
-
-                if (response.ok) {
-                    const html = await response.text();
-                    window.history.pushState({}, '', url.toString());
-                    updateTableContent(html);
-                    initTable();
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            } finally {
-                isLoading = false;
-            }
-        });
-
-        // Botones de paginación (AJAX con delegación de eventos)
-        document.addEventListener('click', async function(e) {
-            const paginationBtn = e.target.closest('.pagination-btn, .pagination-page, .pagination-controls button[data-page]');
-            if (paginationBtn && paginationBtn.dataset.page && !paginationBtn.disabled && !paginationBtn.classList.contains('active')) {
-                e.preventDefault();
-                if (isLoading) return;
-                
-                isLoading = true;
-                const page = paginationBtn.dataset.page;
-                const params = {
-                    search: searchInput?.value.trim() || '',
-                    page: page,
-                    per_page: perPageSelect?.value || '15'
-                };
-
-                try {
-                    const url = new URL(window.location.pathname, window.location.origin);
-                    Object.keys(params).forEach(key => {
-                        if (params[key] !== null && params[key] !== '') {
-                            url.searchParams.set(key, params[key]);
-                        }
-                    });
-
-                    const response = await fetch(url.toString(), {
-                        method: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'text/html'
-                        }
-                    });
-
-                    if (response.ok) {
-                        const html = await response.text();
-                        window.history.pushState({}, '', url.toString());
-                        updateTableContent(html);
-                        initTable();
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                } finally {
-                    isLoading = false;
-                }
-            }
-        });
-    }
-
-    /**
-     * Realizar búsqueda AJAX
-     */
-    async function performSearch() {
-        if (isLoading) return;
-
-        isLoading = true;
-        const search = searchInput.value.trim();
-        const params = {
-            search: search,
-            page: 1,
-            per_page: perPageSelect?.value || '15'
-        };
-
-        try {
-            const url = new URL(window.location.pathname, window.location.origin);
-            Object.keys(params).forEach(key => {
-                if (params[key] !== null && params[key] !== '') {
-                    url.searchParams.set(key, params[key]);
                 }
             });
-
-            const response = await fetch(url.toString(), {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'text/html'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Error en la respuesta del servidor');
-            }
-
-            const html = await response.text();
-            
-            // Actualizar URL sin recargar
-            window.history.pushState({}, '', url.toString());
-            
-            // Actualizar contenido
-            updateTableContent(html);
-            
-            // Re-inicializar eventos de la tabla
-            initTable();
-            
-        } catch (error) {
-            console.error('Error en búsqueda:', error);
-            // Fallback: recargar página
-            window.location.href = url.toString();
-        } finally {
-            isLoading = false;
+        } else {
+            console.error('SearchAJAX no está disponible');
         }
-    }
-
-    /**
-     * Actualizar contenido de la tabla
-     */
-    function updateTableContent(html) {
-        const temp = document.createElement('div');
-        temp.innerHTML = html;
-
-        const newTable = temp.querySelector('.table-container');
-        const newPagination = temp.querySelector('.pagination-container');
-
-        if (newTable && tableContainer) {
-            tableContainer.innerHTML = newTable.innerHTML;
-        }
-
-        if (newPagination) {
-            const currentPagination = document.querySelector('.pagination-container');
-            if (currentPagination) {
-                currentPagination.innerHTML = newPagination.innerHTML;
-            }
-        }
-
-        // Re-inicializar paginación
-        initPagination();
     }
 
     /**
