@@ -6,6 +6,16 @@
 /* ============================================
    CHECKBOXES Y SELECCIÓN MÚLTIPLE
    ============================================ */
+.checkbox-column {
+    display: none !important;
+    width: 40px;
+    text-align: center;
+}
+
+.checkbox-column.show {
+    display: table-cell !important;
+}
+
 .admin-table input[type="checkbox"] {
     width: 18px;
     height: 18px;

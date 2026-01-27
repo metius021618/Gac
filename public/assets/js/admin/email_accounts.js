@@ -91,10 +91,10 @@
                 this.classList.remove('btn-secondary');
                 this.classList.add('btn-primary');
                 
-                // Mostrar checkboxes
+                // Mostrar checkboxes usando clase show
                 if (checkboxColumns) {
                     checkboxColumns.forEach(col => {
-                        col.style.display = '';
+                        col.classList.add('show');
                     });
                 }
                 
@@ -106,10 +106,10 @@
                 this.classList.remove('btn-primary');
                 this.classList.add('btn-secondary');
                 
-                // Ocultar checkboxes
+                // Ocultar checkboxes removiendo clase show
                 if (checkboxColumns) {
                     checkboxColumns.forEach(col => {
-                        col.style.display = 'none';
+                        col.classList.remove('show');
                     });
                 }
                 
@@ -118,8 +118,10 @@
                 if (rowCheckboxes) {
                     rowCheckboxes.forEach(cb => cb.checked = false);
                 }
-                if (selectAllCheckbox) {
-                    selectAllCheckbox.checked = false;
+                const currentSelectAll = document.getElementById('selectAll');
+                if (currentSelectAll) {
+                    currentSelectAll.checked = false;
+                    currentSelectAll.indeterminate = false;
                 }
                 
                 // Ocultar botón eliminar

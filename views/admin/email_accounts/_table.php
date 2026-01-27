@@ -9,14 +9,14 @@
     <table class="admin-table" id="emailAccountsTable">
         <thead>
             <tr>
-                <th style="width: 40px;" class="checkbox-column" style="display: none;">
+                <th class="checkbox-column" style="display: none; width: 40px;">
                     <input type="checkbox" id="selectAll" title="Seleccionar todos">
                 </th>
-                <th>ID</th>
-                <th>Correo</th>
-                <th>Usuario</th>
-                <th>Última Sincronización</th>
-                <th>Acciones</th>
+                <th style="width: 60px;">ID</th>
+                <th style="width: 30%;">Correo</th>
+                <th style="width: 20%;">Usuario</th>
+                <th style="width: 25%;">Última Sincronización</th>
+                <th style="width: 150px;">Acciones</th>
             </tr>
         </thead>
         <tbody id="tableBody">
