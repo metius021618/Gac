@@ -357,6 +357,26 @@ select.per-page-select {
     padding: var(--spacing-md);
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-table .email-cell {
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-table .user-cell {
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-table .actions-cell {
+    white-space: nowrap;
+    width: 150px;
 }
 
 .email-cell {
