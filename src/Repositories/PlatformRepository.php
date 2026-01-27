@@ -152,24 +152,15 @@ class PlatformRepository
     {
         try {
             $db = Database::getConnection();
-            $params = [];
-            $whereClause = '';
-
-            if (!empty($search) && trim($search) !== '') {
-                $searchTerm = '%' . trim($search) . '%';
-                $whereClause = "WHERE (name LIKE :search OR display_name LIKE :search)";
-                $params[':search'] = $searchTerm;
+            $searchTerm = '%' . trim($search) . '%';
+            
+            // Contar total
+            if (!empty($search)) {
+                $countStmt = $db->prepare("SELECT COUNT(*) as total FROM platforms WHERE name LIKE ? OR display_name LIKE ?");
+                $countStmt->execute([$searchTerm, $searchTerm]);
+            } else {
+                $countStmt = $db->query("SELECT COUNT(*) as total FROM platforms");
             }
-
-            // Contar total de registros
-            $countSql = "SELECT COUNT(*) as total FROM platforms {$whereClause}";
-            $countStmt = $db->prepare($countSql);
-            if (!empty($params)) {
-                foreach ($params as $key => $value) {
-                    $countStmt->bindValue($key, $value, PDO::PARAM_STR);
-                }
-            }
-            $countStmt->execute();
             $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
             
             // Calcular paginación
@@ -177,29 +168,24 @@ class PlatformRepository
             $offset = ($page - 1) * $perPage;
             $limitClause = $perPage > 0 ? "LIMIT {$perPage} OFFSET {$offset}" : '';
             
-            // Obtener datos paginados
-            $sql = "
-                SELECT 
-                    id,
-                    name,
-                    display_name,
-                    enabled,
-                    config,
-                    created_at,
-                    updated_at
-                FROM platforms
-                {$whereClause}
-                ORDER BY display_name ASC
-                {$limitClause}
-            ";
-            
-            $stmt = $db->prepare($sql);
-            if (!empty($params)) {
-                foreach ($params as $key => $value) {
-                    $stmt->bindValue($key, $value, PDO::PARAM_STR);
-                }
+            // Obtener datos
+            if (!empty($search)) {
+                $stmt = $db->prepare("
+                    SELECT id, name, display_name, enabled, config, created_at, updated_at
+                    FROM platforms
+                    WHERE name LIKE ? OR display_name LIKE ?
+                    ORDER BY display_name ASC
+                    {$limitClause}
+                ");
+                $stmt->execute([$searchTerm, $searchTerm]);
+            } else {
+                $stmt = $db->query("
+                    SELECT id, name, display_name, enabled, config, created_at, updated_at
+                    FROM platforms
+                    ORDER BY display_name ASC
+                    {$limitClause}
+                ");
             }
-            $stmt->execute();
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             return [

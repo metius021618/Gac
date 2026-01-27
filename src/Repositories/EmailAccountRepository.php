@@ -181,26 +181,15 @@ class EmailAccountRepository
     {
         try {
             $db = Database::getConnection();
+            $searchTerm = '%' . trim($search) . '%';
             
-            // Construir WHERE clause
-            $whereClause = '';
-            $params = [];
-            
-            if (!empty($search) && trim($search) !== '') {
-                $searchTerm = '%' . trim($search) . '%';
-                $whereClause = "WHERE (email LIKE :search OR JSON_UNQUOTE(JSON_EXTRACT(provider_config, '$.imap_user')) LIKE :search)";
-                $params[':search'] = $searchTerm;
+            // Contar total
+            if (!empty($search)) {
+                $countStmt = $db->prepare("SELECT COUNT(*) as total FROM email_accounts WHERE email LIKE ? OR JSON_UNQUOTE(JSON_EXTRACT(provider_config, '$.imap_user')) LIKE ?");
+                $countStmt->execute([$searchTerm, $searchTerm]);
+            } else {
+                $countStmt = $db->query("SELECT COUNT(*) as total FROM email_accounts");
             }
-            
-            // Contar total de registros
-            $countSql = "SELECT COUNT(*) as total FROM email_accounts {$whereClause}";
-            $countStmt = $db->prepare($countSql);
-            if (!empty($params)) {
-                foreach ($params as $key => $value) {
-                    $countStmt->bindValue($key, $value, PDO::PARAM_STR);
-                }
-            }
-            $countStmt->execute();
             $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
             
             // Calcular paginación
@@ -208,40 +197,33 @@ class EmailAccountRepository
             $offset = ($page - 1) * $perPage;
             $limitClause = $perPage > 0 ? "LIMIT {$perPage} OFFSET {$offset}" : '';
             
-            // Obtener datos paginados
-            $sql = "
-                SELECT 
-                    id,
-                    email,
-                    type,
-                    provider_config,
-                    enabled,
-                    last_sync_at,
-                    sync_status,
-                    error_message,
-                    created_at
-                FROM email_accounts
-                {$whereClause}
-                ORDER BY created_at DESC
-                {$limitClause}
-            ";
-            
-            $stmt = $db->prepare($sql);
-            if (!empty($params)) {
-                foreach ($params as $key => $value) {
-                    $stmt->bindValue($key, $value, PDO::PARAM_STR);
-                }
+            // Obtener datos
+            if (!empty($search)) {
+                $stmt = $db->prepare("
+                    SELECT id, email, type, provider_config, enabled, last_sync_at, sync_status, error_message, created_at
+                    FROM email_accounts
+                    WHERE email LIKE ? OR JSON_UNQUOTE(JSON_EXTRACT(provider_config, '$.imap_user')) LIKE ?
+                    ORDER BY created_at DESC
+                    {$limitClause}
+                ");
+                $stmt->execute([$searchTerm, $searchTerm]);
+            } else {
+                $stmt = $db->query("
+                    SELECT id, email, type, provider_config, enabled, last_sync_at, sync_status, error_message, created_at
+                    FROM email_accounts
+                    ORDER BY created_at DESC
+                    {$limitClause}
+                ");
             }
-            $stmt->execute();
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Parsear provider_config para cada registro
+            // Parsear provider_config
             foreach ($data as &$row) {
                 $config = json_decode($row['provider_config'] ?? '{}', true);
                 $row['imap_server'] = $config['imap_server'] ?? '';
                 $row['imap_port'] = $config['imap_port'] ?? 993;
                 $row['imap_user'] = $config['imap_user'] ?? '';
-                $row['imap_password'] = ''; // No exponer contraseñas
+                $row['imap_password'] = '';
             }
             
             return [
