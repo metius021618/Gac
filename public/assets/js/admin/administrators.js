@@ -84,8 +84,14 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    await window.GAC.success('Contraseña actualizada correctamente', 'Éxito');
+                    // Cerrar el modal de cambio de contraseña primero
                     closeModal();
+                    // Esperar un momento para que el modal se cierre completamente
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    // Mostrar popup de éxito
+                    await window.GAC.success('Contraseña actualizada correctamente', 'Éxito');
+                    // Redirigir a la vista de administradores después de aceptar
+                    window.location.href = '/admin/administrators';
                 } else {
                     await window.GAC.error(data.message || 'Error al actualizar contraseña', 'Error');
                 }
