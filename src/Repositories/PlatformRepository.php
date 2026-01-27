@@ -122,14 +122,17 @@ class PlatformRepository
             $whereClause = '';
 
             if (!empty($search)) {
-                $searchLower = '%' . strtolower(trim($search)) . '%';
-                $whereClause = "WHERE (LOWER(name) LIKE :search OR LOWER(display_name) LIKE :search)";
-                $params[':search'] = $searchLower;
+                $searchTerm = '%' . trim($search) . '%';
+                $whereClause = "WHERE (name LIKE :search OR display_name LIKE :search)";
+                $params['search'] = $searchTerm;
             }
 
             // Contar total de registros
             $countStmt = $db->prepare("SELECT COUNT(*) as total FROM platforms {$whereClause}");
-            $countStmt->execute($params);
+            foreach ($params as $key => $value) {
+                $countStmt->bindValue($key, $value, PDO::PARAM_STR);
+            }
+            $countStmt->execute();
             $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
             
             // Calcular paginación
@@ -154,7 +157,10 @@ class PlatformRepository
                 {$limitClause}
             ");
             
-            $stmt->execute($params);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value, PDO::PARAM_STR);
+            }
+            $stmt->execute();
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             return [

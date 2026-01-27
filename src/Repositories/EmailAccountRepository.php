@@ -157,20 +157,22 @@ class EmailAccountRepository
             
             if (!empty($search)) {
                 // Buscar por email o por usuario (imap_user en provider_config JSON)
-                $searchLower = '%' . strtolower(trim($search)) . '%';
+                $searchTerm = '%' . trim($search) . '%';
                 $whereConditions[] = "(
-                    LOWER(email) LIKE :search_email 
-                    OR LOWER(JSON_UNQUOTE(JSON_EXTRACT(provider_config, '$.imap_user'))) LIKE :search_imap_user
+                    email LIKE :search 
+                    OR JSON_UNQUOTE(JSON_EXTRACT(provider_config, '$.imap_user')) LIKE :search
                 )";
-                $params[':search_email'] = $searchLower;
-                $params[':search_imap_user'] = $searchLower;
+                $params['search'] = $searchTerm;
             }
             
             $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
             
             // Contar total de registros
             $countStmt = $db->prepare("SELECT COUNT(*) as total FROM email_accounts {$whereClause}");
-            $countStmt->execute($params);
+            foreach ($params as $key => $value) {
+                $countStmt->bindValue($key, $value, PDO::PARAM_STR);
+            }
+            $countStmt->execute();
             $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
             
             // Calcular paginación
@@ -197,7 +199,10 @@ class EmailAccountRepository
                 {$limitClause}
             ");
             
-            $stmt->execute($params);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value, PDO::PARAM_STR);
+            }
+            $stmt->execute();
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             // Parsear provider_config para cada registro
