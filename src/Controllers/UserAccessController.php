@@ -65,16 +65,6 @@ class UserAccessController
             return;
         }
 
-        // Verificar que el correo exista en email_accounts (debe existir en el dominio)
-        $emailAccount = $this->emailAccountRepository->findByEmail($email);
-        if (!$emailAccount) {
-            json_response([
-                'success' => false,
-                'message' => 'El correo no existe en el sistema. Debe estar registrado primero en "Correos Registrados"'
-            ], 400);
-            return;
-        }
-
         // Verificar que la plataforma exista
         $platform = $this->platformRepository->findById($platformId);
         if (!$platform) {

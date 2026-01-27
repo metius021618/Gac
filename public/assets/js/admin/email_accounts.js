@@ -62,6 +62,115 @@
             btn.removeEventListener('click', handleDelete); // Evitar duplicados
             btn.addEventListener('click', handleDelete);
         });
+
+        // Inicializar selección múltiple
+        initBulkSelection();
+    }
+
+    /**
+     * Inicializar selección múltiple para eliminación masiva
+     */
+    function initBulkSelection() {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const rowCheckboxes = emailAccountsTable?.querySelectorAll('.row-checkbox');
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+        const selectedCountSpan = document.getElementById('selectedCount');
+
+        if (!selectAllCheckbox || !rowCheckboxes || !bulkDeleteBtn) return;
+
+        // Seleccionar/deseleccionar todos
+        selectAllCheckbox.addEventListener('change', function() {
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBulkDeleteButton();
+        });
+
+        // Actualizar botón cuando cambian los checkboxes individuales
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateSelectAllState();
+                updateBulkDeleteButton();
+            });
+        });
+
+        // Manejar eliminación masiva
+        bulkDeleteBtn.addEventListener('click', handleBulkDelete);
+
+        /**
+         * Actualizar estado del checkbox "Seleccionar todos"
+         */
+        function updateSelectAllState() {
+            const checkedCount = Array.from(rowCheckboxes).filter(cb => cb.checked).length;
+            selectAllCheckbox.checked = checkedCount === rowCheckboxes.length && rowCheckboxes.length > 0;
+            selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < rowCheckboxes.length;
+        }
+
+        /**
+         * Actualizar visibilidad y contador del botón de eliminación masiva
+         */
+        function updateBulkDeleteButton() {
+            const selectedIds = Array.from(rowCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => parseInt(cb.value));
+
+            if (selectedIds.length > 0) {
+                bulkDeleteBtn.style.display = 'flex';
+                if (selectedCountSpan) {
+                    selectedCountSpan.textContent = selectedIds.length;
+                }
+            } else {
+                bulkDeleteBtn.style.display = 'none';
+            }
+        }
+    }
+
+    /**
+     * Manejar eliminación masiva
+     */
+    async function handleBulkDelete() {
+        const rowCheckboxes = emailAccountsTable?.querySelectorAll('.row-checkbox:checked');
+        if (!rowCheckboxes || rowCheckboxes.length === 0) {
+            return;
+        }
+
+        const selectedIds = Array.from(rowCheckboxes).map(cb => parseInt(cb.value));
+
+        try {
+            const confirmed = await window.GAC.confirm(
+                `¿Estás seguro de eliminar ${selectedIds.length} cuenta(s)? Esta acción no se puede deshacer.`,
+                'Eliminar Múltiples Cuentas'
+            );
+            if (!confirmed) {
+                return;
+            }
+        } catch (error) {
+            console.error('Error al mostrar modal de confirmación:', error);
+            return;
+        }
+
+        try {
+            const response = await fetch('/admin/email-accounts/bulk-delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ ids: selectedIds })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                await window.GAC.success(result.message || 'Cuentas eliminadas correctamente', 'Éxito');
+                location.reload();
+            } else {
+                await window.GAC.error(result.message || 'Error al eliminar las cuentas', 'Error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            await window.GAC.error('Error de conexión', 'Error');
+        }
     }
 
     /**

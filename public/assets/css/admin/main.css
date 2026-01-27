@@ -13,9 +13,17 @@
 
 .admin-header {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-xl);
+}
+
+.admin-header-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
 }
 
 .admin-header .building-header {

@@ -352,6 +352,32 @@ class EmailAccountRepository
     }
 
     /**
+     * Eliminar múltiples cuentas de email
+     * 
+     * @param array $ids Array de IDs a eliminar
+     * @return bool
+     */
+    public function bulkDelete(array $ids): bool
+    {
+        if (empty($ids)) {
+            return false;
+        }
+
+        try {
+            $db = Database::getConnection();
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            
+            $sql = "DELETE FROM email_accounts WHERE id IN ({$placeholders})";
+            $stmt = $db->prepare($sql);
+            
+            return $stmt->execute($ids);
+        } catch (PDOException $e) {
+            error_log("Error al eliminar múltiples cuentas de email: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Eliminar cuenta de email
      * 
      * @param int $id

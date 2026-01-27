@@ -9,6 +9,9 @@
     <table class="admin-table" id="emailAccountsTable">
         <thead>
             <tr>
+                <th style="width: 40px;">
+                    <input type="checkbox" id="selectAll" title="Seleccionar todos">
+                </th>
                 <th>ID</th>
                 <th>Correo</th>
                 <th>Usuario</th>
@@ -19,13 +22,16 @@
         <tbody id="tableBody">
             <?php if (empty($email_accounts)): ?>
                 <tr>
-                    <td colspan="5" class="text-center">
+                    <td colspan="6" class="text-center">
                         <p class="empty-message">No hay cuentas de email registradas</p>
                     </td>
                 </tr>
             <?php else: ?>
                 <?php foreach ($email_accounts as $account): ?>
                     <tr data-id="<?= $account['id'] ?>" class="table-row">
+                        <td>
+                            <input type="checkbox" class="row-checkbox" value="<?= $account['id'] ?>">
+                        </td>
                         <td><?= $account['id'] ?></td>
                         <td class="email-cell"><?= htmlspecialchars($account['email']) ?></td>
                         <td class="user-cell"><?= htmlspecialchars($account['imap_user'] ?? 'N/A') ?></td>

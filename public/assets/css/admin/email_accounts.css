@@ -4,6 +4,52 @@
  */
 
 /* ============================================
+   CHECKBOXES Y SELECCIÓN MÚLTIPLE
+   ============================================ */
+.admin-table input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+}
+
+.admin-table th input[type="checkbox"] {
+    margin: 0;
+}
+
+.row-checkbox {
+    cursor: pointer;
+}
+
+/* ============================================
+   BOTÓN ELIMINAR MASIVO
+   ============================================ */
+.btn-danger {
+    background: #dc3545;
+    color: #ffffff;
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: all var(--transition-base);
+}
+
+.btn-danger:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-danger:active {
+    transform: translateY(0);
+}
+
+/* ============================================
    TABLE CONTROLS (Búsqueda y Filtros)
    ============================================ */
 .table-controls {

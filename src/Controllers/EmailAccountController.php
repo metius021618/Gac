@@ -277,6 +277,57 @@ class EmailAccountController
     }
 
     /**
+     * Eliminar múltiples cuentas de email
+     */
+    public function bulkDelete(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response([
+                'success' => false,
+                'message' => 'Método no permitido'
+            ], 405);
+            return;
+        }
+
+        $ids = $request->input('ids', []);
+        
+        if (empty($ids) || !is_array($ids)) {
+            json_response([
+                'success' => false,
+                'message' => 'No se seleccionaron cuentas para eliminar'
+            ], 400);
+            return;
+        }
+
+        // Validar que todos sean números
+        $ids = array_filter(array_map('intval', $ids), function($id) {
+            return $id > 0;
+        });
+
+        if (empty($ids)) {
+            json_response([
+                'success' => false,
+                'message' => 'IDs inválidos'
+            ], 400);
+            return;
+        }
+
+        $deleted = $this->emailAccountRepository->bulkDelete($ids);
+
+        if ($deleted) {
+            json_response([
+                'success' => true,
+                'message' => count($ids) . ' cuenta(s) eliminada(s) correctamente'
+            ], 200);
+        } else {
+            json_response([
+                'success' => false,
+                'message' => 'Error al eliminar las cuentas'
+            ], 500);
+        }
+    }
+
+    /**
      * Eliminar cuenta de email
      */
     public function destroy(Request $request): void
