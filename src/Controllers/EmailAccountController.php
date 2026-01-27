@@ -426,6 +426,174 @@ class EmailAccountController
     }
 
     /**
+     * Mostrar formulario de registro masivo
+     */
+    public function bulkRegister(Request $request): void
+    {
+        $platformRepository = new \Gac\Repositories\PlatformRepository();
+        $platforms = $platformRepository->findAllEnabled();
+        
+        $this->renderView('admin/email_accounts/bulk_register', [
+            'title' => 'Asignar Correos Masivamente',
+            'platforms' => $platforms
+        ]);
+    }
+
+    /**
+     * Procesar registro masivo
+     */
+    public function bulkRegisterStore(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response([
+                'success' => false,
+                'message' => 'Método no permitido'
+            ], 405);
+            return;
+        }
+
+        $emailsInput = trim($request->input('emails', ''));
+        $accessCode = trim($request->input('access_code', ''));
+        $platformId = (int)$request->input('platform_id', 0);
+
+        // Validaciones básicas
+        if (empty($emailsInput) || empty($accessCode) || $platformId <= 0) {
+            json_response([
+                'success' => false,
+                'message' => 'Todos los campos son requeridos'
+            ], 400);
+            return;
+        }
+
+        // Validar plataforma
+        $platformRepository = new \Gac\Repositories\PlatformRepository();
+        $platform = $platformRepository->findById($platformId);
+        if (!$platform) {
+            json_response([
+                'success' => false,
+                'message' => 'La plataforma seleccionada no existe'
+            ], 400);
+            return;
+        }
+
+        // Procesar correos
+        $emailsArray = array_filter(
+            array_map('trim', explode("\n", $emailsInput)),
+            function($email) {
+                return !empty($email);
+            }
+        );
+        
+        // Eliminar duplicados
+        $emailsArray = array_unique($emailsArray);
+
+        if (empty($emailsArray)) {
+            json_response([
+                'success' => false,
+                'message' => 'No se proporcionaron correos válidos'
+            ], 400);
+            return;
+        }
+
+        // Validar dominio pocoyoni.com
+        $invalidEmails = [];
+        $validEmails = [];
+        
+        foreach ($emailsArray as $email) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $invalidEmails[] = $email;
+                continue;
+            }
+            
+            // Verificar dominio pocoyoni.com
+            $domain = substr(strrchr($email, "@"), 1);
+            if (strtolower($domain) !== 'pocoyoni.com') {
+                $invalidEmails[] = $email;
+                continue;
+            }
+            
+            $validEmails[] = $email;
+        }
+
+        if (empty($validEmails)) {
+            json_response([
+                'success' => false,
+                'message' => 'No se encontraron correos válidos del dominio pocoyoni.com',
+                'invalid_emails' => $invalidEmails
+            ], 400);
+            return;
+        }
+
+        // Crear cuentas de email si no existen
+        $masterAccount = $this->emailAccountRepository->findMasterAccount();
+        
+        if (!$masterAccount) {
+            json_response([
+                'success' => false,
+                'message' => 'No se encontró la cuenta maestra'
+            ], 500);
+            return;
+        }
+
+        $masterConfig = json_decode($masterAccount['provider_config'] ?? '{}', true);
+        $createdAccounts = 0;
+        
+        foreach ($validEmails as $email) {
+            $existingAccount = $this->emailAccountRepository->findByEmail($email);
+            if (!$existingAccount) {
+                $accountData = [
+                    'email' => $email,
+                    'type' => 'imap',
+                    'provider_config' => [
+                        'imap_server' => $masterConfig['imap_server'] ?? '',
+                        'imap_port' => $masterConfig['imap_port'] ?? 993,
+                        'imap_encryption' => $masterConfig['imap_encryption'] ?? 'ssl',
+                        'imap_user' => $accessCode,
+                        'imap_password' => $masterConfig['imap_password'] ?? '',
+                        'imap_validate_cert' => $masterConfig['imap_validate_cert'] ?? true,
+                        'is_master' => false,
+                        'filter_by_recipient' => true
+                    ],
+                    'enabled' => 1,
+                    'sync_status' => 'pending'
+                ];
+                
+                if ($this->emailAccountRepository->save($accountData)) {
+                    $createdAccounts++;
+                }
+            }
+        }
+
+        // Crear accesos de usuario masivamente
+        $userAccessRepository = new \Gac\Repositories\UserAccessRepository();
+        $result = $userAccessRepository->bulkCreate($validEmails, $accessCode, $platformId);
+
+        $message = sprintf(
+            'Se procesaron %d correo(s) correctamente. %d nuevo(s), %d actualizado(s).',
+            $result['success'] + $result['duplicates'],
+            $result['success'],
+            $result['duplicates']
+        );
+
+        if (!empty($invalidEmails)) {
+            $message .= ' ' . count($invalidEmails) . ' correo(s) fueron rechazados por formato inválido o dominio incorrecto.';
+        }
+
+        json_response([
+            'success' => true,
+            'message' => $message,
+            'stats' => [
+                'total' => count($validEmails),
+                'created' => $result['success'],
+                'updated' => $result['duplicates'],
+                'invalid' => count($invalidEmails),
+                'accounts_created' => $createdAccounts
+            ],
+            'invalid_emails' => $invalidEmails
+        ], 200);
+    }
+
+    /**
      * Renderizar vista
      */
     private function renderView(string $view, array $data = []): void
