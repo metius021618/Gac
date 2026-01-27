@@ -146,12 +146,24 @@
     background: rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-decoration: none;
 }
 
 .bulk-register-form .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.15);
     border-color: var(--color-primary);
+    color: var(--color-primary-light);
     transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .bulk-register-form .btn-primary {

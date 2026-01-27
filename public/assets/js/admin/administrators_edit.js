@@ -25,14 +25,14 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Administrador actualizado correctamente');
+                    await window.GAC.success('Administrador actualizado correctamente', 'Éxito');
                     window.location.href = '/admin/administrators';
                 } else {
-                    alert(data.message || 'Error al actualizar administrador');
+                    await window.GAC.error(data.message || 'Error al actualizar administrador', 'Error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error de conexión. Por favor intenta nuevamente.');
+                await window.GAC.error('Error de conexión. Por favor intenta nuevamente.', 'Error de Conexión');
             }
         });
     }

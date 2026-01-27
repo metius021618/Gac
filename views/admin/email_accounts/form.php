@@ -125,7 +125,7 @@ $title = $title ?? ($isEdit ? 'Editar Cuenta de Email' : 'Agregar Cuenta de Emai
 $show_nav = true;
 $footer_text = '';
 $footer_whatsapp = false;
-$additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/email_accounts.css'];
+$additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/email_accounts.css', '/assets/css/admin/building.css'];
 $additional_js = ['/assets/js/admin/email_accounts.js'];
 
 require base_path('views/layouts/main.php');
