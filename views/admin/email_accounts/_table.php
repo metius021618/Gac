@@ -12,9 +12,6 @@
                 <th>ID</th>
                 <th>Correo</th>
                 <th>Usuario</th>
-                <th>Servidor IMAP</th>
-                <th>Puerto</th>
-                <th>Estado</th>
                 <th>Última Sincronización</th>
                 <th>Acciones</th>
             </tr>
@@ -22,7 +19,7 @@
         <tbody id="tableBody">
             <?php if (empty($email_accounts)): ?>
                 <tr>
-                    <td colspan="8" class="text-center">
+                    <td colspan="5" class="text-center">
                         <p class="empty-message">No hay cuentas de email registradas</p>
                     </td>
                 </tr>
@@ -32,20 +29,13 @@
                         <td><?= $account['id'] ?></td>
                         <td class="email-cell"><?= htmlspecialchars($account['email']) ?></td>
                         <td class="user-cell"><?= htmlspecialchars($account['imap_user'] ?? 'N/A') ?></td>
-                        <td><?= htmlspecialchars($account['imap_server'] ?? 'N/A') ?></td>
-                        <td><?= htmlspecialchars($account['imap_port'] ?? '993') ?></td>
-                        <td>
-                            <span class="status-badge status-<?= $account['enabled'] ? 'active' : 'inactive' ?>">
-                                <?= $account['enabled'] ? 'Activa' : 'Inactiva' ?>
-                            </span>
-                        </td>
                         <td>
                             <?php if ($account['last_sync_at']): ?>
-                                <span class="sync-time" title="<?= htmlspecialchars($account['last_sync_at']) ?>">
+                                <span class="sync-time" title="Última vez que el sistema procesó correos de esta cuenta: <?= htmlspecialchars($account['last_sync_at']) ?>">
                                     <?= date('d/m/Y H:i', strtotime($account['last_sync_at'])) ?>
                                 </span>
                             <?php else: ?>
-                                <span class="sync-time never">Nunca</span>
+                                <span class="sync-time never" title="Esta cuenta aún no ha sido procesada por el sistema">Nunca</span>
                             <?php endif; ?>
                         </td>
                         <td class="actions-cell">
