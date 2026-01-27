@@ -121,6 +121,39 @@ class EmailAccountRepository
     }
 
     /**
+     * Obtener la cuenta maestra
+     * 
+     * @return array|null
+     */
+    public function findMasterAccount(): ?array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                SELECT 
+                    id,
+                    email,
+                    type,
+                    provider_config,
+                    enabled,
+                    last_sync_at,
+                    sync_status
+                FROM email_accounts
+                WHERE JSON_EXTRACT(provider_config, '$.is_master') = true
+                LIMIT 1
+            ");
+            
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            return $result ?: null;
+        } catch (PDOException $e) {
+            error_log("Error al obtener cuenta maestra: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Obtener una cuenta de email por email
      * 
      * @param string $email
