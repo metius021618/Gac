@@ -374,7 +374,12 @@
             // Actualizar contenido de la tabla
             if (window.SearchAJAX && window.SearchAJAX.updateTableContent) {
                 window.SearchAJAX.updateTableContent(html);
-                initTable(); // Re-inicializar eventos
+                // Actualizar referencia a la tabla después de actualización AJAX
+                emailSubjectsTable = document.getElementById('emailSubjectsTable');
+                // Re-inicializar eventos con delegación (funciona con elementos dinámicos)
+                if (emailSubjectsTable) {
+                    initTable();
+                }
                 initPagination(); // Re-inicializar paginación
             } else {
                 // Fallback: recargar página
