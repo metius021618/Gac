@@ -432,16 +432,21 @@
             }
         })
         .then(response => response.text())
-        .then(html => {
-            if (window.SearchAJAX && window.SearchAJAX.updateTableContent) {
-                window.SearchAJAX.updateTableContent(html);
-                initTable();
-                initPagination();
-                
-                // Actualizar URL sin recargar
-                window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
-            }
-        })
+            .then(html => {
+                if (window.SearchAJAX && window.SearchAJAX.updateTableContent) {
+                    window.SearchAJAX.updateTableContent(html);
+                    // Actualizar referencia a la tabla después de actualización AJAX
+                    emailSubjectsTable = document.getElementById('emailSubjectsTable');
+                    // Re-inicializar eventos con delegación
+                    if (emailSubjectsTable) {
+                        initTable();
+                    }
+                    initPagination();
+                    
+                    // Actualizar URL sin recargar
+                    window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
+                }
+            })
         .catch(error => {
             console.error('Error al cambiar de página:', error);
         });
