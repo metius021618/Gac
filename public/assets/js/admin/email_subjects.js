@@ -216,7 +216,13 @@
         if (deleteBtn) {
             e.preventDefault();
             e.stopPropagation();
-            handleDelete(e);
+            // Pasar el botón directamente en el evento
+            const syntheticEvent = {
+                ...e,
+                currentTarget: deleteBtn,
+                target: deleteBtn
+            };
+            handleDelete(syntheticEvent);
             return;
         }
         
@@ -225,7 +231,13 @@
         if (editBtn) {
             e.preventDefault();
             e.stopPropagation();
-            handleEdit(e);
+            // Pasar el botón directamente en el evento
+            const syntheticEvent = {
+                ...e,
+                currentTarget: editBtn,
+                target: editBtn
+            };
+            handleEdit(syntheticEvent);
             return;
         }
     }
