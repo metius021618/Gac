@@ -36,6 +36,7 @@
         if (emailSubjectsTable) {
             initTable();
             initSearch();
+            initPagination();
         }
     }
 
@@ -333,6 +334,7 @@
             if (window.SearchAJAX && window.SearchAJAX.updateTableContent) {
                 window.SearchAJAX.updateTableContent(html);
                 initTable(); // Re-inicializar eventos
+                initPagination(); // Re-inicializar paginación
             } else {
                 // Fallback: recargar página
                 location.reload();
@@ -342,6 +344,63 @@
             console.error('Error al actualizar tabla:', error);
             location.reload();
         });
+    }
+
+    /**
+     * Inicializar eventos de paginación
+     */
+    function initPagination() {
+        // Botones de paginación
+        const paginationBtns = document.querySelectorAll('.pagination-btn[data-page], .pagination-page[data-page]');
+        paginationBtns.forEach(btn => {
+            btn.removeEventListener('click', handlePagination);
+            btn.addEventListener('click', handlePagination);
+        });
+    }
+
+    /**
+     * Manejar clic en paginación
+     */
+    function handlePagination(e) {
+        const btn = e.currentTarget;
+        const page = parseInt(btn.dataset.page);
+        
+        if (!page || isNaN(page)) return;
+        
+        // Actualizar página usando SearchAJAX
+        if (window.SearchAJAX && window.SearchAJAX.goToPage) {
+            window.SearchAJAX.goToPage(page);
+        } else {
+            // Fallback: construir URL manualmente
+            const params = new URLSearchParams();
+            const currentSearch = searchInput?.value || '';
+            const currentPerPage = perPageSelect?.value || '15';
+            
+            if (currentSearch) {
+                params.set('search', currentSearch);
+            }
+            params.set('per_page', currentPerPage);
+            params.set('page', page);
+            params.set('ajax', '1');
+            
+            fetch(`${window.location.pathname}?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                if (window.SearchAJAX && window.SearchAJAX.updateTableContent) {
+                    window.SearchAJAX.updateTableContent(html);
+                    initTable();
+                    initPagination();
+                }
+            })
+            .catch(error => {
+                console.error('Error al cambiar de página:', error);
+            });
+        }
     }
 
     /**
