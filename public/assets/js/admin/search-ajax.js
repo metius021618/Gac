@@ -209,10 +209,14 @@
 
             // Paginación (delegación de eventos)
             document.addEventListener('click', function(e) {
-                const paginationBtn = e.target.closest('.pagination-controls button[data-page]');
-                if (paginationBtn) {
+                // Buscar botones de paginación con múltiples selectores
+                const paginationBtn = e.target.closest('.pagination-controls button[data-page], .pagination-btn[data-page], .pagination-page[data-page]');
+                if (paginationBtn && !paginationBtn.disabled) {
                     e.preventDefault();
-                    const page = paginationBtn.dataset.page;
+                    e.stopPropagation();
+                    const page = parseInt(paginationBtn.dataset.page);
+                    if (!page || isNaN(page) || page < 1) return;
+                    
                     const params = {
                         search: searchInput?.value.trim() || '',
                         page: page,
