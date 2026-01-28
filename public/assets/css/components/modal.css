@@ -12,6 +12,10 @@
     left: 0;
     right: 0;
     bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    min-height: 100vh;
+    max-height: 100vh;
     background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(4px);
     z-index: 20000;
@@ -21,6 +25,8 @@
     padding: var(--spacing-md);
     opacity: 0;
     animation: fadeIn 0.2s ease forwards;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .modal-overlay.hidden {

@@ -159,9 +159,21 @@
                 
                 document.body.appendChild(this.overlay);
                 
-                // Forzar display flex para asegurar visibilidad
+                // Prevenir scroll del body cuando el modal está abierto
+                const originalOverflow = document.body.style.overflow;
+                document.body.style.overflow = 'hidden';
+                this.originalOverflow = originalOverflow;
+                
+                // Forzar display flex y dimensiones completas para asegurar visibilidad
                 this.overlay.style.display = 'flex';
                 this.overlay.style.opacity = '1';
+                this.overlay.style.position = 'fixed';
+                this.overlay.style.top = '0';
+                this.overlay.style.left = '0';
+                this.overlay.style.width = '100vw';
+                this.overlay.style.height = '100vh';
+                this.overlay.style.minHeight = '100vh';
+                this.overlay.style.maxHeight = '100vh';
 
                 // Obtener referencias
                 this.container = this.overlay.querySelector('.modal-container');
@@ -234,6 +246,13 @@
             this.overlay.style.animation = 'fadeOut 0.2s ease forwards';
 
             setTimeout(() => {
+                // Restaurar scroll del body
+                if (this.originalOverflow !== undefined) {
+                    document.body.style.overflow = this.originalOverflow || '';
+                } else {
+                    document.body.style.overflow = '';
+                }
+                
                 if (this.overlay && this.overlay.parentNode) {
                     this.overlay.parentNode.removeChild(this.overlay);
                 }
