@@ -12,11 +12,23 @@
     const searchInput = document.getElementById('searchInput');
     const clearSearchBtn = document.getElementById('clearSearch');
     const perPageSelect = document.getElementById('perPageSelect');
+    const btnNewSubject = document.getElementById('btnNewSubject');
+    const subjectModal = document.getElementById('subjectModal');
+    const closeSubjectModal = document.getElementById('closeSubjectModal');
+    const cancelSubjectBtn = document.getElementById('cancelSubjectBtn');
+    const modalTitle = document.getElementById('modalTitle');
+    const subjectIdInput = document.getElementById('subjectId');
+    const modalPlatformSelect = document.getElementById('modal_platform_id');
+    const modalSubjectLineInput = document.getElementById('modal_subject_line');
 
     /**
      * Inicialización
      */
     function init() {
+        if (btnNewSubject && subjectModal) {
+            initModal();
+        }
+        
         if (emailSubjectForm) {
             initForm();
         }
@@ -28,9 +40,98 @@
     }
 
     /**
+     * Inicializar modal
+     */
+    function initModal() {
+        // Abrir modal al hacer clic en "Nuevo asunto"
+        btnNewSubject.addEventListener('click', openNewSubjectModal);
+        
+        // Cerrar modal
+        if (closeSubjectModal) {
+            closeSubjectModal.addEventListener('click', closeModal);
+        }
+        
+        if (cancelSubjectBtn) {
+            cancelSubjectBtn.addEventListener('click', closeModal);
+        }
+        
+        // Cerrar al hacer clic en el overlay
+        const overlay = subjectModal?.querySelector('.modal-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', closeModal);
+        }
+        
+        // Cerrar con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !subjectModal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+    }
+
+    /**
+     * Abrir modal para nuevo asunto
+     */
+    function openNewSubjectModal() {
+        if (!subjectModal) return;
+        
+        // Resetear formulario
+        resetForm();
+        
+        // Actualizar título
+        if (modalTitle) {
+            modalTitle.textContent = 'Nuevo Asunto';
+        }
+        
+        // Mostrar modal
+        subjectModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    /**
+     * Cerrar modal
+     */
+    function closeModal() {
+        if (!subjectModal) return;
+        
+        subjectModal.classList.add('hidden');
+        document.body.style.overflow = '';
+        resetForm();
+    }
+
+    /**
+     * Resetear formulario
+     */
+    function resetForm() {
+        if (emailSubjectForm) {
+            emailSubjectForm.reset();
+        }
+        if (subjectIdInput) {
+            subjectIdInput.value = '';
+        }
+        clearAllErrors();
+    }
+
+    /**
+     * Limpiar todos los errores
+     */
+    function clearAllErrors() {
+        const errorElements = emailSubjectForm?.querySelectorAll('.form-error');
+        errorElements?.forEach(el => {
+            el.textContent = '';
+            el.style.display = 'none';
+        });
+        
+        const formGroups = emailSubjectForm?.querySelectorAll('.form-group');
+        formGroups?.forEach(group => group.classList.remove('has-error'));
+    }
+
+    /**
      * Inicializar formulario
      */
     function initForm() {
+        if (!emailSubjectForm) return;
+        
         emailSubjectForm.addEventListener('submit', handleFormSubmit);
         
         // Validación en tiempo real
@@ -99,7 +200,7 @@
 
         const formData = new FormData(emailSubjectForm);
         const data = Object.fromEntries(formData);
-        const isEdit = !!data.id;
+        const isEdit = !!data.id && data.id !== '';
         const url = isEdit ? '/admin/email-subjects/update' : '/admin/email-subjects';
 
         try {
@@ -115,8 +216,17 @@
             const result = await response.json();
 
             if (result.success) {
-                await window.GAC.success(result.message || (isEdit ? 'Asunto actualizado correctamente' : 'Asunto agregado correctamente'), 'Éxito');
-                window.location.href = '/admin/email-subjects';
+                // Cerrar modal primero
+                closeModal();
+                
+                // Mostrar popup de éxito
+                await window.GAC.success(
+                    result.message || (isEdit ? 'Asunto actualizado correctamente' : 'Asunto agregado correctamente'), 
+                    'Éxito'
+                );
+                
+                // Actualizar tabla dinámicamente
+                refreshTable();
             } else {
                 await window.GAC.error(result.message || 'Error al guardar el asunto', 'Error');
             }
@@ -126,6 +236,54 @@
         } finally {
             setLoadingState(false);
         }
+    }
+
+    /**
+     * Actualizar tabla dinámicamente
+     */
+    function refreshTable() {
+        if (!window.SearchAJAX) {
+            // Si SearchAJAX no está disponible, recargar la página
+            location.reload();
+            return;
+        }
+        
+        // Obtener valores actuales de búsqueda y paginación
+        const currentSearch = searchInput?.value || '';
+        const currentPerPage = perPageSelect?.value || '15';
+        const currentPage = 1; // Resetear a página 1 después de agregar
+        
+        // Construir URL con parámetros
+        const params = new URLSearchParams();
+        if (currentSearch) {
+            params.set('search', currentSearch);
+        }
+        params.set('per_page', currentPerPage);
+        params.set('page', currentPage);
+        params.set('ajax', '1');
+        
+        // Hacer petición AJAX para actualizar la tabla
+        fetch(`${window.location.pathname}?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            // Actualizar contenido de la tabla
+            if (window.SearchAJAX && window.SearchAJAX.updateTableContent) {
+                window.SearchAJAX.updateTableContent(html);
+                initTable(); // Re-inicializar eventos
+            } else {
+                // Fallback: recargar página
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error al actualizar tabla:', error);
+            location.reload();
+        });
     }
 
     /**
@@ -149,15 +307,17 @@
      */
     function validateField(e) {
         const field = e.target;
-        const errorElement = document.getElementById(field.id + 'Error');
+        // Manejar tanto campos normales como del modal
+        const fieldId = field.id.replace('modal_', '');
+        const errorElement = document.getElementById(field.id + 'Error') || document.getElementById('modal' + fieldId.charAt(0).toUpperCase() + fieldId.slice(1) + 'Error');
         const formGroup = field.closest('.form-group');
         let errorMessage = '';
 
         if (field.hasAttribute('required') && !field.value.trim()) {
             errorMessage = 'Este campo es requerido';
-        } else if (field.id === 'subject_line' && field.value.trim().length < 3) {
+        } else if ((field.id === 'subject_line' || field.id === 'modal_subject_line') && field.value.trim().length < 3) {
             errorMessage = 'El asunto debe tener al menos 3 caracteres';
-        } else if (field.id === 'platform_id' && parseInt(field.value) <= 0) {
+        } else if ((field.id === 'platform_id' || field.id === 'modal_platform_id') && parseInt(field.value) <= 0) {
             errorMessage = 'Selecciona una plataforma válida';
         }
 
@@ -187,7 +347,8 @@
      */
     function clearFieldError(e) {
         const field = e.target;
-        const errorElement = document.getElementById(field.id + 'Error');
+        const fieldId = field.id.replace('modal_', '');
+        const errorElement = document.getElementById(field.id + 'Error') || document.getElementById('modal' + fieldId.charAt(0).toUpperCase() + fieldId.slice(1) + 'Error');
         const formGroup = field.closest('.form-group');
         
         if (errorElement) {

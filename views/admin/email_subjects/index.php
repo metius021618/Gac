@@ -20,13 +20,13 @@ $content = ob_start();
     <div class="admin-content">
         <div class="table-controls">
             <div class="table-controls-left">
-                <a href="/admin/email-subjects/create" class="btn btn-primary btn-new-subject">
+                <button type="button" id="btnNewSubject" class="btn btn-primary btn-new-subject">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                     Nuevo asunto
-                </a>
+                </button>
             </div>
             
             <div class="table-controls-right">
@@ -75,6 +75,92 @@ $content = ob_start();
 
         <!-- Tabla de asuntos -->
         <?php require base_path('views/admin/email_subjects/_table.php'); ?>
+    </div>
+</div>
+
+<!-- Modal para nuevo/editar asunto -->
+<div id="subjectModal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title" id="modalTitle">Nuevo Asunto</h2>
+            <button type="button" class="modal-close" id="closeSubjectModal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-content">
+            <form id="emailSubjectForm" class="admin-form email-subjects-form" novalidate>
+                <input type="hidden" id="subjectId" name="id" value="">
+                
+                <div class="form-group">
+                    <label for="modal_platform_id" class="form-label">
+                        <svg class="form-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                        Plataforma <span class="required">*</span>
+                    </label>
+                    <select 
+                        id="modal_platform_id" 
+                        name="platform_id" 
+                        class="form-select" 
+                        required
+                    >
+                        <option value="" disabled selected>Seleccione una plataforma</option>
+                        <?php 
+                        // Cargar plataformas para el modal
+                        use Gac\Repositories\PlatformRepository;
+                        $platformRepo = new PlatformRepository();
+                        $platforms = $platformRepo->findAllEnabled();
+                        foreach ($platforms as $platform): 
+                        ?>
+                            <option value="<?= $platform['id'] ?>">
+                                <?= htmlspecialchars($platform['display_name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <span class="form-error" id="modalPlatformError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="modal_subject_line" class="form-label">
+                        <svg class="form-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        Asunto <span class="required">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="modal_subject_line" 
+                        name="subject_line" 
+                        class="form-input" 
+                        placeholder="Ej: Tu código de verificación de Netflix"
+                        value=""
+                        required
+                        maxlength="500"
+                    >
+                    <span class="form-error" id="modalSubjectLineError"></span>
+                    <small class="form-help">Asunto del correo electrónico que se buscará para identificar la plataforma</small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelSubjectBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-text">Guardar Asunto</span>
+                        <span class="btn-loader" style="display: none;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

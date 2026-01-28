@@ -334,6 +334,28 @@
 }
 
 /* ============================================
+   MODAL ESTILOS
+   ============================================ */
+#subjectModal .modal-container {
+    max-width: 600px;
+    width: 90%;
+}
+
+#subjectModal .modal-content {
+    padding: var(--spacing-xl);
+}
+
+#subjectModal .form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+#subjectModal .form-actions {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+}
+
+/* ============================================
    RESPONSIVE
    ============================================ */
 @media (max-width: 768px) {
@@ -359,5 +381,10 @@
     .email-subjects-form .form-actions .btn {
         width: 100%;
         justify-content: center;
+    }
+
+    #subjectModal .modal-container {
+        width: 95%;
+        margin: var(--spacing-md);
     }
 }
