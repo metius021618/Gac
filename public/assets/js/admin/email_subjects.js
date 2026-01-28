@@ -8,7 +8,7 @@
 
     // Elementos del DOM
     const emailSubjectForm = document.getElementById('emailSubjectForm');
-    const emailSubjectsTable = document.getElementById('emailSubjectsTable');
+    let emailSubjectsTable = document.getElementById('emailSubjectsTable'); // let para poder actualizar después de AJAX
     const searchInput = document.getElementById('searchInput');
     const clearSearchBtn = document.getElementById('clearSearch');
     const perPageSelect = document.getElementById('perPageSelect');
