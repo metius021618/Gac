@@ -192,22 +192,42 @@
     }
 
     /**
-     * Inicializar tabla
+     * Inicializar tabla (usando delegación de eventos para elementos dinámicos)
      */
     function initTable() {
-        // Botones de eliminar
-        const deleteButtons = emailSubjectsTable?.querySelectorAll('.btn-delete');
-        deleteButtons?.forEach(btn => {
-            btn.removeEventListener('click', handleDelete);
-            btn.addEventListener('click', handleDelete);
-        });
+        // Usar delegación de eventos en el contenedor de la tabla para elementos dinámicos
+        // Esto asegura que los eventos funcionen incluso después de actualizaciones AJAX
         
-        // Botones de editar
-        const editButtons = emailSubjectsTable?.querySelectorAll('.btn-edit');
-        editButtons?.forEach(btn => {
-            btn.removeEventListener('click', handleEdit);
-            btn.addEventListener('click', handleEdit);
-        });
+        // Delegación para botones de eliminar
+        if (emailSubjectsTable) {
+            // Remover listeners anteriores si existen
+            emailSubjectsTable.removeEventListener('click', handleTableClick);
+            // Agregar nuevo listener con delegación
+            emailSubjectsTable.addEventListener('click', handleTableClick);
+        }
+    }
+
+    /**
+     * Manejar clics en la tabla usando delegación de eventos
+     */
+    function handleTableClick(e) {
+        // Botón de eliminar
+        const deleteBtn = e.target.closest('.btn-delete');
+        if (deleteBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleDelete(e);
+            return;
+        }
+        
+        // Botón de editar
+        const editBtn = e.target.closest('.btn-edit');
+        if (editBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleEdit(e);
+            return;
+        }
     }
 
     /**
@@ -225,7 +245,12 @@
                 endpoint: window.location.pathname,
                 renderCallback: function(html) {
                     window.SearchAJAX.updateTableContent(html);
-                    initTable(); // Re-inicializar eventos de la tabla después de la actualización
+                    // Actualizar referencia a la tabla después de actualización AJAX
+                    emailSubjectsTable = document.getElementById('emailSubjectsTable');
+                    // Re-inicializar eventos (la delegación ya está activa, pero por si acaso)
+                    if (emailSubjectsTable) {
+                        initTable();
+                    }
                     initPagination(); // Re-inicializar paginación
                 },
                 onSearchComplete: function() {

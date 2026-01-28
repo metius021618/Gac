@@ -98,16 +98,18 @@
                 }
             }
 
-            // Re-inicializar eventos de la tabla
-            this.reinitializeTableEvents();
+            // Re-inicializar eventos de la tabla (si existe callback personalizado)
+            if (this.reinitializeTableEvents) {
+                this.reinitializeTableEvents();
+            }
         },
 
         /**
          * Re-inicializar eventos después de actualizar el contenido
+         * Este método puede ser sobrescrito por cada vista específica
          */
         reinitializeTableEvents() {
-            // Este método será sobrescrito por cada vista específica
-            // para agregar eventos personalizados (toggle, delete, etc.)
+            // Por defecto no hace nada, cada vista puede sobrescribir esto
         },
 
         /**
