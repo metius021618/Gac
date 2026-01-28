@@ -65,6 +65,14 @@ class Application
         // Rutas de plataformas
         $router->get('/admin/platforms', 'PlatformController@index', ['auth']);
         
+        // Rutas de asuntos de email
+        $router->get('/admin/email-subjects', 'EmailSubjectController@index', ['auth']);
+        $router->get('/admin/email-subjects/create', 'EmailSubjectController@create', ['auth']);
+        $router->post('/admin/email-subjects', 'EmailSubjectController@store', ['auth']);
+        $router->get('/admin/email-subjects/edit', 'EmailSubjectController@edit', ['auth']);
+        $router->post('/admin/email-subjects/update', 'EmailSubjectController@update', ['auth']);
+        $router->post('/admin/email-subjects/delete', 'EmailSubjectController@destroy', ['auth']);
+        
         // Rutas de administradores
         $router->get('/admin/administrators', 'AdminController@index', ['auth']);
         $router->get('/admin/administrators/edit', 'AdminController@edit', ['auth']);
