@@ -151,6 +151,12 @@
         if (subjectIdInput) {
             subjectIdInput.value = '';
         }
+        if (modalPlatformSelect) {
+            modalPlatformSelect.value = '';
+        }
+        if (modalSubjectLineInput) {
+            modalSubjectLineInput.value = '';
+        }
         clearAllErrors();
     }
 
