@@ -3,6 +3,79 @@
  */
 
 /* ============================================
+   BÚSQUEDA ESTILIZADA
+   ============================================ */
+.search-input-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+    max-width: 400px;
+}
+
+.search-input-wrapper .search-icon {
+    position: absolute;
+    left: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: color var(--transition-base);
+    z-index: 1;
+}
+
+.search-input-wrapper .search-input {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) calc(var(--spacing-xl) + var(--spacing-sm));
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 2px solid var(--border-color) !important;
+    border-radius: var(--border-radius);
+    color: var(--text-primary) !important;
+    font-size: var(--font-size-base);
+    font-family: var(--font-family);
+    transition: all var(--transition-base);
+    outline: none;
+}
+
+.search-input-wrapper .search-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.search-input-wrapper .search-input:focus {
+    border-color: var(--color-primary) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+}
+
+.search-input-wrapper .search-input:focus ~ .search-icon,
+.search-input-wrapper .search-input:not(:placeholder-shown) ~ .search-icon {
+    color: var(--color-primary-light);
+}
+
+.clear-search-btn {
+    position: absolute;
+    right: var(--spacing-sm);
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-base);
+    z-index: 2;
+}
+
+.clear-search-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================
    BOTÓN NUEVO ASUNTO
    ============================================ */
 .btn-new-subject {
@@ -47,6 +120,34 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
+}
+
+.table-controls-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+/* Asegurar que el buscador tenga estilos consistentes */
+.table-controls .search-input-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+    max-width: 400px;
+}
+
+.table-controls .per-page-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    white-space: nowrap;
+}
+
+.table-controls .per-page-label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
 }
 
 .table-controls-right {

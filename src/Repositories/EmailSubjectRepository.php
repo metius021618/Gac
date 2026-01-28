@@ -237,4 +237,46 @@ class EmailSubjectRepository
             return 0;
         }
     }
+
+    /**
+     * Verificar si la tabla existe y tiene datos (para debugging)
+     * 
+     * @return array
+     */
+    public function debugTable(): array
+    {
+        try {
+            $db = Database::getConnection();
+            
+            // Verificar si la tabla existe
+            $tableCheck = $db->query("SHOW TABLES LIKE 'email_subjects'")->fetch();
+            if (!$tableCheck) {
+                return ['error' => 'La tabla email_subjects no existe'];
+            }
+            
+            // Contar registros totales
+            $totalCount = $db->query("SELECT COUNT(*) as count FROM email_subjects")->fetch(PDO::FETCH_ASSOC);
+            
+            // Contar registros activos
+            $activeCount = $db->query("SELECT COUNT(*) as count FROM email_subjects WHERE active = 1")->fetch(PDO::FETCH_ASSOC);
+            
+            // Obtener algunos registros de ejemplo
+            $sample = $db->query("
+                SELECT es.*, p.name as platform_name, p.display_name 
+                FROM email_subjects es 
+                LEFT JOIN platforms p ON es.platform_id = p.id 
+                LIMIT 5
+            ")->fetchAll(PDO::FETCH_ASSOC);
+            
+            return [
+                'table_exists' => true,
+                'total_records' => (int) $totalCount['count'],
+                'active_records' => (int) $activeCount['count'],
+                'sample' => $sample
+            ];
+        } catch (PDOException $e) {
+            error_log("Error en debugTable: " . $e->getMessage());
+            return ['error' => $e->getMessage()];
+        }
+    }
 }
