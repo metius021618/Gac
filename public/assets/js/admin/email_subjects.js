@@ -83,6 +83,48 @@
             modalTitle.textContent = 'Nuevo Asunto';
         }
         
+        // Limpiar ID (modo crear)
+        if (subjectIdInput) {
+            subjectIdInput.value = '';
+        }
+        
+        // Mostrar modal
+        subjectModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    /**
+     * Abrir modal para editar asunto
+     */
+    function handleEdit(e) {
+        const btn = e.currentTarget;
+        const id = btn.dataset.id;
+        const platformId = btn.dataset.platformId;
+        const subjectLine = btn.dataset.subjectLine;
+        
+        if (!id || !subjectModal) return;
+        
+        // Llenar formulario con datos
+        if (subjectIdInput) {
+            subjectIdInput.value = id;
+        }
+        
+        if (modalPlatformSelect) {
+            modalPlatformSelect.value = platformId || '';
+        }
+        
+        if (modalSubjectLineInput) {
+            modalSubjectLineInput.value = subjectLine || '';
+        }
+        
+        // Actualizar título
+        if (modalTitle) {
+            modalTitle.textContent = 'Editar Asunto';
+        }
+        
+        // Limpiar errores
+        clearAllErrors();
+        
         // Mostrar modal
         subjectModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
@@ -151,6 +193,13 @@
         deleteButtons?.forEach(btn => {
             btn.removeEventListener('click', handleDelete);
             btn.addEventListener('click', handleDelete);
+        });
+        
+        // Botones de editar
+        const editButtons = emailSubjectsTable?.querySelectorAll('.btn-edit');
+        editButtons?.forEach(btn => {
+            btn.removeEventListener('click', handleEdit);
+            btn.addEventListener('click', handleEdit);
         });
     }
 

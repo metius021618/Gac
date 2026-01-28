@@ -31,14 +31,17 @@
                         </td>
                         <td class="subject-cell"><?= htmlspecialchars($subject['subject_line']) ?></td>
                         <td class="actions-cell">
-                            <a href="/admin/email-subjects/edit?id=<?= $subject['id'] ?>" 
-                               class="btn-icon btn-edit" 
-                               title="Editar">
+                            <button type="button"
+                                    class="btn-icon btn-edit" 
+                                    data-id="<?= $subject['id'] ?>"
+                                    data-platform-id="<?= $subject['platform_id'] ?>"
+                                    data-subject-line="<?= htmlspecialchars($subject['subject_line']) ?>"
+                                    title="Editar">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
-                            </a>
+                            </button>
                             <button class="btn-icon btn-delete" 
                                     data-id="<?= $subject['id'] ?>"
                                     data-subject="<?= htmlspecialchars($subject['subject_line']) ?>"
