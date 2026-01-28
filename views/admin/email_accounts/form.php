@@ -3,6 +3,8 @@
  * GAC - Vista de Formulario de Cuenta de Email
  */
 
+use Gac\Repositories\UserAccessRepository;
+
 $isEdit = ($mode === 'edit' && $email_account !== null);
 $content = ob_start();
 ?>
@@ -73,11 +75,15 @@ $content = ob_start();
                 <?php if ($isEdit): ?>
                     <?php
                     // Obtener plataformas asignadas a este correo
-                    use Gac\Repositories\UserAccessRepository;
-                    $userAccessRepo = new UserAccessRepository();
                     $platforms = [];
-                    if (!empty($email_account['email'])) {
-                        $platforms = $userAccessRepo->getPlatformsByEmail($email_account['email']);
+                    try {
+                        if (!empty($email_account['email'])) {
+                            $userAccessRepo = new UserAccessRepository();
+                            $platforms = $userAccessRepo->getPlatformsByEmail($email_account['email']);
+                        }
+                    } catch (\Exception $e) {
+                        error_log("Error al obtener plataformas en form.php: " . $e->getMessage());
+                        $platforms = [];
                     }
                     ?>
                     <div class="form-group">
