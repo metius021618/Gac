@@ -9,9 +9,16 @@
 namespace Gac\Middleware;
 
 use Gac\Core\Request;
+use Gac\Repositories\SettingsRepository;
 
 class AuthMiddleware
 {
+    private SettingsRepository $settingsRepository;
+
+    public function __construct()
+    {
+        $this->settingsRepository = new SettingsRepository();
+    }
     /**
      * Manejar request
      */
@@ -48,7 +55,14 @@ class AuthMiddleware
 
         // Verificar timeout de sesión
         if (isset($_SESSION['last_activity'])) {
-            $timeout = isset($_SESSION['remember']) ? 86400 * 30 : 7200; // 30 días o 2 horas
+            // Obtener timeout configurado del sistema
+            $timeout = $this->getSessionTimeout();
+            
+            // Si tiene "recordar" activado, usar 30 días
+            if (isset($_SESSION['remember']) && $_SESSION['remember']) {
+                $timeout = 86400 * 30; // 30 días
+            }
+            
             if (time() - $_SESSION['last_activity'] > $timeout) {
                 $this->destroySession();
                 return false;
@@ -56,6 +70,14 @@ class AuthMiddleware
         }
 
         return true;
+    }
+
+    /**
+     * Obtener timeout de sesión configurado
+     */
+    private function getSessionTimeout(): int
+    {
+        return $this->settingsRepository->getSessionTimeout();
     }
 
     /**

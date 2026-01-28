@@ -1,46 +1,108 @@
 <?php
 /**
  * GAC - Controlador de Configuración
+ * Maneja la vista y actualización de configuraciones del sistema
+ * 
+ * @package Gac\Controllers
  */
 
 namespace Gac\Controllers;
 
 use Gac\Core\Request;
+use Gac\Repositories\SettingsRepository;
 
 class SettingsController
 {
+    private SettingsRepository $settingsRepository;
+
+    public function __construct()
+    {
+        $this->settingsRepository = new SettingsRepository();
+    }
+
+    /**
+     * Mostrar vista de configuración
+     */
     public function index(Request $request): void
     {
-        $settingsRepository = new \Gac\Repositories\SettingsRepository();
-        $allSubjects = $settingsRepository->getAllEmailSubjects();
-        
-        // Organizar por plataforma
-        $platforms = ['netflix', 'disney', 'prime', 'spotify', 'crunchyroll', 'paramount', 'chatgpt', 'canva'];
-        $subjectsByPlatform = [];
-        
-        foreach ($platforms as $platform) {
-            $subjects = $settingsRepository->getEmailSubjectsForPlatform($platform);
-            if (!empty($subjects)) {
-                $subjectsByPlatform[$platform] = $subjects;
-            }
-        }
+        // Obtener tiempo de sesión actual
+        $sessionTimeoutHours = (int) $this->settingsRepository->getValue('session_timeout_hours', '1');
         
         $this->renderView('admin/settings/index', [
-            'title' => 'Registro de Asuntos',
-            'subjects_by_platform' => $subjectsByPlatform,
-            'platforms' => $platforms
+            'title' => 'Configuración del Sistema',
+            'session_timeout_hours' => $sessionTimeoutHours
         ]);
     }
 
+    /**
+     * Actualizar configuración
+     */
+    public function update(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response([
+                'success' => false,
+                'message' => 'Método no permitido'
+            ], 405);
+            return;
+        }
+
+        // Validar CSRF token
+        if (!$this->validateCsrfToken($request)) {
+            json_response([
+                'success' => false,
+                'message' => 'Token de seguridad inválido'
+            ], 403);
+            return;
+        }
+
+        $sessionTimeoutHours = (int) $request->input('session_timeout_hours', 1);
+
+        // Validar que esté en el rango permitido
+        $allowedHours = [1, 2, 3, 5, 7];
+        if (!in_array($sessionTimeoutHours, $allowedHours)) {
+            json_response([
+                'success' => false,
+                'message' => 'El tiempo de sesión debe ser 1, 2, 3, 5 o 7 horas'
+            ], 400);
+            return;
+        }
+
+        // Actualizar configuración
+        $success = $this->settingsRepository->update(
+            'session_timeout_hours',
+            (string) $sessionTimeoutHours,
+            'Tiempo en horas que se mantiene activa la sesión del usuario'
+        );
+
+        if ($success) {
+            json_response([
+                'success' => true,
+                'message' => 'Configuración actualizada correctamente'
+            ]);
+        } else {
+            json_response([
+                'success' => false,
+                'message' => 'Error al actualizar la configuración'
+            ], 500);
+        }
+    }
+
+    /**
+     * Renderizar vista
+     */
     private function renderView(string $view, array $data = []): void
     {
         extract($data);
-        $viewPath = base_path('views/' . str_replace('.', '/', $view) . '.php');
-        if (file_exists($viewPath)) {
-            require $viewPath;
-        } else {
-            http_response_code(404);
-            echo "Vista no encontrada: {$view}";
-        }
+        require base_path("views/{$view}.php");
+    }
+
+    /**
+     * Validar token CSRF
+     */
+    private function validateCsrfToken(Request $request): bool
+    {
+        $token = $request->input('csrf_token', '');
+        return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
     }
 }

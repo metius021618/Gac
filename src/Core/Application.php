@@ -61,6 +61,7 @@ class Application
         $router->get('/admin/codes', 'CodeController@index', ['auth']);
         $router->get('/admin/users', 'UserController@index', ['auth']);
         $router->get('/admin/settings', 'SettingsController@index', ['auth']);
+        $router->post('/admin/settings/update', 'SettingsController@update', ['auth']);
         
         // Rutas de plataformas
         $router->get('/admin/platforms', 'PlatformController@index', ['auth']);

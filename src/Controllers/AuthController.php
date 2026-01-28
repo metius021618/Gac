@@ -10,18 +10,20 @@ namespace Gac\Controllers;
 
 use Gac\Core\Request;
 use Gac\Repositories\UserRepository;
+use Gac\Repositories\SettingsRepository;
 
 class AuthController
 {
     private UserRepository $userRepository;
+    private SettingsRepository $settingsRepository;
 
     public function __construct()
     {
         $this->userRepository = new UserRepository();
+        $this->settingsRepository = new SettingsRepository();
     }
     private const MAX_LOGIN_ATTEMPTS = 5;
     private const LOCKOUT_TIME = 900; // 15 minutos en segundos
-    private const SESSION_LIFETIME = 7200; // 2 horas
 
     /**
      * Mostrar formulario de login
@@ -181,7 +183,8 @@ class AuthController
             $_SESSION['remember'] = true;
             $_SESSION['cookie_lifetime'] = 86400 * 30; // 30 días
         } else {
-            $_SESSION['cookie_lifetime'] = self::SESSION_LIFETIME;
+            // Usar timeout configurado del sistema
+            $_SESSION['cookie_lifetime'] = $this->settingsRepository->getSessionTimeout();
         }
 
         // Configurar cookie de sesión segura
@@ -194,7 +197,7 @@ class AuthController
     private function setSecureSessionCookie(bool $remember = false): void
     {
         $params = session_get_cookie_params();
-        $lifetime = $remember ? (86400 * 30) : self::SESSION_LIFETIME;
+        $lifetime = $remember ? (86400 * 30) : $this->settingsRepository->getSessionTimeout();
         $expires = time() + $lifetime;
         $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
         
@@ -235,7 +238,14 @@ class AuthController
 
         // Verificar timeout de sesión
         if (isset($_SESSION['last_activity'])) {
-            $timeout = isset($_SESSION['remember']) ? 86400 * 30 : self::SESSION_LIFETIME;
+            // Obtener timeout configurado del sistema
+            $timeout = $this->settingsRepository->getSessionTimeout();
+            
+            // Si tiene "recordar" activado, usar 30 días
+            if (isset($_SESSION['remember']) && $_SESSION['remember']) {
+                $timeout = 86400 * 30; // 30 días
+            }
+            
             if (time() - $_SESSION['last_activity'] > $timeout) {
                 $this->destroySession();
                 return false;

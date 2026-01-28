@@ -1,189 +1,129 @@
 <?php
 /**
- * GAC - Repositorio de Settings
- * 
- * Maneja el acceso a datos de configuraciones
+ * GAC - Repositorio de Configuración
+ * Maneja las configuraciones del sistema
  * 
  * @package Gac\Repositories
  */
 
 namespace Gac\Repositories;
 
-use Gac\Helpers\Database;
+use Gac\Core\Database;
 use PDO;
 use PDOException;
 
 class SettingsRepository
 {
     /**
-     * Cache de settings
+     * Obtener todas las configuraciones
      */
-    private static array $cache = [];
-
-    /**
-     * Obtener un setting por nombre
-     * 
-     * @param string $name
-     * @param mixed $default
-     * @return mixed
-     */
-    public function get(string $name, $default = null)
-    {
-        // Verificar cache
-        if (isset(self::$cache[$name])) {
-            return self::$cache[$name];
-        }
-
-        try {
-            $db = Database::getConnection();
-            $stmt = $db->prepare("
-                SELECT value, type
-                FROM settings
-                WHERE name = :name
-            ");
-            
-            $stmt->execute(['name' => $name]);
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($result) {
-                $value = $this->castValue($result['value'], $result['type'] ?? 'string');
-                self::$cache[$name] = $value;
-                return $value;
-            }
-            
-            return $default;
-        } catch (PDOException $e) {
-            error_log("Error al obtener setting '{$name}': " . $e->getMessage());
-            return $default;
-        }
-    }
-
-    /**
-     * Obtener múltiples settings por patrón
-     * 
-     * @param string $pattern Patrón SQL LIKE (ej: 'NETFLIX_%')
-     * @return array Array asociativo [name => value]
-     */
-    public function getByPattern(string $pattern): array
+    public function findAll(): array
     {
         try {
             $db = Database::getConnection();
-            $stmt = $db->prepare("
-                SELECT name, value, type
-                FROM settings
-                WHERE name LIKE :pattern
-                ORDER BY name ASC
-            ");
-            
-            $stmt->execute(['pattern' => $pattern]);
-            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            $settings = [];
-            foreach ($results as $result) {
-                $value = $this->castValue($result['value'], $result['type'] ?? 'string');
-                $settings[$result['name']] = $value;
-                // Actualizar cache
-                self::$cache[$result['name']] = $value;
-            }
-            
-            return $settings;
+            $stmt = $db->query("SELECT * FROM settings ORDER BY category, `key`");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Error al obtener settings por patrón '{$pattern}': " . $e->getMessage());
+            error_log("Error al obtener configuraciones: " . $e->getMessage());
             return [];
         }
     }
 
     /**
-     * Obtener todos los asuntos de email para una plataforma
-     * 
-     * @param string $platform Slug de la plataforma (ej: 'netflix', 'disney')
-     * @return array Array de asuntos
+     * Obtener configuración por clave
      */
-    public function getEmailSubjectsForPlatform(string $platform): array
+    public function findByKey(string $key): ?array
     {
-        $platformUpper = strtoupper($platform);
-        $pattern = "{$platformUpper}_%";
-        
-        $settings = $this->getByPattern($pattern);
-        
-        // Filtrar solo los que son asuntos (terminan en _1, _2, _3, _4)
-        $subjects = [];
-        foreach ($settings as $name => $value) {
-            if (preg_match('/^' . preg_quote($platformUpper, '/') . '_(\d+)$/', $name, $matches)) {
-                $subjects[] = $value;
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("SELECT * FROM settings WHERE `key` = :key LIMIT 1");
+            $stmt->execute([':key' => $key]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ?: null;
+        } catch (PDOException $e) {
+            error_log("Error al obtener configuración por clave: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Obtener valor de configuración por clave
+     */
+    public function getValue(string $key, string $default = ''): string
+    {
+        $setting = $this->findByKey($key);
+        return $setting ? $setting['value'] : $default;
+    }
+
+    /**
+     * Obtener configuraciones por categoría
+     */
+    public function findByCategory(string $category): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("SELECT * FROM settings WHERE category = :category ORDER BY `key`");
+            $stmt->execute([':category' => $category]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error al obtener configuraciones por categoría: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Actualizar configuración
+     */
+    public function update(string $key, string $value, string $description = null): bool
+    {
+        try {
+            $db = Database::getConnection();
+            
+            // Verificar si existe
+            $existing = $this->findByKey($key);
+            
+            if ($existing) {
+                // Actualizar
+                $sql = "UPDATE settings SET `value` = :value, updated_at = NOW()";
+                $params = [':key' => $key, ':value' => $value];
+                
+                if ($description !== null) {
+                    $sql .= ", description = :description";
+                    $params[':description'] = $description;
+                }
+                
+                $sql .= " WHERE `key` = :key";
+                
+                $stmt = $db->prepare($sql);
+                return $stmt->execute($params);
+            } else {
+                // Crear nueva configuración
+                $stmt = $db->prepare("
+                    INSERT INTO settings (`key`, `value`, description, category) 
+                    VALUES (:key, :value, :description, 'general')
+                ");
+                return $stmt->execute([
+                    ':key' => $key,
+                    ':value' => $value,
+                    ':description' => $description ?? ''
+                ]);
             }
-        }
-        
-        return $subjects;
-    }
-
-    /**
-     * Obtener todos los asuntos de email para todas las plataformas
-     * 
-     * @return array Array asociativo [platform => [subjects]]
-     */
-    public function getAllEmailSubjects(): array
-    {
-        $platforms = ['netflix', 'disney', 'prime', 'spotify', 'crunchyroll', 'paramount', 'chatgpt', 'canva'];
-        $allSubjects = [];
-        
-        foreach ($platforms as $platform) {
-            $subjects = $this->getEmailSubjectsForPlatform($platform);
-            if (!empty($subjects)) {
-                $allSubjects[$platform] = $subjects;
-            }
-        }
-        
-        return $allSubjects;
-    }
-
-    /**
-     * Verificar si una plataforma está habilitada
-     * 
-     * @param string $platform
-     * @return bool
-     */
-    public function isPlatformEnabled(string $platform): bool
-    {
-        $platformUpper = strtoupper($platform);
-        $settingName = "HABILITAR_{$platformUpper}";
-        
-        $value = $this->get($settingName, '0');
-        
-        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
-    }
-
-    /**
-     * Convertir valor según tipo
-     * 
-     * @param string $value
-     * @param string $type
-     * @return mixed
-     */
-    private function castValue(string $value, string $type)
-    {
-        switch ($type) {
-            case 'boolean':
-            case 'bool':
-                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
-            case 'integer':
-            case 'int':
-                return (int) $value;
-            case 'float':
-            case 'double':
-                return (float) $value;
-            case 'json':
-                return json_decode($value, true);
-            default:
-                return $value;
+        } catch (PDOException $e) {
+            error_log("Error al actualizar configuración: " . $e->getMessage());
+            return false;
         }
     }
 
     /**
-     * Limpiar cache
+     * Obtener tiempo de sesión en segundos
      */
-    public static function clearCache(): void
+    public function getSessionTimeout(): int
     {
-        self::$cache = [];
+        $hours = (int) $this->getValue('session_timeout_hours', '1');
+        // Validar que esté en el rango permitido (1-7 horas)
+        if ($hours < 1 || $hours > 7) {
+            $hours = 1;
+        }
+        return $hours * 3600; // Convertir horas a segundos
     }
 }
