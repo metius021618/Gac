@@ -174,25 +174,48 @@ class EmailAccountController
      */
     public function edit(Request $request): void
     {
-        $id = (int)$request->get('id', 0);
-        
-        $emailAccount = $this->emailAccountRepository->findById($id);
-        
-        if (!$emailAccount) {
-            http_response_code(404);
-            echo "Cuenta no encontrada";
-            return;
+        try {
+            $id = (int)$request->get('id', 0);
+            
+            if ($id <= 0) {
+                http_response_code(404);
+                echo "ID de cuenta inválido";
+                return;
+            }
+            
+            $emailAccount = $this->emailAccountRepository->findById($id);
+            
+            if (!$emailAccount) {
+                http_response_code(404);
+                echo "Cuenta no encontrada";
+                return;
+            }
+
+            // Parsear provider_config de manera segura
+            $providerConfig = $emailAccount['provider_config'] ?? '{}';
+            if (is_string($providerConfig)) {
+                $config = json_decode($providerConfig, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    error_log("Error al parsear provider_config para cuenta ID {$id}: " . json_last_error_msg());
+                    $config = [];
+                }
+            } else {
+                $config = is_array($providerConfig) ? $providerConfig : [];
+            }
+            
+            $emailAccount['imap_user'] = $config['imap_user'] ?? '';
+
+            $this->renderView('admin/email_accounts/form', [
+                'title' => 'Editar Cuenta de Email',
+                'email_account' => $emailAccount,
+                'mode' => 'edit'
+            ]);
+        } catch (\Exception $e) {
+            error_log("Error en EmailAccountController::edit: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            http_response_code(500);
+            echo "Error interno del servidor. Por favor contacta al administrador.";
         }
-
-        // Parsear provider_config
-        $config = json_decode($emailAccount['provider_config'] ?? '{}', true);
-        $emailAccount['imap_user'] = $config['imap_user'] ?? '';
-
-        $this->renderView('admin/email_accounts/form', [
-            'title' => 'Editar Cuenta de Email',
-            'email_account' => $emailAccount,
-            'mode' => 'edit'
-        ]);
     }
 
     /**
