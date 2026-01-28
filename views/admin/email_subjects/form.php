@@ -23,7 +23,7 @@ $content = ob_start();
 
     <div class="admin-content">
         <div class="form-container">
-            <form id="emailSubjectForm" class="admin-form" novalidate>
+            <form id="emailSubjectForm" class="admin-form email-subjects-form" novalidate>
                 <?php if ($isEdit): ?>
                     <input type="hidden" id="id" name="id" value="<?= $subject['id'] ?>">
                 <?php endif; ?>
