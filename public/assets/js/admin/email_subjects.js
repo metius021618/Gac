@@ -350,57 +350,60 @@
      * Inicializar eventos de paginación
      */
     function initPagination() {
-        // Botones de paginación
-        const paginationBtns = document.querySelectorAll('.pagination-btn[data-page], .pagination-page[data-page]');
-        paginationBtns.forEach(btn => {
-            btn.removeEventListener('click', handlePagination);
-            btn.addEventListener('click', handlePagination);
-        });
+        // Botones de paginación (usar delegación de eventos para elementos dinámicos)
+        const paginationContainer = document.querySelector('.pagination-container');
+        if (paginationContainer) {
+            paginationContainer.removeEventListener('click', handlePaginationClick);
+            paginationContainer.addEventListener('click', handlePaginationClick);
+        }
     }
 
     /**
-     * Manejar clic en paginación
+     * Manejar clic en paginación (con delegación de eventos)
      */
-    function handlePagination(e) {
-        const btn = e.currentTarget;
+    function handlePaginationClick(e) {
+        const btn = e.target.closest('.pagination-btn[data-page], .pagination-page[data-page]');
+        if (!btn || btn.disabled) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
         const page = parseInt(btn.dataset.page);
+        if (!page || isNaN(page) || page < 1) return;
         
-        if (!page || isNaN(page)) return;
+        // Construir URL con parámetros
+        const params = new URLSearchParams();
+        const currentSearch = searchInput?.value || '';
+        const currentPerPage = perPageSelect?.value || '15';
         
-        // Actualizar página usando SearchAJAX
-        if (window.SearchAJAX && window.SearchAJAX.goToPage) {
-            window.SearchAJAX.goToPage(page);
-        } else {
-            // Fallback: construir URL manualmente
-            const params = new URLSearchParams();
-            const currentSearch = searchInput?.value || '';
-            const currentPerPage = perPageSelect?.value || '15';
-            
-            if (currentSearch) {
-                params.set('search', currentSearch);
-            }
-            params.set('per_page', currentPerPage);
-            params.set('page', page);
-            params.set('ajax', '1');
-            
-            fetch(`${window.location.pathname}?${params.toString()}`, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.text())
-            .then(html => {
-                if (window.SearchAJAX && window.SearchAJAX.updateTableContent) {
-                    window.SearchAJAX.updateTableContent(html);
-                    initTable();
-                    initPagination();
-                }
-            })
-            .catch(error => {
-                console.error('Error al cambiar de página:', error);
-            });
+        if (currentSearch) {
+            params.set('search', currentSearch);
         }
+        params.set('per_page', currentPerPage);
+        params.set('page', page);
+        params.set('ajax', '1');
+        
+        // Hacer petición AJAX
+        fetch(`${window.location.pathname}?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            if (window.SearchAJAX && window.SearchAJAX.updateTableContent) {
+                window.SearchAJAX.updateTableContent(html);
+                initTable();
+                initPagination();
+                
+                // Actualizar URL sin recargar
+                window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error al cambiar de página:', error);
+        });
     }
 
     /**
