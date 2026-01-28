@@ -30,7 +30,7 @@ class EmailSubjectRepository
             $params = [];
             $whereClause = '';
 
-            if (!empty($search) && trim($search) !== '') {
+            if (!empty($search) && trim($search) !== '' && strlen(trim($search)) >= 3) {
                 $searchTerm = '%' . trim($search) . '%';
                 $whereClause = "WHERE es.active = 1 AND (es.subject_line LIKE :search OR p.display_name LIKE :search)";
                 $params[':search'] = $searchTerm;

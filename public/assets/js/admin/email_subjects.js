@@ -226,13 +226,17 @@
                 renderCallback: function(html) {
                     window.SearchAJAX.updateTableContent(html);
                     initTable(); // Re-inicializar eventos de la tabla después de la actualización
+                    initPagination(); // Re-inicializar paginación
                 },
                 onSearchComplete: function() {
                     // Mostrar/ocultar botón de limpiar
-                    if (clearSearchBtn && searchInput.value.trim()) {
-                        clearSearchBtn.style.display = 'flex';
-                    } else if (clearSearchBtn) {
-                        clearSearchBtn.style.display = 'none';
+                    const searchValue = searchInput.value.trim();
+                    if (clearSearchBtn) {
+                        if (searchValue && searchValue.length >= 3) {
+                            clearSearchBtn.style.display = 'flex';
+                        } else {
+                            clearSearchBtn.style.display = 'none';
+                        }
                     }
                 }
             });

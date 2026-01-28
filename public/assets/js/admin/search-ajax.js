@@ -131,21 +131,28 @@
             if (searchInput) {
                 searchInput.addEventListener('input', function() {
                     clearTimeout(searchTimeout);
+                    const searchValue = this.value.trim();
                     
                     // Mostrar/ocultar botón de limpiar
                     if (clearSearchBtn) {
-                        if (this.value.trim()) {
+                        if (searchValue) {
                             clearSearchBtn.style.display = 'flex';
                         } else {
                             clearSearchBtn.style.display = 'none';
                         }
                     }
                     
+                    // Solo buscar si hay más de 3 caracteres o está vacío (para mostrar todos)
                     searchTimeout = setTimeout(() => {
                         if (!isLoading) {
+                            // Si tiene menos de 3 caracteres y no está vacío, no buscar
+                            if (searchValue.length > 0 && searchValue.length < 3) {
+                                return; // No hacer búsqueda si tiene menos de 3 caracteres
+                            }
+                            
                             isLoading = true;
                             const params = {
-                                search: searchInput.value.trim(),
+                                search: searchValue,
                                 page: 1,
                                 per_page: perPageSelect?.value || 15
                             };
