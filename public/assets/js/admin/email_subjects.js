@@ -268,6 +268,9 @@
                 // Cerrar modal primero
                 closeModal();
                 
+                // Pequeño delay para que el modal se cierre antes del popup
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
                 // Mostrar popup de éxito
                 await window.GAC.success(
                     result.message || (isEdit ? 'Asunto actualizado correctamente' : 'Asunto agregado correctamente'), 
