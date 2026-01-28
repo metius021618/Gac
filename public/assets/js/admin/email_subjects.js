@@ -198,9 +198,11 @@
         // Usar delegación de eventos en el contenedor de la tabla para elementos dinámicos
         // Esto asegura que los eventos funcionen incluso después de actualizaciones AJAX
         
-        // Delegación para botones de eliminar
+        // Obtener la tabla actual (puede haber cambiado después de AJAX)
+        emailSubjectsTable = document.getElementById('emailSubjectsTable');
+        
         if (emailSubjectsTable) {
-            // Remover listeners anteriores si existen
+            // Remover listeners anteriores si existen (usando una función nombrada para poder removerla)
             emailSubjectsTable.removeEventListener('click', handleTableClick);
             // Agregar nuevo listener con delegación
             emailSubjectsTable.addEventListener('click', handleTableClick);
