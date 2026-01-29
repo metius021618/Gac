@@ -113,7 +113,7 @@ class Request
     /**
      * Verificar si el request es JSON
      */
-    private function isJson(): bool
+    public function isJson(): bool
     {
         $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
         return strpos($contentType, 'application/json') !== false;

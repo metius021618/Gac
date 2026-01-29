@@ -39,6 +39,11 @@ class SettingsController
      */
     public function update(Request $request): void
     {
+        // Asegurar que la sesión esté iniciada
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
         if ($request->method() !== 'POST') {
             json_response([
                 'success' => false,
@@ -102,7 +107,22 @@ class SettingsController
      */
     private function validateCsrfToken(Request $request): bool
     {
+        // Asegurar que la sesión esté iniciada
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
+        // Obtener token del request (Request::input ya maneja JSON)
         $token = $request->input('csrf_token', '');
-        return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+        
+        if (empty($token)) {
+            return false;
+        }
+        
+        if (!isset($_SESSION['csrf_token'])) {
+            return false;
+        }
+        
+        return hash_equals($_SESSION['csrf_token'], $token);
     }
 }
