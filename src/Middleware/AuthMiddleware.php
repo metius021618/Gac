@@ -10,10 +10,12 @@ namespace Gac\Middleware;
 
 use Gac\Core\Request;
 use Gac\Repositories\SettingsRepository;
+use Gac\Repositories\SessionRepository;
 
 class AuthMiddleware
 {
     private ?SettingsRepository $settingsRepository = null;
+    private ?SessionRepository $sessionRepository = null;
 
     public function __construct()
     {
@@ -24,6 +26,14 @@ class AuthMiddleware
             // Si hay error al crear SettingsRepository, usar valor por defecto
             error_log("Error al inicializar SettingsRepository en middleware: " . $e->getMessage());
             $this->settingsRepository = null;
+        }
+        // Instanciar SessionRepository de forma segura
+        try {
+            $this->sessionRepository = new SessionRepository();
+        } catch (\Exception $e) {
+            // Si hay error al crear SessionRepository, usar valor por defecto
+            error_log("Error al inicializar SessionRepository en middleware: " . $e->getMessage());
+            $this->sessionRepository = null;
         }
     }
     /**
@@ -47,7 +57,12 @@ class AuthMiddleware
             }
         }
 
-        // Actualizar última actividad
+        // Actualizar última actividad en la base de datos
+        $sessionId = session_id();
+        if ($this->sessionRepository && $sessionId) {
+            $this->sessionRepository->updateLastActivity($sessionId);
+        }
+        // También actualizar en $_SESSION
         $_SESSION['last_activity'] = time();
     }
 
@@ -60,23 +75,35 @@ class AuthMiddleware
             return false;
         }
 
-        // Verificar timeout de sesión
-        if (isset($_SESSION['last_activity'])) {
-            // Obtener timeout configurado del sistema
-            if ($this->settingsRepository) {
-                $timeout = $this->getSessionTimeout();
-            } else {
-                $timeout = 3600; // 1 hora por defecto
-            }
-            
-            // Si tiene "recordar" activado, usar 30 días
-            if (isset($_SESSION['remember']) && $_SESSION['remember']) {
-                $timeout = 86400 * 30; // 30 días
-            }
-            
-            if (time() - $_SESSION['last_activity'] > $timeout) {
+        $sessionId = session_id();
+        if (!$sessionId) {
+            return false;
+        }
+
+        // Obtener timeout configurado del sistema
+        $timeout = 3600; // 1 hora por defecto
+        if ($this->settingsRepository) {
+            $timeout = $this->getSessionTimeout();
+        }
+        
+        // Si tiene "recordar" activado, usar 30 días
+        if (isset($_SESSION['remember']) && $_SESSION['remember']) {
+            $timeout = 86400 * 30; // 30 días
+        }
+
+        // Verificar timeout de sesión usando la tabla sessions
+        if ($this->sessionRepository) {
+            if ($this->sessionRepository->isExpired($sessionId, $timeout)) {
                 $this->destroySession();
                 return false;
+            }
+        } else {
+            // Fallback: usar $_SESSION si SessionRepository no está disponible
+            if (isset($_SESSION['last_activity'])) {
+                if (time() - $_SESSION['last_activity'] > $timeout) {
+                    $this->destroySession();
+                    return false;
+                }
             }
         }
 
@@ -102,6 +129,12 @@ class AuthMiddleware
      */
     private function destroySession(): void
     {
+        // Eliminar sesión de la base de datos
+        $sessionId = session_id();
+        if ($this->sessionRepository && $sessionId) {
+            $this->sessionRepository->delete($sessionId);
+        }
+
         $_SESSION = [];
         
         if (isset($_COOKIE[session_name()])) {

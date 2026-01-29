@@ -11,11 +11,13 @@ namespace Gac\Controllers;
 use Gac\Core\Request;
 use Gac\Repositories\UserRepository;
 use Gac\Repositories\SettingsRepository;
+use Gac\Repositories\SessionRepository;
 
 class AuthController
 {
     private UserRepository $userRepository;
     private ?SettingsRepository $settingsRepository = null;
+    private ?SessionRepository $sessionRepository = null;
 
     public function __construct()
     {
@@ -26,6 +28,13 @@ class AuthController
         } catch (\Exception $e) {
             // Si hay error al crear SettingsRepository, usar valor por defecto
             $this->settingsRepository = null;
+        }
+        // Instanciar SessionRepository de forma lazy
+        try {
+            $this->sessionRepository = new SessionRepository();
+        } catch (\Exception $e) {
+            // Si hay error al crear SessionRepository, usar valor por defecto
+            $this->sessionRepository = null;
         }
     }
     private const MAX_LOGIN_ATTEMPTS = 5;
@@ -174,6 +183,7 @@ class AuthController
     {
         // Regenerar ID de sesión por seguridad
         session_regenerate_id(true);
+        $sessionId = session_id();
 
         // Configurar datos de sesión
         $_SESSION['user_id'] = $user['id'];
@@ -195,6 +205,18 @@ class AuthController
             } else {
                 $_SESSION['cookie_lifetime'] = 3600; // 1 hora por defecto
             }
+        }
+
+        // Guardar sesión en la base de datos
+        if ($this->sessionRepository) {
+            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
+            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+            $payload = json_encode([
+                'username' => $user['username'],
+                'email' => $user['email'],
+                'role_id' => $user['role_id']
+            ]);
+            $this->sessionRepository->createOrUpdate($sessionId, $user['id'], $ipAddress, $userAgent, $payload);
         }
 
         // Configurar cookie de sesión segura
@@ -232,6 +254,14 @@ class AuthController
      */
     private function destroySession(): void
     {
+        // Eliminar sesión de la base de datos
+        if ($this->sessionRepository && isset($_SESSION['user_id'])) {
+            $sessionId = session_id();
+            if ($sessionId) {
+                $this->sessionRepository->delete($sessionId);
+            }
+        }
+
         $_SESSION = [];
         
         if (isset($_COOKIE[session_name()])) {
@@ -250,27 +280,41 @@ class AuthController
             return false;
         }
 
-        // Verificar timeout de sesión
-        if (isset($_SESSION['last_activity'])) {
-            // Obtener timeout configurado del sistema
-            if ($this->settingsRepository) {
-                $timeout = $this->settingsRepository->getSessionTimeout();
-            } else {
-                $timeout = 3600; // 1 hora por defecto
-            }
-            
-            // Si tiene "recordar" activado, usar 30 días
-            if (isset($_SESSION['remember']) && $_SESSION['remember']) {
-                $timeout = 86400 * 30; // 30 días
-            }
-            
-            if (time() - $_SESSION['last_activity'] > $timeout) {
+        $sessionId = session_id();
+        if (!$sessionId) {
+            return false;
+        }
+
+        // Obtener timeout configurado del sistema
+        $timeout = 3600; // 1 hora por defecto
+        if ($this->settingsRepository) {
+            $timeout = $this->settingsRepository->getSessionTimeout();
+        }
+        
+        // Si tiene "recordar" activado, usar 30 días
+        if (isset($_SESSION['remember']) && $_SESSION['remember']) {
+            $timeout = 86400 * 30; // 30 días
+        }
+
+        // Verificar timeout de sesión usando la tabla sessions
+        if ($this->sessionRepository) {
+            if ($this->sessionRepository->isExpired($sessionId, $timeout)) {
                 $this->destroySession();
                 return false;
             }
+            // Actualizar última actividad en la base de datos
+            $this->sessionRepository->updateLastActivity($sessionId);
+        } else {
+            // Fallback: usar $_SESSION si SessionRepository no está disponible
+            if (isset($_SESSION['last_activity'])) {
+                if (time() - $_SESSION['last_activity'] > $timeout) {
+                    $this->destroySession();
+                    return false;
+                }
+            }
         }
 
-        // Actualizar última actividad
+        // Actualizar última actividad en $_SESSION también
         $_SESSION['last_activity'] = time();
 
         return true;
