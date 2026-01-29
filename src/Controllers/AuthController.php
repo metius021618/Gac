@@ -25,7 +25,6 @@ class AuthController
             $this->settingsRepository = new SettingsRepository();
         } catch (\Exception $e) {
             // Si hay error al crear SettingsRepository, usar valor por defecto
-            error_log("Error al inicializar SettingsRepository: " . $e->getMessage());
             $this->settingsRepository = null;
         }
     }
