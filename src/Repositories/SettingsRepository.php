@@ -104,14 +104,21 @@ class SettingsRepository
                 return $stmt->execute($params);
             } else {
                 // Crear nueva configuración
+                // Determinar categoría según la clave
+                $category = 'general';
+                if ($key === 'session_timeout_hours') {
+                    $category = 'session';
+                }
+                
                 $stmt = $db->prepare("
                     INSERT INTO settings (`key`, `value`, description, category) 
-                    VALUES (:key, :value, :description, 'general')
+                    VALUES (:key, :value, :description, :category)
                 ");
                 return $stmt->execute([
                     ':key' => $key,
                     ':value' => $value,
-                    ':description' => $description ?? ''
+                    ':description' => $description ?? '',
+                    ':category' => $category
                 ]);
             }
         } catch (PDOException $e) {

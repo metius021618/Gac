@@ -74,21 +74,28 @@ class SettingsController
         }
 
         // Actualizar configuración
-        $success = $this->settingsRepository->update(
-            'session_timeout_hours',
-            (string) $sessionTimeoutHours,
-            'Tiempo en horas que se mantiene activa la sesión del usuario'
-        );
+        try {
+            $success = $this->settingsRepository->update(
+                'session_timeout_hours',
+                (string) $sessionTimeoutHours,
+                'Tiempo en horas que se mantiene activa la sesión del usuario'
+            );
 
-        if ($success) {
-            json_response([
-                'success' => true,
-                'message' => 'Configuración actualizada correctamente'
-            ]);
-        } else {
+            if ($success) {
+                json_response([
+                    'success' => true,
+                    'message' => 'Configuración actualizada correctamente'
+                ]);
+            } else {
+                json_response([
+                    'success' => false,
+                    'message' => 'Error al actualizar la configuración. Verifica que la tabla settings existe en la base de datos.'
+                ], 500);
+            }
+        } catch (\Exception $e) {
             json_response([
                 'success' => false,
-                'message' => 'Error al actualizar la configuración'
+                'message' => 'Error al actualizar la configuración: ' . $e->getMessage()
             ], 500);
         }
     }
