@@ -13,7 +13,7 @@ use Gac\Repositories\SettingsRepository;
 
 class AuthMiddleware
 {
-    private SettingsRepository $settingsRepository;
+    private ?SettingsRepository $settingsRepository = null;
 
     public function __construct()
     {
