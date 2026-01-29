@@ -21,7 +21,8 @@ class SettingsRepository
     {
         try {
             $db = Database::getConnection();
-            $stmt = $db->query("SELECT * FROM settings ORDER BY category, `key`");
+            // Adaptado: usar 'name' en lugar de 'key', 'type' en lugar de 'category'
+            $stmt = $db->query("SELECT * FROM settings ORDER BY type, name");
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Error al obtener configuraciones: " . $e->getMessage());
@@ -36,7 +37,8 @@ class SettingsRepository
     {
         try {
             $db = Database::getConnection();
-            $stmt = $db->prepare("SELECT * FROM settings WHERE `key` = :key LIMIT 1");
+            // Adaptado: usar 'name' en lugar de 'key'
+            $stmt = $db->prepare("SELECT * FROM settings WHERE name = :key LIMIT 1");
             $stmt->execute([':key' => $key]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             return $result ?: null;
@@ -68,7 +70,8 @@ class SettingsRepository
     {
         try {
             $db = Database::getConnection();
-            $stmt = $db->prepare("SELECT * FROM settings WHERE category = :category ORDER BY `key`");
+            // Adaptado: usar 'type' en lugar de 'category', 'name' en lugar de 'key'
+            $stmt = $db->prepare("SELECT * FROM settings WHERE type = :category ORDER BY name");
             $stmt->execute([':category' => $category]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -90,7 +93,7 @@ class SettingsRepository
             
             if ($existing) {
                 // Actualizar
-                $sql = "UPDATE settings SET `value` = :value, updated_at = NOW()";
+                $sql = "UPDATE settings SET value = :value, updated_at = NOW()";
                 $params = [':key' => $key, ':value' => $value];
                 
                 if ($description !== null) {
@@ -98,27 +101,29 @@ class SettingsRepository
                     $params[':description'] = $description;
                 }
                 
-                $sql .= " WHERE `key` = :key";
+                // Adaptado: usar 'name' en lugar de 'key'
+                $sql .= " WHERE name = :key";
                 
                 $stmt = $db->prepare($sql);
                 return $stmt->execute($params);
             } else {
                 // Crear nueva configuración
-                // Determinar categoría según la clave
-                $category = 'general';
+                // Determinar tipo según la clave
+                $type = 'string';
                 if ($key === 'session_timeout_hours') {
-                    $category = 'session';
+                    $type = 'session';
                 }
                 
+                // Adaptado: usar 'name' en lugar de 'key', 'type' en lugar de 'category'
                 $stmt = $db->prepare("
-                    INSERT INTO settings (`key`, `value`, description, category) 
-                    VALUES (:key, :value, :description, :category)
+                    INSERT INTO settings (name, value, description, type) 
+                    VALUES (:key, :value, :description, :type)
                 ");
                 return $stmt->execute([
                     ':key' => $key,
                     ':value' => $value,
                     ':description' => $description ?? '',
-                    ':category' => $category
+                    ':type' => $type
                 ]);
             }
         } catch (PDOException $e) {
