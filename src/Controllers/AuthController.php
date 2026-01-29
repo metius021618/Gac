@@ -20,7 +20,14 @@ class AuthController
     public function __construct()
     {
         $this->userRepository = new UserRepository();
-        $this->settingsRepository = new SettingsRepository();
+        // Instanciar SettingsRepository de forma lazy para evitar errores si la tabla no existe
+        try {
+            $this->settingsRepository = new SettingsRepository();
+        } catch (\Exception $e) {
+            // Si hay error al crear SettingsRepository, usar valor por defecto
+            error_log("Error al inicializar SettingsRepository: " . $e->getMessage());
+            $this->settingsRepository = null;
+        }
     }
     private const MAX_LOGIN_ATTEMPTS = 5;
     private const LOCKOUT_TIME = 900; // 15 minutos en segundos
@@ -184,7 +191,11 @@ class AuthController
             $_SESSION['cookie_lifetime'] = 86400 * 30; // 30 días
         } else {
             // Usar timeout configurado del sistema
-            $_SESSION['cookie_lifetime'] = $this->settingsRepository->getSessionTimeout();
+            if ($this->settingsRepository) {
+                $_SESSION['cookie_lifetime'] = $this->settingsRepository->getSessionTimeout();
+            } else {
+                $_SESSION['cookie_lifetime'] = 3600; // 1 hora por defecto
+            }
         }
 
         // Configurar cookie de sesión segura
@@ -197,7 +208,11 @@ class AuthController
     private function setSecureSessionCookie(bool $remember = false): void
     {
         $params = session_get_cookie_params();
-        $lifetime = $remember ? (86400 * 30) : $this->settingsRepository->getSessionTimeout();
+        if ($remember) {
+            $lifetime = 86400 * 30; // 30 días
+        } else {
+            $lifetime = $this->settingsRepository ? $this->settingsRepository->getSessionTimeout() : 3600;
+        }
         $expires = time() + $lifetime;
         $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
         
@@ -239,7 +254,11 @@ class AuthController
         // Verificar timeout de sesión
         if (isset($_SESSION['last_activity'])) {
             // Obtener timeout configurado del sistema
-            $timeout = $this->settingsRepository->getSessionTimeout();
+            if ($this->settingsRepository) {
+                $timeout = $this->settingsRepository->getSessionTimeout();
+            } else {
+                $timeout = 3600; // 1 hora por defecto
+            }
             
             // Si tiene "recordar" activado, usar 30 días
             if (isset($_SESSION['remember']) && $_SESSION['remember']) {

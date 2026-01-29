@@ -17,7 +17,14 @@ class AuthMiddleware
 
     public function __construct()
     {
-        $this->settingsRepository = new SettingsRepository();
+        // Instanciar SettingsRepository de forma segura
+        try {
+            $this->settingsRepository = new SettingsRepository();
+        } catch (\Exception $e) {
+            // Si hay error al crear SettingsRepository, usar valor por defecto
+            error_log("Error al inicializar SettingsRepository en middleware: " . $e->getMessage());
+            $this->settingsRepository = null;
+        }
     }
     /**
      * Manejar request
@@ -56,7 +63,11 @@ class AuthMiddleware
         // Verificar timeout de sesión
         if (isset($_SESSION['last_activity'])) {
             // Obtener timeout configurado del sistema
-            $timeout = $this->getSessionTimeout();
+            if ($this->settingsRepository) {
+                $timeout = $this->getSessionTimeout();
+            } else {
+                $timeout = 3600; // 1 hora por defecto
+            }
             
             // Si tiene "recordar" activado, usar 30 días
             if (isset($_SESSION['remember']) && $_SESSION['remember']) {
@@ -77,7 +88,13 @@ class AuthMiddleware
      */
     private function getSessionTimeout(): int
     {
-        return $this->settingsRepository->getSessionTimeout();
+        try {
+            return $this->settingsRepository->getSessionTimeout();
+        } catch (\Exception $e) {
+            // Si hay error, usar valor por defecto
+            error_log("Error al obtener timeout de sesión en middleware: " . $e->getMessage());
+            return 3600; // 1 hora por defecto
+        }
     }
 
     /**

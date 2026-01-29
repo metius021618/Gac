@@ -51,8 +51,14 @@ class SettingsRepository
      */
     public function getValue(string $key, string $default = ''): string
     {
-        $setting = $this->findByKey($key);
-        return $setting ? $setting['value'] : $default;
+        try {
+            $setting = $this->findByKey($key);
+            return $setting ? $setting['value'] : $default;
+        } catch (\Exception $e) {
+            // Si hay error (tabla no existe, etc.), retornar valor por defecto
+            error_log("Error al obtener valor de configuración '{$key}': " . $e->getMessage());
+            return $default;
+        }
     }
 
     /**
@@ -119,11 +125,17 @@ class SettingsRepository
      */
     public function getSessionTimeout(): int
     {
-        $hours = (int) $this->getValue('session_timeout_hours', '1');
-        // Validar que esté en el rango permitido (1-7 horas)
-        if ($hours < 1 || $hours > 7) {
-            $hours = 1;
+        try {
+            $hours = (int) $this->getValue('session_timeout_hours', '1');
+            // Validar que esté en el rango permitido (1-7 horas)
+            if ($hours < 1 || $hours > 7) {
+                $hours = 1;
+            }
+            return $hours * 3600; // Convertir horas a segundos
+        } catch (\Exception $e) {
+            // Si hay error (tabla no existe, etc.), usar valor por defecto
+            error_log("Error al obtener timeout de sesión: " . $e->getMessage());
+            return 3600; // 1 hora por defecto
         }
-        return $hours * 3600; // Convertir horas a segundos
     }
 }
