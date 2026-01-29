@@ -64,7 +64,10 @@
                 const redirectUrl = data.redirect || '/admin/dashboard';
                 window.location.href = redirectUrl;
             } else {
-                await showError(data.message || 'Error al iniciar sesión');
+                // Mostrar mensaje de error específico
+                const errorMessage = data.message || 'Error al iniciar sesión';
+                console.error('Login error:', errorMessage, data);
+                await showError(errorMessage);
             }
         } catch (error) {
             console.error('Error:', error);
