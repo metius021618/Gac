@@ -8,7 +8,7 @@
 
 namespace Gac\Repositories;
 
-use Gac\Core\Database;
+use Gac\Helpers\Database;
 use PDO;
 use PDOException;
 
