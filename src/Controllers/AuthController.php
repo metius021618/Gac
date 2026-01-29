@@ -15,7 +15,7 @@ use Gac\Repositories\SettingsRepository;
 class AuthController
 {
     private UserRepository $userRepository;
-    private SettingsRepository $settingsRepository;
+    private ?SettingsRepository $settingsRepository = null;
 
     public function __construct()
     {
