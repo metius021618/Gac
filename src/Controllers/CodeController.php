@@ -111,6 +111,39 @@ class CodeController
     }
 
     /**
+     * Disparar el lector de correos en segundo plano (throttle 90 s).
+     * Se llama al cargar la vista de consulta para sincronizar correos recientes.
+     */
+    public function triggerEmailSync(Request $request): void
+    {
+        $throttleSeconds = 90;
+        $lockFile = base_path('logs' . DIRECTORY_SEPARATOR . 'last_sync_trigger.txt');
+        $logDir = base_path('logs');
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+        $triggered = false;
+        $now = time();
+        if (file_exists($lockFile)) {
+            $last = (int) trim((string) @file_get_contents($lockFile));
+            if ($last > 0 && ($now - $last) < $throttleSeconds) {
+                json_response(['triggered' => false, 'reason' => 'throttle']);
+                return;
+            }
+        }
+        @file_put_contents($lockFile, (string) $now);
+        $root = base_path();
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $cmd = 'start /B cd /d ' . escapeshellarg($root) . ' && python cron/email_reader.py >> logs/cron.log 2>&1';
+        } else {
+            $cmd = sprintf('cd %s && /bin/python3 cron/email_reader.py >> logs/cron.log 2>&1 &', escapeshellarg($root));
+        }
+        @exec($cmd);
+        $triggered = true;
+        json_response(['triggered' => $triggered]);
+    }
+
+    /**
      * Listar códigos recibidos (vista administrativa)
      */
     public function index(Request $request): void

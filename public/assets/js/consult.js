@@ -30,6 +30,8 @@
     function init() {
         if (!consultForm) return;
 
+        // Al cargar la vista de consulta, disparar el lector de correos en segundo plano (throttle en servidor)
+        fetch('/api/v1/sync-emails', { method: 'GET', credentials: 'same-origin' }).catch(function() {});
 
         // Event listeners
         consultForm.addEventListener('submit', handleSubmit);
