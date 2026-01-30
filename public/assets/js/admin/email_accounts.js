@@ -6,16 +6,17 @@
 (function() {
     'use strict';
 
-    // Elementos del DOM
+    // Elementos del DOM (la tabla se obtiene por ID cada vez para que tras búsqueda sea la actual)
     const emailAccountForm = document.getElementById('emailAccountForm');
-    const emailAccountsTable = document.getElementById('emailAccountsTable');
     const searchInput = document.getElementById('searchInput');
+    function getEmailAccountsTable() { return document.getElementById('emailAccountsTable'); }
     const clearSearchBtn = document.getElementById('clearSearch');
     const perPageSelect = document.getElementById('perPageSelect');
     const tableContainer = document.querySelector('.table-container');
     
-    // Estado
+    // Estado: IDs seleccionados se conservan al buscar o cambiar de página
     let isLoading = false;
+    let selectedIds = new Set();
 
     /**
      * Inicialización
@@ -25,7 +26,7 @@
             initForm();
         }
         
-        if (emailAccountsTable) {
+        if (getEmailAccountsTable()) {
             initTable();
             initSearch();
         }
@@ -49,16 +50,18 @@
      * Inicializar tabla
      */
     function initTable() {
+        const emailAccountsTable = getEmailAccountsTable();
+        if (!emailAccountsTable) return;
         // Botones de toggle status
-        const toggleButtons = emailAccountsTable?.querySelectorAll('.btn-toggle');
-        toggleButtons?.forEach(btn => {
-            btn.removeEventListener('click', handleToggleStatus); // Evitar duplicados
+        const toggleButtons = emailAccountsTable.querySelectorAll('.btn-toggle');
+        toggleButtons.forEach(btn => {
+            btn.removeEventListener('click', handleToggleStatus);
             btn.addEventListener('click', handleToggleStatus);
         });
 
         // Botones de eliminar
-        const deleteButtons = emailAccountsTable?.querySelectorAll('.btn-delete');
-        deleteButtons?.forEach(btn => {
+        const deleteButtons = emailAccountsTable.querySelectorAll('.btn-delete');
+        deleteButtons.forEach(btn => {
             btn.removeEventListener('click', handleDelete); // Evitar duplicados
             btn.addEventListener('click', handleDelete);
         });
@@ -68,125 +71,147 @@
     }
 
     /**
+     * Tras actualizar la tabla (búsqueda/paginación): si el modo selección múltiple está activo,
+     * volver a mostrar las casillas y marcar las que ya estaban seleccionadas.
+     */
+    function reapplyMultiSelectState() {
+        const multiSelectBtn = document.getElementById('multiSelectBtn');
+        const table = document.getElementById('emailAccountsTable');
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        if (!multiSelectBtn || !table) return;
+
+        if (!multiSelectBtn.classList.contains('active')) return;
+
+        const cols = table.querySelectorAll('.checkbox-column');
+        cols.forEach(col => col.classList.add('show'));
+
+        const rowCheckboxes = table.querySelectorAll('.row-checkbox');
+        rowCheckboxes.forEach(cb => {
+            const id = parseInt(cb.value, 10);
+            cb.checked = selectedIds.has(id);
+        });
+
+        const selectAll = document.getElementById('selectAll');
+        if (selectAll && rowCheckboxes.length) {
+            const checkedHere = Array.from(rowCheckboxes).filter(cb => cb.checked).length;
+            selectAll.checked = checkedHere === rowCheckboxes.length;
+            selectAll.indeterminate = checkedHere > 0 && checkedHere < rowCheckboxes.length;
+        }
+
+        if (selectedIds.size > 0 && bulkDeleteBtn) {
+            bulkDeleteBtn.style.display = 'flex';
+            if (selectedCountSpan) selectedCountSpan.textContent = selectedIds.size;
+        }
+    }
+
+    /**
      * Inicializar selección múltiple para eliminación masiva
      */
     function initBulkSelection() {
         const multiSelectBtn = document.getElementById('multiSelectBtn');
-        const selectAllCheckbox = document.getElementById('selectAll');
         const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
         const selectedCountSpan = document.getElementById('selectedCount');
-        const checkboxColumns = emailAccountsTable?.querySelectorAll('.checkbox-column');
 
         if (!multiSelectBtn) return;
+        if (multiSelectBtn.dataset.bulkListener === 'true') {
+            if (multiSelectBtn.classList.contains('active')) initCheckboxEvents();
+            return;
+        }
+        multiSelectBtn.dataset.bulkListener = 'true';
 
         let multiSelectMode = false;
 
-        // Toggle modo selección múltiple
-        multiSelectBtn.addEventListener('click', function() {
-            multiSelectMode = !multiSelectMode;
-            
-            if (multiSelectMode) {
-                // Activar modo selección múltiple
-                this.classList.add('active');
-                this.classList.remove('btn-secondary');
-                this.classList.add('btn-primary');
-                
-                // Mostrar checkboxes usando clase show
-                if (checkboxColumns) {
-                    checkboxColumns.forEach(col => {
-                        col.classList.add('show');
-                    });
-                }
-                
-                // Inicializar eventos de checkboxes
-                initCheckboxEvents();
-            } else {
-                // Desactivar modo selección múltiple
-                this.classList.remove('active');
-                this.classList.remove('btn-primary');
-                this.classList.add('btn-secondary');
-                
-                // Ocultar checkboxes removiendo clase show
-                if (checkboxColumns) {
-                    checkboxColumns.forEach(col => {
-                        col.classList.remove('show');
-                    });
-                }
-                
-                // Desmarcar todos
-                const rowCheckboxes = emailAccountsTable?.querySelectorAll('.row-checkbox');
-                if (rowCheckboxes) {
-                    rowCheckboxes.forEach(cb => cb.checked = false);
-                }
-                const currentSelectAll = document.getElementById('selectAll');
-                if (currentSelectAll) {
-                    currentSelectAll.checked = false;
-                    currentSelectAll.indeterminate = false;
-                }
-                
-                // Ocultar botón eliminar
-                bulkDeleteBtn.style.display = 'none';
-            }
-        });
+        function getCheckboxColumns() {
+            const table = getEmailAccountsTable();
+            return table ? table.querySelectorAll('.checkbox-column') : [];
+        }
 
-        /**
-         * Actualizar estado del checkbox "Seleccionar todos"
-         */
         function updateSelectAllState() {
-            const checkboxes = emailAccountsTable?.querySelectorAll('.row-checkbox');
+            const table = getEmailAccountsTable();
+            const checkboxes = table?.querySelectorAll('.row-checkbox');
             const selectAll = document.getElementById('selectAll');
             if (!checkboxes || !selectAll) return;
-            
+            checkboxes.forEach(cb => {
+                const id = parseInt(cb.value, 10);
+                if (cb.checked) selectedIds.add(id); else selectedIds.delete(id);
+            });
             const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
             selectAll.checked = checkedCount === checkboxes.length && checkboxes.length > 0;
             selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
         }
 
-        /**
-         * Actualizar visibilidad y contador del botón de eliminación masiva
-         */
         function updateBulkDeleteButton() {
-            const checkboxes = emailAccountsTable?.querySelectorAll('.row-checkbox');
-            if (!checkboxes) return;
-            
-            const selectedIds = Array.from(checkboxes)
-                .filter(cb => cb.checked)
-                .map(cb => parseInt(cb.value));
-
-            if (selectedIds.length > 0 && multiSelectMode) {
-                bulkDeleteBtn.style.display = 'flex';
-                if (selectedCountSpan) {
-                    selectedCountSpan.textContent = selectedIds.length;
-                }
+            const table = getEmailAccountsTable();
+            const checkboxes = table?.querySelectorAll('.row-checkbox');
+            if (checkboxes) {
+                checkboxes.forEach(cb => {
+                    const id = parseInt(cb.value, 10);
+                    if (cb.checked) selectedIds.add(id); else selectedIds.delete(id);
+                });
+            }
+            if (selectedIds.size > 0 && multiSelectMode) {
+                if (bulkDeleteBtn) bulkDeleteBtn.style.display = 'flex';
+                if (selectedCountSpan) selectedCountSpan.textContent = selectedIds.size;
             } else {
-                bulkDeleteBtn.style.display = 'none';
+                if (bulkDeleteBtn) bulkDeleteBtn.style.display = 'none';
             }
         }
 
-        /**
-         * Inicializar eventos de checkboxes usando event delegation
-         */
+        multiSelectBtn.addEventListener('click', function() {
+            multiSelectMode = !multiSelectMode;
+            const checkboxColumns = getCheckboxColumns();
+
+            if (multiSelectMode) {
+                this.classList.add('active');
+                this.classList.remove('btn-secondary');
+                this.classList.add('btn-primary');
+                checkboxColumns.forEach(col => col.classList.add('show'));
+                initCheckboxEvents();
+            } else {
+                this.classList.remove('active');
+                this.classList.remove('btn-primary');
+                this.classList.add('btn-secondary');
+                checkboxColumns.forEach(col => col.classList.remove('show'));
+                selectedIds.clear();
+                const table = getEmailAccountsTable();
+                const rowCheckboxes = table?.querySelectorAll('.row-checkbox');
+                rowCheckboxes?.forEach(cb => { cb.checked = false; });
+                const currentSelectAll = document.getElementById('selectAll');
+                if (currentSelectAll) {
+                    currentSelectAll.checked = false;
+                    currentSelectAll.indeterminate = false;
+                }
+                if (bulkDeleteBtn) bulkDeleteBtn.style.display = 'none';
+            }
+        });
+
         function initCheckboxEvents() {
-            // Usar event delegation para evitar problemas con elementos dinámicos
-            emailAccountsTable?.addEventListener('change', function(e) {
+            const table = getEmailAccountsTable();
+            if (!table) return;
+            table.addEventListener('change', function(e) {
                 if (e.target.id === 'selectAll') {
-                    // Seleccionar/deseleccionar todos
-                    const checkboxes = emailAccountsTable.querySelectorAll('.row-checkbox');
+                    const checkboxes = table.querySelectorAll('.row-checkbox');
                     checkboxes.forEach(checkbox => {
                         checkbox.checked = e.target.checked;
+                        if (e.target.checked) selectedIds.add(parseInt(checkbox.value, 10));
+                        else selectedIds.delete(parseInt(checkbox.value, 10));
                     });
                     updateBulkDeleteButton();
                 } else if (e.target.classList.contains('row-checkbox')) {
-                    // Checkbox individual cambiado
                     updateSelectAllState();
                     updateBulkDeleteButton();
                 }
             });
         }
 
-        // Manejar eliminación masiva
         if (bulkDeleteBtn) {
             bulkDeleteBtn.addEventListener('click', handleBulkDelete);
+        }
+
+        // Si el modo ya estaba activo (p. ej. tras búsqueda), enganchar eventos de checkboxes en la tabla actual
+        if (multiSelectBtn.classList.contains('active')) {
+            initCheckboxEvents();
         }
     }
 
@@ -194,17 +219,15 @@
      * Manejar eliminación masiva
      */
     async function handleBulkDelete() {
-        const rowCheckboxes = emailAccountsTable?.querySelectorAll('.row-checkbox:checked');
-        if (!rowCheckboxes || rowCheckboxes.length === 0) {
+        const idsToDelete = Array.from(selectedIds);
+        if (idsToDelete.length === 0) {
             await window.GAC.warning('Por favor selecciona al menos una cuenta para eliminar', 'Advertencia');
             return;
         }
 
-        const selectedIds = Array.from(rowCheckboxes).map(cb => parseInt(cb.value));
-
         try {
             const confirmed = await window.GAC.confirm(
-                `¿Estás seguro de eliminar ${selectedIds.length} cuenta(s)? Esta acción no se puede deshacer.`,
+                `¿Estás seguro de eliminar ${idsToDelete.length} cuenta(s)? Esta acción no se puede deshacer.`,
                 'Eliminar Múltiples Cuentas'
             );
             if (!confirmed) {
@@ -222,12 +245,13 @@
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({ ids: selectedIds })
+                body: JSON.stringify({ ids: idsToDelete })
             });
 
             const result = await response.json();
 
             if (result.success) {
+                selectedIds.clear();
                 await window.GAC.success(result.message || 'Cuentas eliminadas correctamente', 'Éxito');
                 location.reload();
             } else {
@@ -256,6 +280,7 @@
                 renderCallback: function(html) {
                     window.SearchAJAX.updateTableContent(html);
                     initTable(); // Re-inicializar eventos de la tabla después de la actualización
+                    reapplyMultiSelectState(); // Mantener casillas visibles y selección si el modo estaba activo
                 },
                 onSearchComplete: function() {
                     // Mostrar/ocultar botón de limpiar
