@@ -35,6 +35,7 @@ class Application
         
         // Rutas API
         $router->post('/api/v1/codes/consult', 'CodeController@apiConsult');
+        $router->post('/api/v1/codes/consult-with-sync', 'CodeController@apiConsultWithSync');
         $router->get('/api/v1/sync-emails', 'CodeController@triggerEmailSync');
         $router->post('/api/v1/codes/consult-by-domain', 'ApiController@consultByDomain');
         $router->get('/api/v1/codes/list-by-domain', 'ApiController@listByDomain');

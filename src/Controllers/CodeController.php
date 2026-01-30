@@ -111,6 +111,34 @@ class CodeController
     }
 
     /**
+     * Consultar código ejecutando antes el lector de correos (síncrono, ~30-60 s).
+     * Así el usuario ve el correo más reciente sin tener que refrescar.
+     */
+    public function apiConsultWithSync(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+        $email = $request->input('email', '');
+        $username = $request->input('username', '');
+        $platform = $request->input('platform', '');
+        if (empty($email) || empty($username) || empty($platform)) {
+            json_response(['success' => false, 'message' => 'Por favor completa todos los campos'], 400);
+            return;
+        }
+        @set_time_limit(90);
+        $root = base_path();
+        $cmd = (DIRECTORY_SEPARATOR === '\\')
+            ? 'cd /d ' . escapeshellarg($root) . ' && python cron/email_reader.py 2>&1'
+            : sprintf('cd %s && /bin/python3 cron/email_reader.py 2>&1', escapeshellarg($root));
+        @exec($cmd);
+        $result = $this->codeService->consultCode($platform, $email, $username);
+        $httpCode = $result['success'] ? 200 : 404;
+        json_response($result, $httpCode);
+    }
+
+    /**
      * Disparar el lector de correos en segundo plano (throttle 90 s).
      * Se llama al cargar la vista de consulta para sincronizar correos recientes.
      */
