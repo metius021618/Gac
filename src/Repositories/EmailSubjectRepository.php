@@ -28,14 +28,22 @@ class EmailSubjectRepository
         try {
             $db = Database::getConnection();
             $params = [];
-            $whereClause = '';
+            $whereClause = 'WHERE es.active = 1';
 
-            if (!empty($search) && trim($search) !== '' && strlen(trim($search)) >= 3) {
-                $searchTerm = '%' . trim($search) . '%';
-                $whereClause = "WHERE es.active = 1 AND (es.subject_line LIKE :search OR p.display_name LIKE :search)";
-                $params[':search'] = $searchTerm;
-            } else {
-                $whereClause = "WHERE es.active = 1";
+            $searchTrim = trim($search);
+            if ($searchTrim !== '') {
+                // Dividir en palabras (una o más) y buscar que cada palabra coincida en plataforma o asunto
+                $words = preg_split('/\s+/u', $searchTrim, -1, PREG_SPLIT_NO_EMPTY);
+                if (!empty($words)) {
+                    $conditions = [];
+                    foreach ($words as $i => $word) {
+                        $paramKey = ':search_' . $i;
+                        $params[$paramKey] = '%' . $word . '%';
+                        // Cada palabra debe coincidir en asunto, display_name o name de plataforma
+                        $conditions[] = "(es.subject_line LIKE {$paramKey} OR p.display_name LIKE {$paramKey} OR p.name LIKE {$paramKey})";
+                    }
+                    $whereClause .= ' AND (' . implode(' AND ', $conditions) . ')';
+                }
             }
 
             // Contar total

@@ -123,11 +123,13 @@
                 clearSearchBtn,
                 endpoint,
                 renderCallback,
-                onSearchComplete
+                onSearchComplete,
+                minSearchLength = 3
             } = config;
 
             let searchTimeout = null;
             let isLoading = false;
+            const minLen = typeof minSearchLength === 'number' ? minSearchLength : 3;
 
             // Búsqueda con debounce
             if (searchInput) {
@@ -144,12 +146,11 @@
                         }
                     }
                     
-                    // Solo buscar si hay más de 3 caracteres o está vacío (para mostrar todos)
+                    // Buscar si hay minSearchLength caracteres o está vacío (para mostrar todos)
                     searchTimeout = setTimeout(() => {
                         if (!isLoading) {
-                            // Si tiene menos de 3 caracteres y no está vacío, no buscar
-                            if (searchValue.length > 0 && searchValue.length < 3) {
-                                return; // No hacer búsqueda si tiene menos de 3 caracteres
+                            if (searchValue.length > 0 && searchValue.length < minLen) {
+                                return;
                             }
                             
                             isLoading = true;

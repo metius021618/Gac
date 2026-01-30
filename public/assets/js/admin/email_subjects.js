@@ -257,6 +257,7 @@
                 perPageSelect: perPageSelect,
                 clearSearchBtn: clearSearchBtn,
                 endpoint: window.location.pathname,
+                minSearchLength: 1,
                 renderCallback: function(html) {
                     window.SearchAJAX.updateTableContent(html);
                     // Actualizar referencia a la tabla después de actualización AJAX
@@ -268,14 +269,9 @@
                     initPagination(); // Re-inicializar paginación
                 },
                 onSearchComplete: function() {
-                    // Mostrar/ocultar botón de limpiar
                     const searchValue = searchInput.value.trim();
                     if (clearSearchBtn) {
-                        if (searchValue && searchValue.length >= 3) {
-                            clearSearchBtn.style.display = 'flex';
-                        } else {
-                            clearSearchBtn.style.display = 'none';
-                        }
+                        clearSearchBtn.style.display = searchValue ? 'flex' : 'none';
                     }
                 }
             });

@@ -143,6 +143,10 @@ class CodeExtractorService:
                         'date': email.get('date', ''),
                         'timestamp': email.get('timestamp', 0),
                         'extracted_at': email.get('date', ''),
+                        # Incluir cuerpo para que se guarde en BD y se muestre en la consulta
+                        'body': email.get('body', ''),
+                        'body_text': email.get('body_text', ''),
+                        'body_html': email.get('body_html', ''),
                     }
         
         return None
