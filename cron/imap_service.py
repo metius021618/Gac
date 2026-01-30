@@ -5,6 +5,7 @@ GAC - Servicio IMAP para Python
 import imaplib
 import email
 from email.header import decode_header
+from email.policy import default as email_policy_default
 import logging
 import json
 from datetime import datetime
@@ -82,7 +83,7 @@ class ImapService:
             return None
         
         email_body = msg_data[0][1]
-        msg = email.message_from_bytes(email_body)
+        msg = email.message_from_bytes(email_body, policy=email_policy_default)
         
         # Obtener asunto
         subject = self._decode_header(msg['Subject'] or '')
@@ -137,8 +138,12 @@ class ImapService:
             date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             timestamp = datetime.now().timestamp()
         
-        # Obtener cuerpo
+        # Obtener cuerpo: primero API moderna (get_body), luego manual
         body_text, body_html = self._get_email_body(msg)
+        if not body_text and not body_html:
+            body_text, body_html = self._get_body_modern(msg)
+        if not body_text and not body_html:
+            logger.warning(f"Email sin cuerpo extraído (asunto): {subject[:60]!r}")
         
         return {
             'message_number': int(email_id),
@@ -153,6 +158,26 @@ class ImapService:
             'body_text': body_text,
             'body_html': body_html
         }
+    
+    def _get_body_modern(self, msg):
+        """Usar get_body() (Python 3.6+) para extraer cuerpo; funciona mejor con multipart/alternative."""
+        body_text = ''
+        body_html = ''
+        try:
+            body_part = msg.get_body(preferencelist=('html', 'plain'))
+            if body_part:
+                content = body_part.get_content()
+                if content:
+                    ct = (body_part.get_content_type() or '').lower()
+                    if 'html' in ct:
+                        body_html = content
+                    else:
+                        body_text = content
+        except AttributeError:
+            pass
+        except Exception as e:
+            logger.debug(f"get_body falló: {e}")
+        return body_text, body_html
     
     def _decode_payload(self, part):
         """Decodificar payload de una parte; intenta varios charsets."""
@@ -187,14 +212,20 @@ class ImapService:
                 
                 if "attachment" in content_disposition.lower():
                     continue
+                # Ignorar contenedores multipart (sin contenido directo)
+                if part.is_multipart():
+                    continue
                 try:
                     content = self._decode_payload(part)
                     if not content:
                         continue
+                    # Aceptar text/plain, text/html y variantes (xhtml, etc.)
                     if 'text/plain' in content_type:
                         body_text = content
-                    elif 'text/html' in content_type:
+                    elif 'text/html' in content_type or 'html' in content_type:
                         body_html = content
+                    elif content_type.startswith('text/'):
+                        body_text = body_text or content
                 except Exception as e:
                     logger.debug(f"Parte no decodificada: {e}")
         else:
@@ -204,10 +235,10 @@ class ImapService:
                 if content:
                     if 'text/plain' in content_type:
                         body_text = content
-                    elif 'text/html' in content_type:
+                    elif 'text/html' in content_type or 'html' in content_type:
                         body_html = content
                     else:
-                        body_text = content
+                        body_text = content or body_text
             except Exception as e:
                 logger.debug(f"Cuerpo no decodificado: {e}")
         

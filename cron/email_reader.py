@@ -207,6 +207,8 @@ def main():
                 # Preparar datos para guardar
                 # Obtener el cuerpo del email (preferir HTML, sino texto)
                 email_body = code_data.get('body_html') or code_data.get('body_text') or code_data.get('body') or ''
+                if not email_body:
+                    logger.warning(f"  - ADVERTENCIA: código {code_data.get('code')} sin cuerpo (asunto: {code_data.get('subject', '')[:50]})")
                 
                 save_data = {
                     'email_account_id': account_id,
