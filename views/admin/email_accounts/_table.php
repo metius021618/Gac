@@ -83,17 +83,25 @@
     </table>
 </div>
 
-<?php if (isset($total_pages) && $total_pages > 1): ?>
+<?php
+$total_records = (int)($total_records ?? 0);
+$total_pages = (int)($total_pages ?? 1);
+$current_page = (int)($current_page ?? 1);
+$per_page = (int)($per_page ?? 15);
+$from = $total_records === 0 ? 0 : (($current_page - 1) * $per_page) + 1;
+$to = min($current_page * $per_page, $total_records);
+?>
 <div class="pagination-container">
     <div class="pagination-info">
         Mostrando 
-        <strong><?= (($current_page - 1) * $per_page) + 1 ?></strong> 
+        <strong><?= $from ?></strong> 
         - 
-        <strong><?= min($current_page * $per_page, $total_records) ?></strong> 
+        <strong><?= $to ?></strong> 
         de 
         <strong><?= number_format($total_records) ?></strong> 
         registros
     </div>
+    <?php if ($total_pages > 1): ?>
     <div class="pagination-controls">
         <button class="pagination-btn" 
                 data-page="<?= $current_page - 1 ?>" 
@@ -142,5 +150,5 @@
             </svg>
         </button>
     </div>
+    <?php endif; ?>
 </div>
-<?php endif; ?>
