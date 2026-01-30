@@ -91,6 +91,11 @@ class UserAccessRepository
      */
     public function searchAndPaginate(string $search = '', int $page = 1, int $perPage = 15): array
     {
+        $logFile = defined('BASE_PATH') ? BASE_PATH . '/logs/search_debug.log' : (__DIR__ . '/../../logs/search_debug.log');
+        $log = function ($msg) use ($logFile) {
+            @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [UserAccessRepository] ' . $msg . "\n", FILE_APPEND | LOCK_EX);
+        };
+        $log('searchAndPaginate called: search="' . $search . '" page=' . $page . ' perPage=' . $perPage);
         try {
             $db = Database::getConnection();
             $q = trim($search);
@@ -100,15 +105,19 @@ class UserAccessRepository
             if ($q !== '') {
                 $whereClause = "WHERE (ua.email LIKE :q OR ua.password LIKE :q)";
                 $params[':q'] = '%' . $q . '%';
+                $log('WHERE applied: q="' . $q . '" param_q="' . $params[':q'] . '"');
+            } else {
+                $log('no search term, listing all');
             }
 
-            // Contar total
+            // Contar total (tabla user_access)
             $countSql = "
                 SELECT COUNT(*) as total
                 FROM user_access ua
                 LEFT JOIN platforms p ON ua.platform_id = p.id
                 {$whereClause}
             ";
+            $log('countSql: ' . trim(preg_replace('/\s+/', ' ', $countSql)));
             $countStmt = $db->prepare($countSql);
             if (!empty($params)) {
                 foreach ($params as $key => $value) {
@@ -117,6 +126,7 @@ class UserAccessRepository
             }
             $countStmt->execute();
             $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+            $log('count result total=' . $total);
             
             // Calcular paginación
             $totalPages = $perPage > 0 ? ceil($total / $perPage) : 1;
@@ -150,6 +160,7 @@ class UserAccessRepository
             }
             $stmt->execute();
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $log('SELECT returned ' . count($data) . ' rows');
             
             return [
                 'data' => $data,

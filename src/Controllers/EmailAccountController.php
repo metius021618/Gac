@@ -31,6 +31,11 @@ class EmailAccountController
         $page = max(1, (int)$request->get('page', 1));
         $perPage = $request->get('per_page', '15');
         
+        // Log búsqueda Correos Registrados (tabla user_access)
+        $logFile = base_path('logs/search_debug.log');
+        $logLine = date('Y-m-d H:i:s') . ' [EmailAccountController] GET=' . json_encode($_GET) . ' search="' . $search . '" isAjax=' . ($request->isAjax() ? '1' : '0') . "\n";
+        @file_put_contents($logFile, $logLine, FILE_APPEND | LOCK_EX);
+        
         $allowedPerPage = ['15', '30', '60', '100', 'all'];
         if (!in_array($perPage, $allowedPerPage)) {
             $perPage = '15';
@@ -39,6 +44,8 @@ class EmailAccountController
         $perPageInt = $perPage === 'all' ? 0 : (int)$perPage;
         
         $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt);
+        
+        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [EmailAccountController] total=' . $result['total'] . ' rows=' . count($result['data']) . "\n", FILE_APPEND | LOCK_EX);
         
         // Si es petición AJAX, devolver solo la tabla y paginación (mismo ID que en la página)
         if ($request->isAjax()) {
