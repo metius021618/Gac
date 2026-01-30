@@ -91,19 +91,26 @@ class AuthMiddleware
             $timeout = 86400 * 30; // 30 días
         }
 
-        // Verificar timeout de sesión usando la tabla sessions
+        // Verificar timeout de sesión
         if ($this->sessionRepository) {
-            if ($this->sessionRepository->isExpired($sessionId, $timeout)) {
-                $this->destroySession();
-                return false;
-            }
-        } else {
-            // Fallback: usar $_SESSION si SessionRepository no está disponible
-            if (isset($_SESSION['last_activity'])) {
-                if (time() - $_SESSION['last_activity'] > $timeout) {
+            $sessionRow = $this->sessionRepository->findById($sessionId);
+            if ($sessionRow) {
+                // Sesión en BD: usar last_activity de la BD
+                if ($this->sessionRepository->isExpired($sessionId, $timeout)) {
                     $this->destroySession();
                     return false;
                 }
+            } else {
+                // No hay fila en BD (tabla inexistente, fallo al crear, etc.): usar solo $_SESSION
+                if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $timeout)) {
+                    $this->destroySession();
+                    return false;
+                }
+            }
+        } else {
+            if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $timeout)) {
+                $this->destroySession();
+                return false;
             }
         }
 
