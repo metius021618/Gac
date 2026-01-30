@@ -84,6 +84,23 @@ python3 cron/email_reader.py
 python3 email_reader.py 2>&1 | tee -a ../logs/cron.log
 ```
 
+### Rellenar cuerpo de correos antiguos (email_body vacío)
+
+Si en "Consulta tu Código" ves "El contenido del email no está disponible", es porque ese correo se guardó sin cuerpo. Para rellenar el cuerpo de los correos ya guardados (leyendo desde IMAP):
+
+```bash
+cd SISTEMA_GAC/cron
+python3 update_old_emails_body.py
+```
+
+Opcional: límite de emails a procesar (por defecto 500):
+
+```bash
+python3 update_old_emails_body.py 100
+```
+
+El script usa la cuenta maestra IMAP, lee los emails del servidor y actualiza en la BD los registros en `codes` que tengan `email_body` vacío (matching por asunto, remitente y destinatario). Log en `cron/logs/update_old_emails.log`.
+
 ---
 
 ## ⏰ Configurar Cron Jobs

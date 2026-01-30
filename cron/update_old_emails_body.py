@@ -10,18 +10,26 @@ import logging
 from datetime import datetime
 
 # Agregar el directorio padre al path para importar módulos
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(script_dir)
+sys.path.insert(0, parent_dir)
+os.chdir(script_dir)
 
 from cron.database import Database
 from cron.imap_service import ImapService
 from cron.repositories import EmailAccountRepository
+
+# Crear carpeta logs si no existe
+log_dir = os.path.join(script_dir, 'logs')
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, 'update_old_emails.log')
 
 # Configurar logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('logs/update_old_emails.log'),
+        logging.FileHandler(log_file),
         logging.StreamHandler()
     ]
 )
