@@ -154,43 +154,62 @@ class ImapService:
             'body_html': body_html
         }
     
+    def _decode_payload(self, part):
+        """Decodificar payload de una parte; intenta varios charsets."""
+        payload = part.get_payload(decode=True)
+        if payload is None:
+            raw = part.get_payload(decode=False)
+            if isinstance(raw, str):
+                return raw
+            if isinstance(raw, bytes):
+                payload = raw
+            else:
+                return ''
+        if not payload:
+            return ''
+        charset = part.get_content_charset() or 'utf-8'
+        for enc in (charset, 'utf-8', 'latin-1', 'cp1252'):
+            try:
+                return payload.decode(enc, errors='strict')
+            except (LookupError, UnicodeDecodeError):
+                continue
+        return payload.decode('utf-8', errors='ignore')
+    
     def _get_email_body(self, msg):
-        """Extraer cuerpo del email"""
+        """Extraer cuerpo del email (robusto a distintos formatos MIME)."""
         body_text = ''
         body_html = ''
         
         if msg.is_multipart():
             for part in msg.walk():
-                content_type = part.get_content_type()
-                content_disposition = str(part.get("Content-Disposition"))
+                content_type = (part.get_content_type() or '').lower()
+                content_disposition = str(part.get("Content-Disposition") or '')
                 
-                if "attachment" not in content_disposition:
-                    try:
-                        payload = part.get_payload(decode=True)
-                        if payload:
-                            charset = part.get_content_charset() or 'utf-8'
-                            content = payload.decode(charset, errors='ignore')
-                            
-                            if content_type == "text/plain":
-                                body_text = content
-                            elif content_type == "text/html":
-                                body_html = content
-                    except Exception as e:
-                        logger.error(f"Error al decodificar parte del email: {e}")
+                if "attachment" in content_disposition.lower():
+                    continue
+                try:
+                    content = self._decode_payload(part)
+                    if not content:
+                        continue
+                    if 'text/plain' in content_type:
+                        body_text = content
+                    elif 'text/html' in content_type:
+                        body_html = content
+                except Exception as e:
+                    logger.debug(f"Parte no decodificada: {e}")
         else:
             try:
-                payload = msg.get_payload(decode=True)
-                if payload:
-                    charset = msg.get_content_charset() or 'utf-8'
-                    content = payload.decode(charset, errors='ignore')
-                    content_type = msg.get_content_type()
-                    
-                    if content_type == "text/plain":
+                content = self._decode_payload(msg)
+                content_type = (msg.get_content_type() or '').lower()
+                if content:
+                    if 'text/plain' in content_type:
                         body_text = content
-                    elif content_type == "text/html":
+                    elif 'text/html' in content_type:
                         body_html = content
+                    else:
+                        body_text = content
             except Exception as e:
-                logger.error(f"Error al decodificar email: {e}")
+                logger.debug(f"Cuerpo no decodificado: {e}")
         
         return body_text, body_html
     

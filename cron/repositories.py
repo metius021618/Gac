@@ -321,6 +321,34 @@ class CodeRepository:
             return False
     
     @staticmethod
+    def update_email_body_if_empty(code, platform_id, email_account_id, recipient_email, email_body):
+        """Actualizar email_body de un código existente solo si está vacío (para duplicados)."""
+        if not email_body or not recipient_email:
+            return False
+        try:
+            db = Database.get_connection()
+            cursor = db.cursor()
+            cursor.execute("""
+                UPDATE codes
+                SET email_body = %s
+                WHERE code = %s AND platform_id = %s AND email_account_id = %s
+                  AND LOWER(recipient_email) = LOWER(%s)
+                  AND (email_body IS NULL OR email_body = '')
+                LIMIT 1
+            """, (email_body, code, platform_id, email_account_id, recipient_email))
+            updated = cursor.rowcount > 0
+            db.commit()
+            cursor.close()
+            return updated
+        except Error as e:
+            logger.error(f"Error al actualizar email_body: {e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            return False
+    
+    @staticmethod
     def save_to_warehouse(code_data):
         """Guardar código en warehouse"""
         try:

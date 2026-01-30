@@ -133,9 +133,9 @@ O cada 10 minutos:
    - **Día:** `*`
    - **Mes:** `*`
    - **Día de la semana:** `*`
-   - **Comando:**
+   - **Comando:** (usa la ruta que devuelve `which python3` en el servidor; suele ser `/bin/python3` o `/usr/bin/python3`)
      ```bash
-     cd /home/usuario/public_html/SISTEMA_GAC && /usr/bin/python3 cron/email_reader.py >> logs/cron.log 2>&1
+     cd /home/pocoavbb/app.pocoyoni.com && /bin/python3 crony/email_reader.py >> logs/cron.log 2>&1
      ```
 
 ### Windows (Task Scheduler)

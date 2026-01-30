@@ -194,6 +194,13 @@ def main():
                     account_id,
                     recipient_email  # Incluir recipient_email en la verificación
                 ):
+                    # Si es duplicado pero tenemos cuerpo y el registro puede tenerlo vacío, actualizar
+                    email_body = code_data.get('body_html') or code_data.get('body_text') or code_data.get('body') or ''
+                    if email_body:
+                        if CodeRepository.update_email_body_if_empty(
+                            code_data['code'], platform_obj['id'], account_id, recipient_email, email_body
+                        ):
+                            logger.info(f"  - ✓ Cuerpo actualizado para código duplicado: {code_data['code']} ({recipient_email})")
                     logger.info(f"  - Código duplicado: {code_data['code']} para {platform} y destinatario {recipient_email}")
                     continue
                 
