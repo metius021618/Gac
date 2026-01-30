@@ -171,8 +171,8 @@ cron/
 
 ## 🔍 Flujo de Procesamiento
 
-1. **Lectura de Cuentas:** Obtiene todas las cuentas IMAP habilitadas
-2. **Lectura de Emails:** Lee últimos 50 emails de cada cuenta
+1. **Lectura de Cuentas:** Obtiene **todas** las cuentas IMAP habilitadas (no solo la maestra)
+2. **Lectura de Emails:** Lee el INBOX de **cada** cuenta (casa2025, streaming, etc.)
 3. **Filtrado:** Filtra emails por asunto usando patrones de settings
 4. **Extracción:** Extrae códigos usando regex por plataforma
 5. **Validación:** Verifica duplicados y plataformas habilitadas
@@ -231,6 +231,15 @@ pip install python-dotenv
 - Verificar configuración IMAP en `email_accounts`
 - Verificar credenciales de email
 - Verificar puerto y encriptación (SSL/TLS)
+
+### El sistema no lee correos enviados a casa2025 (u otro usuario)
+
+El cron lee **todas** las cuentas IMAP habilitadas en "Correos Registrados". Para que lea los correos enviados a `casa2025@pocoyoni.com`:
+
+1. **casa2025 debe estar en Correos Registrados** (tabla `email_accounts`), con `enabled = 1`.
+2. **Credenciales IMAP correctas** para el buzón de casa2025: en `provider_config` debe ir el usuario y contraseña con los que se entra a ese correo (p. ej. casa2025 o LENINPERU y su contraseña).
+3. **Cron en ejecución**: el cron debe estar programado (cada 5–10 min) en el servidor.
+4. **Asunto del correo**: debe coincidir con un asunto registrado en "Asuntos de correo" (p. ej. Disney: "Tu código de acceso único para Disney+").
 
 ### Logs no se crean
 
