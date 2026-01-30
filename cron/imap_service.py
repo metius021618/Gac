@@ -108,11 +108,11 @@ class ImapService:
                     if email_addr:
                         recipients.append(email_addr.lower())
         
-        # Cuando todos los correos llegan a la cuenta principal pero el destinatario
-        # real (ej. casa2025@pocoyoni.com) puede venir en To o en cabeceras de entrega.
-        # Priorizar Delivered-To / X-Original-To como destinatario principal.
+        # Destinatario real: el servidor puede poner la cuenta maestra en Delivered-To
+        # y el destinatario original en Envelope-to (ej. casa2025@pocoyoni.com).
+        # Priorizar Envelope-To / X-Envelope-To sobre Delivered-To.
         delivery_recipient = ''
-        for header_name in ('Delivered-To', 'X-Original-To', 'X-Envelope-To', 'Envelope-To'):
+        for header_name in ('Envelope-To', 'X-Envelope-To', 'X-Original-To', 'Delivered-To'):
             raw = msg.get(header_name, '')
             if raw:
                 decoded = self._decode_header(raw)
