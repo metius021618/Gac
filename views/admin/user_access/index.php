@@ -37,6 +37,7 @@ $content = ob_start();
                         name="email" 
                         class="form-input" 
                         placeholder="correo@ejemplo.com"
+                        value="<?= htmlspecialchars($prefill_email ?? '') ?>"
                         required
                         autocomplete="email"
                     >
@@ -80,9 +81,10 @@ $content = ob_start();
                         class="form-select" 
                         required
                     >
-                        <option value="" disabled selected>Seleccione una plataforma</option>
+                        <?php $prefill_platform_id = (int)($prefill_platform_id ?? 0); ?>
+                        <option value="" disabled <?= $prefill_platform_id ? '' : 'selected' ?>>Seleccione una plataforma</option>
                         <?php foreach ($platforms as $platform): ?>
-                            <option value="<?= $platform['id'] ?>">
+                            <option value="<?= $platform['id'] ?>" <?= ($platform['id'] == $prefill_platform_id) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($platform['display_name']) ?>
                             </option>
                         <?php endforeach; ?>

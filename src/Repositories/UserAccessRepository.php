@@ -99,7 +99,7 @@ class UserAccessRepository
             
             if (!empty($search) && trim($search) !== '') {
                 $searchTerm = '%' . trim($search) . '%';
-                $whereClause = "WHERE (ua.email LIKE :search OR p.display_name LIKE :search)";
+                $whereClause = "WHERE (ua.email LIKE :search OR ua.password LIKE :search OR p.display_name LIKE :search OR p.name LIKE :search)";
                 $params[':search'] = $searchTerm;
             }
             
@@ -281,6 +281,40 @@ class UserAccessRepository
             return $stmt->execute();
         } catch (PDOException $e) {
             error_log("Error al eliminar acceso de usuario: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Eliminar múltiples accesos por ID
+     */
+    public function bulkDelete(array $ids): bool
+    {
+        if (empty($ids)) {
+            return false;
+        }
+        try {
+            $db = Database::getConnection();
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $stmt = $db->prepare("DELETE FROM user_access WHERE id IN ({$placeholders})");
+            return $stmt->execute(array_values($ids));
+        } catch (PDOException $e) {
+            error_log("Error al eliminar accesos en lote: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Cambiar estado enabled de un acceso
+     */
+    public function toggleEnabled(int $id, bool $enabled): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("UPDATE user_access SET enabled = :enabled, updated_at = NOW() WHERE id = :id");
+            return $stmt->execute([':id' => $id, ':enabled' => $enabled ? 1 : 0]);
+        } catch (PDOException $e) {
+            error_log("Error al cambiar estado de acceso: " . $e->getMessage());
             return false;
         }
     }

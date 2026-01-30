@@ -26,15 +26,19 @@ class UserAccessController
     }
 
     /**
-     * Mostrar formulario de registro de accesos
+     * Mostrar formulario de registro de accesos (puede prellenar con email y platform_id por URL)
      */
     public function index(Request $request): void
     {
         $platforms = $this->platformRepository->findAllEnabled();
+        $prefill_email = trim($request->get('email', ''));
+        $prefill_platform_id = (int) $request->get('platform_id', 0);
         
         $this->renderView('admin/user_access/index', [
             'title' => 'Registro de Accesos',
-            'platforms' => $platforms
+            'platforms' => $platforms,
+            'prefill_email' => $prefill_email,
+            'prefill_platform_id' => $prefill_platform_id
         ]);
     }
 

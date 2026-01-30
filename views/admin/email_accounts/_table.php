@@ -14,9 +14,9 @@
                 </th>
                 <th style="width: 60px;">ID</th>
                 <th style="width: 25%;">Correo</th>
-                <th style="width: 15%;">Usuario</th>
+                <th style="width: 15%;">Usuario (acceso)</th>
                 <th style="width: 20%;">Plataforma</th>
-                <th style="width: 18%;">Última Sincronización</th>
+                <th style="width: 18%;">Fecha registro</th>
                 <th style="width: 150px;">Acciones</th>
             </tr>
         </thead>
@@ -24,59 +24,51 @@
             <?php if (empty($email_accounts)): ?>
                 <tr>
                     <td colspan="7" class="text-center">
-                        <p class="empty-message">No hay cuentas de email registradas</p>
+                        <p class="empty-message">No hay registros de acceso. Usa "Asignar/Actualizar Contraseña" o "Registro masivo" para agregar.</p>
                     </td>
                 </tr>
             <?php else: ?>
                 <?php foreach ($email_accounts as $account): ?>
-                    <tr data-id="<?= $account['id'] ?>" class="table-row">
+                    <?php
+                    // Datos desde user_access: email, password (usuario), platform_display_name
+                    $usuario = $account['password'] ?? '';
+                    $plataforma = $account['platform_display_name'] ?? $account['platform_name'] ?? '—';
+                    $fechaRegistro = !empty($account['created_at']) ? date('d/m/Y H:i', strtotime($account['created_at'])) : '—';
+                    ?>
+                    <tr data-id="<?= (int)$account['id'] ?>" class="table-row">
                         <td class="checkbox-column" style="display: none;">
-                            <input type="checkbox" class="row-checkbox" value="<?= $account['id'] ?>">
+                            <input type="checkbox" class="row-checkbox" value="<?= (int)$account['id'] ?>">
                         </td>
-                        <td><?= $account['id'] ?></td>
-                        <td class="email-cell"><?= htmlspecialchars($account['email']) ?></td>
-                        <td class="user-cell"><?= htmlspecialchars($account['imap_user'] ?? 'N/A') ?></td>
+                        <td><?= (int)$account['id'] ?></td>
+                        <td class="email-cell"><?= htmlspecialchars($account['email'] ?? '') ?></td>
+                        <td class="user-cell"><?= htmlspecialchars($usuario) ?></td>
                         <td class="platform-cell">
-                            <?php if (!empty($account['platforms']) && is_array($account['platforms'])): ?>
-                                <?php foreach ($account['platforms'] as $platform): ?>
-                                    <span class="platform-badge"><?= htmlspecialchars($platform) ?></span>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <span class="platform-badge empty">Sin asignar</span>
-                            <?php endif; ?>
+                            <span class="platform-badge"><?= htmlspecialchars($plataforma) ?></span>
                         </td>
-                        <td>
-                            <?php if ($account['last_sync_at']): ?>
-                                <span class="sync-time" title="Última vez que el sistema procesó correos de esta cuenta: <?= htmlspecialchars($account['last_sync_at']) ?>">
-                                    <?= date('d/m/Y H:i', strtotime($account['last_sync_at'])) ?>
-                                </span>
-                            <?php else: ?>
-                                <span class="sync-time never" title="Esta cuenta aún no ha sido procesada por el sistema">Nunca</span>
-                            <?php endif; ?>
-                        </td>
+                        <td><span class="sync-time"><?= $fechaRegistro ?></span></td>
                         <td class="actions-cell">
                             <button class="btn-icon btn-toggle" 
-                                    data-id="<?= $account['id'] ?>"
-                                    data-enabled="<?= $account['enabled'] ?>"
-                                    title="<?= $account['enabled'] ? 'Deshabilitar' : 'Habilitar' ?>">
+                                    data-id="<?= (int)$account['id'] ?>"
+                                    data-enabled="<?= (int)($account['enabled'] ?? 1) ?>"
+                                    title="<?= ($account['enabled'] ?? 1) ? 'Deshabilitar' : 'Habilitar' ?>">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <?php if ($account['enabled']): ?>
+                                    <?php if (!empty($account['enabled'])): ?>
                                         <path d="M18 6L6 18M6 6l12 12"/>
                                     <?php else: ?>
                                         <polyline points="20 6 9 17 4 12"></polyline>
                                     <?php endif; ?>
                                 </svg>
                             </button>
-                            <a href="/admin/email-accounts/edit?id=<?= $account['id'] ?>" 
+                            <a href="/admin/user-access?email=<?= rawurlencode($account['email'] ?? '') ?>&platform_id=<?= (int)($account['platform_id'] ?? 0) ?>" 
                                class="btn-icon btn-edit" 
-                               title="Editar">
+                               title="Editar acceso">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
                             </a>
                             <button class="btn-icon btn-delete" 
-                                    data-id="<?= $account['id'] ?>"
+                                    data-id="<?= (int)$account['id'] ?>"
                                     title="Eliminar">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="3 6 5 6 21 6"></polyline>

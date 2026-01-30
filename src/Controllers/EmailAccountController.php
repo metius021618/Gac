@@ -9,24 +9,21 @@ namespace Gac\Controllers;
 
 use Gac\Core\Request;
 use Gac\Repositories\EmailAccountRepository;
+use Gac\Repositories\UserAccessRepository;
 
 class EmailAccountController
 {
-    /**
-     * Repositorio de cuentas de email
-     */
     private EmailAccountRepository $emailAccountRepository;
+    private UserAccessRepository $userAccessRepository;
 
-    /**
-     * Constructor
-     */
     public function __construct()
     {
         $this->emailAccountRepository = new EmailAccountRepository();
+        $this->userAccessRepository = new UserAccessRepository();
     }
 
     /**
-     * Listar todas las cuentas de email con búsqueda y paginación
+     * Listar "Correos Registrados" desde user_access (email, usuario=password, plataforma)
      */
     public function index(Request $request): void
     {
@@ -34,7 +31,6 @@ class EmailAccountController
         $page = max(1, (int)$request->get('page', 1));
         $perPage = $request->get('per_page', '15');
         
-        // Validar per_page
         $allowedPerPage = ['15', '30', '60', '100', 'all'];
         if (!in_array($perPage, $allowedPerPage)) {
             $perPage = '15';
@@ -42,7 +38,7 @@ class EmailAccountController
         
         $perPageInt = $perPage === 'all' ? 0 : (int)$perPage;
         
-        $result = $this->emailAccountRepository->searchAndPaginate($search, $page, $perPageInt);
+        $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt);
         
         // Si es petición AJAX, devolver solo la tabla y paginación
         if ($request->isAjax()) {
@@ -335,12 +331,12 @@ class EmailAccountController
             return;
         }
 
-        $deleted = $this->emailAccountRepository->bulkDelete($ids);
+        $deleted = $this->userAccessRepository->bulkDelete($ids);
 
         if ($deleted) {
             json_response([
                 'success' => true,
-                'message' => count($ids) . ' cuenta(s) eliminada(s) correctamente'
+                'message' => count($ids) . ' registro(s) eliminado(s) correctamente'
             ], 200);
         } else {
             json_response([
@@ -373,23 +369,23 @@ class EmailAccountController
             return;
         }
 
-        $deleted = $this->emailAccountRepository->delete($id);
+        $deleted = $this->userAccessRepository->delete($id);
 
         if ($deleted) {
             json_response([
                 'success' => true,
-                'message' => 'Cuenta de email eliminada correctamente'
+                'message' => 'Registro eliminado correctamente'
             ], 200);
         } else {
             json_response([
                 'success' => false,
-                'message' => 'Error al eliminar la cuenta de email'
+                'message' => 'Error al eliminar el registro'
             ], 500);
         }
     }
 
     /**
-     * Cambiar estado (habilitar/deshabilitar)
+     * Cambiar estado (habilitar/deshabilitar) en user_access
      */
     public function toggleStatus(Request $request): void
     {
@@ -407,43 +403,23 @@ class EmailAccountController
         if ($id <= 0) {
             json_response([
                 'success' => false,
-                'message' => 'ID de cuenta inválido'
+                'message' => 'ID inválido'
             ], 400);
             return;
         }
 
-        // Obtener cuenta existente
-        $account = $this->emailAccountRepository->findById($id);
-        if (!$account) {
-            json_response([
-                'success' => false,
-                'message' => 'Cuenta no encontrada'
-            ], 404);
-            return;
-        }
-
-        // Actualizar solo el estado
-        $config = json_decode($account['provider_config'] ?? '{}', true);
-        $data = [
-            'email' => $account['email'],
-            'type' => $account['type'],
-            'provider_config' => $config,
-            'enabled' => $enabled,
-            'sync_status' => $account['sync_status'] ?? 'pending'
-        ];
-
-        $updated = $this->emailAccountRepository->update($id, $data);
+        $updated = $this->userAccessRepository->toggleEnabled($id, (bool)$enabled);
 
         if ($updated) {
             json_response([
                 'success' => true,
-                'message' => 'Estado de cuenta actualizado correctamente',
+                'message' => 'Estado actualizado correctamente',
                 'enabled' => $enabled
             ], 200);
         } else {
             json_response([
                 'success' => false,
-                'message' => 'Error al actualizar el estado de la cuenta'
+                'message' => 'Error al actualizar el estado'
             ], 500);
         }
     }
