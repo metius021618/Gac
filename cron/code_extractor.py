@@ -59,6 +59,18 @@ class CodeExtractorService:
             ],
         }
         
+        # Identificadores de plataforma desde remitente (DE: Disney+, etc.)
+        self.sender_identifiers = {
+            'disney': ['disney', 'disney+', 'disneyplus'],
+            'netflix': ['netflix'],
+            'prime': ['amazon', 'prime'],
+            'spotify': ['spotify'],
+            'crunchyroll': ['crunchyroll'],
+            'paramount': ['paramount'],
+            'chatgpt': ['chatgpt', 'openai'],
+            'canva': ['canva'],
+        }
+        
         # Identificadores de plataforma desde asunto
         self.platform_identifiers = {
             'netflix': [
@@ -97,12 +109,27 @@ class CodeExtractorService:
         
         return None
     
+    def identify_platform_from_sender(self, from_name, from_email):
+        """Identificar plataforma desde DE (remitente): Disney+, Netflix, etc."""
+        combined = ' '.join([(from_name or '').lower(), (from_email or '').lower()])
+        if not combined.strip():
+            return None
+        for platform, keywords in self.sender_identifiers.items():
+            for kw in keywords:
+                if kw in combined:
+                    return platform
+        return None
+    
     def extract_code(self, email, platform=None):
         """Extraer código de un email"""
-        # Identificar plataforma si no se proporciona
+        # Identificar plataforma si no se proporciona: asunto o DE (remitente)
         if not platform:
             platform = self.identify_platform(email.get('subject', ''))
-            
+            if not platform:
+                platform = self.identify_platform_from_sender(
+                    email.get('from_name', ''),
+                    email.get('from', '')
+                )
             if not platform:
                 return None
         

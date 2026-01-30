@@ -9,11 +9,41 @@ logger = logging.getLogger(__name__)
 
 
 class EmailFilterService:
-    """Servicio para filtrar emails por asunto"""
+    """Servicio para filtrar emails por asunto y/o por remitente (DE: Disney+, etc.)"""
+    
+    # Mapeo DE (remitente) -> plataforma para cuando el asunto no coincida
+    SENDER_TO_PLATFORM = {
+        'disney': 'disney',
+        'disney+': 'disney',
+        'disneyplus': 'disney',
+        'netflix': 'netflix',
+        'amazon': 'prime',
+        'prime video': 'prime',
+        'spotify': 'spotify',
+        'crunchyroll': 'crunchyroll',
+        'paramount': 'paramount',
+        'paramount+': 'paramount',
+        'chatgpt': 'chatgpt',
+        'openai': 'chatgpt',
+        'canva': 'canva',
+    }
     
     def __init__(self):
         self.subject_patterns_cache = {}
         self._load_subject_patterns()
+    
+    def _platform_from_sender(self, from_name, from_email):
+        """Obtener plataforma desde DE (remitente): nombre o dominio del correo."""
+        if not from_name and not from_email:
+            return None
+        combined = ' '.join([
+            (from_name or '').lower(),
+            (from_email or '').lower()
+        ])
+        for key, platform in self.SENDER_TO_PLATFORM.items():
+            if key in combined:
+                return platform
+        return None
     
     def _load_subject_patterns(self):
         """Cargar patrones de asuntos desde settings"""
@@ -26,20 +56,24 @@ class EmailFilterService:
                     self.subject_patterns_cache[platform] = subjects
     
     def filter_by_subject(self, emails):
-        """Filtrar emails por asunto"""
+        """Filtrar emails por asunto o por remitente (DE: Disney+, Netflix, etc.)"""
         filtered = []
         
         for email in emails:
             subject = email.get('subject', '')
+            from_name = email.get('from_name', '')
+            from_email = email.get('from', '')
             
-            if not subject:
-                continue
+            # 1) Plataforma desde asunto (tabla email_subjects o patrones)
+            platform = self.match_subject_to_platform(subject) if subject else None
             
-            platform = self.match_subject_to_platform(subject)
+            # 2) Si no hay match por asunto, usar DE (remitente): Disney+, Netflix, etc.
+            if not platform:
+                platform = self._platform_from_sender(from_name, from_email)
             
             if platform:
                 email['matched_platform'] = platform
-                email['matched_subject'] = self.find_matching_subject(subject, platform)
+                email['matched_subject'] = self.find_matching_subject(subject, platform) if subject else subject
                 filtered.append(email)
         
         return filtered

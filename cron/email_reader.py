@@ -37,6 +37,54 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _backfill_email_bodies(emails, limit=500):
+    """
+    Actualizar email_body de códigos ya guardados que lo tengan vacío.
+    Usa la misma lista de emails ya leída por el cron (un solo cron hace todo).
+    """
+    if not emails:
+        return 0
+    updated = 0
+    try:
+        db = Database.get_connection()
+        cursor = db.cursor()
+        # Limitar para no sobrecargar en cada ejecución
+        to_process = emails[:limit] if len(emails) > limit else emails
+        for email_data in to_process:
+            subject = email_data.get('subject', '')
+            email_from = email_data.get('from', '')
+            recipient = (email_data.get('to_primary', '') or '').strip().lower()
+            if not recipient and email_data.get('to'):
+                recipient = (email_data['to'][0] or '').strip().lower()
+            body = email_data.get('body_html') or email_data.get('body_text') or email_data.get('body') or ''
+            if not body or not subject:
+                continue
+            try:
+                cursor.execute("""
+                    SELECT id FROM codes
+                    WHERE subject = %s AND email_from = %s AND recipient_email = %s
+                      AND (email_body IS NULL OR email_body = '')
+                    LIMIT 1
+                """, (subject, email_from, recipient))
+                row = cursor.fetchone()
+                if row:
+                    code_id = row['id'] if isinstance(row, dict) else row[0]
+                    cursor.execute("UPDATE codes SET email_body = %s WHERE id = %s", (body, code_id))
+                    db.commit()
+                    updated += 1
+                    logger.info(f"  - ✓ Cuerpo actualizado para código ID {code_id}")
+            except Exception as e:
+                logger.debug(f"  - Backfill skip: {e}")
+                try:
+                    db.rollback()
+                except Exception:
+                    pass
+        cursor.close()
+    except Exception as e:
+        logger.warning(f"Backfill de cuerpos: {e}")
+    return updated
+
+
 def main():
     """Función principal"""
     logger.info("=" * 60)
@@ -132,8 +180,8 @@ def main():
                     logger.info(f"  - Plataforma '{platform}' deshabilitada, saltando código")
                     continue
                 
-                # Obtener destinatario del email (el usuario que consultará el código)
-                recipient_email = code_data.get('to_primary', '') or (code_data.get('to', [])[0] if code_data.get('to') else '')
+                # DESTINATARIO: correo que consultará (ej. casa2025@pocoyoni.com)
+                recipient_email = (code_data.get('to_primary', '') or (code_data.get('to', [])[0] if code_data.get('to') else '')).strip().lower()
                 
                 if not recipient_email:
                     logger.warning(f"  - Email sin destinatario, saltando código: {code_data.get('code', 'N/A')}")
@@ -154,15 +202,15 @@ def main():
                 email_body = code_data.get('body_html') or code_data.get('body_text') or code_data.get('body') or ''
                 
                 save_data = {
-                    'email_account_id': account_id,  # ID de la cuenta maestra
+                    'email_account_id': account_id,
                     'platform_id': platform_obj['id'],
                     'code': code_data['code'],
                     'email_from': code_data.get('from'),
                     'subject': code_data.get('subject'),
-                    'email_body': email_body,  # Cuerpo completo del email
+                    'email_body': email_body,
                     'received_at': code_data.get('date'),
                     'origin': 'imap',
-                    'recipient_email': recipient_email  # Email del destinatario (usuario)
+                    'recipient_email': recipient_email  # Siempre en minúsculas para consulta
                 }
                 
                 # Guardar código
@@ -180,6 +228,11 @@ def main():
             
             total_codes_saved += codes_saved
             logger.info(f"  - Códigos guardados en esta cuenta: {codes_saved}")
+            
+            # Un solo cron: rellenar cuerpos de códigos antiguos que tengan email_body vacío
+            backfill_count = _backfill_email_bodies(emails, limit=300)
+            if backfill_count:
+                logger.info(f"  - Cuerpos de email actualizados (backfill): {backfill_count}")
             
             # Actualizar estado de sincronización
             EmailAccountRepository.update_sync_status(account_id, 'success')

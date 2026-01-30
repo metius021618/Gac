@@ -84,22 +84,21 @@ python3 cron/email_reader.py
 python3 email_reader.py 2>&1 | tee -a ../logs/cron.log
 ```
 
-### Rellenar cuerpo de correos antiguos (email_body vacío)
+### Un solo cron: nuevo correo + relleno de cuerpos
 
-Si en "Consulta tu Código" ves "El contenido del email no está disponible", es porque ese correo se guardó sin cuerpo. Para rellenar el cuerpo de los correos ya guardados (leyendo desde IMAP):
+El script **email_reader.py** hace todo en una ejecución:
+
+1. **Nuevos correos:** Lee la cuenta maestra (ej. streaming@pocoyoni.com), filtra por asunto o por remitente (DE: Disney+, Netflix, etc.), extrae códigos y los guarda en la BD con el **destinatario real** (cabeceras Delivered-To / X-Original-To) y el cuerpo del email.
+2. **Cuerpos antiguos:** Con la misma lectura de correo, actualiza en la BD los registros en `codes` que tengan `email_body` vacío (matching por asunto, remitente y destinatario).
+
+No hace falta ejecutar otro script. Si en "Consulta tu Código" ves "El contenido del email no está disponible", basta con que el cron siga corriendo; en las siguientes ejecuciones se rellenará el cuerpo.
+
+Opcional: si quieres rellenar muchos cuerpos de una vez sin esperar al cron, puedes ejecutar manualmente:
 
 ```bash
 cd SISTEMA_GAC/cron
 python3 update_old_emails_body.py
 ```
-
-Opcional: límite de emails a procesar (por defecto 500):
-
-```bash
-python3 update_old_emails_body.py 100
-```
-
-El script usa la cuenta maestra IMAP, lee los emails del servidor y actualiza en la BD los registros en `codes` que tengan `email_body` vacío (matching por asunto, remitente y destinatario). Log en `cron/logs/update_old_emails.log`.
 
 ---
 
@@ -169,15 +168,15 @@ cron/
 
 ---
 
-## 🔍 Flujo de Procesamiento
+## 🔍 Flujo de Procesamiento (un solo cron)
 
-1. **Lectura de Cuentas:** Obtiene todas las cuentas IMAP habilitadas
-2. **Lectura de Emails:** Lee últimos 50 emails de cada cuenta
-3. **Filtrado:** Filtra emails por asunto usando patrones de settings
-4. **Extracción:** Extrae códigos usando regex por plataforma
-5. **Validación:** Verifica duplicados y plataformas habilitadas
-6. **Guardado:** Guarda códigos en BD operativa y warehouse
-7. **Actualización:** Actualiza estado de sincronización de cuentas
+1. **Cuenta maestra:** Usa la cuenta IMAP marcada como maestra (ej. streaming@pocoyoni.com).
+2. **Lectura:** Lee los últimos emails del buzón (hasta 300).
+3. **Filtrado:** Filtra por asunto o por remitente (DE: Disney+, Netflix, etc.) usando settings y mapeo DE → plataforma.
+4. **Extracción:** Extrae códigos con regex por plataforma; el **destinatario real** se toma de Delivered-To / X-Original-To / X-Envelope-To.
+5. **Guardado:** Guarda cada código en BD con `recipient_email` en minúsculas (el correo que consultará).
+6. **Backfill:** Con la misma lectura, actualiza `email_body` en registros de `codes` que lo tengan vacío (matching por asunto, remitente y destinatario).
+7. **Sincronización:** Actualiza estado de la cuenta.
 
 ---
 
