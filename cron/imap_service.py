@@ -3,6 +3,7 @@ GAC - Servicio IMAP para Python
 """
 
 import imaplib
+import re
 import email
 from email.header import decode_header
 from email.policy import default as email_policy_default
@@ -57,9 +58,10 @@ class ImapService:
             emails = []
             start = max(0, len(email_ids) - 300)
             
+            account_email = (account.get('email') or '').strip().lower()
             for email_id in reversed(email_ids[start:]):
                 try:
-                    email_data = self._read_email(mail, email_id)
+                    email_data = self._read_email(mail, email_id, account_email)
                     if email_data:
                         emails.append(email_data)
                 except Exception as e:
@@ -75,8 +77,8 @@ class ImapService:
             logger.error(f"Error al conectar con IMAP: {e}")
             raise
     
-    def _read_email(self, mail, email_id):
-        """Leer un email específico"""
+    def _read_email(self, mail, email_id, account_email=''):
+        """Leer un email específico. account_email = cuenta maestra para detectar destinatario real."""
         status, msg_data = mail.fetch(email_id, '(RFC822)')
         
         if status != 'OK':
@@ -121,8 +123,24 @@ class ImapService:
         if delivery_recipient and delivery_recipient not in recipients:
             recipients.insert(0, delivery_recipient)
         
-        # Destinatario principal: el que consultará el código (puede ser de distintos remitentes: Disney+, Netflix, etc.)
+        # Destinatario principal: el que consultará el código
         to_primary = (delivery_recipient if delivery_recipient else (recipients[0] if recipients else ''))
+        
+        # Obtener cuerpo antes de posible fallback (necesitamos body para extraer Destinatario)
+        body_text, body_html = self._get_email_body(msg)
+        if not body_text and not body_html:
+            body_text, body_html = self._get_body_modern(msg)
+        if not body_text and not body_html:
+            logger.warning(f"Email sin cuerpo extraído (asunto): {subject[:60]!r}")
+        
+        # Si el destinatario es la cuenta maestra (o vacío), intentar extraer del cuerpo: "Destinatario: casa2025@pocoyoni.com"
+        if account_email and (not to_primary or to_primary.lower() == account_email.lower()):
+            body_for_recipient = body_text or body_html or ''
+            if body_for_recipient:
+                extracted = self._extract_recipient_from_body(body_for_recipient, account_email)
+                if extracted:
+                    to_primary = extracted
+                    logger.debug(f"Destinatario real desde cuerpo: {to_primary}")
         
         # Obtener fecha
         date_str = msg['Date'] or ''
@@ -138,13 +156,7 @@ class ImapService:
             date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             timestamp = datetime.now().timestamp()
         
-        # Obtener cuerpo: primero API moderna (get_body), luego manual
-        body_text, body_html = self._get_email_body(msg)
-        if not body_text and not body_html:
-            body_text, body_html = self._get_body_modern(msg)
-        if not body_text and not body_html:
-            logger.warning(f"Email sin cuerpo extraído (asunto): {subject[:60]!r}")
-        
+        # Cuerpo ya obtenido arriba (para poder extraer destinatario del body)
         return {
             'message_number': int(email_id),
             'subject': subject,
@@ -263,9 +275,33 @@ class ImapService:
         
         return decoded_string
     
+    def _extract_recipient_from_body(self, body, master_email):
+        """Extraer destinatario real del cuerpo cuando aparece 'Destinatario: casa2025@...' o 'Para: ...'."""
+        if not body or not master_email:
+            return ''
+        master_lower = master_email.lower()
+        # Quitar tags HTML para buscar en texto
+        body_clean = re.sub(r'<[^>]+>', ' ', body)
+        body_clean = ' '.join(body_clean.split())
+        # Patrones: Destinatario: casa2025@pocoyoni.com, Para: ..., To: ..., o Destinatario ... @pocoyoni.com
+        patterns = [
+            r'Destinatario\s*[:\s]+\s*([\w\.-]+@[\w\.-]+\.\w+)',
+            r'Para\s*[:\s]+\s*([\w\.-]+@[\w\.-]+\.\w+)',
+            r'To\s*[:\s]+\s*([\w\.-]+@[\w\.-]+\.\w+)',
+            r'Recipient\s*[:\s]+\s*([\w\.-]+@[\w\.-]+\.\w+)',
+            r'Destinatario\s+[\w\s]*?([\w\.-]+@pocoyoni\.com)',
+            r'Destinatario.*?([\w\.-]+@pocoyoni\.com)',
+        ]
+        for pat in patterns:
+            match = re.search(pat, body_clean, re.IGNORECASE | re.DOTALL)
+            if match:
+                email_addr = match.group(1).strip().lower()
+                if email_addr and email_addr != master_lower:
+                    return email_addr
+        return ''
+
     def _extract_email(self, address_string):
         """Extraer email de string de dirección"""
-        import re
         match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', address_string)
         return match.group(0) if match else ''
     
