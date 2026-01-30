@@ -40,9 +40,8 @@ class EmailAccountController
         
         $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt);
         
-        // Si es petición AJAX, devolver solo la tabla y paginación
+        // Si es petición AJAX, devolver solo la tabla y paginación (mismo ID que en la página)
         if ($request->isAjax()) {
-            // Renderizar el contenido dentro de admin-content para que SearchAJAX lo encuentre
             ob_start();
             extract([
                 'email_accounts' => $result['data'],
@@ -55,9 +54,7 @@ class EmailAccountController
             ]);
             require base_path('views/admin/email_accounts/_table.php');
             $tableHtml = ob_get_clean();
-            
-            // Envolver en admin-content para que SearchAJAX.updateTableContent funcione
-            echo '<div class="admin-content">' . $tableHtml . '</div>';
+            echo '<div id="email-accounts-list">' . $tableHtml . '</div>';
             return;
         }
         

@@ -73,8 +73,10 @@ $content = ob_start();
             </div>
         </div>
 
-        <!-- Tabla de cuentas -->
-        <?php require base_path('views/admin/email_accounts/_table.php'); ?>
+        <!-- Contenedor de tabla y paginación (se reemplaza por AJAX al buscar) -->
+        <div id="email-accounts-list">
+            <?php require base_path('views/admin/email_accounts/_table.php'); ?>
+        </div>
     </div>
 </div>
 

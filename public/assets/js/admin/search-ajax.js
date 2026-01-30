@@ -24,6 +24,7 @@
 
                 const response = await fetch(url.toString(), {
                     method: 'GET',
+                    cache: 'no-store',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'text/html'
@@ -58,50 +59,31 @@
          * Actualizar contenido de la tabla desde HTML
          */
         updateTableContent(html) {
-            // Crear un elemento temporal para parsear el HTML
             const temp = document.createElement('div');
             temp.innerHTML = html;
 
-            // Intentar extraer del admin-content primero
-            let adminContent = temp.querySelector('.admin-content');
-            if (!adminContent) {
-                // Si no hay admin-content, buscar directamente en el body
-                adminContent = temp.querySelector('body') || temp;
+            // Reemplazar por ID si existe (Correos Registrados y vistas que usen este ID)
+            const newList = temp.querySelector('#email-accounts-list');
+            const currentList = document.getElementById('email-accounts-list');
+            if (newList && currentList) {
+                currentList.innerHTML = newList.innerHTML;
+                if (this.reinitializeTableEvents) this.reinitializeTableEvents();
+                return;
             }
 
+            // Fallback: reemplazar .table-container y .pagination-container
+            const adminContent = temp.querySelector('.admin-content') || temp.querySelector('body') || temp;
             const newTable = adminContent.querySelector('.table-container');
             const newPagination = adminContent.querySelector('.pagination-container');
-
-            // Actualizar tabla
-            const currentTable = document.querySelector('.table-container');
-            if (newTable && currentTable) {
-                currentTable.innerHTML = newTable.innerHTML;
-            } else if (newTable) {
-                // Si no existe la tabla actual, crear el contenedor
-                const tableContainer = document.querySelector('.admin-content .table-container') || 
-                                      document.querySelector('.table-container');
-                if (tableContainer) {
-                    tableContainer.innerHTML = newTable.innerHTML;
-                }
+            if (newTable) {
+                const currentTable = document.querySelector('.admin-content .table-container') || document.querySelector('.table-container');
+                if (currentTable) currentTable.innerHTML = newTable.innerHTML;
             }
-
-            // Actualizar paginación
-            const currentPagination = document.querySelector('.pagination-container');
-            if (newPagination && currentPagination) {
-                currentPagination.innerHTML = newPagination.innerHTML;
-            } else if (newPagination) {
-                // Si no existe la paginación actual, buscar donde insertarla
-                const paginationContainer = document.querySelector('.admin-content .pagination-container') ||
-                                           document.querySelector('.pagination-container');
-                if (paginationContainer) {
-                    paginationContainer.innerHTML = newPagination.innerHTML;
-                }
+            if (newPagination) {
+                const currentPagination = document.querySelector('.admin-content .pagination-container') || document.querySelector('.pagination-container');
+                if (currentPagination) currentPagination.innerHTML = newPagination.innerHTML;
             }
-
-            // Re-inicializar eventos de la tabla (si existe callback personalizado)
-            if (this.reinitializeTableEvents) {
-                this.reinitializeTableEvents();
-            }
+            if (this.reinitializeTableEvents) this.reinitializeTableEvents();
         },
 
         /**
