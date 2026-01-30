@@ -53,107 +53,141 @@ def main():
         filter_service = EmailFilterService()
         extractor_service = CodeExtractorService()
         
-        # Obtener TODAS las cuentas IMAP habilitadas (no solo la maestra)
-        # Así se leen correos enviados a casa2025, cineclub017, etc. en sus propios buzones
+        # Obtener cuenta maestra IMAP
+        # Buscar cuenta con is_master = true en provider_config
         accounts = EmailAccountRepository.find_by_type('imap')
         
-        if not accounts:
-            logger.info("No hay cuentas IMAP configuradas o habilitadas")
+        # Buscar cuenta maestra
+        master_account = None
+        for account in accounts:
+            try:
+                import json
+                config = json.loads(account.get('provider_config', '{}'))
+                if config.get('is_master', False):
+                    master_account = account
+                    break
+            except:
+                continue
+        
+        # Si no hay cuenta maestra, usar la primera cuenta o buscar streaming@pocoyoni.com
+        if not master_account:
+            for account in accounts:
+                if account['email'] == 'streaming@pocoyoni.com':
+                    master_account = account
+                    break
+        
+        if not master_account:
+            logger.info("No se encontró cuenta maestra IMAP (streaming@pocoyoni.com)")
             return
         
-        logger.info(f"Cuentas IMAP a procesar: {len(accounts)}")
+        logger.info(f"Procesando cuenta maestra: {master_account['email']}")
         
         total_codes_saved = 0
         
-        for account in accounts:
-            account_id = account['id']
-            account_email = account['email']
+        # Procesar cuenta maestra
+        account = master_account
+        account_id = account['id']
+        account_email = account['email']
+        
+        logger.info(f"Procesando cuenta: {account_email} (ID: {account_id})")
+        
+        try:
+            # Leer emails
+            emails = imap_service.read_account(account)
+            logger.info(f"  - Emails leídos: {len(emails)}")
             
-            logger.info("-" * 50)
-            logger.info(f"Procesando cuenta: {account_email} (ID: {account_id})")
-            
-            try:
-                # Leer emails de ESTA cuenta (cada una tiene su propio buzón)
-                emails = imap_service.read_account(account)
-                logger.info(f"  - Emails leídos: {len(emails)}")
-                
-                if not emails:
-                    EmailAccountRepository.update_sync_status(account_id, 'success')
-                    continue
-                
-                # Filtrar por asunto (Disney, Netflix, etc.)
-                filtered_emails = filter_service.filter_by_subject(emails)
-                logger.info(f"  - Emails filtrados: {len(filtered_emails)}")
-                
-                if not filtered_emails:
-                    EmailAccountRepository.update_sync_status(account_id, 'success')
-                    continue
-                
-                # Extraer códigos
-                codes = extractor_service.extract_codes(filtered_emails)
-                logger.info(f"  - Códigos extraídos: {len(codes)}")
-                
-                if not codes:
-                    EmailAccountRepository.update_sync_status(account_id, 'success')
-                    continue
-                
-                # Guardar códigos (recipient = destinatario del email, para la consulta)
-                codes_saved = 0
-                for code_data in codes:
-                    platform = code_data['platform']
-                    
-                    platform_obj = PlatformRepository.find_by_name(platform)
-                    if not platform_obj:
-                        logger.warning(f"  - Plataforma '{platform}' no encontrada, saltando")
-                        continue
-                    
-                    if not platform_obj['enabled']:
-                        continue
-                    
-                    # Destinatario: quien recibió el correo (para Consulta tu Código)
-                    recipient_email = code_data.get('to_primary', '') or (code_data.get('to', [])[0] if code_data.get('to') else '')
-                    if not recipient_email:
-                        recipient_email = account_email  # Fallback: la propia cuenta
-                    
-                    if CodeRepository.code_exists(
-                        code_data['code'],
-                        platform_obj['id'],
-                        account_id,
-                        recipient_email
-                    ):
-                        logger.info(f"  - Código duplicado: {code_data['code']} para {recipient_email}")
-                        continue
-                    
-                    email_body = code_data.get('body_html') or code_data.get('body_text') or code_data.get('body') or ''
-                    
-                    save_data = {
-                        'email_account_id': account_id,
-                        'platform_id': platform_obj['id'],
-                        'code': code_data['code'],
-                        'email_from': code_data.get('from'),
-                        'subject': code_data.get('subject'),
-                        'email_body': email_body,
-                        'received_at': code_data.get('date'),
-                        'origin': 'imap',
-                        'recipient_email': recipient_email.lower() if recipient_email else account_email
-                    }
-                    
-                    code_id = CodeRepository.save(save_data)
-                    
-                    if code_id:
-                        codes_saved += 1
-                        logger.info(f"  - ✓ Código guardado: {code_data['code']} ({platform}) para {recipient_email}")
-                    else:
-                        logger.error(f"  - ✗ Error al guardar: {code_data['code']}")
-                
-                total_codes_saved += codes_saved
-                logger.info(f"  - Códigos guardados en esta cuenta: {codes_saved}")
+            if not emails:
                 EmailAccountRepository.update_sync_status(account_id, 'success')
+                return
+            
+            # Filtrar por asunto
+            filtered_emails = filter_service.filter_by_subject(emails)
+            logger.info(f"  - Emails filtrados: {len(filtered_emails)}")
+            
+            if not filtered_emails:
+                EmailAccountRepository.update_sync_status(account_id, 'success')
+                return
+            
+            # Extraer códigos
+            codes = extractor_service.extract_codes(filtered_emails)
+            logger.info(f"  - Códigos extraídos: {len(codes)}")
+            
+            if not codes:
+                EmailAccountRepository.update_sync_status(account_id, 'success')
+                return
+            
+            # Guardar códigos
+            # IMPORTANTE: Cada código se asocia con el destinatario del email, no con la cuenta maestra
+            codes_saved = 0
+            for code_data in codes:
+                platform = code_data['platform']
                 
-            except Exception as e:
-                error_msg = str(e)
-                logger.error(f"  - ✗ Error al procesar {account_email}: {error_msg}")
-                EmailAccountRepository.update_sync_status(account_id, 'error', error_msg)
+                # Obtener plataforma desde BD
+                platform_obj = PlatformRepository.find_by_name(platform)
+                if not platform_obj:
+                    logger.warning(f"  - Plataforma '{platform}' no encontrada, saltando código")
+                    continue
+                
+                if not platform_obj['enabled']:
+                    logger.info(f"  - Plataforma '{platform}' deshabilitada, saltando código")
+                    continue
+                
+                # Obtener destinatario del email (el usuario que consultará el código)
+                recipient_email = code_data.get('to_primary', '') or (code_data.get('to', [])[0] if code_data.get('to') else '')
+                
+                if not recipient_email:
+                    logger.warning(f"  - Email sin destinatario, saltando código: {code_data.get('code', 'N/A')}")
+                    continue
+                
+                # Verificar duplicados (incluyendo recipient_email para permitir el mismo código para diferentes usuarios)
+                if CodeRepository.code_exists(
+                    code_data['code'],
+                    platform_obj['id'],
+                    account_id,
+                    recipient_email  # Incluir recipient_email en la verificación
+                ):
+                    logger.info(f"  - Código duplicado: {code_data['code']} para {platform} y destinatario {recipient_email}")
+                    continue
+                
+                # Preparar datos para guardar
+                # Obtener el cuerpo del email (preferir HTML, sino texto)
+                email_body = code_data.get('body_html') or code_data.get('body_text') or code_data.get('body') or ''
+                
+                save_data = {
+                    'email_account_id': account_id,  # ID de la cuenta maestra
+                    'platform_id': platform_obj['id'],
+                    'code': code_data['code'],
+                    'email_from': code_data.get('from'),
+                    'subject': code_data.get('subject'),
+                    'email_body': email_body,  # Cuerpo completo del email
+                    'received_at': code_data.get('date'),
+                    'origin': 'imap',
+                    'recipient_email': recipient_email  # Email del destinatario (usuario)
+                }
+                
+                # Guardar código
+                code_id = CodeRepository.save(save_data)
+                
+                if code_id:
+                    codes_saved += 1
+                    logger.info(f"  - ✓ Código guardado: {code_data['code']} ({platform}) para {recipient_email}")
+                    
+                    # Guardar en warehouse - Deshabilitado temporalmente
+                    # save_data['id'] = code_id
+                    # CodeRepository.save_to_warehouse(save_data)
+                else:
+                    logger.error(f"  - ✗ Error al guardar código: {code_data['code']}")
+            
+            total_codes_saved += codes_saved
+            logger.info(f"  - Códigos guardados en esta cuenta: {codes_saved}")
+            
+            # Actualizar estado de sincronización
+            EmailAccountRepository.update_sync_status(account_id, 'success')
+            
+        except Exception as e:
+            error_msg = str(e)
+            logger.error(f"  - ✗ Error al procesar cuenta {account_email}: {error_msg}")
+            EmailAccountRepository.update_sync_status(account_id, 'error', error_msg)
         
         logger.info("=" * 60)
         logger.info(f"Proceso completado. Total de códigos guardados: {total_codes_saved}")

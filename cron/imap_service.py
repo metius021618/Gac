@@ -105,6 +105,21 @@ class ImapService:
                     if email_addr:
                         recipients.append(email_addr.lower())
         
+        # Cuando todos los correos llegan a la cuenta maestra, el servidor puede
+        # reescribir "To" a la cuenta maestra. Usar cabeceras de entrega real:
+        # Delivered-To, X-Original-To, X-Envelope-To (destinatario original).
+        delivery_recipient = ''
+        for header_name in ('Delivered-To', 'X-Original-To', 'X-Envelope-To', 'Envelope-To'):
+            raw = msg.get(header_name, '')
+            if raw:
+                decoded = self._decode_header(raw)
+                addr = self._extract_email(decoded)
+                if addr:
+                    delivery_recipient = addr.lower()
+                    break
+        if delivery_recipient and delivery_recipient not in recipients:
+            recipients.insert(0, delivery_recipient)
+        
         # Obtener fecha
         date_str = msg['Date'] or ''
         try:

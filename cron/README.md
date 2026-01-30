@@ -171,8 +171,8 @@ cron/
 
 ## 🔍 Flujo de Procesamiento
 
-1. **Lectura de Cuentas:** Obtiene **todas** las cuentas IMAP habilitadas (no solo la maestra)
-2. **Lectura de Emails:** Lee el INBOX de **cada** cuenta (casa2025, streaming, etc.)
+1. **Lectura de Cuentas:** Obtiene todas las cuentas IMAP habilitadas
+2. **Lectura de Emails:** Lee últimos 50 emails de cada cuenta
 3. **Filtrado:** Filtra emails por asunto usando patrones de settings
 4. **Extracción:** Extrae códigos usando regex por plataforma
 5. **Validación:** Verifica duplicados y plataformas habilitadas
@@ -232,14 +232,15 @@ pip install python-dotenv
 - Verificar credenciales de email
 - Verificar puerto y encriptación (SSL/TLS)
 
-### El sistema no lee correos enviados a casa2025 (u otro usuario)
+### El sistema no lee correos enviados a un destinatario (ej. casa2025@pocoyoni.com)
 
-El cron lee **todas** las cuentas IMAP habilitadas en "Correos Registrados". Para que lea los correos enviados a `casa2025@pocoyoni.com`:
+1. **Destinatario real:** Si todos los correos llegan a la cuenta maestra, el servidor puede reescribir el "To" a la cuenta maestra. El cron usa las cabeceras **Delivered-To**, **X-Original-To**, **X-Envelope-To** para obtener el destinatario real (el que consultará el código). Asegúrate de que tu servidor de correo añada una de estas cabeceras con la dirección original (ej. casa2025@pocoyoni.com).
 
-1. **casa2025 debe estar en Correos Registrados** (tabla `email_accounts`), con `enabled = 1`.
-2. **Credenciales IMAP correctas** para el buzón de casa2025: en `provider_config` debe ir el usuario y contraseña con los que se entra a ese correo (p. ej. casa2025 o LENINPERU y su contraseña).
-3. **Cron en ejecución**: el cron debe estar programado (cada 5–10 min) en el servidor.
-4. **Asunto del correo**: debe coincidir con un asunto registrado en "Asuntos de correo" (p. ej. Disney: "Tu código de acceso único para Disney+").
+2. **Asunto debe coincidir:** En "Asuntos de correo" debe haber al menos un asunto que coincida con el del email (ej. "Tu código de acceso único para Disney+" o "código de acceso único" para Disney+). Si no hay coincidencia, el email se descarta.
+
+3. **Cuerpo con código:** El cuerpo del email debe contener un código numérico que coincida con la plataforma (ej. Disney 6–8 dígitos). Si no se extrae código, no se guarda.
+
+4. **Cron ejecutado:** El cron debe estar programado y ejecutándose (cada 5–10 min). Tras enviar el correo, espera a que corra el cron.
 
 ### Logs no se crean
 
