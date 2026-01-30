@@ -140,7 +140,9 @@ class ImapService:
                 extracted = self._extract_recipient_from_body(body_for_recipient, account_email)
                 if extracted:
                     to_primary = extracted
-                    logger.debug(f"Destinatario real desde cuerpo: {to_primary}")
+                    logger.info(f"  Destinatario real desde cuerpo: {to_primary}")
+                else:
+                    logger.warning(f"  No se encontró destinatario en cuerpo (asunto: {subject[:50]}), se usará cuenta maestra")
         
         # Obtener fecha
         date_str = msg['Date'] or ''
@@ -276,14 +278,19 @@ class ImapService:
         return decoded_string
     
     def _extract_recipient_from_body(self, body, master_email):
-        """Extraer destinatario real del cuerpo cuando aparece 'Destinatario: casa2025@...' o 'Para: ...'."""
+        """Extraer destinatario real del cuerpo: Destinatario/Para/mailto o cualquier @pocoyoni.com que no sea la cuenta maestra."""
         if not body or not master_email:
             return ''
         master_lower = master_email.lower()
-        # Quitar tags HTML para buscar en texto
+        # 1) mailto: en enlaces (muchos correos ponen el destinatario ahí)
+        for match in re.finditer(r'mailto:\s*([\w\.-]+@[\w\.-]+\.\w+)', body, re.IGNORECASE):
+            addr = match.group(1).strip().lower()
+            if addr != master_lower and 'pocoyoni.com' in addr:
+                return addr
+        # 2) Quitar tags HTML para buscar en texto
         body_clean = re.sub(r'<[^>]+>', ' ', body)
         body_clean = ' '.join(body_clean.split())
-        # Patrones: Destinatario: casa2025@pocoyoni.com, Para: ..., To: ..., o Destinatario ... @pocoyoni.com
+        # 3) Patrones con etiqueta: Destinatario: casa2025@..., Para: ..., etc.
         patterns = [
             r'Destinatario\s*[:\s]+\s*([\w\.-]+@[\w\.-]+\.\w+)',
             r'Para\s*[:\s]+\s*([\w\.-]+@[\w\.-]+\.\w+)',
@@ -298,6 +305,12 @@ class ImapService:
                 email_addr = match.group(1).strip().lower()
                 if email_addr and email_addr != master_lower:
                     return email_addr
+        # 4) Último recurso: cualquier @pocoyoni.com en el cuerpo que no sea la cuenta maestra
+        all_pocoyoni = re.findall(r'([\w\.-]+@pocoyoni\.com)', body_clean, re.IGNORECASE)
+        for addr in all_pocoyoni:
+            addr = addr.strip().lower()
+            if addr != master_lower:
+                return addr
         return ''
 
     def _extract_email(self, address_string):
