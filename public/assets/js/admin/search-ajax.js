@@ -61,28 +61,13 @@
         updateTableContent(html) {
             const temp = document.createElement('div');
             temp.innerHTML = html;
-
-            // Reemplazar por ID si existe (Correos Registrados y vistas que usen este ID)
-            const newList = temp.querySelector('#email-accounts-list');
-            const currentList = document.getElementById('email-accounts-list');
-            if (newList && currentList) {
-                currentList.innerHTML = newList.innerHTML;
-                if (this.reinitializeTableEvents) this.reinitializeTableEvents();
-                return;
-            }
-
-            // Fallback: reemplazar .table-container y .pagination-container
-            const adminContent = temp.querySelector('.admin-content') || temp.querySelector('body') || temp;
+            const adminContent = temp.querySelector('.admin-content') || temp;
             const newTable = adminContent.querySelector('.table-container');
             const newPagination = adminContent.querySelector('.pagination-container');
-            if (newTable) {
-                const currentTable = document.querySelector('.admin-content .table-container') || document.querySelector('.table-container');
-                if (currentTable) currentTable.innerHTML = newTable.innerHTML;
-            }
-            if (newPagination) {
-                const currentPagination = document.querySelector('.admin-content .pagination-container') || document.querySelector('.pagination-container');
-                if (currentPagination) currentPagination.innerHTML = newPagination.innerHTML;
-            }
+            const currentTable = document.querySelector('.admin-content .table-container') || document.querySelector('.table-container');
+            const currentPagination = document.querySelector('.admin-content .pagination-container') || document.querySelector('.pagination-container');
+            if (newTable && currentTable) currentTable.innerHTML = newTable.innerHTML;
+            if (newPagination && currentPagination) currentPagination.innerHTML = newPagination.innerHTML;
             if (this.reinitializeTableEvents) this.reinitializeTableEvents();
         },
 

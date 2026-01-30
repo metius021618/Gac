@@ -25,7 +25,7 @@ $content = ob_start();
                     id="searchInput" 
                     class="search-input" 
                     placeholder="Buscar por correo o usuario..." 
-                    value="<?= htmlspecialchars($search ?? '') ?>"
+                    value="<?= htmlspecialchars($search_query ?? '') ?>"
                     autocomplete="off"
                 >
                 <button class="search-clear" id="clearSearch" style="display: none;">
@@ -73,10 +73,8 @@ $content = ob_start();
             </div>
         </div>
 
-        <!-- Contenedor de tabla y paginación (se reemplaza por AJAX al buscar) -->
-        <div id="email-accounts-list">
-            <?php require base_path('views/admin/email_accounts/_table.php'); ?>
-        </div>
+        <!-- Tabla de cuentas (igual que platforms) -->
+        <?php require base_path('views/admin/email_accounts/_table.php'); ?>
     </div>
 </div>
 

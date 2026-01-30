@@ -54,7 +54,7 @@ class EmailAccountController
             ]);
             require base_path('views/admin/email_accounts/_table.php');
             $tableHtml = ob_get_clean();
-            echo '<div id="email-accounts-list">' . $tableHtml . '</div>';
+            echo '<div class="admin-content">' . $tableHtml . '</div>';
             return;
         }
         
