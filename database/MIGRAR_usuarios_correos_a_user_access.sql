@@ -8,9 +8,9 @@
 
 USE pocoavbb_gac;
 
--- Insertar en user_access mapeando plataforma (nombre) → platform_id
--- Coincidencia por nombre interno (netflix, disney, etc.) o display_name (Netflix, Disney+)
-INSERT IGNORE INTO user_access (email, password, platform_id, enabled)
+-- Insertar en pocoavbb_gac.user_access (NUEVA BD), leyendo desde pocoavbb_codes544shd.usuarios_correos (BD antigua)
+-- Mapeo: plataforma (nombre) → platform_id de pocoavbb_gac.platforms
+INSERT IGNORE INTO pocoavbb_gac.user_access (email, password, platform_id, enabled)
 SELECT
     LOWER(TRIM(uc.email)) AS email,
     TRIM(uc.password) AS password,
