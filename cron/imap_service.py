@@ -105,9 +105,9 @@ class ImapService:
                     if email_addr:
                         recipients.append(email_addr.lower())
         
-        # Cuando todos los correos llegan a la cuenta maestra, el servidor puede
-        # reescribir "To" a la cuenta maestra. Usar cabeceras de entrega real:
-        # Delivered-To, X-Original-To, X-Envelope-To (destinatario original).
+        # Cuando todos los correos llegan a la cuenta principal pero el destinatario
+        # real (ej. casa2025@pocoyoni.com) puede venir en To o en cabeceras de entrega.
+        # Priorizar Delivered-To / X-Original-To como destinatario principal.
         delivery_recipient = ''
         for header_name in ('Delivered-To', 'X-Original-To', 'X-Envelope-To', 'Envelope-To'):
             raw = msg.get(header_name, '')
@@ -119,6 +119,9 @@ class ImapService:
                     break
         if delivery_recipient and delivery_recipient not in recipients:
             recipients.insert(0, delivery_recipient)
+        
+        # Destinatario principal: el que consultará el código (puede ser de distintos remitentes: Disney+, Netflix, etc.)
+        to_primary = (delivery_recipient if delivery_recipient else (recipients[0] if recipients else ''))
         
         # Obtener fecha
         date_str = msg['Date'] or ''
@@ -142,8 +145,8 @@ class ImapService:
             'subject': subject,
             'from': from_email,
             'from_name': self._extract_name(from_addr),
-            'to': recipients,  # Lista de destinatarios
-            'to_primary': recipients[0] if recipients else '',  # Primer destinatario (principal)
+            'to': recipients,
+            'to_primary': to_primary,  # Destinatario real (para asociar el código al usuario que consulta)
             'date': date,
             'timestamp': int(timestamp),
             'body': body_text or body_html or '',
