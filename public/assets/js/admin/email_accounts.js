@@ -252,6 +252,7 @@
                 perPageSelect: perPageSelect,
                 clearSearchBtn: clearSearchBtn,
                 endpoint: window.location.pathname,
+                minSearchLength: 1,
                 renderCallback: function(html) {
                     window.SearchAJAX.updateTableContent(html);
                     initTable(); // Re-inicializar eventos de la tabla después de la actualización

@@ -24,7 +24,7 @@ $content = ob_start();
                     type="text" 
                     id="searchInput" 
                     class="search-input" 
-                    placeholder="Buscar por correo, usuario o plataforma..." 
+                    placeholder="Buscar por correo o usuario..." 
                     value="<?= htmlspecialchars($search ?? '') ?>"
                     autocomplete="off"
                 >

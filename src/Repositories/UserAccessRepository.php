@@ -87,22 +87,21 @@ class UserAccessRepository
     }
 
     /**
-     * Listar todos los accesos con paginación
+     * Listar/buscar en user_access. Si hay texto, filtra por email o usuario (password).
      */
     public function searchAndPaginate(string $search = '', int $page = 1, int $perPage = 15): array
     {
         try {
             $db = Database::getConnection();
-            
+            $q = trim($search);
             $whereClause = '';
             $params = [];
-            
-            if (!empty($search) && trim($search) !== '') {
-                $searchTerm = '%' . trim($search) . '%';
-                $whereClause = "WHERE (ua.email LIKE :search OR ua.password LIKE :search OR p.display_name LIKE :search OR p.name LIKE :search)";
-                $params[':search'] = $searchTerm;
+
+            if ($q !== '') {
+                $whereClause = "WHERE (ua.email LIKE :q OR ua.password LIKE :q)";
+                $params[':q'] = '%' . $q . '%';
             }
-            
+
             // Contar total
             $countSql = "
                 SELECT COUNT(*) as total
