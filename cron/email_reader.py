@@ -19,10 +19,9 @@ os.chdir(script_dir)
 
 from cron.config import CRON_CONFIG, LOG_CONFIG
 from cron.database import Database
-from cron.repositories import EmailAccountRepository, PlatformRepository, CodeRepository, SettingsRepository
+from cron.repositories import EmailAccountRepository, PlatformRepository, CodeRepository
 from cron.imap_service import ImapService
 from cron.email_filter import EmailFilterService
-from cron.code_extractor import CodeExtractorService
 
 # Configurar logging
 logging.basicConfig(
@@ -96,10 +95,9 @@ def main():
         return
     
     try:
-        # Inicializar servicios
+        # Inicializar servicios (solo IMAP y filtro por DE/plataforma; no extracción de código numérico)
         imap_service = ImapService()
         filter_service = EmailFilterService()
-        extractor_service = CodeExtractorService()
         
         # Obtener cuenta maestra IMAP
         # Buscar cuenta con is_master = true en provider_config
@@ -148,7 +146,7 @@ def main():
                 EmailAccountRepository.update_sync_status(account_id, 'success')
                 return
             
-            # Filtrar por asunto
+            # Filtrar por asunto o por DE (plataforma: Disney+, Netflix, etc.)
             filtered_emails = filter_service.filter_by_subject(emails)
             logger.info(f"  - Emails filtrados: {len(filtered_emails)}")
             
@@ -156,88 +154,61 @@ def main():
                 EmailAccountRepository.update_sync_status(account_id, 'success')
                 return
             
-            # Extraer códigos
-            codes = extractor_service.extract_codes(filtered_emails)
-            logger.info(f"  - Códigos extraídos: {len(codes)}")
-            
-            if not codes:
-                EmailAccountRepository.update_sync_status(account_id, 'success')
-                return
-            
-            # Guardar códigos
-            # IMPORTANTE: Cada código se asocia con el destinatario del email, no con la cuenta maestra
-            codes_saved = 0
-            for code_data in codes:
-                platform = code_data['platform']
-                
-                # Obtener plataforma desde BD
+            # Guardar cada correo: DE → code, destinatario → recipient_email, fecha → received_at, HTML → email_body
+            records_saved = 0
+            for email_data in filtered_emails:
+                platform = email_data.get('matched_platform')
+                if not platform:
+                    continue
                 platform_obj = PlatformRepository.find_by_name(platform)
                 if not platform_obj:
-                    logger.warning(f"  - Plataforma '{platform}' no encontrada, saltando código")
+                    logger.warning(f"  - Plataforma '{platform}' no encontrada, saltando")
                     continue
-                
                 if not platform_obj['enabled']:
-                    logger.info(f"  - Plataforma '{platform}' deshabilitada, saltando código")
                     continue
                 
-                # DESTINATARIO: correo que consultará (ej. casa2025@pocoyoni.com)
-                recipient_email = (code_data.get('to_primary', '') or (code_data.get('to', [])[0] if code_data.get('to') else '')).strip().lower()
-                
+                # DE (remitente) → se guarda en code
+                email_from = email_data.get('from', '') or ''
+                # Destinatario → recipient_email
+                recipient_email = (email_data.get('to_primary', '') or (email_data.get('to', [None])[0] or '')).strip().lower()
                 if not recipient_email:
-                    logger.warning(f"  - Email sin destinatario, saltando código: {code_data.get('code', 'N/A')}")
+                    logger.warning(f"  - Email sin destinatario, saltando (asunto: {email_data.get('subject', '')[:40]})")
                     continue
+                # Fecha → received_at
+                received_at = email_data.get('date', '')
+                subject = email_data.get('subject', '')
+                # HTML del contenido → email_body
+                email_body = email_data.get('body_html') or email_data.get('body_text') or email_data.get('body') or ''
                 
-                # Verificar duplicados por email: DE, destinatario, asunto y fecha (no por el código numérico)
-                if CodeRepository.email_record_exists(
-                    account_id,
-                    code_data.get('from'),
-                    recipient_email,
-                    code_data.get('subject', ''),
-                    code_data.get('date')
-                ):
-                    # Mismo email ya guardado: actualizar cuerpo si está vacío
-                    email_body = code_data.get('body_html') or code_data.get('body_text') or code_data.get('body') or ''
+                # Evitar duplicados: mismo DE, destinatario, asunto y fecha
+                if CodeRepository.email_record_exists(account_id, email_from, recipient_email, subject, received_at):
                     if email_body:
                         if CodeRepository.update_email_body_by_email(
-                            account_id, code_data.get('from'), recipient_email,
-                            code_data.get('subject', ''), code_data.get('date'), email_body
+                            account_id, email_from, recipient_email, subject, received_at, email_body
                         ):
                             logger.info(f"  - ✓ Cuerpo actualizado para email ya registrado ({recipient_email})")
                     continue
                 
-                # Preparar datos para guardar
-                # Obtener el cuerpo del email (preferir HTML, sino texto)
-                email_body = code_data.get('body_html') or code_data.get('body_text') or code_data.get('body') or ''
-                if not email_body:
-                    logger.warning(f"  - ADVERTENCIA: código {code_data.get('code')} sin cuerpo (asunto: {code_data.get('subject', '')[:50]})")
-                
                 save_data = {
                     'email_account_id': account_id,
                     'platform_id': platform_obj['id'],
-                    'code': code_data['code'],
-                    'email_from': code_data.get('from'),
-                    'subject': code_data.get('subject'),
+                    'code': email_from,  # DE → code
+                    'email_from': email_from,
+                    'subject': subject,
                     'email_body': email_body,
-                    'received_at': code_data.get('date'),
+                    'received_at': received_at,
                     'origin': 'imap',
-                    'recipient_email': recipient_email  # Siempre en minúsculas para consulta
+                    'recipient_email': recipient_email,
                 }
-                
-                # Guardar código
                 code_id = CodeRepository.save(save_data)
-                
                 if code_id:
-                    codes_saved += 1
-                    logger.info(f"  - ✓ Código guardado: {code_data['code']} ({platform}) para {recipient_email}")
-                    
-                    # Guardar en warehouse - Deshabilitado temporalmente
-                    # save_data['id'] = code_id
-                    # CodeRepository.save_to_warehouse(save_data)
+                    records_saved += 1
+                    logger.info(f"  - ✓ Correo guardado: DE={email_from[:40]} → {recipient_email}")
                 else:
-                    logger.error(f"  - ✗ Error al guardar código: {code_data['code']}")
+                    logger.error(f"  - ✗ Error al guardar correo para {recipient_email}")
             
-            total_codes_saved += codes_saved
-            logger.info(f"  - Códigos guardados en esta cuenta: {codes_saved}")
+            total_codes_saved += records_saved
+            logger.info(f"  - Correos guardados en esta cuenta: {records_saved}")
             
             # Un solo cron: rellenar cuerpos de códigos antiguos que tengan email_body vacío
             backfill_count = _backfill_email_bodies(emails, limit=300)
@@ -253,7 +224,7 @@ def main():
             EmailAccountRepository.update_sync_status(account_id, 'error', error_msg)
         
         logger.info("=" * 60)
-        logger.info(f"Proceso completado. Total de códigos guardados: {total_codes_saved}")
+        logger.info(f"Proceso completado. Total de correos guardados: {total_codes_saved}")
         logger.info("=" * 60)
         
     except Exception as e:
