@@ -103,9 +103,11 @@ class UserAccessRepository
             $params = [];
 
             if ($q !== '') {
-                $whereClause = "WHERE (ua.email LIKE :q OR ua.password LIKE :q)";
-                $params[':q'] = '%' . $q . '%';
-                $log('WHERE applied: q="' . $q . '" param_q="' . $params[':q'] . '"');
+                $term = '%' . $q . '%';
+                $whereClause = "WHERE (ua.email LIKE :q_email OR ua.password LIKE :q_password)";
+                $params[':q_email'] = $term;
+                $params[':q_password'] = $term;
+                $log('WHERE applied: q="' . $q . '" term="' . $term . '"');
             } else {
                 $log('no search term, listing all');
             }
