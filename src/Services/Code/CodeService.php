@@ -12,32 +12,21 @@ namespace Gac\Services\Code;
 use Gac\Repositories\CodeRepository;
 use Gac\Repositories\PlatformRepository;
 use Gac\Repositories\UserAccessRepository;
+use Gac\Repositories\EmailAccountRepository;
 
 class CodeService
 {
-    /**
-     * Repositorio de códigos
-     */
     private CodeRepository $codeRepository;
-
-    /**
-     * Repositorio de plataformas
-     */
     private PlatformRepository $platformRepository;
-
-    /**
-     * Repositorio de accesos de usuario
-     */
     private UserAccessRepository $userAccessRepository;
+    private EmailAccountRepository $emailAccountRepository;
 
-    /**
-     * Constructor
-     */
     public function __construct()
     {
         $this->codeRepository = new CodeRepository();
         $this->platformRepository = new PlatformRepository();
         $this->userAccessRepository = new UserAccessRepository();
+        $this->emailAccountRepository = new EmailAccountRepository();
     }
 
     /**
@@ -92,12 +81,19 @@ class CodeService
             ];
         }
 
-        // Buscar el último correo recibido (sin importar si está disponible o consumido)
-        // El sistema filtra por el email del destinatario del correo y la plataforma
+        // Buscar el último correo para este usuario (recipient_email = userEmail)
         $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $userEmail);
 
+        // Si no hay correo con su email, mostrar el último que llegó a la cuenta maestra
+        // (por si el servidor no guardó Delivered-To y se guardó como streaming@)
         if (!$lastEmail) {
-            // Si realmente no hay ningún correo, retornar error
+            $master = $this->emailAccountRepository->findMasterAccount();
+            if ($master && !empty($master['email'])) {
+                $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $master['email']);
+            }
+        }
+
+        if (!$lastEmail) {
             return [
                 'success' => false,
                 'message' => 'No se encontraron correos para esta plataforma. Por favor intenta más tarde.'
