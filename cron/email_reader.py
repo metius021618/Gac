@@ -187,21 +187,22 @@ def main():
                     logger.warning(f"  - Email sin destinatario, saltando código: {code_data.get('code', 'N/A')}")
                     continue
                 
-                # Verificar duplicados (incluyendo recipient_email para permitir el mismo código para diferentes usuarios)
-                if CodeRepository.code_exists(
-                    code_data['code'],
-                    platform_obj['id'],
+                # Verificar duplicados por email: DE, destinatario, asunto y fecha (no por el código numérico)
+                if CodeRepository.email_record_exists(
                     account_id,
-                    recipient_email  # Incluir recipient_email en la verificación
+                    code_data.get('from'),
+                    recipient_email,
+                    code_data.get('subject', ''),
+                    code_data.get('date')
                 ):
-                    # Si es duplicado pero tenemos cuerpo y el registro puede tenerlo vacío, actualizar
+                    # Mismo email ya guardado: actualizar cuerpo si está vacío
                     email_body = code_data.get('body_html') or code_data.get('body_text') or code_data.get('body') or ''
                     if email_body:
-                        if CodeRepository.update_email_body_if_empty(
-                            code_data['code'], platform_obj['id'], account_id, recipient_email, email_body
+                        if CodeRepository.update_email_body_by_email(
+                            account_id, code_data.get('from'), recipient_email,
+                            code_data.get('subject', ''), code_data.get('date'), email_body
                         ):
-                            logger.info(f"  - ✓ Cuerpo actualizado para código duplicado: {code_data['code']} ({recipient_email})")
-                    logger.info(f"  - Código duplicado: {code_data['code']} para {platform} y destinatario {recipient_email}")
+                            logger.info(f"  - ✓ Cuerpo actualizado para email ya registrado ({recipient_email})")
                     continue
                 
                 # Preparar datos para guardar

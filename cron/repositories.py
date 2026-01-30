@@ -284,46 +284,33 @@ class CodeRepository:
             return None
     
     @staticmethod
-    def code_exists(code, platform_id, email_account_id, recipient_email=None):
-        """Verificar si código existe para esta combinación"""
+    def email_record_exists(email_account_id, email_from, recipient_email, subject, received_at):
+        """Verificar si ya existe un registro para este email (DE, destinatario, asunto, fecha)."""
+        if not recipient_email or not subject:
+            return False
         try:
             db = Database.get_connection()
             cursor = db.cursor()
-            
-            # Si se proporciona recipient_email, verificar duplicados incluyendo ese campo
-            if recipient_email:
-                cursor.execute("""
-                    SELECT COUNT(*) as count
-                    FROM codes
-                    WHERE code = %s
-                      AND platform_id = %s
-                      AND email_account_id = %s
-                      AND recipient_email = %s
-                      AND status = 'available'
-                """, (code, platform_id, email_account_id, recipient_email.lower()))
-            else:
-                # Si no se proporciona, verificar solo por código, plataforma y cuenta
-                cursor.execute("""
-                    SELECT COUNT(*) as count
-                    FROM codes
-                    WHERE code = %s
-                      AND platform_id = %s
-                      AND email_account_id = %s
-                      AND status = 'available'
-                """, (code, platform_id, email_account_id))
-            
-            result = cursor.fetchone()
+            cursor.execute("""
+                SELECT 1 FROM codes
+                WHERE email_account_id = %s
+                  AND email_from = %s
+                  AND LOWER(recipient_email) = LOWER(%s)
+                  AND subject = %s
+                  AND received_at = %s
+                LIMIT 1
+            """, (email_account_id, email_from or '', recipient_email, subject, received_at or ''))
+            row = cursor.fetchone()
             cursor.close()
-            
-            return result[0] > 0 if result else False
+            return row is not None
         except Error as e:
-            logger.error(f"Error al verificar código duplicado: {e}")
+            logger.error(f"Error al verificar email existente: {e}")
             return False
-    
+
     @staticmethod
-    def update_email_body_if_empty(code, platform_id, email_account_id, recipient_email, email_body):
-        """Actualizar email_body de un código existente solo si está vacío (para duplicados)."""
-        if not email_body or not recipient_email:
+    def update_email_body_by_email(email_account_id, email_from, recipient_email, subject, received_at, email_body):
+        """Actualizar email_body del registro que coincida con DE, destinatario, asunto y fecha."""
+        if not email_body or not recipient_email or not subject:
             return False
         try:
             db = Database.get_connection()
@@ -331,11 +318,12 @@ class CodeRepository:
             cursor.execute("""
                 UPDATE codes
                 SET email_body = %s
-                WHERE code = %s AND platform_id = %s AND email_account_id = %s
+                WHERE email_account_id = %s AND email_from = %s
                   AND LOWER(recipient_email) = LOWER(%s)
+                  AND subject = %s AND received_at = %s
                   AND (email_body IS NULL OR email_body = '')
                 LIMIT 1
-            """, (email_body, code, platform_id, email_account_id, recipient_email))
+            """, (email_body, email_account_id, email_from or '', recipient_email, subject, received_at or ''))
             updated = cursor.rowcount > 0
             db.commit()
             cursor.close()
