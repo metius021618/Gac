@@ -39,6 +39,8 @@
 
         const formData = new FormData(settingsForm);
         const data = Object.fromEntries(formData.entries());
+        data.master_consult_enabled = document.getElementById('master_consult_enabled')?.checked ? '1' : '0';
+        data.master_consult_username = (document.getElementById('master_consult_username')?.value || '').trim();
 
         try {
             const response = await fetch('/admin/settings/update', {

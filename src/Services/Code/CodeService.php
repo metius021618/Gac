@@ -13,6 +13,7 @@ use Gac\Repositories\CodeRepository;
 use Gac\Repositories\PlatformRepository;
 use Gac\Repositories\UserAccessRepository;
 use Gac\Repositories\EmailAccountRepository;
+use Gac\Repositories\SettingsRepository;
 
 class CodeService
 {
@@ -20,6 +21,7 @@ class CodeService
     private PlatformRepository $platformRepository;
     private UserAccessRepository $userAccessRepository;
     private EmailAccountRepository $emailAccountRepository;
+    private SettingsRepository $settingsRepository;
 
     public function __construct()
     {
@@ -27,6 +29,7 @@ class CodeService
         $this->platformRepository = new PlatformRepository();
         $this->userAccessRepository = new UserAccessRepository();
         $this->emailAccountRepository = new EmailAccountRepository();
+        $this->settingsRepository = new SettingsRepository();
     }
 
     /**
@@ -70,6 +73,36 @@ class CodeService
             return [
                 'success' => false,
                 'message' => 'Esta plataforma no está disponible actualmente'
+            ];
+        }
+
+        // Acceso maestro: admin logueado + usuario maestro configurado → ver último código de la plataforma (cualquier cuenta)
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $masterEnabled = $this->settingsRepository->getValue('master_consult_enabled', '0') === '1';
+        $masterUsername = trim($this->settingsRepository->getValue('master_consult_username', ''));
+        $isAdminLoggedIn = !empty($_SESSION['logged_in']);
+        if ($masterEnabled && $masterUsername !== '' && $isAdminLoggedIn && trim($username) === $masterUsername) {
+            $lastEmail = $this->codeRepository->findLastEmailForPlatform($platform['id']);
+            if ($lastEmail) {
+                return [
+                    'success' => true,
+                    'message' => 'Vista maestra (último código de esta plataforma)',
+                    'platform' => $platform['display_name'],
+                    'received_at' => $lastEmail['received_at'],
+                    'minutes_ago' => $lastEmail['minutes_ago'] ?? 0,
+                    'time_ago_text' => $lastEmail['time_ago_text'] ?? 'hace tiempo',
+                    'email_from' => $lastEmail['email_from'] ?? '',
+                    'email_subject' => $lastEmail['subject'] ?? 'Sin asunto',
+                    'email_body' => $lastEmail['email_body'] ?? '',
+                    'is_master_view' => true,
+                    'recipient_email' => $lastEmail['recipient_email'] ?? ''
+                ];
+            }
+            return [
+                'success' => false,
+                'message' => 'No hay correos para esta plataforma.'
             ];
         }
 

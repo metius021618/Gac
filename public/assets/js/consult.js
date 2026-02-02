@@ -296,6 +296,14 @@
                 minute: '2-digit'
             });
         }
+        const recipientRow = document.getElementById('emailModalRecipientRow');
+        const recipientValue = document.getElementById('emailModalRecipient');
+        if (data.is_master_view && recipientRow && recipientValue) {
+            recipientValue.textContent = data.recipient_email || '-';
+            recipientRow.classList.remove('hidden');
+        } else if (recipientRow) {
+            recipientRow.classList.add('hidden');
+        }
         
         // Mostrar cuerpo del email (HTML o texto)
         if (modalBody && data.email_body) {

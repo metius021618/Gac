@@ -70,6 +70,33 @@ $content = ob_start();
                         <span class="form-error" id="sessionTimeoutHoursError"></span>
                     </div>
 
+                    <!-- Acceso maestro a Consulta tu código -->
+                    <div class="settings-section-header" style="margin-top: 2rem;">
+                        <h2 class="settings-section-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                            Acceso maestro a consulta de códigos
+                        </h2>
+                        <p class="settings-section-description">
+                            Si está habilitado, un administrador logueado puede usar la clave maestra en "Consulta tu código" y ver el último código de la plataforma (de cualquier cuenta), no solo el suyo.
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label checkbox-label">
+                            <input type="checkbox" id="master_consult_enabled" name="master_consult_enabled" value="1" <?= (!empty($master_consult_enabled) && $master_consult_enabled === '1') ? 'checked' : '' ?>>
+                            Habilitar acceso maestro
+                        </label>
+                        <small class="form-help">Solo funciona si el usuario está logueado como administrador en el panel.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="master_consult_username" class="form-label">Usuario/clave maestra</label>
+                        <input type="text" id="master_consult_username" name="master_consult_username" class="form-input" 
+                               value="<?= htmlspecialchars($master_consult_username ?? '') ?>" 
+                               placeholder="Ej: MAESTRO o clave secreta">
+                        <small class="form-help">El admin escribe este valor en el campo "Usuario" en Consulta tu código (y cualquier correo/plataforma) para ver el último código de esa plataforma.</small>
+                    </div>
+
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" id="cancelBtn">
                             Cancelar
