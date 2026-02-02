@@ -8,24 +8,21 @@
 namespace Gac\Controllers;
 
 use Gac\Core\Request;
-use Gac\Repositories\EmailAccountRepository;
 use Gac\Repositories\PlatformRepository;
 use Gac\Repositories\UserRepository;
-use Gac\Repositories\CodeRepository;
+use Gac\Repositories\UserAccessRepository;
 
 class DashboardController
 {
-    private EmailAccountRepository $emailAccountRepo;
+    private UserAccessRepository $userAccessRepo;
     private PlatformRepository $platformRepo;
     private UserRepository $userRepo;
-    private CodeRepository $codeRepo;
 
     public function __construct()
     {
-        $this->emailAccountRepo = new EmailAccountRepository();
+        $this->userAccessRepo = new UserAccessRepository();
         $this->platformRepo = new PlatformRepository();
         $this->userRepo = new UserRepository();
-        $this->codeRepo = new CodeRepository();
     }
 
     /**
@@ -46,14 +43,14 @@ class DashboardController
     }
 
     /**
-     * Obtener cantidad de correos agregados
+     * Obtener cantidad de correos registrados (tabla user_access, mismo dato que la vista Correos registrados)
      */
     private function getEmailAccountsCount(): int
     {
         try {
-            return $this->emailAccountRepo->countAll();
+            return $this->userAccessRepo->countAll();
         } catch (\Exception $e) {
-            error_log("Error al contar correos: " . $e->getMessage());
+            error_log("Error al contar correos registrados: " . $e->getMessage());
             return 0;
         }
     }

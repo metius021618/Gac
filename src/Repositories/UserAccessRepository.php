@@ -87,6 +87,21 @@ class UserAccessRepository
     }
 
     /**
+     * Total de registros en user_access (para dashboard "Correos registrados")
+     */
+    public function countAll(): int
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("SELECT COUNT(*) FROM user_access");
+            return (int) $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("Error al contar user_access: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * Listar/buscar en user_access. Si hay texto, filtra por email o usuario (password).
      */
     public function searchAndPaginate(string $search = '', int $page = 1, int $perPage = 15): array
