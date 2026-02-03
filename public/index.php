@@ -6,6 +6,19 @@
  * @version 2.0.0
  */
 
+// Configurar timeout de sesión PHP ANTES de iniciar sesión
+// Usar valor alto por defecto (7 horas = 25200 segundos) para que PHP no elimine la sesión
+// El timeout real se verifica en AuthMiddleware usando el valor de settings
+$maxLifetime = ini_get('session.gc_maxlifetime');
+if ($maxLifetime < 25200) {
+    ini_set('session.gc_maxlifetime', 25200); // 7 horas máximo permitido
+}
+$actualMaxLifetime = ini_get('session.gc_maxlifetime');
+if (defined('APP_DEBUG') && APP_DEBUG) {
+    error_log("[Session] session.gc_maxlifetime configurado: {$actualMaxLifetime} segundos (" . round($actualMaxLifetime / 3600, 1) . " horas)");
+}
+ini_set('session.cookie_lifetime', 0); // Cookie expira al cerrar navegador (o según settings)
+
 // Iniciar sesión
 session_start();
 

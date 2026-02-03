@@ -57,13 +57,16 @@ class AuthMiddleware
             }
         }
 
-        // Actualizar última actividad en la base de datos
+        // Actualizar última actividad en la base de datos y en $_SESSION
+        // Esto asegura que tanto la BD como el archivo de sesión PHP se actualicen
         $sessionId = session_id();
+        $now = time();
         if ($this->sessionRepository && $sessionId) {
             $this->sessionRepository->updateLastActivity($sessionId);
         }
-        // También actualizar en $_SESSION
-        $_SESSION['last_activity'] = time();
+        // Actualizar en $_SESSION para que PHP también actualice el archivo de sesión
+        // (PHP escribirá el archivo automáticamente cuando el script termine)
+        $_SESSION['last_activity'] = $now;
     }
 
     /**
@@ -89,6 +92,20 @@ class AuthMiddleware
         // Si tiene "recordar" activado, usar 30 días
         if (isset($_SESSION['remember']) && $_SESSION['remember']) {
             $timeout = 86400 * 30; // 30 días
+        }
+        
+        // Log para debug (solo si APP_DEBUG está activado)
+        if (defined('APP_DEBUG') && APP_DEBUG) {
+            $sessionRow = $this->sessionRepository ? $this->sessionRepository->findById(session_id()) : null;
+            $lastActivity = $sessionRow ? (int)$sessionRow['last_activity'] : ($_SESSION['last_activity'] ?? 0);
+            $minutesSinceActivity = $lastActivity > 0 ? round((time() - $lastActivity) / 60, 1) : 0;
+            error_log(sprintf(
+                "[AuthMiddleware] Timeout configurado: %d segundos (%d horas). Última actividad hace: %s minutos. Sesión expirada: %s",
+                $timeout,
+                round($timeout / 3600, 1),
+                $minutesSinceActivity,
+                ($lastActivity > 0 && (time() - $lastActivity) > $timeout) ? 'SÍ' : 'NO'
+            ));
         }
 
         // Verificar timeout de sesión

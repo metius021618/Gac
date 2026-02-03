@@ -13,6 +13,15 @@
     RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>
 
+# Configuración de sesión PHP (si el servidor lo permite)
+# Timeout máximo: 7 horas (25200 segundos) - el timeout real se controla desde settings
+<IfModule mod_php7.c>
+    php_value session.gc_maxlifetime 25200
+</IfModule>
+<IfModule mod_php8.c>
+    php_value session.gc_maxlifetime 25200
+</IfModule>
+
 # Prevenir acceso a archivos sensibles
 <FilesMatch "\.(env|log|sql|md)$">
     Order allow,deny
