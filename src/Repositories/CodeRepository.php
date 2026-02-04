@@ -211,6 +211,8 @@ class CodeRepository
                     c.email_body,
                     c.received_at,
                     c.status,
+                    c.origin,
+                    c.recipient_email,
                     TIMESTAMPDIFF(MINUTE, c.received_at, NOW()) as minutes_ago
                 FROM codes c
                 WHERE c.platform_id = :platform_id

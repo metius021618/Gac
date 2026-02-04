@@ -75,6 +75,7 @@ def _backfill_email_bodies(emails, limit=100):
 
 def main():
     logger.info("=" * 60)
+    logger.info("===== EJECUTANDO email_reader_gmail.py (SOLO GMAIL - no IMAP) =====")
     logger.info("GAC - Lector Gmail únicamente (email_reader_gmail.py)")
     logger.info("=" * 60)
 
@@ -139,7 +140,7 @@ def main():
                     code_id = CodeRepository.save(save_data)
                     if code_id:
                         records_saved += 1
-                        logger.info(f"  - ✓ Correo guardado: DE={email_from[:40]} → {recipient_email}")
+                        logger.info(f"  - ✓ GUARDADO origin=gmail recipient_email={recipient_email} received_at={received_at} subject={(subject or '')[:50]!r} id={code_id}")
                 total_codes_saved += records_saved
                 backfill_count = _backfill_email_bodies(emails, limit=100)
                 if backfill_count:

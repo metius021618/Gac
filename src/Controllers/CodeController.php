@@ -132,6 +132,13 @@ class CodeController
         $emailLower = strtolower(trim($email));
         $scriptGmail = (substr($emailLower, -11) === '@gmail.com');
         $script = $scriptGmail ? 'cron/email_reader_gmail.py' : 'cron/email_reader.py';
+        $logFile = $root . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'consult_debug.log';
+        $logDir = dirname($logFile);
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+        $ts = date('Y-m-d H:i:s');
+        @file_put_contents($logFile, "[{$ts}] SYNC ANTES DE CONSULTA: email=" . $email . " -> ejecutando script=" . $script . " (solo " . ($scriptGmail ? 'GMAIL' : 'IMAP') . ")\n", FILE_APPEND | LOCK_EX);
         $cmd = (DIRECTORY_SEPARATOR === '\\')
             ? 'cd /d ' . escapeshellarg($root) . ' && python ' . $script . ' 2>&1'
             : sprintf('cd %s && /bin/python3 %s 2>&1', escapeshellarg($root), $script);

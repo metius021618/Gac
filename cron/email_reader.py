@@ -88,6 +88,7 @@ def _backfill_email_bodies(emails, limit=500):
 def main():
     """Función principal. Solo IMAP (cuenta maestra @pocoyoni). Para Gmail usar email_reader_gmail.py."""
     logger.info("=" * 60)
+    logger.info("===== EJECUTANDO email_reader.py (SOLO IMAP - no Gmail) =====")
     logger.info("GAC - Lector IMAP únicamente (email_reader.py)")
     logger.info("=" * 60)
     
@@ -189,7 +190,7 @@ def main():
                             code_id = CodeRepository.save(save_data)
                             if code_id:
                                 records_saved += 1
-                                logger.info(f"  - ✓ Correo guardado: DE={email_from[:40]} → {recipient_email}")
+                                logger.info(f"  - ✓ GUARDADO origin=imap recipient_email={recipient_email} received_at={received_at} subject={(subject or '')[:50]!r} id={code_id}")
                             else:
                                 logger.error(f"  - ✗ Error al guardar correo para {recipient_email}")
                         
