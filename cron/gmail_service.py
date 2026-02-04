@@ -73,6 +73,17 @@ def _parse_date(date_str):
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
+def _parse_internal_date(internal_date_ms):
+    """Convertir internalDate de Gmail (ms desde epoch) a Y-m-d H:%M:%S. Fecha real de recepción."""
+    if internal_date_ms is None:
+        return None
+    try:
+        ts = int(internal_date_ms) / 1000.0
+        return datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    except (TypeError, ValueError, OSError):
+        return None
+
+
 def _get_body_from_payload(payload):
     """Extraer body HTML/texto del payload de un mensaje Gmail."""
     body_html = ''
@@ -177,27 +188,31 @@ class GmailService:
                 logger.debug(f"Error al leer mensaje {msg_id}: {e}")
                 continue
 
+        # Ordenar por fecha real (más reciente primero) para que la consulta devuelva el último recibido
+        emails.sort(key=lambda e: e.get('date', ''), reverse=True)
         return emails
 
     def _parse_message(self, msg, account_email):
-        """Convertir mensaje Gmail API al formato usado por ImapService (subject, from, to_primary, date, body_*)."""
+        """Convertir mensaje Gmail API al formato usado por ImapService (subject, from, to_primary, date, body_*).
+        Usamos internalDate (fecha real de recepción en Gmail) para que Consulta tu código muestre el correo más reciente."""
         payload = msg.get('payload') or {}
         headers = payload.get('headers') or []
 
         subject = _get_header(headers, 'Subject')
         from_raw = _get_header(headers, 'From')
         to_raw = _get_header(headers, 'To')
-        date_str = _get_header(headers, 'Date')
+        date_header_str = _get_header(headers, 'Date')
 
         from_email = _extract_email(from_raw)
         from_name = _extract_name(from_raw)
         to_list = [e.strip().lower() for e in re.findall(r'[\w.+-]+@[\w.-]+\.\w+', to_raw or '') if e]
-        # En Gmail el destinatario del buzón es la cuenta que leemos
         to_primary = account_email
 
         body_text, body_html = _get_body_from_payload(payload)
         body = body_text or body_html or ''
-        date = _parse_date(date_str)
+        # Preferir internalDate (cuando Gmail recibió el correo) sobre el header Date (puede venir mal del remitente)
+        internal_date = msg.get('internalDate')
+        date = _parse_internal_date(internal_date) if internal_date else _parse_date(date_header_str)
 
         return {
             'message_number': msg.get('id', ''),
