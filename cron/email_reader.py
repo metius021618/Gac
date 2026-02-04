@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-GAC - Script Principal de Lectura de Emails
-Cron Job para leer emails automáticamente y extraer códigos
+GAC - Lector de correos SOLO IMAP (cuenta maestra @pocoyoni)
+Cron independiente: solo lee la cuenta maestra IMAP y guarda en codes con origin='imap'.
+Para Gmail usar el script separado: email_reader_gmail.py
 """
 
 import sys
@@ -22,12 +23,6 @@ from cron.database import Database
 from cron.repositories import EmailAccountRepository, PlatformRepository, CodeRepository
 from cron.imap_service import ImapService
 from cron.email_filter import EmailFilterService
-try:
-    from cron.gmail_service import GmailService
-    GMAIL_SERVICE_AVAILABLE = True
-except Exception:
-    GmailService = None
-    GMAIL_SERVICE_AVAILABLE = False
 
 # Configurar logging
 logging.basicConfig(
@@ -91,20 +86,9 @@ def _backfill_email_bodies(emails, limit=500):
 
 
 def main():
-    """Función principal. Acepta --gmail-only o --imap-only para ejecutar solo una parte."""
-    run_imap = True
-    run_gmail = True
-    if '--gmail-only' in sys.argv:
-        run_imap = False
-        run_gmail = True
-        logger.info("Modo: solo Gmail (--gmail-only)")
-    elif '--imap-only' in sys.argv:
-        run_imap = True
-        run_gmail = False
-        logger.info("Modo: solo IMAP (--imap-only)")
-    
+    """Función principal. Solo IMAP (cuenta maestra @pocoyoni). Para Gmail usar email_reader_gmail.py."""
     logger.info("=" * 60)
-    logger.info("Iniciando lectura automática de emails")
+    logger.info("GAC - Lector IMAP únicamente (email_reader.py)")
     logger.info("=" * 60)
     
     if not CRON_CONFIG['enabled']:
@@ -112,17 +96,12 @@ def main():
         return
     
     try:
-        imap_service = ImapService() if run_imap else None
+        imap_service = ImapService()
         filter_service = EmailFilterService()
+        accounts = EmailAccountRepository.find_by_type('imap')
         
-        if run_imap:
-            accounts = EmailAccountRepository.find_by_type('imap')
-        else:
-            accounts = []
-        
-        # Buscar cuenta maestra IMAP (solo si estamos en modo IMAP)
         master_account = None
-        for account in (accounts or []):
+        for account in accounts:
             try:
                 import json
                 config = json.loads(account.get('provider_config', '{}'))
@@ -142,12 +121,11 @@ def main():
         total_codes_saved = 0
         
         if not master_account:
-            logger.info("No se encontró cuenta maestra IMAP; se procesarán solo cuentas Gmail si hay.")
-        else:
-            logger.info(f"Procesando cuenta maestra: {master_account['email']}")
+            logger.info("No se encontró cuenta maestra IMAP.")
+            return
         
-        # Procesar cuenta maestra IMAP (solo si run_imap y existe)
-        account = master_account if run_imap else None
+        logger.info(f"Procesando cuenta maestra: {master_account['email']}")
+        account = master_account
         if account:
             account_id = account['id']
             account_email = account['email']
@@ -230,69 +208,6 @@ def main():
                 error_msg = str(e)
                 logger.error(f"  - ✗ Error al procesar cuenta {account_email}: {error_msg}")
                 EmailAccountRepository.update_sync_status(account_id, 'error', error_msg)
-        
-        # --- Procesar cuentas Gmail (solo si run_gmail) ---
-        if run_gmail and GMAIL_SERVICE_AVAILABLE and GmailService:
-            gmail_accounts = EmailAccountRepository.find_by_type('gmail')
-            for gaccount in gmail_accounts:
-                gaccount_id = gaccount['id']
-                gaccount_email = (gaccount.get('email') or '').strip().lower()
-                logger.info(f"Procesando cuenta Gmail: {gaccount_email} (ID: {gaccount_id})")
-                try:
-                    gmail_service = GmailService()
-                    emails = gmail_service.read_account(gaccount, max_messages=200)
-                    logger.info(f"  - Emails leídos (Gmail): {len(emails)}")
-                    if not emails:
-                        EmailAccountRepository.update_sync_status(gaccount_id, 'success')
-                        continue
-                    filtered = filter_service.filter_by_subject(emails)
-                    logger.info(f"  - Emails filtrados (Gmail): {len(filtered)}")
-                    if not filtered:
-                        EmailAccountRepository.update_sync_status(gaccount_id, 'success')
-                        continue
-                    records_saved = 0
-                    for email_data in filtered:
-                        platform = email_data.get('matched_platform')
-                        if not platform:
-                            continue
-                        platform_obj = PlatformRepository.find_by_name(platform)
-                        if not platform_obj or not platform_obj.get('enabled'):
-                            continue
-                        email_from = email_data.get('from', '') or ''
-                        recipient_email = (email_data.get('to_primary') or gaccount_email).strip().lower()
-                        received_at = email_data.get('date', '')
-                        subject = email_data.get('subject', '')
-                        email_body = email_data.get('body_html') or email_data.get('body_text') or email_data.get('body') or ''
-                        if CodeRepository.email_record_exists(gaccount_id, email_from, recipient_email, subject, received_at):
-                            if email_body and CodeRepository.update_email_body_by_email(
-                                gaccount_id, email_from, recipient_email, subject, received_at, email_body
-                            ):
-                                logger.info(f"  - ✓ Cuerpo actualizado (Gmail) para {recipient_email}")
-                            continue
-                        save_data = {
-                            'email_account_id': gaccount_id,
-                            'platform_id': platform_obj['id'],
-                            'code': email_from,
-                            'email_from': email_from,
-                            'subject': subject,
-                            'email_body': email_body,
-                            'received_at': received_at,
-                            'origin': 'gmail',
-                            'recipient_email': recipient_email,
-                        }
-                        code_id = CodeRepository.save(save_data)
-                        if code_id:
-                            records_saved += 1
-                            logger.info(f"  - ✓ Correo Gmail guardado: DE={email_from[:40]} → {recipient_email}")
-                    total_codes_saved += records_saved
-                    backfill_count = _backfill_email_bodies(emails, limit=100)
-                    if backfill_count:
-                        logger.info(f"  - Cuerpos actualizados (backfill Gmail): {backfill_count}")
-                    EmailAccountRepository.update_sync_status(gaccount_id, 'success')
-                except Exception as e:
-                    error_msg = str(e)
-                    logger.error(f"  - ✗ Error al procesar Gmail {gaccount_email}: {error_msg}")
-                    EmailAccountRepository.update_sync_status(gaccount_id, 'error', error_msg)
         
         logger.info("=" * 60)
         logger.info(f"Proceso completado. Total de correos guardados: {total_codes_saved}")

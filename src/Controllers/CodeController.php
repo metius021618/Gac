@@ -130,10 +130,11 @@ class CodeController
         @set_time_limit(90);
         $root = base_path();
         $emailLower = strtolower(trim($email));
-        $cronMode = (substr($emailLower, -11) === '@gmail.com') ? '--gmail-only' : '--imap-only';
+        $scriptGmail = (substr($emailLower, -11) === '@gmail.com');
+        $script = $scriptGmail ? 'cron/email_reader_gmail.py' : 'cron/email_reader.py';
         $cmd = (DIRECTORY_SEPARATOR === '\\')
-            ? 'cd /d ' . escapeshellarg($root) . ' && python cron/email_reader.py ' . $cronMode . ' 2>&1'
-            : sprintf('cd %s && /bin/python3 cron/email_reader.py %s 2>&1', escapeshellarg($root), $cronMode);
+            ? 'cd /d ' . escapeshellarg($root) . ' && python ' . $script . ' 2>&1'
+            : sprintf('cd %s && /bin/python3 %s 2>&1', escapeshellarg($root), $script);
         @exec($cmd);
         $result = $this->codeService->consultCode($platform, $email, $username);
         $httpCode = $result['success'] ? 200 : 404;
@@ -163,12 +164,14 @@ class CodeController
         }
         @file_put_contents($lockFile, (string) $now);
         $root = base_path();
+        $logFile = $root . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'cron.log';
         if (DIRECTORY_SEPARATOR === '\\') {
-            $cmd = 'start /B cd /d ' . escapeshellarg($root) . ' && python cron/email_reader.py >> logs/cron.log 2>&1';
+            @exec('start /B cd /d ' . escapeshellarg($root) . ' && python cron/email_reader.py >> ' . escapeshellarg($logFile) . ' 2>&1');
+            @exec('start /B cd /d ' . escapeshellarg($root) . ' && python cron/email_reader_gmail.py >> ' . escapeshellarg($logFile) . ' 2>&1');
         } else {
-            $cmd = sprintf('cd %s && /bin/python3 cron/email_reader.py >> logs/cron.log 2>&1 &', escapeshellarg($root));
+            @exec(sprintf('cd %s && /bin/python3 cron/email_reader.py >> %s 2>&1 &', escapeshellarg($root), escapeshellarg($logFile)));
+            @exec(sprintf('cd %s && /bin/python3 cron/email_reader_gmail.py >> %s 2>&1 &', escapeshellarg($root), escapeshellarg($logFile)));
         }
-        @exec($cmd);
         $triggered = true;
         json_response(['triggered' => $triggered]);
     }
