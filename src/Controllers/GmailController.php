@@ -12,14 +12,20 @@ use Google\Client as GoogleClient;
 use Google\Service\Gmail;
 use Gac\Core\Request;
 use Gac\Repositories\EmailAccountRepository;
+use Gac\Repositories\UserAccessRepository;
+use Gac\Repositories\PlatformRepository;
 
 class GmailController
 {
     private EmailAccountRepository $emailAccountRepository;
+    private UserAccessRepository $userAccessRepository;
+    private PlatformRepository $platformRepository;
 
     public function __construct()
     {
         $this->emailAccountRepository = new EmailAccountRepository();
+        $this->userAccessRepository = new UserAccessRepository();
+        $this->platformRepository = new PlatformRepository();
     }
 
     /**
@@ -131,6 +137,13 @@ class GmailController
             $_SESSION['gmail_error'] = 'Error al guardar la cuenta en la base de datos.';
             redirect('/admin/user-access');
             return;
+        }
+
+        // Registrar también en user_access para que aparezca en "Correos Registrados"
+        $platforms = $this->platformRepository->findAllEnabled();
+        $firstPlatformId = !empty($platforms) ? (int) $platforms[0]['id'] : 0;
+        if ($firstPlatformId > 0) {
+            $this->userAccessRepository->createOrUpdate($email, 'Gmail (OAuth)', $firstPlatformId);
         }
 
         unset($_SESSION['gmail_error']);
