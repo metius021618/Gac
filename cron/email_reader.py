@@ -91,7 +91,18 @@ def _backfill_email_bodies(emails, limit=500):
 
 
 def main():
-    """Función principal"""
+    """Función principal. Acepta --gmail-only o --imap-only para ejecutar solo una parte."""
+    run_imap = True
+    run_gmail = True
+    if '--gmail-only' in sys.argv:
+        run_imap = False
+        run_gmail = True
+        logger.info("Modo: solo Gmail (--gmail-only)")
+    elif '--imap-only' in sys.argv:
+        run_imap = True
+        run_gmail = False
+        logger.info("Modo: solo IMAP (--imap-only)")
+    
     logger.info("=" * 60)
     logger.info("Iniciando lectura automática de emails")
     logger.info("=" * 60)
@@ -101,17 +112,17 @@ def main():
         return
     
     try:
-        # Inicializar servicios (solo IMAP y filtro por DE/plataforma; no extracción de código numérico)
-        imap_service = ImapService()
+        imap_service = ImapService() if run_imap else None
         filter_service = EmailFilterService()
         
-        # Obtener cuenta maestra IMAP
-        # Buscar cuenta con is_master = true en provider_config
-        accounts = EmailAccountRepository.find_by_type('imap')
+        if run_imap:
+            accounts = EmailAccountRepository.find_by_type('imap')
+        else:
+            accounts = []
         
-        # Buscar cuenta maestra
+        # Buscar cuenta maestra IMAP (solo si estamos en modo IMAP)
         master_account = None
-        for account in accounts:
+        for account in (accounts or []):
             try:
                 import json
                 config = json.loads(account.get('provider_config', '{}'))
@@ -135,8 +146,8 @@ def main():
         else:
             logger.info(f"Procesando cuenta maestra: {master_account['email']}")
         
-        # Procesar cuenta maestra IMAP (si existe)
-        account = master_account
+        # Procesar cuenta maestra IMAP (solo si run_imap y existe)
+        account = master_account if run_imap else None
         if account:
             account_id = account['id']
             account_email = account['email']
@@ -220,8 +231,8 @@ def main():
                 logger.error(f"  - ✗ Error al procesar cuenta {account_email}: {error_msg}")
                 EmailAccountRepository.update_sync_status(account_id, 'error', error_msg)
         
-        # --- Procesar cuentas Gmail (destinatario = la propia cuenta Gmail) ---
-        if GMAIL_SERVICE_AVAILABLE and GmailService:
+        # --- Procesar cuentas Gmail (solo si run_gmail) ---
+        if run_gmail and GMAIL_SERVICE_AVAILABLE and GmailService:
             gmail_accounts = EmailAccountRepository.find_by_type('gmail')
             for gaccount in gmail_accounts:
                 gaccount_id = gaccount['id']

@@ -129,9 +129,11 @@ class CodeController
         }
         @set_time_limit(90);
         $root = base_path();
+        $emailLower = strtolower(trim($email));
+        $cronMode = (substr($emailLower, -11) === '@gmail.com') ? '--gmail-only' : '--imap-only';
         $cmd = (DIRECTORY_SEPARATOR === '\\')
-            ? 'cd /d ' . escapeshellarg($root) . ' && python cron/email_reader.py 2>&1'
-            : sprintf('cd %s && /bin/python3 cron/email_reader.py 2>&1', escapeshellarg($root));
+            ? 'cd /d ' . escapeshellarg($root) . ' && python cron/email_reader.py ' . $cronMode . ' 2>&1'
+            : sprintf('cd %s && /bin/python3 cron/email_reader.py %s 2>&1', escapeshellarg($root), $cronMode);
         @exec($cmd);
         $result = $this->codeService->consultCode($platform, $email, $username);
         $httpCode = $result['success'] ? 200 : 404;
