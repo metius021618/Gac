@@ -440,7 +440,7 @@ class EmailAccountRepository
 
     /**
      * Eliminar cuenta de email
-     * 
+     *
      * @param int $id
      * @return bool
      */
@@ -452,6 +452,97 @@ class EmailAccountRepository
             return $stmt->execute(['id' => $id]);
         } catch (PDOException $e) {
             error_log("Error al eliminar cuenta de email: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Crear o actualizar cuenta Gmail con tokens OAuth
+     * Si ya existe la cuenta por email, actualiza tokens y type; si no, inserta nueva.
+     *
+     * @param string $email
+     * @param string $accessToken Token de acceso (se guarda para uso inmediato)
+     * @param string $refreshToken Token de refresco (obligatorio para cron)
+     * @return int ID de la cuenta creada o actualizada, o false en error
+     */
+    public function createOrUpdateGmailAccount(string $email, string $accessToken, string $refreshToken): int|false
+    {
+        $email = trim(strtolower($email));
+        if ($email === '') {
+            return false;
+        }
+
+        try {
+            $db = Database::getConnection();
+            $existing = $this->findByEmail($email);
+
+            if ($existing) {
+                $stmt = $db->prepare("
+                    UPDATE email_accounts
+                    SET type = 'gmail',
+                        oauth_token = :oauth_token,
+                        oauth_refresh_token = :oauth_refresh_token,
+                        sync_status = 'pending',
+                        error_message = NULL,
+                        updated_at = NOW()
+                    WHERE id = :id
+                ");
+                $stmt->execute([
+                    'id' => $existing['id'],
+                    'oauth_token' => $accessToken,
+                    'oauth_refresh_token' => $refreshToken
+                ]);
+                return (int) $existing['id'];
+            }
+
+            $stmt = $db->prepare("
+                INSERT INTO email_accounts (
+                    email, type, provider_config, oauth_token, oauth_refresh_token,
+                    enabled, sync_status, created_at, updated_at
+                ) VALUES (
+                    :email, 'gmail', '{}', :oauth_token, :oauth_refresh_token,
+                    1, 'pending', NOW(), NOW()
+                )
+            ");
+            $stmt->execute([
+                'email' => $email,
+                'oauth_token' => $accessToken,
+                'oauth_refresh_token' => $refreshToken
+            ]);
+            return (int) $db->lastInsertId();
+        } catch (PDOException $e) {
+            error_log("Error al guardar cuenta Gmail: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Actualizar solo los tokens OAuth de una cuenta
+     *
+     * @param int $id
+     * @param string $accessToken
+     * @param string $refreshToken
+     * @return bool
+     */
+    public function updateOAuthTokens(int $id, string $accessToken, string $refreshToken): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                UPDATE email_accounts
+                SET oauth_token = :oauth_token,
+                    oauth_refresh_token = :oauth_refresh_token,
+                    error_message = NULL,
+                    updated_at = NOW()
+                WHERE id = :id
+            ");
+            return $stmt->execute([
+                'id' => $id,
+                'oauth_token' => $accessToken,
+                'oauth_refresh_token' => $refreshToken
+            ]);
+        } catch (PDOException $e) {
+            error_log("Error al actualizar tokens OAuth: " . $e->getMessage());
             return false;
         }
     }

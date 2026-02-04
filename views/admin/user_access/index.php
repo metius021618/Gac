@@ -18,7 +18,31 @@ $content = ob_start();
         </h1>
     </div>
 
+    <?php if (!empty($_SESSION['gmail_success'])): ?>
+        <div class="alert alert-success" role="alert">
+            <?= htmlspecialchars($_SESSION['gmail_success']) ?>
+            <?php unset($_SESSION['gmail_success']); ?>
+        </div>
+    <?php endif; ?>
+    <?php if (!empty($_SESSION['gmail_error'])): ?>
+        <div class="alert alert-danger" role="alert">
+            <?= htmlspecialchars($_SESSION['gmail_error']) ?>
+            <?php unset($_SESSION['gmail_error']); ?>
+        </div>
+    <?php endif; ?>
+
     <div class="admin-content">
+        <!-- Conectar Gmail -->
+        <div class="form-card" style="margin-bottom: 1.5rem;">
+            <p class="form-label" style="margin-bottom: 0.75rem;">Conectar cuenta Gmail para que el sistema pueda leer correos de esa cuenta</p>
+            <a href="/gmail/connect" class="btn btn-primary" id="gmailConnectBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.636H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.313l8.073-5.82C21.69 2.28 24 3.434 24 5.457z"/>
+                </svg>
+                Conectar Gmail
+            </a>
+        </div>
+
         <!-- Formulario -->
         <div class="form-card">
             <form id="userAccessForm" class="user-access-form">
