@@ -114,15 +114,19 @@ class CodeService
             ];
         }
 
-        // Buscar el último correo para este usuario (recipient_email = userEmail)
-        $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $userEmail);
+        // Si el correo es @gmail.com, buscar solo códigos leídos desde Gmail (no mezclar con IMAP)
+        $userEmailLower = strtolower(trim($userEmail));
+        $originFilter = (substr($userEmailLower, -11) === '@gmail.com') ? 'gmail' : null;
 
-        // Si no hay correo con su email, mostrar el último que llegó a la cuenta maestra
+        // Buscar el último correo para este usuario (recipient_email = userEmail)
+        $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $userEmail, $originFilter);
+
+        // Si no hay correo con su email y NO es Gmail, mostrar el último que llegó a la cuenta maestra
         // (por si el servidor no guardó Delivered-To y se guardó como streaming@)
-        if (!$lastEmail) {
+        if (!$lastEmail && $originFilter !== 'gmail') {
             $master = $this->emailAccountRepository->findMasterAccount();
             if ($master && !empty($master['email'])) {
-                $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $master['email']);
+                $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $master['email'], null);
             }
         }
 

@@ -183,15 +183,25 @@ class CodeRepository
 
     /**
      * Buscar el último correo recibido (sin importar estado) para un email y plataforma
-     * 
+     *
      * @param int $platformId ID de la plataforma
      * @param string $recipientEmail Email del destinatario
+     * @param string|null $origin Solo códigos de este origen: 'gmail', 'imap' o null (cualquiera)
      * @return array|null Datos del último correo con tiempo transcurrido
      */
-    public function findLastEmail(int $platformId, string $recipientEmail): ?array
+    public function findLastEmail(int $platformId, string $recipientEmail, ?string $origin = null): ?array
     {
         try {
             $db = Database::getConnection();
+            $originClause = '';
+            $params = [
+                'platform_id' => $platformId,
+                'recipient_email' => strtolower($recipientEmail)
+            ];
+            if ($origin === 'gmail' || $origin === 'imap') {
+                $originClause = ' AND c.origin = :origin';
+                $params['origin'] = $origin;
+            }
             $stmt = $db->prepare("
                 SELECT 
                     c.id,
@@ -205,14 +215,12 @@ class CodeRepository
                 FROM codes c
                 WHERE c.platform_id = :platform_id
                   AND c.recipient_email = :recipient_email
+                  {$originClause}
                 ORDER BY c.received_at DESC, c.id DESC
                 LIMIT 1
             ");
             
-            $stmt->execute([
-                'platform_id' => $platformId,
-                'recipient_email' => strtolower($recipientEmail)
-            ]);
+            $stmt->execute($params);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($result) {
