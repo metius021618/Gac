@@ -115,6 +115,32 @@ class EmailAccountRepository:
             db.rollback()
             return False
 
+    @staticmethod
+    def update_oauth_tokens(account_id, access_token, refresh_token=None):
+        """Actualizar access_token y opcionalmente refresh_token de una cuenta (Outlook/Gmail)."""
+        try:
+            db = Database.get_connection()
+            cursor = db.cursor()
+            if refresh_token is not None:
+                cursor.execute("""
+                    UPDATE email_accounts
+                    SET oauth_token = %s, oauth_refresh_token = %s, error_message = NULL, updated_at = NOW()
+                    WHERE id = %s
+                """, (access_token, refresh_token, account_id))
+            else:
+                cursor.execute("""
+                    UPDATE email_accounts
+                    SET oauth_token = %s, error_message = NULL, updated_at = NOW()
+                    WHERE id = %s
+                """, (access_token, account_id))
+            db.commit()
+            cursor.close()
+            return True
+        except Error as e:
+            logger.error(f"Error al actualizar tokens OAuth: {e}")
+            db.rollback()
+            return False
+
 
 class PlatformRepository:
     """Repositorio de plataformas"""

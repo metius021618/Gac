@@ -11,6 +11,7 @@ from datetime import datetime
 from email.utils import parsedate_tz, mktime_tz
 
 from cron.config import OUTLOOK_CONFIG
+from cron.repositories import EmailAccountRepository
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +59,12 @@ class OutlookService:
         self.client_secret = OUTLOOK_CONFIG.get('client_secret', '')
         self.tenant_id = (OUTLOOK_CONFIG.get('tenant_id') or '').strip() or 'common'
 
-    def _get_access_token(self, refresh_token):
-        """Obtener access_token usando refresh_token. Scope debe coincidir con el de la autorización (PHP)."""
+    def _refresh_tokens(self, refresh_token):
+        """
+        Renovar access_token (y opcionalmente refresh_token) usando refresh_token.
+        Scope debe coincidir con el de la autorización (PHP).
+        Returns: (access_token, new_refresh_token) - new_refresh_token puede ser None si Microsoft no lo devuelve.
+        """
         token_url = f'https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token'
         # Mismo scope que OutlookController.php (User.Read + Mail.Read + offline_access)
         scope = 'https://graph.microsoft.com/User.Read https://graph.microsoft.com/Mail.Read offline_access'
@@ -72,11 +77,19 @@ class OutlookService:
         }
         try:
             response = requests.post(token_url, data=data, timeout=30)
+            if response.status_code != 200:
+                logger.error(
+                    "Token endpoint respondió %s: %s",
+                    response.status_code,
+                    response.text[:500] if response.text else "(vacío)"
+                )
             response.raise_for_status()
             token_data = response.json()
-            return token_data.get('access_token')
+            access = token_data.get('access_token')
+            new_refresh = token_data.get('refresh_token') or None
+            return (access, new_refresh)
         except Exception as e:
-            logger.error(f"Error al obtener access_token: {e}")
+            logger.error(f"Error al renovar token: {e}")
             raise Exception(f"Error al renovar token: {str(e)}")
 
     def read_account(self, account, max_messages=50):
@@ -94,13 +107,18 @@ class OutlookService:
         if not self.client_id or not self.client_secret:
             raise Exception("OUTLOOK_CLIENT_ID y OUTLOOK_CLIENT_SECRET deben estar en .env")
 
-        # Obtener access_token
-        access_token = self._get_access_token(refresh_token)
+        account_id = account.get('id')
+        # Renovar access_token (y opcionalmente refresh_token)
+        access_token, new_refresh = self._refresh_tokens(refresh_token)
         if not access_token:
             raise Exception("No se pudo obtener access_token")
+        logger.info("Token Outlook renovado correctamente")
+        if new_refresh and account_id:
+            EmailAccountRepository.update_oauth_tokens(account_id, access_token, new_refresh)
+            refresh_token = new_refresh
 
-        # Listar mensajes (últimos max_messages)
-        graph_url = f'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages'
+        # Listar mensajes (últimos max_messages); reintentar una vez si 401
+        graph_url = 'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages'
         headers = {
             'Authorization': f'Bearer {access_token}',
             'Content-Type': 'application/json'
@@ -111,8 +129,22 @@ class OutlookService:
             '$select': 'id,subject,from,toRecipients,receivedDateTime,body,bodyPreview'
         }
 
+        response = requests.get(graph_url, headers=headers, params=params, timeout=30)
+        if response.status_code == 401:
+            logger.warning("401 en Graph: renegociando token y reintentando una vez...")
+            try:
+                access_token, new_refresh = self._refresh_tokens(refresh_token)
+                if access_token and account_id:
+                    EmailAccountRepository.update_oauth_tokens(
+                        account_id, access_token, new_refresh if new_refresh else refresh_token
+                    )
+                if access_token:
+                    headers = {'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json'}
+                    response = requests.get(graph_url, headers=headers, params=params, timeout=30)
+            except Exception as e:
+                logger.error(f"Reintento tras 401 falló: {e}")
+
         try:
-            response = requests.get(graph_url, headers=headers, params=params, timeout=30)
             response.raise_for_status()
             result = response.json()
         except Exception as e:
