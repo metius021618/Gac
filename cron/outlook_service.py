@@ -4,6 +4,8 @@ Lee correos de cuentas Outlook/Hotmail usando OAuth (refresh_token guardado en e
 El destinatario (to_primary) es siempre la cuenta Outlook que estamos leyendo.
 """
 
+import base64
+import json
 import logging
 import re
 import requests
@@ -14,6 +16,20 @@ from cron.config import OUTLOOK_CONFIG
 from cron.repositories import EmailAccountRepository
 
 logger = logging.getLogger(__name__)
+
+
+def _decode_jwt_payload(token):
+    """Decodificar payload del JWT (sin verificar firma) para ver aud, scp, etc."""
+    try:
+        parts = token.split('.')
+        if len(parts) != 3:
+            return None
+        payload_b64 = parts[1]
+        payload_b64 += '=' * (4 - len(payload_b64) % 4)
+        payload = base64.urlsafe_b64decode(payload_b64)
+        return json.loads(payload)
+    except Exception:
+        return None
 
 
 def _extract_email(addr_str):
@@ -96,6 +112,15 @@ class OutlookService:
             logger.info("Scope en token: %s", scope_returned or "(vacío)")
             if scope_returned and 'Mail.Read' not in scope_returned:
                 logger.warning("El token NO incluye Mail.Read. Añade OUTLOOK_REDIRECT_URI en .env y reconecta Outlook.")
+            # Inspeccionar JWT: aud (audience) debe ser Graph; scp = permisos reales
+            if access:
+                payload = _decode_jwt_payload(access)
+                if payload:
+                    aud = payload.get('aud', '')
+                    scp = payload.get('scp', '') or payload.get('roles', '')
+                    logger.info("JWT aud=%s scp=%s", aud, scp)
+                    if aud and 'graph.microsoft.com' not in str(aud).lower():
+                        logger.warning("El token no es para Graph (aud=%s). Revisa tenant y app.", aud)
             return (access, new_refresh)
         except Exception as e:
             logger.error(f"Error al renovar token: {e}")
@@ -170,6 +195,13 @@ class OutlookService:
             result = response.json()
         except Exception as e:
             if response.status_code == 401:
+                try:
+                    err_body = response.json()
+                    code = err_body.get('error', {}).get('code', '') if isinstance(err_body.get('error'), dict) else ''
+                    msg = err_body.get('error', {}).get('message', '') if isinstance(err_body.get('error'), dict) else ''
+                    logger.error("Graph 401: code=%s message=%s", code, msg or response.text[:300])
+                except Exception:
+                    logger.error("Graph 401 body: %s", response.text[:500] if response.text else "(vacío)")
                 logger.error(
                     "401 en bandeja de entrada. El token no tiene permiso Mail.Read. "
                     "Reconecta Outlook desde la web (Registro de Accesos → Conectar Outlook) y vuelve a ejecutar."
