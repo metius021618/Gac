@@ -40,7 +40,7 @@ class OutlookController
         $tenantId = defined('OUTLOOK_TENANT_ID') && OUTLOOK_TENANT_ID ? OUTLOOK_TENANT_ID : 'common';
         $redirectUri = defined('OUTLOOK_REDIRECT_URI') ? OUTLOOK_REDIRECT_URI : $this->buildRedirectUri();
         
-        $scopes = 'https://graph.microsoft.com/Mail.Read offline_access';
+        $scopes = 'https://graph.microsoft.com/User.Read https://graph.microsoft.com/Mail.Read offline_access';
         $authUrl = sprintf(
             'https://login.microsoftonline.com/%s/oauth2/v2.0/authorize?client_id=%s&response_type=code&redirect_uri=%s&response_mode=query&scope=%s&state=%s',
             urlencode($tenantId),
@@ -94,7 +94,7 @@ class OutlookController
             'code' => $code,
             'redirect_uri' => $redirectUri,
             'grant_type' => 'authorization_code',
-            'scope' => 'https://graph.microsoft.com/Mail.Read offline_access'
+            'scope' => 'https://graph.microsoft.com/User.Read https://graph.microsoft.com/Mail.Read offline_access'
         ];
 
         $ch = curl_init($tokenUrl);
