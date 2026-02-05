@@ -41,8 +41,10 @@ class OutlookController
         $redirectUri = defined('OUTLOOK_REDIRECT_URI') ? OUTLOOK_REDIRECT_URI : $this->buildRedirectUri();
         
         $scopes = 'https://graph.microsoft.com/User.Read https://graph.microsoft.com/Mail.Read offline_access';
+        // prompt=consent obliga a Microsoft a mostrar la pantalla de permisos (incl. "Leer tu correo")
+        // Sin esto, puede reutilizar un consentimiento antiguo sin Mail.Read y el token falla en el cron
         $authUrl = sprintf(
-            'https://login.microsoftonline.com/%s/oauth2/v2.0/authorize?client_id=%s&response_type=code&redirect_uri=%s&response_mode=query&scope=%s&state=%s',
+            'https://login.microsoftonline.com/%s/oauth2/v2.0/authorize?client_id=%s&response_type=code&redirect_uri=%s&response_mode=query&scope=%s&prompt=consent&state=%s',
             urlencode($tenantId),
             urlencode(OUTLOOK_CLIENT_ID),
             urlencode($redirectUri),
