@@ -163,17 +163,14 @@ class OutlookService:
             logger.error("Token rechazado incluso en /me (User.Read). Revisa OUTLOOK_CLIENT_ID/SECRET en .env.")
             raise Exception("Token no válido para Graph API")
 
-        # Listar mensajes (últimos max_messages); reintentar una vez si 401
+        # Listar mensajes: petición mínima ($top solo) para evitar 401 con cuentas personales
         graph_url = 'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages'
         headers = {
             'Authorization': f'Bearer {access_token}',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         }
-        params = {
-            '$top': min(max_messages, 100),
-            '$orderby': 'receivedDateTime desc',
-            '$select': 'id,subject,from,toRecipients,receivedDateTime,body,bodyPreview'
-        }
+        params = {'$top': min(max_messages, 100)}
 
         response = requests.get(graph_url, headers=headers, params=params, timeout=30)
         if response.status_code == 401:
@@ -195,6 +192,7 @@ class OutlookService:
             result = response.json()
         except Exception as e:
             if response.status_code == 401:
+                logger.error("Graph 401 headers: %s", dict(response.headers))
                 try:
                     err_body = response.json()
                     code = err_body.get('error', {}).get('code', '') if isinstance(err_body.get('error'), dict) else ''
