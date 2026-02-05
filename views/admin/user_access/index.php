@@ -55,7 +55,7 @@ $content = ob_start();
         <!-- Conectar Gmail y Outlook -->
         <div class="form-card" style="margin-bottom: 1.5rem;">
             <p class="form-label" style="margin-bottom: 0.75rem;">Conectar cuenta Gmail o Outlook para que el sistema pueda leer correos de esa cuenta</p>
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
                 <a href="/gmail/connect" class="btn btn-primary" id="gmailConnectBtn">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                         <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.636H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.313l8.073-5.82C21.69 2.28 24 3.434 24 5.457z"/>
