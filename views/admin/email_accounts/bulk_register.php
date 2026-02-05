@@ -8,10 +8,10 @@ $content = ob_start();
 ?>
 
 <div class="admin-container">
-    <div class="admin-header" style="display: flex; justify-content: flex-end; align-items: center;">
-        <div class="bulk-tabs" style="display: flex; gap: 0.5rem; background: #f5f5f5; padding: 0.25rem; border-radius: 8px;">
-            <button type="button" class="bulk-tab active" data-tab="assign" style="padding: 0.5rem 1rem; border: none; background: white; border-radius: 6px; cursor: pointer; font-weight: 500; color: #333; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 6px;">
+    <div class="admin-header" style="display: flex; justify-content: center; align-items: center; padding: 1rem 0;">
+        <div class="bulk-tabs" style="display: flex; gap: 0.5rem; background: #f0f0f0; padding: 0.375rem; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <button type="button" class="bulk-tab active" data-tab="assign" style="padding: 0.625rem 1.25rem; border: none; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); border-radius: 8px; cursor: pointer; font-weight: 600; color: white; box-shadow: 0 2px 4px rgba(0,123,255,0.3); transition: all 0.2s ease; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle;">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                     <circle cx="9" cy="7" r="4"></circle>
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -19,8 +19,8 @@ $content = ob_start();
                 </svg>
                 Asignar Correos Masivamente
             </button>
-            <button type="button" class="bulk-tab" data-tab="delete" style="padding: 0.5rem 1rem; border: none; background: transparent; border-radius: 6px; cursor: pointer; font-weight: 500; color: #666;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 6px;">
+            <button type="button" class="bulk-tab" data-tab="delete" style="padding: 0.625rem 1.25rem; border: none; background: transparent; border-radius: 8px; cursor: pointer; font-weight: 500; color: #666; transition: all 0.2s ease; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle;">
                     <polyline points="3 6 5 6 21 6"></polyline>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                 </svg>
@@ -172,31 +172,56 @@ document.addEventListener('DOMContentLoaded', function() {
     const assignContainer = document.getElementById('assignFormContainer');
     const deleteContainer = document.getElementById('deleteFormContainer');
 
+    function setActiveTab(tab) {
+        // Estilos para tab activo
+        const activeStyles = {
+            background: 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)',
+            color: 'white',
+            boxShadow: '0 2px 4px rgba(0,123,255,0.3)',
+            fontWeight: '600'
+        };
+
+        // Estilos para tab inactivo
+        const inactiveStyles = {
+            background: 'transparent',
+            color: '#666',
+            boxShadow: 'none',
+            fontWeight: '500'
+        };
+
+        if (tab === 'assign') {
+            // Activar asignar
+            Object.assign(assignTab.style, activeStyles);
+            assignTab.classList.add('active');
+            assignContainer.style.display = 'block';
+            
+            // Desactivar eliminar
+            Object.assign(deleteTab.style, inactiveStyles);
+            deleteTab.classList.remove('active');
+            deleteContainer.style.display = 'none';
+        } else {
+            // Activar eliminar
+            Object.assign(deleteTab.style, activeStyles);
+            deleteTab.classList.add('active');
+            deleteContainer.style.display = 'block';
+            
+            // Desactivar asignar
+            Object.assign(assignTab.style, inactiveStyles);
+            assignTab.classList.remove('active');
+            assignContainer.style.display = 'none';
+        }
+    }
+
     assignTab.addEventListener('click', function() {
-        assignTab.classList.add('active');
-        assignTab.style.background = 'white';
-        assignTab.style.color = '#333';
-        assignTab.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-        deleteTab.classList.remove('active');
-        deleteTab.style.background = 'transparent';
-        deleteTab.style.color = '#666';
-        deleteTab.style.boxShadow = 'none';
-        assignContainer.style.display = 'block';
-        deleteContainer.style.display = 'none';
+        setActiveTab('assign');
     });
 
     deleteTab.addEventListener('click', function() {
-        deleteTab.classList.add('active');
-        deleteTab.style.background = 'white';
-        deleteTab.style.color = '#333';
-        deleteTab.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-        assignTab.classList.remove('active');
-        assignTab.style.background = 'transparent';
-        assignTab.style.color = '#666';
-        assignTab.style.boxShadow = 'none';
-        assignContainer.style.display = 'none';
-        deleteContainer.style.display = 'block';
+        setActiveTab('delete');
     });
+
+    // Asegurar estado inicial
+    setActiveTab('assign');
 });
 </script>
 
