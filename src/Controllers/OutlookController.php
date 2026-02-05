@@ -148,6 +148,7 @@ class OutlookController
 
         $profile = json_decode($profileResponse, true);
         $email = $profile['mail'] ?? $profile['userPrincipalName'] ?? '';
+        $email = $this->normalizeOutlookEmail($email);
 
         if (empty($email)) {
             $_SESSION['outlook_error'] = 'No se pudo obtener el correo de la cuenta Outlook.';
@@ -172,6 +173,24 @@ class OutlookController
         unset($_SESSION['outlook_error']);
         $_SESSION['outlook_success'] = 'Cuenta Outlook conectada correctamente: ' . htmlspecialchars($email);
         redirect('/admin/user-access');
+    }
+
+    /**
+     * Normalizar email cuando Microsoft devuelve formato guest (ej. apipocoyoni_outlook.com#EXT#@tenant.onmicrosoft.com)
+     * a email real: apipocoyoni@outlook.com
+     */
+    private function normalizeOutlookEmail(string $email): string
+    {
+        $email = trim($email);
+        if (str_contains($email, '#EXT#')) {
+            $email = trim(explode('#EXT#', $email)[0]);
+            // Reemplazar última barra baja por @ (ej. apipocoyoni_outlook.com -> apipocoyoni@outlook.com)
+            $pos = strrpos($email, '_');
+            if ($pos !== false) {
+                $email = substr($email, 0, $pos) . '@' . substr($email, $pos + 1);
+            }
+        }
+        return strtolower($email);
     }
 
     /**
