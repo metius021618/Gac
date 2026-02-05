@@ -597,6 +597,87 @@ class EmailAccountController
     }
 
     /**
+     * Procesar eliminación masiva
+     */
+    public function bulkDeleteStore(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response([
+                'success' => false,
+                'message' => 'Método no permitido'
+            ], 405);
+            return;
+        }
+
+        $emailsInput = trim($request->input('emails', ''));
+
+        if (empty($emailsInput)) {
+            json_response([
+                'success' => false,
+                'message' => 'Debes proporcionar al menos un correo'
+            ], 400);
+            return;
+        }
+
+        // Procesar correos
+        $emailsArray = array_filter(
+            array_map('trim', explode("\n", $emailsInput)),
+            function($email) {
+                return !empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL);
+            }
+        );
+        
+        // Eliminar duplicados
+        $emailsArray = array_unique($emailsArray);
+
+        if (empty($emailsArray)) {
+            json_response([
+                'success' => false,
+                'message' => 'No se proporcionaron correos válidos'
+            ], 400);
+            return;
+        }
+
+        $deletedCount = 0;
+        $notFoundEmails = [];
+        $userAccessRepository = new \Gac\Repositories\UserAccessRepository();
+
+        foreach ($emailsArray as $email) {
+            $account = $this->emailAccountRepository->findByEmail($email);
+            if ($account) {
+                // Eliminar de user_access
+                $userAccessRepository->deleteByEmail($email);
+                // Eliminar de email_accounts
+                if ($this->emailAccountRepository->deleteByEmail($email)) {
+                    $deletedCount++;
+                }
+            } else {
+                $notFoundEmails[] = $email;
+            }
+        }
+
+        $message = sprintf(
+            'Se eliminaron %d correo(s) correctamente.',
+            $deletedCount
+        );
+
+        if (!empty($notFoundEmails)) {
+            $message .= ' ' . count($notFoundEmails) . ' correo(s) no se encontraron en la base de datos.';
+        }
+
+        json_response([
+            'success' => true,
+            'message' => $message,
+            'stats' => [
+                'total' => count($emailsArray),
+                'deleted' => $deletedCount,
+                'not_found' => count($notFoundEmails)
+            ],
+            'not_found_emails' => $notFoundEmails
+        ], 200);
+    }
+
+    /**
      * Renderizar vista
      */
     private function renderView(string $view, array $data = []): void

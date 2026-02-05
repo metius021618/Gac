@@ -362,6 +362,24 @@ class UserAccessRepository
     }
 
     /**
+     * Eliminar acceso por email
+     *
+     * @param string $email
+     * @return bool
+     */
+    public function deleteByEmail(string $email): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("DELETE FROM user_access WHERE email = :email");
+            return $stmt->execute(['email' => strtolower(trim($email))]);
+        } catch (PDOException $e) {
+            error_log("Error al eliminar acceso por email: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Eliminar múltiples accesos por ID
      */
     public function bulkDelete(array $ids): bool

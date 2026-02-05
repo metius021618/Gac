@@ -457,6 +457,24 @@ class EmailAccountRepository
     }
 
     /**
+     * Eliminar cuenta de email por email
+     *
+     * @param string $email
+     * @return bool
+     */
+    public function deleteByEmail(string $email): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("DELETE FROM email_accounts WHERE email = :email");
+            return $stmt->execute(['email' => strtolower(trim($email))]);
+        } catch (PDOException $e) {
+            error_log("Error al eliminar cuenta de email por email: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Crear o actualizar cuenta Gmail con tokens OAuth
      * Si ya existe la cuenta por email, actualiza tokens y type; si no, inserta nueva.
      *

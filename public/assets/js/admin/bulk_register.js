@@ -254,10 +254,172 @@
         }
     }
 
+    // ============================================
+    // FORMULARIO DE ELIMINACIÓN MASIVA
+    // ============================================
+    const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+    const emailsDeleteTextarea = document.getElementById('emails_delete');
+    const deleteBtn = bulkDeleteForm?.querySelector('.btn-bulk-delete');
+
+    /**
+     * Inicializar formulario de eliminación
+     */
+    function initDeleteForm() {
+        if (bulkDeleteForm) {
+            bulkDeleteForm.addEventListener('submit', handleDeleteSubmit);
+            
+            emailsDeleteTextarea?.addEventListener('blur', validateDeleteEmails);
+            emailsDeleteTextarea?.addEventListener('input', function(e) {
+                const errorElement = document.getElementById('emailsDeleteError');
+                const formGroup = e.target.closest('.form-group');
+                if (errorElement) {
+                    errorElement.textContent = '';
+                    errorElement.style.display = 'none';
+                }
+                formGroup?.classList.remove('has-error');
+            });
+        }
+    }
+
+    /**
+     * Manejar envío del formulario de eliminación
+     */
+    async function handleDeleteSubmit(e) {
+        e.preventDefault();
+
+        if (!validateDeleteEmails({ target: emailsDeleteTextarea })) {
+            await window.GAC.error('Por favor corrige los errores en el formulario.', 'Error de Validación');
+            return;
+        }
+
+        const confirmResult = await window.GAC.confirm(
+            '¿Estás seguro de que deseas eliminar estos correos? Esta acción no se puede deshacer.',
+            'Confirmar Eliminación Masiva'
+        );
+
+        if (!confirmResult) {
+            return;
+        }
+
+        setDeleteLoadingState(true);
+
+        const formData = {
+            emails: emailsDeleteTextarea.value.trim()
+        };
+
+        try {
+            const response = await fetch('/admin/email-accounts/bulk-delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                let message = result.message;
+                
+                if (result.not_found_emails && result.not_found_emails.length > 0) {
+                    message += '\n\nCorreos no encontrados:\n' + result.not_found_emails.join('\n');
+                }
+                
+                await window.GAC.success(message, 'Eliminación Masiva Exitosa');
+                
+                bulkDeleteForm.reset();
+                const errorElement = document.getElementById('emailsDeleteError');
+                if (errorElement) {
+                    errorElement.textContent = '';
+                    errorElement.style.display = 'none';
+                }
+            } else {
+                let errorMessage = result.message || 'Error al procesar la eliminación masiva';
+                await window.GAC.error(errorMessage, 'Error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            await window.GAC.error('Error de conexión. Por favor intenta nuevamente.', 'Error de Conexión');
+        } finally {
+            setDeleteLoadingState(false);
+        }
+    }
+
+    /**
+     * Validar campo de correos para eliminación
+     */
+    function validateDeleteEmails(e) {
+        const textarea = e.target;
+        const errorElement = document.getElementById('emailsDeleteError');
+        const formGroup = textarea.closest('.form-group');
+        let errorMessage = '';
+
+        const emailsText = textarea.value.trim();
+        
+        if (!emailsText) {
+            errorMessage = 'Este campo es requerido';
+        } else {
+            const emailsArray = emailsText.split('\n')
+                .map(email => email.trim())
+                .filter(email => email.length > 0);
+            
+            if (emailsArray.length === 0) {
+                errorMessage = 'Debes ingresar al menos un correo electrónico';
+            } else {
+                const invalidEmails = [];
+                emailsArray.forEach(email => {
+                    if (!filter_var(email)) {
+                        invalidEmails.push(email);
+                    }
+                });
+                
+                if (invalidEmails.length > 0) {
+                    errorMessage = `${invalidEmails.length} correo(s) con formato inválido`;
+                }
+            }
+        }
+
+        if (errorMessage) {
+            if (errorElement) {
+                errorElement.textContent = errorMessage;
+                errorElement.style.display = 'block';
+            }
+            formGroup?.classList.add('has-error');
+            return false;
+        } else {
+            if (errorElement) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+            }
+            formGroup?.classList.remove('has-error');
+            return true;
+        }
+    }
+
+    /**
+     * Establecer estado de carga para eliminación
+     */
+    function setDeleteLoadingState(loading) {
+        if (!deleteBtn) return;
+        
+        if (loading) {
+            deleteBtn.disabled = true;
+            deleteBtn.classList.add('loading');
+        } else {
+            deleteBtn.disabled = false;
+            deleteBtn.classList.remove('loading');
+        }
+    }
+
     // Inicializar cuando el DOM esté listo
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', function() {
+            init();
+            initDeleteForm();
+        });
     } else {
         init();
+        initDeleteForm();
     }
 })();
