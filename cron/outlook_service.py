@@ -151,20 +151,24 @@ class OutlookService:
             EmailAccountRepository.update_oauth_tokens(account_id, access_token, new_refresh)
             refresh_token = new_refresh
 
-        # Diagnóstico: si /me funciona pero /me/mailFolders falla con 401, el token no tiene Mail.Read
+        # GET /me para validar token y obtener user_id (cuentas personales a veces requieren /users/{id} para mail)
         me_resp = requests.get(
             'https://graph.microsoft.com/v1.0/me',
             headers={'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json'},
             timeout=10
         )
-        if me_resp.status_code == 200 and me_resp.json():
-            pass  # Token válido para User.Read
-        elif me_resp.status_code == 401:
+        if me_resp.status_code == 401:
             logger.error("Token rechazado incluso en /me (User.Read). Revisa OUTLOOK_CLIENT_ID/SECRET en .env.")
             raise Exception("Token no válido para Graph API")
+        me_data = me_resp.json() if me_resp.status_code == 200 else {}
+        user_id = (me_data.get('id') or '').strip()
+        if not user_id:
+            user_id = 'me'  # fallback
 
-        # Listar mensajes: petición mínima ($top solo) para evitar 401 con cuentas personales
-        graph_url = 'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages'
+        # Listar mensajes: usar /users/{id} en lugar de /me por si cuentas personales lo requieren
+        base = f'https://graph.microsoft.com/v1.0/users/{user_id}'
+        graph_url = f'{base}/mailFolders/inbox/messages'
+        logger.info("Petición mail: /users/%s/mailFolders/inbox/messages", user_id)
         headers = {
             'Authorization': f'Bearer {access_token}',
             'Content-Type': 'application/json',
@@ -182,7 +186,7 @@ class OutlookService:
                         account_id, access_token, new_refresh if new_refresh else refresh_token
                     )
                 if access_token:
-                    headers = {'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json'}
+                    headers = {'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json', 'Accept': 'application/json'}
                     response = requests.get(graph_url, headers=headers, params=params, timeout=30)
             except Exception as e:
                 logger.error(f"Reintento tras 401 falló: {e}")
@@ -222,8 +226,8 @@ class OutlookService:
                 # Si el mensaje ya tiene body completo, usarlo; si no, hacer otra llamada
                 body_content = msg.get('body', {})
                 if not body_content.get('content'):
-                    # Obtener mensaje completo
-                    msg_url = f'https://graph.microsoft.com/v1.0/me/messages/{msg_id}'
+                    # Obtener mensaje completo (mismo base /users/{id} que listado)
+                    msg_url = f'{base}/messages/{msg_id}' if user_id != 'me' else f'https://graph.microsoft.com/v1.0/me/messages/{msg_id}'
                     msg_response = requests.get(msg_url, headers=headers, timeout=30)
                     if msg_response.status_code == 200:
                         msg = msg_response.json()
