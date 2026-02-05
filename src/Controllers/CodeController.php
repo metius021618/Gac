@@ -127,18 +127,24 @@ class CodeController
             json_response(['success' => false, 'message' => 'Por favor completa todos los campos'], 400);
             return;
         }
-        @set_time_limit(90);
-        $root = base_path();
-        $emailLower = strtolower(trim($email));
-        $scriptGmail = (substr($emailLower, -11) === '@gmail.com');
-        $script = $scriptGmail ? 'cron/email_reader_gmail.py' : 'cron/email_reader.py';
-        $logFile = $root . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'consult_debug.log';
-        $logDir = dirname($logFile);
+        $logDir = base_path('logs');
         if (!is_dir($logDir)) {
             @mkdir($logDir, 0755, true);
         }
-        $ts = date('Y-m-d H:i:s');
-        @file_put_contents($logFile, "[{$ts}] SYNC ANTES DE CONSULTA: email=" . $email . " -> ejecutando script=" . $script . " (solo " . ($scriptGmail ? 'GMAIL' : 'IMAP') . ")\n", FILE_APPEND | LOCK_EX);
+        $consultLog = $logDir . DIRECTORY_SEPARATOR . 'consult_debug.log';
+        $emailLower = strtolower(trim($email));
+        $scriptGmail = (substr($emailLower, -11) === '@gmail.com');
+        $scriptOutlook = (substr($emailLower, -12) === '@outlook.com' || substr($emailLower, -11) === '@hotmail.com' || substr($emailLower, -9) === '@live.com');
+        if ($scriptGmail) {
+            $script = 'cron/email_reader_gmail.py';
+        } elseif ($scriptOutlook) {
+            $script = 'cron/email_reader_outlook.py';
+        } else {
+            $script = 'cron/email_reader.py';
+        }
+        @file_put_contents($consultLog, date('Y-m-d H:i:s') . " [REQUEST] correo_recibido=" . $email . " username=" . $username . " platform=" . $platform . " → script_ejecutado=" . $script . "\n", FILE_APPEND | LOCK_EX);
+        @set_time_limit(90);
+        $root = base_path();
         $cmd = (DIRECTORY_SEPARATOR === '\\')
             ? 'cd /d ' . escapeshellarg($root) . ' && python ' . $script . ' 2>&1'
             : sprintf('cd %s && /bin/python3 %s 2>&1', escapeshellarg($root), $script);
@@ -175,9 +181,11 @@ class CodeController
         if (DIRECTORY_SEPARATOR === '\\') {
             @exec('start /B cd /d ' . escapeshellarg($root) . ' && python cron/email_reader.py >> ' . escapeshellarg($logFile) . ' 2>&1');
             @exec('start /B cd /d ' . escapeshellarg($root) . ' && python cron/email_reader_gmail.py >> ' . escapeshellarg($logFile) . ' 2>&1');
+            @exec('start /B cd /d ' . escapeshellarg($root) . ' && python cron/email_reader_outlook.py >> ' . escapeshellarg($logFile) . ' 2>&1');
         } else {
             @exec(sprintf('cd %s && /bin/python3 cron/email_reader.py >> %s 2>&1 &', escapeshellarg($root), escapeshellarg($logFile)));
             @exec(sprintf('cd %s && /bin/python3 cron/email_reader_gmail.py >> %s 2>&1 &', escapeshellarg($root), escapeshellarg($logFile)));
+            @exec(sprintf('cd %s && /bin/python3 cron/email_reader_outlook.py >> %s 2>&1 &', escapeshellarg($root), escapeshellarg($logFile)));
         }
         $triggered = true;
         json_response(['triggered' => $triggered]);

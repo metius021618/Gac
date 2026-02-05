@@ -9,7 +9,7 @@ from email.header import decode_header
 from email.policy import default as email_policy_default
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -45,19 +45,27 @@ class ImapService:
             
             mail.login(username, password)
             mail.select('INBOX')
-            
-            # Buscar emails (últimos 300)
-            status, messages = mail.search(None, 'ALL')
-            
-            if status != 'OK':
-                raise Exception("Error al buscar emails")
-            
-            email_ids = messages[0].split()
-            
-            # Leer desde el más reciente (últimos 300)
+
+            # Buscar solo correos recientes (últimos 7 días) para reducir tiempo; si falla, usar ALL
+            max_fetch = 80
+            email_ids = []
+            try:
+                since_date = (datetime.now() - timedelta(days=7)).strftime('%d-%b-%Y')
+                status, messages = mail.search(None, 'SINCE', since_date)
+                if status == 'OK' and messages[0]:
+                    email_ids = messages[0].split()
+            except Exception:
+                pass
+            if not email_ids:
+                status, messages = mail.search(None, 'ALL')
+                if status != 'OK':
+                    raise Exception("Error al buscar emails")
+                email_ids = messages[0].split()
+
+            # Leer desde el más reciente (máximo max_fetch para ir más rápido)
             emails = []
-            start = max(0, len(email_ids) - 300)
-            
+            start = max(0, len(email_ids) - max_fetch)
+
             account_email = (account.get('email') or '').strip().lower()
             for email_id in reversed(email_ids[start:]):
                 try:

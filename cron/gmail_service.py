@@ -128,7 +128,7 @@ class GmailService:
         self.client_id = GMAIL_CONFIG.get('client_id', '')
         self.client_secret = GMAIL_CONFIG.get('client_secret', '')
 
-    def read_account(self, account, max_messages=200):
+    def read_account(self, account, max_messages=50):
         """
         Leer emails de una cuenta Gmail.
         account: dict con id, email, oauth_refresh_token (y opcional oauth_token).
@@ -160,7 +160,7 @@ class GmailService:
             result = service.users().messages().list(
                 userId='me',
                 labelIds=['INBOX'],
-                maxResults=min(max_messages, 500)
+                maxResults=min(max_messages, 100)
             ).execute()
         except Exception as e:
             logger.error(f"Gmail list messages error: {e}")

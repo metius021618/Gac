@@ -115,36 +115,40 @@ class CodeService
         }
 
         // Si el correo es @gmail.com, buscar solo códigos leídos desde Gmail (no mezclar con IMAP)
+        // Si el correo es @outlook.com/@hotmail.com/@live.com, buscar solo códigos leídos desde Outlook
         $userEmailLower = strtolower(trim($userEmail));
-        $originFilter = (substr($userEmailLower, -11) === '@gmail.com') ? 'gmail' : null;
+        $originFilter = null;
+        if (substr($userEmailLower, -11) === '@gmail.com') {
+            $originFilter = 'gmail';
+        } elseif (substr($userEmailLower, -12) === '@outlook.com' || substr($userEmailLower, -11) === '@hotmail.com' || substr($userEmailLower, -9) === '@live.com') {
+            $originFilter = 'outlook';
+        }
 
-        $logFile = defined('BASE_PATH') ? BASE_PATH . '/logs/consult_debug.log' : (__DIR__ . '/../../logs/consult_debug.log');
-        $logDir = dirname($logFile);
+        $logDir = defined('BASE_PATH') ? BASE_PATH . DIRECTORY_SEPARATOR . 'logs' : (__DIR__ . '/../../logs');
         if (!is_dir($logDir)) {
             @mkdir($logDir, 0755, true);
         }
-        $ts = date('Y-m-d H:i:s');
-        @file_put_contents($logFile, "[{$ts}] CONSULTA: email=" . $userEmail . " platform=" . $platformSlug . " originFilter=" . ($originFilter ?? 'null') . "\n", FILE_APPEND | LOCK_EX);
+        $consultLogFile = $logDir . DIRECTORY_SEPARATOR . 'consult_debug.log';
+
+        // Log: correo que recibimos en la consulta y correo/origen para el que buscamos
+        @file_put_contents($consultLogFile, date('Y-m-d H:i:s') . " [CONSULT] correo_recibido=" . $userEmail . " → buscando_codigo_para_recipient=" . $userEmail . " origin_filtro=" . ($originFilter ?? 'cualquiera') . " platform=" . ($platform['display_name'] ?? $platformSlug) . "\n", FILE_APPEND | LOCK_EX);
 
         // Buscar el último correo para este usuario (recipient_email = userEmail)
         $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $userEmail, $originFilter);
 
-        if ($lastEmail) {
-            @file_put_contents($logFile, "[{$ts}] RESULTADO: id=" . ($lastEmail['id'] ?? '') . " recipient_email=" . ($lastEmail['recipient_email'] ?? '') . " origin=" . ($lastEmail['origin'] ?? '') . " received_at=" . ($lastEmail['received_at'] ?? '') . " subject=" . substr($lastEmail['subject'] ?? '', 0, 50) . "\n", FILE_APPEND | LOCK_EX);
-        } else {
-            @file_put_contents($logFile, "[{$ts}] RESULTADO: no encontrado con originFilter=" . ($originFilter ?? 'null') . "\n", FILE_APPEND | LOCK_EX);
-        }
-
-        // Si no hay correo con su email y NO es Gmail, mostrar el último que llegó a la cuenta maestra
-        // (por si el servidor no guardó Delivered-To y se guardó como streaming@)
-        if (!$lastEmail && $originFilter !== 'gmail') {
+        // Si no hay correo con su email y NO es Gmail ni Outlook, mostrar el último que llegó a la cuenta maestra
+        if (!$lastEmail && $originFilter !== 'gmail' && $originFilter !== 'outlook') {
             $master = $this->emailAccountRepository->findMasterAccount();
             if ($master && !empty($master['email'])) {
+                @file_put_contents($consultLogFile, date('Y-m-d H:i:s') . " [CONSULT] FALLBACK: no encontrado para " . $userEmail . " → buscando con cuenta_maestra=" . $master['email'] . "\n", FILE_APPEND | LOCK_EX);
                 $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $master['email'], null);
-                if ($lastEmail) {
-                    @file_put_contents($logFile, "[{$ts}] FALLBACK maestra: id=" . ($lastEmail['id'] ?? '') . " recipient_email=" . ($lastEmail['recipient_email'] ?? '') . " origin=" . ($lastEmail['origin'] ?? '') . "\n", FILE_APPEND | LOCK_EX);
-                }
             }
+        }
+
+        if ($lastEmail) {
+            @file_put_contents($consultLogFile, date('Y-m-d H:i:s') . " [CONSULT] ENCONTRADO: code_id=" . ($lastEmail['id'] ?? '') . " origin=" . ($lastEmail['origin'] ?? '') . " recipient_email=" . ($lastEmail['recipient_email'] ?? '') . " received_at=" . ($lastEmail['received_at'] ?? '') . "\n", FILE_APPEND | LOCK_EX);
+        } else {
+            @file_put_contents($consultLogFile, date('Y-m-d H:i:s') . " [CONSULT] NO_ENCONTRADO: buscamos recipient=" . $userEmail . " origin_filtro=" . ($originFilter ?? 'cualquiera') . "\n", FILE_APPEND | LOCK_EX);
         }
 
         if (!$lastEmail) {

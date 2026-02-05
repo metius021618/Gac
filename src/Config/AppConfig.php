@@ -73,6 +73,12 @@ class AppConfig
         define('GMAIL_REDIRECT_URI', $_ENV['GMAIL_REDIRECT_URI'] ?? '');
         define('GMAIL_SCOPES', $_ENV['GMAIL_SCOPES'] ?? 'https://www.googleapis.com/auth/gmail.readonly');
 
+        // Configuración Outlook/Microsoft Graph API
+        define('OUTLOOK_CLIENT_ID', $_ENV['OUTLOOK_CLIENT_ID'] ?? '');
+        define('OUTLOOK_CLIENT_SECRET', $_ENV['OUTLOOK_CLIENT_SECRET'] ?? '');
+        define('OUTLOOK_TENANT_ID', $_ENV['OUTLOOK_TENANT_ID'] ?? '');
+        define('OUTLOOK_REDIRECT_URI', $_ENV['OUTLOOK_REDIRECT_URI'] ?? '');
+
         // Configuración IMAP
         define('IMAP_HOST', $_ENV['IMAP_HOST'] ?? '');
         define('IMAP_PORT', $_ENV['IMAP_PORT'] ?? 993);

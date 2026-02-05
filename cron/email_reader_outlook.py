@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-GAC - Lector de correos SOLO Gmail (Gmail API)
-Script independiente: solo lee cuentas type=gmail y guarda en codes con origin='gmail'.
-No mezcla con IMAP. Para consultas con @gmail.com se ejecuta este script.
+GAC - Lector de correos SOLO Outlook/Hotmail (Microsoft Graph API)
+Script independiente: solo lee cuentas type=outlook y guarda en codes con origin='outlook'.
+No mezcla con IMAP ni Gmail. Para consultas con @outlook.com/@hotmail.com/@live.com se ejecuta este script.
 """
 
 import sys
@@ -18,7 +18,7 @@ from cron.config import CRON_CONFIG, LOG_CONFIG
 from cron.database import Database
 from cron.repositories import EmailAccountRepository, PlatformRepository, CodeRepository
 from cron.email_filter import EmailFilterService
-from cron.gmail_service import GmailService
+from cron.outlook_service import OutlookService
 
 logging.basicConfig(
     level=getattr(logging, LOG_CONFIG['level'].upper(), logging.INFO),
@@ -75,7 +75,7 @@ def _backfill_email_bodies(emails, limit=100):
 
 def main():
     logger.info("=" * 60)
-    logger.info("GAC - Lector Gmail únicamente (email_reader_gmail.py)")
+    logger.info("GAC - Lector Outlook únicamente (email_reader_outlook.py)")
     logger.info("=" * 60)
 
     if not CRON_CONFIG['enabled']:
@@ -84,27 +84,27 @@ def main():
 
     try:
         filter_service = EmailFilterService()
-        gmail_accounts = EmailAccountRepository.find_by_type('gmail')
-        if not gmail_accounts:
-            logger.info("No hay cuentas Gmail habilitadas.")
+        outlook_accounts = EmailAccountRepository.find_by_type('outlook')
+        if not outlook_accounts:
+            logger.info("No hay cuentas Outlook habilitadas.")
             return
 
         total_codes_saved = 0
-        for gaccount in gmail_accounts:
-            gaccount_id = gaccount['id']
-            gaccount_email = (gaccount.get('email') or '').strip().lower()
-            logger.info(f"Procesando cuenta Gmail: {gaccount_email} (ID: {gaccount_id})")
+        for oaccount in outlook_accounts:
+            oaccount_id = oaccount['id']
+            oaccount_email = (oaccount.get('email') or '').strip().lower()
+            logger.info(f"Procesando cuenta Outlook: {oaccount_email} (ID: {oaccount_id})")
             try:
-                gmail_service = GmailService()
-                emails = gmail_service.read_account(gaccount, max_messages=50)
+                outlook_service = OutlookService()
+                emails = outlook_service.read_account(oaccount, max_messages=50)
                 logger.info(f"  - Emails leídos: {len(emails)}")
                 if not emails:
-                    EmailAccountRepository.update_sync_status(gaccount_id, 'success')
+                    EmailAccountRepository.update_sync_status(oaccount_id, 'success')
                     continue
                 filtered = filter_service.filter_by_subject(emails)
                 logger.info(f"  - Emails filtrados: {len(filtered)}")
                 if not filtered:
-                    EmailAccountRepository.update_sync_status(gaccount_id, 'success')
+                    EmailAccountRepository.update_sync_status(oaccount_id, 'success')
                     continue
                 records_saved = 0
                 for email_data in filtered:
@@ -115,25 +115,25 @@ def main():
                     if not platform_obj or not platform_obj.get('enabled'):
                         continue
                     email_from = email_data.get('from', '') or ''
-                    recipient_email = (email_data.get('to_primary') or gaccount_email).strip().lower()
+                    recipient_email = (email_data.get('to_primary') or oaccount_email).strip().lower()
                     received_at = email_data.get('date', '')
                     subject = email_data.get('subject', '')
                     email_body = email_data.get('body_html') or email_data.get('body_text') or email_data.get('body') or ''
-                    if CodeRepository.email_record_exists(gaccount_id, email_from, recipient_email, subject, received_at):
+                    if CodeRepository.email_record_exists(oaccount_id, email_from, recipient_email, subject, received_at):
                         if email_body and CodeRepository.update_email_body_by_email(
-                            gaccount_id, email_from, recipient_email, subject, received_at, email_body
+                            oaccount_id, email_from, recipient_email, subject, received_at, email_body
                         ):
                             logger.info(f"  - ✓ Cuerpo actualizado para {recipient_email}")
                         continue
                     save_data = {
-                        'email_account_id': gaccount_id,
+                        'email_account_id': oaccount_id,
                         'platform_id': platform_obj['id'],
                         'code': email_from,
                         'email_from': email_from,
                         'subject': subject,
                         'email_body': email_body,
                         'received_at': received_at,
-                        'origin': 'gmail',
+                        'origin': 'outlook',
                         'recipient_email': recipient_email,
                     }
                     code_id = CodeRepository.save(save_data)
@@ -144,14 +144,14 @@ def main():
                 backfill_count = _backfill_email_bodies(emails, limit=100)
                 if backfill_count:
                     logger.info(f"  - Cuerpos actualizados (backfill): {backfill_count}")
-                EmailAccountRepository.update_sync_status(gaccount_id, 'success')
+                EmailAccountRepository.update_sync_status(oaccount_id, 'success')
             except Exception as e:
                 error_msg = str(e)
-                logger.error(f"  - ✗ Error Gmail {gaccount_email}: {error_msg}")
-                EmailAccountRepository.update_sync_status(gaccount_id, 'error', error_msg)
+                logger.error(f"  - ✗ Error Outlook {oaccount_email}: {error_msg}")
+                EmailAccountRepository.update_sync_status(oaccount_id, 'error', error_msg)
 
         logger.info("=" * 60)
-        logger.info(f"Gmail completado. Total guardados: {total_codes_saved}")
+        logger.info(f"Outlook completado. Total guardados: {total_codes_saved}")
         logger.info("=" * 60)
     except Exception as e:
         logger.error(f"Error fatal: {e}", exc_info=True)

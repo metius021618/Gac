@@ -92,6 +92,10 @@ class Application
         $router->get('/gmail/connect', 'GmailController@connect', ['auth']);
         $router->get('/gmail/callback', 'GmailController@callback');
         
+        // Rutas Outlook
+        $router->get('/outlook/connect', 'OutlookController@connect', ['auth']);
+        $router->get('/outlook/callback', 'OutlookController@callback');
+        
         // Cargar más rutas desde archivo de configuración
         // require_once base_path('routes/web.php');
     }

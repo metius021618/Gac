@@ -34,6 +34,15 @@ GMAIL_CONFIG = {
     'scopes': [os.getenv('GMAIL_SCOPES', 'https://www.googleapis.com/auth/gmail.readonly')]
 }
 
+# Configuración Outlook/Microsoft Graph API
+OUTLOOK_CONFIG = {
+    'client_id': os.getenv('OUTLOOK_CLIENT_ID', ''),
+    'client_secret': os.getenv('OUTLOOK_CLIENT_SECRET', ''),
+    'tenant_id': os.getenv('OUTLOOK_TENANT_ID', ''),
+    'redirect_uri': os.getenv('OUTLOOK_REDIRECT_URI', ''),
+    'scopes': ['https://graph.microsoft.com/Mail.Read', 'offline_access']
+}
+
 # Configuración IMAP
 IMAP_CONFIG = {
     'host': os.getenv('IMAP_HOST', ''),
