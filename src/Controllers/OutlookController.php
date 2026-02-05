@@ -172,7 +172,10 @@ class OutlookController
 
         unset($_SESSION['outlook_error']);
         $_SESSION['outlook_success'] = 'Cuenta Outlook conectada correctamente: ' . htmlspecialchars($email);
-        redirect('/admin/user-access');
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+        redirect('/admin/user-access?outlook_connected=1');
     }
 
     /**

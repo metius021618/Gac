@@ -56,17 +56,19 @@ class OutlookService:
     def __init__(self):
         self.client_id = OUTLOOK_CONFIG.get('client_id', '')
         self.client_secret = OUTLOOK_CONFIG.get('client_secret', '')
-        self.tenant_id = OUTLOOK_CONFIG.get('tenant_id', 'common')
+        self.tenant_id = (OUTLOOK_CONFIG.get('tenant_id') or '').strip() or 'common'
 
     def _get_access_token(self, refresh_token):
-        """Obtener access_token usando refresh_token."""
+        """Obtener access_token usando refresh_token. Scope debe coincidir con el de la autorización (PHP)."""
         token_url = f'https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token'
+        # Mismo scope que OutlookController.php (User.Read + Mail.Read + offline_access)
+        scope = 'https://graph.microsoft.com/User.Read https://graph.microsoft.com/Mail.Read offline_access'
         data = {
             'client_id': self.client_id,
             'client_secret': self.client_secret,
             'refresh_token': refresh_token,
             'grant_type': 'refresh_token',
-            'scope': 'https://graph.microsoft.com/Mail.Read offline_access'
+            'scope': scope
         }
         try:
             response = requests.post(token_url, data=data, timeout=30)

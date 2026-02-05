@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS platforms (
 CREATE TABLE IF NOT EXISTS email_accounts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(100) NOT NULL UNIQUE,
-    type ENUM('imap', 'gmail') NOT NULL,
+    type ENUM('imap', 'gmail', 'outlook') NOT NULL,
     provider_config JSON,
     oauth_token TEXT,
     oauth_refresh_token TEXT,
@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS codes (
     email_from VARCHAR(255),
     subject VARCHAR(500),
     received_at TIMESTAMP NOT NULL,
-    origin ENUM('imap', 'gmail') NOT NULL,
+    origin ENUM('imap', 'gmail', 'outlook') NOT NULL,
     status ENUM('available', 'consumed') DEFAULT 'available',
     consumed_at TIMESTAMP NULL,
     consumed_by INT NULL,

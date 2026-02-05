@@ -30,6 +30,26 @@ $content = ob_start();
             <?php unset($_SESSION['gmail_error']); ?>
         </div>
     <?php endif; ?>
+    <?php
+    $showOutlookSuccess = !empty($_SESSION['outlook_success']) || (!empty($_GET['outlook_connected']) && $_GET['outlook_connected'] === '1');
+    $outlookSuccessText = !empty($_SESSION['outlook_success']) ? $_SESSION['outlook_success'] : 'Cuenta Outlook conectada correctamente.';
+    if ($showOutlookSuccess): ?>
+        <div class="alert alert-success" role="alert">
+            <?= htmlspecialchars($outlookSuccessText) ?>
+            <?php unset($_SESSION['outlook_success']); ?>
+        </div>
+        <?php if (!empty($_GET['outlook_connected'])): ?>
+        <script>
+        (function(){ var u = new URL(window.location.href); u.searchParams.delete('outlook_connected'); if (u.search !== window.location.search) window.history.replaceState({}, '', u.pathname + u.search); })();
+        </script>
+        <?php endif; ?>
+    <?php endif; ?>
+    <?php if (!empty($_SESSION['outlook_error'])): ?>
+        <div class="alert alert-danger" role="alert">
+            <?= htmlspecialchars($_SESSION['outlook_error']) ?>
+            <?php unset($_SESSION['outlook_error']); ?>
+        </div>
+    <?php endif; ?>
 
     <div class="admin-content">
         <!-- Conectar Gmail y Outlook -->

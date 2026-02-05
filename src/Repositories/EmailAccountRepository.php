@@ -542,6 +542,7 @@ class EmailAccountRepository
                     SET type = 'outlook',
                         oauth_token = :oauth_token,
                         oauth_refresh_token = :oauth_refresh_token,
+                        enabled = 1,
                         sync_status = 'pending',
                         error_message = NULL,
                         updated_at = NOW()
