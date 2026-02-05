@@ -64,7 +64,8 @@ $content = ob_start();
                 </a>
                 <a href="/outlook/connect" class="btn btn-primary" id="outlookConnectBtn" style="background-color: #0078d4;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M7.5 7.5h9v9h-9v-9zM3 3v18h18V3H3zm16 16H5V5h14v14z"/>
+                        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                        <circle cx="12" cy="11" r="3" fill="currentColor"/>
                     </svg>
                     Conectar Outlook
                 </a>
