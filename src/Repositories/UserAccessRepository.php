@@ -44,6 +44,55 @@ class UserAccessRepository
     }
 
     /**
+     * Buscar fila de user_access para un email que sea placeholder OAuth (Gmail/Outlook).
+     * Sirve para actualizar esa fila en lugar de crear duplicado cuando el usuario edita.
+     */
+    public function findOAuthPlaceholderByEmail(string $email): ?array
+    {
+        try {
+            $db = Database::getConnection();
+            $sql = "
+                SELECT id, email, password, platform_id, enabled, created_at, updated_at
+                FROM user_access
+                WHERE LOWER(TRIM(email)) = :email AND password IN ('Gmail (OAuth)', 'Outlook (OAuth)') AND enabled = 1
+                LIMIT 1
+            ";
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(':email', trim(strtolower($email)), PDO::PARAM_STR);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ?: null;
+        } catch (PDOException $e) {
+            error_log("Error al buscar placeholder OAuth: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Actualizar una fila de user_access por ID (usado al "editar" el placeholder OAuth).
+     */
+    public function updateById(int $id, string $email, string $password, int $platformId): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $sql = "
+                UPDATE user_access
+                SET email = :email, password = :password, platform_id = :platform_id, updated_at = NOW()
+                WHERE id = :id
+            ";
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->bindValue(':email', trim(strtolower($email)), PDO::PARAM_STR);
+            $stmt->bindValue(':password', $password, PDO::PARAM_STR);
+            $stmt->bindValue(':platform_id', $platformId, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error al actualizar acceso por ID: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Buscar acceso por email y plataforma
      */
     public function findByEmailAndPlatform(string $email, int $platformId): ?array

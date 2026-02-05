@@ -117,8 +117,13 @@ class UserAccessController
             }
         }
 
-        // Crear o actualizar acceso
-        $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId);
+        // Si ya existe una fila OAuth (Gmail/Outlook) para este correo, actualizarla en lugar de crear duplicado
+        $oauthRow = $this->userAccessRepository->findOAuthPlaceholderByEmail($email);
+        if ($oauthRow && (int)($oauthRow['id'] ?? 0) > 0) {
+            $success = $this->userAccessRepository->updateById((int) $oauthRow['id'], $email, $password, $platformId);
+        } else {
+            $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId);
+        }
 
         if ($success) {
             json_response([
