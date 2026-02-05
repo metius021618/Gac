@@ -58,11 +58,12 @@ class OutlookService:
         self.client_id = OUTLOOK_CONFIG.get('client_id', '')
         self.client_secret = OUTLOOK_CONFIG.get('client_secret', '')
         self.tenant_id = (OUTLOOK_CONFIG.get('tenant_id') or '').strip() or 'common'
+        self.redirect_uri = (OUTLOOK_CONFIG.get('redirect_uri') or '').strip()
 
     def _refresh_tokens(self, refresh_token):
         """
         Renovar access_token (y opcionalmente refresh_token) usando refresh_token.
-        Scope debe coincidir con el de la autorización (PHP).
+        Scope y redirect_uri deben coincidir con el de la autorización (PHP).
         Returns: (access_token, new_refresh_token) - new_refresh_token puede ser None si Microsoft no lo devuelve.
         """
         token_url = f'https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token'
@@ -75,6 +76,9 @@ class OutlookService:
             'grant_type': 'refresh_token',
             'scope': scope
         }
+        # redirect_uri obligatorio para cuentas personales; debe ser el mismo que al conectar
+        if self.redirect_uri:
+            data['redirect_uri'] = self.redirect_uri
         try:
             response = requests.post(token_url, data=data, timeout=30)
             if response.status_code != 200:
@@ -87,6 +91,11 @@ class OutlookService:
             token_data = response.json()
             access = token_data.get('access_token')
             new_refresh = token_data.get('refresh_token') or None
+            # Log scope que Microsoft devuelve (para ver si incluye Mail.Read)
+            scope_returned = token_data.get('scope', '')
+            logger.info("Scope en token: %s", scope_returned or "(vacío)")
+            if scope_returned and 'Mail.Read' not in scope_returned:
+                logger.warning("El token NO incluye Mail.Read. Añade OUTLOOK_REDIRECT_URI en .env y reconecta Outlook.")
             return (access, new_refresh)
         except Exception as e:
             logger.error(f"Error al renovar token: {e}")
