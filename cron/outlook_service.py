@@ -117,6 +117,18 @@ class OutlookService:
             EmailAccountRepository.update_oauth_tokens(account_id, access_token, new_refresh)
             refresh_token = new_refresh
 
+        # Diagnóstico: si /me funciona pero /me/mailFolders falla con 401, el token no tiene Mail.Read
+        me_resp = requests.get(
+            'https://graph.microsoft.com/v1.0/me',
+            headers={'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json'},
+            timeout=10
+        )
+        if me_resp.status_code == 200 and me_resp.json():
+            pass  # Token válido para User.Read
+        elif me_resp.status_code == 401:
+            logger.error("Token rechazado incluso en /me (User.Read). Revisa OUTLOOK_CLIENT_ID/SECRET en .env.")
+            raise Exception("Token no válido para Graph API")
+
         # Listar mensajes (últimos max_messages); reintentar una vez si 401
         graph_url = 'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages'
         headers = {
@@ -148,6 +160,11 @@ class OutlookService:
             response.raise_for_status()
             result = response.json()
         except Exception as e:
+            if response.status_code == 401:
+                logger.error(
+                    "401 en bandeja de entrada. El token no tiene permiso Mail.Read. "
+                    "Reconecta Outlook desde la web (Registro de Accesos → Conectar Outlook) y vuelve a ejecutar."
+                )
             logger.error(f"Microsoft Graph list messages error: {e}")
             raise
 
