@@ -31,6 +31,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _normalize_outlook_email(email):
+    """Normalizar email guest (ej. apipocoyoni_outlook.com#EXT#@tenant.onmicrosoft.com) a apipocoyoni@outlook.com."""
+    if not email:
+        return email
+    email = email.strip().lower()
+    if '#EXT#' in email:
+        email = email.split('#EXT#')[0].strip()
+        pos = email.rfind('_')
+        if pos >= 0:
+            email = email[:pos] + '@' + email[pos + 1:]
+    return email
+
+
 def _backfill_email_bodies(emails, limit=100):
     """Actualizar email_body de códigos ya guardados que lo tengan vacío."""
     if not emails:
@@ -93,6 +106,7 @@ def main():
         for oaccount in outlook_accounts:
             oaccount_id = oaccount['id']
             oaccount_email = (oaccount.get('email') or '').strip().lower()
+            recipient_email_normalized = _normalize_outlook_email(oaccount_email)  # Para guardar códigos con correo corto
             logger.info(f"Procesando cuenta Outlook: {oaccount_email} (ID: {oaccount_id})")
             try:
                 outlook_service = OutlookService()
@@ -115,7 +129,8 @@ def main():
                     if not platform_obj or not platform_obj.get('enabled'):
                         continue
                     email_from = email_data.get('from', '') or ''
-                    recipient_email = (email_data.get('to_primary') or oaccount_email).strip().lower()
+                    recipient_email = (email_data.get('to_primary') or recipient_email_normalized or oaccount_email).strip().lower()
+                    recipient_email = _normalize_outlook_email(recipient_email) or recipient_email
                     received_at = email_data.get('date', '')
                     subject = email_data.get('subject', '')
                     email_body = email_data.get('body_html') or email_data.get('body_text') or email_data.get('body') or ''
