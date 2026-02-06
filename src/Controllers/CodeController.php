@@ -192,35 +192,6 @@ class CodeController
     }
 
     /**
-     * Listar códigos recibidos (vista administrativa)
-     */
-    public function index(Request $request): void
-    {
-        $page = (int)$request->get('page', 1);
-        $perPage = (int)$request->get('per_page', 15);
-        $search = $request->get('search', '');
-
-        $validPerPage = [15, 30, 60, 100, 0];
-        if (!in_array($perPage, $validPerPage)) {
-            $perPage = 15;
-        }
-
-        $codeRepository = new \Gac\Repositories\CodeRepository();
-        $paginationData = $codeRepository->searchConsumedCodes($page, $perPage, $search);
-        
-        $this->renderView('admin/codes/index', [
-            'title' => 'Registro de Accesos',
-            'codes' => $paginationData['data'],
-            'total_records' => $paginationData['total'],
-            'current_page' => $paginationData['page'],
-            'per_page' => $paginationData['per_page'],
-            'total_pages' => $paginationData['total_pages'],
-            'search_query' => $search,
-            'valid_per_page' => $validPerPage
-        ]);
-    }
-
-    /**
      * Renderizar vista
      */
     private function renderView(string $view, array $data = []): void

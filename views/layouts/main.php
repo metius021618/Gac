@@ -40,7 +40,6 @@
                     <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']): ?>
                         <a href="/admin/dashboard" class="nav-link">Dashboard</a>
                         <a href="/admin/email-accounts" class="nav-link">Correos</a>
-                        <a href="/admin/codes" class="nav-link">Códigos</a>
                         <a href="/admin/users" class="nav-link">Usuarios</a>
                     <?php else: ?>
                         <a href="/" class="nav-link">Inicio</a>

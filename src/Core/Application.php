@@ -60,7 +60,6 @@ class Application
         
         // Rutas administrativas (requieren autenticación)
         $router->get('/admin/dashboard', 'DashboardController@index', ['auth']);
-        $router->get('/admin/codes', 'CodeController@index', ['auth']);
         $router->get('/admin/users', 'UserController@index', ['auth']);
         $router->get('/admin/settings', 'SettingsController@index', ['auth']);
         $router->post('/admin/settings/update', 'SettingsController@update', ['auth']);
