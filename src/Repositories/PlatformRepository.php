@@ -141,6 +141,44 @@ class PlatformRepository
     }
 
     /**
+     * Activar/desactivar plataforma
+     */
+    public function toggleEnabled(int $id, bool $enabled): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("UPDATE platforms SET enabled = :enabled, updated_at = NOW() WHERE id = :id");
+            return $stmt->execute(['enabled' => $enabled ? 1 : 0, 'id' => $id]);
+        } catch (PDOException $e) {
+            error_log("Error al togglear plataforma: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Crear nueva plataforma
+     */
+    public function create(string $name, string $displayName, bool $enabled = true): int|false
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                INSERT INTO platforms (name, display_name, enabled, created_at, updated_at)
+                VALUES (:name, :display_name, :enabled, NOW(), NOW())
+            ");
+            $stmt->execute([
+                'name' => strtolower(trim($name)),
+                'display_name' => trim($displayName),
+                'enabled' => $enabled ? 1 : 0
+            ]);
+            return (int)$db->lastInsertId();
+        } catch (PDOException $e) {
+            error_log("Error al crear plataforma: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Obtener todas las plataformas (con paginación y búsqueda)
      * 
      * @param int $page

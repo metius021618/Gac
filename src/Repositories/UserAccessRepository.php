@@ -153,28 +153,42 @@ class UserAccessRepository
     /**
      * Listar/buscar en user_access. Si hay texto, filtra por email o usuario (password).
      */
-    public function searchAndPaginate(string $search = '', int $page = 1, int $perPage = 15): array
+    public function searchAndPaginate(string $search = '', int $page = 1, int $perPage = 15, array $filterDomains = []): array
     {
         $logFile = defined('BASE_PATH') ? BASE_PATH . '/logs/search_debug.log' : (__DIR__ . '/../../logs/search_debug.log');
         $log = function ($msg) use ($logFile) {
             @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [UserAccessRepository] ' . $msg . "\n", FILE_APPEND | LOCK_EX);
         };
-        $log('searchAndPaginate called: search="' . $search . '" page=' . $page . ' perPage=' . $perPage);
+        $log('searchAndPaginate called: search="' . $search . '" page=' . $page . ' perPage=' . $perPage . ' domains=' . implode(',', $filterDomains));
         try {
             $db = Database::getConnection();
             $q = trim($search);
-            $whereClause = '';
+            $conditions = [];
             $params = [];
 
             if ($q !== '') {
                 $term = '%' . $q . '%';
-                $whereClause = "WHERE (ua.email LIKE :q_email OR ua.password LIKE :q_password)";
+                $conditions[] = "(ua.email LIKE :q_email OR ua.password LIKE :q_password)";
                 $params[':q_email'] = $term;
                 $params[':q_password'] = $term;
                 $log('WHERE applied: q="' . $q . '" term="' . $term . '"');
             } else {
                 $log('no search term, listing all');
             }
+
+            // Filtro por dominios
+            if (!empty($filterDomains)) {
+                $domainConds = [];
+                foreach ($filterDomains as $i => $domain) {
+                    $key = ':fdomain' . $i;
+                    $domainConds[] = "ua.email LIKE {$key}";
+                    $params[$key] = '%@' . strtolower(trim($domain));
+                }
+                $conditions[] = '(' . implode(' OR ', $domainConds) . ')';
+                $log('domain filter: ' . implode(', ', $filterDomains));
+            }
+
+            $whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
 
             // Contar total (tabla user_access)
             $countSql = "
@@ -417,6 +431,31 @@ class UserAccessRepository
             return (int)($row['total'] ?? 0);
         } catch (PDOException $e) {
             error_log("Error al contar accesos por email: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Contar correos por dominio(s)
+     */
+    public function countByDomains(array $domains): int
+    {
+        if (empty($domains)) return 0;
+        try {
+            $db = Database::getConnection();
+            $conditions = [];
+            $params = [];
+            foreach ($domains as $i => $domain) {
+                $key = 'domain' . $i;
+                $conditions[] = "email LIKE :{$key}";
+                $params[$key] = '%@' . strtolower(trim($domain));
+            }
+            $sql = "SELECT COUNT(DISTINCT email) FROM user_access WHERE " . implode(' OR ', $conditions);
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("Error al contar por dominios: " . $e->getMessage());
             return 0;
         }
     }

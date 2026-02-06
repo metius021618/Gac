@@ -68,6 +68,76 @@ class PlatformController
     }
 
     /**
+     * Toggle activar/desactivar plataforma (AJAX)
+     */
+    public function toggleStatus(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+
+        $id = (int)$request->input('id', 0);
+        $enabled = (int)$request->input('enabled', 0);
+
+        if ($id <= 0) {
+            json_response(['success' => false, 'message' => 'ID inválido'], 400);
+            return;
+        }
+
+        $result = $this->platformRepository->toggleEnabled($id, (bool)$enabled);
+
+        if ($result) {
+            json_response([
+                'success' => true,
+                'message' => $enabled ? 'Plataforma activada' : 'Plataforma desactivada',
+                'enabled' => $enabled
+            ]);
+        } else {
+            json_response(['success' => false, 'message' => 'Error al actualizar'], 500);
+        }
+    }
+
+    /**
+     * Crear nueva plataforma (AJAX)
+     */
+    public function store(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+
+        $name = trim($request->input('name', ''));
+        $displayName = trim($request->input('display_name', ''));
+        $enabled = (int)$request->input('enabled', 1);
+
+        if (empty($name) || empty($displayName)) {
+            json_response(['success' => false, 'message' => 'Nombre y slug son obligatorios'], 400);
+            return;
+        }
+
+        // Verificar si el slug ya existe
+        $existing = $this->platformRepository->findByName($name);
+        if ($existing) {
+            json_response(['success' => false, 'message' => 'Ya existe una plataforma con ese slug'], 400);
+            return;
+        }
+
+        $id = $this->platformRepository->create($name, $displayName, (bool)$enabled);
+
+        if ($id !== false) {
+            json_response([
+                'success' => true,
+                'message' => 'Plataforma creada correctamente',
+                'id' => $id
+            ]);
+        } else {
+            json_response(['success' => false, 'message' => 'Error al crear la plataforma'], 500);
+        }
+    }
+
+    /**
      * Renderizar vista
      */
     private function renderView(string $view, array $data = []): void

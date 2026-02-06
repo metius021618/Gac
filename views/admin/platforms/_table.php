@@ -13,6 +13,7 @@
                 <th>Nombre</th>
                 <th>Slug</th>
                 <th>Estado</th>
+                <th>Act/Desc</th>
                 <th>Fecha Creación</th>
                 <th>Última Actualización</th>
             </tr>
@@ -20,7 +21,7 @@
         <tbody>
             <?php if (empty($platforms)): ?>
                 <tr>
-                    <td colspan="6" class="text-center">
+                    <td colspan="7" class="text-center">
                         <p class="empty-message">No hay plataformas registradas</p>
                     </td>
                 </tr>
@@ -35,9 +36,15 @@
                             <code><?= htmlspecialchars($platform['name']) ?></code>
                         </td>
                         <td>
-                            <span class="status-badge status-<?= $platform['enabled'] ? 'active' : 'inactive' ?>">
+                            <span class="status-badge status-<?= $platform['enabled'] ? 'active' : 'inactive' ?>" id="statusBadge-<?= $platform['id'] ?>">
                                 <?= $platform['enabled'] ? 'Activa' : 'Inactiva' ?>
                             </span>
+                        </td>
+                        <td>
+                            <label class="toggle-switch" title="<?= $platform['enabled'] ? 'Desactivar' : 'Activar' ?>">
+                                <input type="checkbox" class="toggle-input" data-id="<?= $platform['id'] ?>" <?= $platform['enabled'] ? 'checked' : '' ?>>
+                                <span class="toggle-slider"></span>
+                            </label>
                         </td>
                         <td>
                             <?= $platform['created_at'] ? date('d/m/Y H:i', strtotime($platform['created_at'])) : '-' ?>

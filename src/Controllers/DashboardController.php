@@ -33,7 +33,10 @@ class DashboardController
         $stats = [
             'email_accounts' => $this->getEmailAccountsCount(),
             'platforms_active' => $this->getPlatformsActiveCount(),
-            'administrators' => $this->getAdministratorsCount()
+            'administrators' => $this->getAdministratorsCount(),
+            'gmail_count' => $this->getEmailCountByDomain(['gmail.com']),
+            'outlook_count' => $this->getEmailCountByDomain(['outlook.com', 'hotmail.com', 'live.com']),
+            'pocoyoni_count' => $this->getEmailCountByDomain(['pocoyoni.com'])
         ];
 
         $this->renderView('admin/dashboard/index', [
@@ -77,6 +80,19 @@ class DashboardController
             return $this->userRepo->countAdministrators();
         } catch (\Exception $e) {
             error_log("Error al contar administradores: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Contar correos por dominio(s) en user_access
+     */
+    private function getEmailCountByDomain(array $domains): int
+    {
+        try {
+            return $this->userAccessRepo->countByDomains($domains);
+        } catch (\Exception $e) {
+            error_log("Error al contar correos por dominio: " . $e->getMessage());
             return 0;
         }
     }
