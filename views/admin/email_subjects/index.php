@@ -20,16 +20,6 @@ $content = ob_start();
     <div class="admin-content">
         <div class="table-controls">
             <div class="table-controls-left">
-                <button type="button" id="btnNewSubject" class="btn btn-primary btn-new-subject">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Nuevo asunto
-                </button>
-            </div>
-            
-            <div class="table-controls-right">
                 <div class="search-input-wrapper">
                     <span class="search-icon">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -52,7 +42,16 @@ $content = ob_start();
                         </svg>
                     </button>
                 </div>
-                
+            </div>
+            
+            <div class="table-controls-right">
+                <button type="button" id="btnNewSubject" class="btn btn-primary btn-new-subject">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Nuevo asunto
+                </button>
                 <div class="per-page-selector">
                     <label for="perPageSelect" class="per-page-label">Mostrar:</label>
                     <select id="perPageSelect" class="form-select">

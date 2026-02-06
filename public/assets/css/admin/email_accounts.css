@@ -387,6 +387,12 @@ select.per-page-select {
     white-space: nowrap;
 }
 
+/* Columna Correo centrada en vista filtrada (Gmail/Outlook/Pocoyoni) */
+.admin-table th.text-center,
+.admin-table td.email-cell.text-center {
+    text-align: center;
+}
+
 .admin-table .user-cell {
     max-width: 0;
     overflow: hidden;

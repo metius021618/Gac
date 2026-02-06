@@ -17,8 +17,9 @@
             try {
                 const url = new URL(endpoint, window.location.origin);
                 Object.keys(params).forEach(key => {
-                    if (params[key] !== null && params[key] !== '') {
-                        url.searchParams.set(key, params[key]);
+                    const val = params[key];
+                    if (val !== null && val !== undefined) {
+                        url.searchParams.set(key, val === '' ? '' : String(val));
                     }
                 });
 

@@ -10,7 +10,7 @@
         <thead>
             <tr>
                 <th style="width: 60px;">ID</th>
-                <th>Correo</th>
+                <th class="text-center">Correo</th>
                 <th style="width: 18%;">Fecha registro</th>
             </tr>
         </thead>
@@ -25,7 +25,7 @@
                 <?php foreach ($email_accounts as $account): ?>
                     <tr>
                         <td><?= (int)$account['id'] ?></td>
-                        <td class="email-cell"><?= htmlspecialchars($account['email'] ?? '') ?></td>
+                        <td class="email-cell text-center"><?= htmlspecialchars($account['email'] ?? '') ?></td>
                         <td><span class="sync-time"><?= !empty($account['created_at']) ? date('d/m/Y H:i', strtotime($account['created_at'])) : '—' ?></span></td>
                     </tr>
                 <?php endforeach; ?>
