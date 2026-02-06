@@ -344,6 +344,67 @@ class EmailAccountRepository
     }
 
     /**
+     * Listar cuentas de email por dominios (para vistas Gmail/Outlook/Pocoyoni - incluye stock)
+     * 
+     * @param array $domains Ej: ['gmail.com'], ['outlook.com','hotmail.com','live.com'], ['pocoyoni.com']
+     * @param string $search Búsqueda en email
+     * @param int $page
+     * @param int $perPage
+     * @return array ['data' => [['id','email','created_at']], 'total', 'page', 'per_page', 'total_pages']
+     */
+    public function listByDomainsPaginate(array $domains, string $search = '', int $page = 1, int $perPage = 15): array
+    {
+        if (empty($domains)) {
+            return ['data' => [], 'total' => 0, 'page' => $page, 'per_page' => $perPage, 'total_pages' => 1];
+        }
+        try {
+            $db = Database::getConnection();
+            $domainConds = [];
+            $params = [];
+            foreach ($domains as $i => $d) {
+                $key = ':dom' . $i;
+                $domainConds[] = "LOWER(SUBSTRING_INDEX(ea.email, '@', -1)) = {$key}";
+                $params[$key] = strtolower(trim($d));
+            }
+            $whereDomain = '(' . implode(' OR ', $domainConds) . ')';
+            $searchTerm = '%' . trim($search) . '%';
+            if ($search !== '') {
+                $params[':search'] = $searchTerm;
+                $whereClause = "WHERE {$whereDomain} AND (ea.email LIKE :search)";
+            } else {
+                $whereClause = "WHERE {$whereDomain}";
+            }
+            $countSql = "SELECT COUNT(*) as total FROM email_accounts ea {$whereClause}";
+            $countStmt = $db->prepare($countSql);
+            foreach ($params as $k => $v) {
+                $countStmt->bindValue($k, $v, PDO::PARAM_STR);
+            }
+            $countStmt->execute();
+            $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+            $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
+            $offset = ($page - 1) * $perPage;
+            $limitClause = $perPage > 0 ? "LIMIT " . (int) $perPage . " OFFSET " . (int) $offset : '';
+            $sql = "SELECT ea.id, ea.email, ea.created_at FROM email_accounts ea {$whereClause} ORDER BY ea.created_at DESC {$limitClause}";
+            $stmt = $db->prepare($sql);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v, PDO::PARAM_STR);
+            }
+            $stmt->execute();
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return [
+                'data' => $data,
+                'total' => $total,
+                'page' => $page,
+                'per_page' => $perPage,
+                'total_pages' => $totalPages
+            ];
+        } catch (PDOException $e) {
+            error_log("Error listByDomainsPaginate: " . $e->getMessage());
+            return ['data' => [], 'total' => 0, 'page' => $page, 'per_page' => $perPage, 'total_pages' => 1];
+        }
+    }
+
+    /**
      * Guardar nueva cuenta de email
      * 
      * @param array $data

@@ -58,8 +58,13 @@ class EmailAccountController
             $filterDomains = ['pocoyoni.com'];
             $filterLabel = 'Pocoyoni';
         }
-        
-        $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, $filterDomains);
+
+        // Vista principal "Listar correos": solo emails con user_access (asignados). Vistas filtradas: todos los emails de email_accounts (stock + asignados).
+        if (!empty($filterDomains)) {
+            $result = $this->emailAccountRepository->listByDomainsPaginate($filterDomains, $search, $page, $perPageInt);
+        } else {
+            $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, []);
+        }
         
         @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [EmailAccountController] total=' . $result['total'] . ' rows=' . count($result['data']) . "\n", FILE_APPEND | LOCK_EX);
         

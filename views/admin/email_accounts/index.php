@@ -62,18 +62,6 @@ $content = ob_start();
             </div>
             
             <div class="table-controls-right">
-                <a href="/gmail/connect" class="btn btn-primary" id="gmailConnectBtn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.636H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.313l8.073-5.82C21.69 2.28 24 3.434 24 5.457z"/>
-                    </svg>
-                    Conectar Gmail
-                </a>
-                <a href="/outlook/connect" class="btn btn-primary" id="outlookConnectBtn" style="background-color: #0078d4;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M7.5 7.5h9v9h-9v-9zM3 3v18h18V3H3zm16 16H5V5h14v14z"/>
-                    </svg>
-                    Conectar Outlook
-                </a>
                 <button id="multiSelectBtn" class="btn btn-secondary">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="9 11 12 14 22 4"></polyline>

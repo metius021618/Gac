@@ -43,7 +43,7 @@ class UserAccessController
     }
 
     /**
-     * Crear o actualizar acceso
+     * Crear o actualizar acceso. Permite guardar solo email (stock) o email + usuario + plataforma.
      */
     public function store(Request $request): void
     {
@@ -51,46 +51,71 @@ class UserAccessController
         $password = trim($request->input('password', ''));
         $platformId = (int)$request->input('platform_id', 0);
 
-        // Validaciones
-        if (empty($email) || empty($password) || $platformId <= 0) {
-            json_response([
-                'success' => false,
-                'message' => 'Por favor completa todos los campos'
-            ], 400);
+        if (empty($email)) {
+            json_response(['success' => false, 'message' => 'El correo es obligatorio'], 400);
             return;
         }
 
-        // Validar email
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            json_response(['success' => false, 'message' => 'El correo electrónico no es válido'], 400);
+            return;
+        }
+
+        $domain = strtolower(substr($email, strrpos($email, '@') + 1));
+        $useButtonsDomains = ['gmail.com', 'hotmail.com', 'outlook.com', 'live.com'];
+        if (in_array($domain, $useButtonsDomains, true)) {
             json_response([
                 'success' => false,
-                'message' => 'El correo electrónico no es válido'
+                'message' => 'Para registrar este dominio debe usar los botones Conectar Gmail o Conectar Outlook.'
             ], 400);
             return;
         }
 
-        // Verificar que la plataforma exista
+        $hasUser = $password !== '';
+        $hasPlatform = $platformId > 0;
+
+        // Modo stock: solo email (sin usuario o sin plataforma) → solo email_accounts, no user_access
+        if (!$hasUser || !$hasPlatform) {
+            $type = 'imap';
+            if (str_contains($domain, 'gmail.com')) {
+                $type = 'gmail';
+            } elseif (in_array($domain, ['outlook.com', 'hotmail.com', 'live.com'], true)) {
+                $type = 'outlook';
+            }
+            $existing = $this->emailAccountRepository->findByEmail($email);
+            if (!$existing) {
+                $accountData = [
+                    'email' => $email,
+                    'type' => $type,
+                    'provider_config' => [],
+                    'enabled' => 1,
+                    'sync_status' => 'pending'
+                ];
+                $id = $this->emailAccountRepository->save($accountData);
+                if (!$id) {
+                    json_response(['success' => false, 'message' => 'Error al guardar el correo'], 500);
+                    return;
+                }
+            }
+            $missing = [];
+            if (!$hasUser) $missing[] = 'usuario (contraseña)';
+            if (!$hasPlatform) $missing[] = 'plataforma';
+            $msg = 'Este correo se ha guardado como Stock al no tener asignado ' . implode(' ni ', $missing) . '. Estará disponible en la sección que le corresponda (Gmail, Outlook o Pocoyoni).';
+            json_response(['success' => true, 'message' => $msg, 'stock' => true]);
+            return;
+        }
+
+        // Con usuario y plataforma: flujo normal (email_accounts si no existe + user_access)
         $platform = $this->platformRepository->findById($platformId);
         if (!$platform) {
-            json_response([
-                'success' => false,
-                'message' => 'La plataforma seleccionada no existe'
-            ], 400);
+            json_response(['success' => false, 'message' => 'La plataforma seleccionada no existe'], 400);
             return;
         }
 
-        // Crear el correo en email_accounts si no existe
         $emailAccount = $this->emailAccountRepository->findByEmail($email);
         if (!$emailAccount) {
-            // Obtener configuración del correo maestro para usar la misma configuración
             $masterAccount = $this->emailAccountRepository->findByEmail('streaming@pocoyoni.com');
-            $masterConfig = [];
-            
-            if ($masterAccount && !empty($masterAccount['provider_config'])) {
-                $masterConfig = json_decode($masterAccount['provider_config'], true);
-            }
-            
-            // Crear cuenta de email con configuración básica
+            $masterConfig = $masterAccount && !empty($masterAccount['provider_config']) ? json_decode($masterAccount['provider_config'], true) : [];
             $accountData = [
                 'email' => $email,
                 'type' => 'imap',
@@ -106,18 +131,12 @@ class UserAccessController
                 'enabled' => 1,
                 'sync_status' => 'pending'
             ];
-            
-            $accountId = $this->emailAccountRepository->save($accountData);
-            if (!$accountId) {
-                json_response([
-                    'success' => false,
-                    'message' => 'Error al crear la cuenta de email'
-                ], 500);
+            if (!$this->emailAccountRepository->save($accountData)) {
+                json_response(['success' => false, 'message' => 'Error al crear la cuenta de email'], 500);
                 return;
             }
         }
 
-        // Si ya existe una fila OAuth (Gmail/Outlook) para este correo, actualizarla en lugar de crear duplicado
         $oauthRow = $this->userAccessRepository->findOAuthPlaceholderByEmail($email);
         if ($oauthRow && (int)($oauthRow['id'] ?? 0) > 0) {
             $success = $this->userAccessRepository->updateById((int) $oauthRow['id'], $email, $password, $platformId);
@@ -126,15 +145,9 @@ class UserAccessController
         }
 
         if ($success) {
-            json_response([
-                'success' => true,
-                'message' => 'Acceso registrado correctamente'
-            ]);
+            json_response(['success' => true, 'message' => 'Acceso registrado correctamente']);
         } else {
-            json_response([
-                'success' => false,
-                'message' => 'Error al registrar el acceso'
-            ], 500);
+            json_response(['success' => false, 'message' => 'Error al registrar el acceso'], 500);
         }
     }
 

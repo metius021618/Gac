@@ -95,6 +95,9 @@ $content = ob_start();
                         autocomplete="email"
                     >
                     <span class="form-error" id="emailError"></span>
+                    <p class="form-hint form-hint-domain-warning" id="emailDomainWarning" style="display: none; margin-top: 0.5rem; color: var(--color-warning, #f59e0b); font-size: 0.875rem;">
+                        Para registrar este dominio debe usar los botones Conectar Gmail o Conectar Outlook de arriba.
+                    </p>
                 </div>
 
                 <!-- Campo Contraseña -->
@@ -111,8 +114,7 @@ $content = ob_start();
                         id="password" 
                         name="password" 
                         class="form-input" 
-                        placeholder="Clave para el buzón"
-                        required
+                        placeholder="Clave para el buzón (opcional: si no se asigna, el correo se guarda como Stock)"
                         autocomplete="off"
                     >
                     <span class="form-error" id="passwordError"></span>
@@ -131,11 +133,10 @@ $content = ob_start();
                     <select 
                         id="platform_id" 
                         name="platform_id" 
-                        class="form-select" 
-                        required
+                        class="form-select"
                     >
                         <?php $prefill_platform_id = (int)($prefill_platform_id ?? 0); ?>
-                        <option value="" disabled <?= $prefill_platform_id ? '' : 'selected' ?>>Seleccione una plataforma</option>
+                        <option value="" <?= $prefill_platform_id ? '' : 'selected' ?>>Seleccione una plataforma (opcional: si no se asigna, el correo se guarda como Stock)</option>
                         <?php foreach ($platforms as $platform): ?>
                             <option value="<?= $platform['id'] ?>" <?= ($platform['id'] == $prefill_platform_id) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($platform['display_name']) ?>
