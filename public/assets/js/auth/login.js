@@ -26,6 +26,19 @@
         usernameInput?.addEventListener('input', clearError.bind(null, usernameError));
         passwordInput?.addEventListener('blur', validatePassword);
         passwordInput?.addEventListener('input', clearError.bind(null, passwordError));
+
+        // Toggle mostrar/ocultar contraseña
+        const toggleBtn = document.getElementById('togglePassword');
+        const eyeOpen = document.getElementById('eyeOpen');
+        const eyeClosed = document.getElementById('eyeClosed');
+        if (toggleBtn && passwordInput) {
+            toggleBtn.addEventListener('click', function() {
+                const isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                eyeOpen.style.display = isPassword ? 'block' : 'none';
+                eyeClosed.style.display = isPassword ? 'none' : 'block';
+            });
+        }
     }
 
     /**
