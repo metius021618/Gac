@@ -76,12 +76,11 @@ $content = ob_start();
     <!-- Cards de Estadísticas (Grises) -->
     <div class="dashboard-stats">
         <div class="stats-cards-grid">
-            <!-- Correos Registrados: dividido en Gmail, Outlook, Pocoyoni -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; grid-column: 1 / -1;">
-                <!-- Gmail -->
-                <a href="/admin/email-accounts?filter=gmail" class="stat-card stat-card-grey stat-card-link" title="Ver correos Gmail" style="border-radius: 12px 0 0 12px; border-right: 1px solid #e0e0e0;">
+            <!-- Correos Registrados: 3 bloques del mismo ancho que una stat-card, con separación -->
+            <div class="stats-emails-wrapper">
+                <a href="/admin/email-accounts?filter=gmail" class="stat-card stat-card-grey stat-card-link stat-card-email" title="Ver correos Gmail">
                     <div class="stat-card-icon" style="background: rgba(234,67,53,0.1);">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="#EA4335">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="#EA4335">
                             <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.636H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.313l8.073-5.82C21.69 2.28 24 3.434 24 5.457z"/>
                         </svg>
                     </div>
@@ -90,13 +89,12 @@ $content = ob_start();
                         <div class="stat-card-label">Gmail</div>
                     </div>
                     <div class="stat-card-arrow">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
                 </a>
-                <!-- Outlook -->
-                <a href="/admin/email-accounts?filter=outlook" class="stat-card stat-card-grey stat-card-link" title="Ver correos Outlook" style="border-radius: 0; border-right: 1px solid #e0e0e0;">
+                <a href="/admin/email-accounts?filter=outlook" class="stat-card stat-card-grey stat-card-link stat-card-email" title="Ver correos Outlook">
                     <div class="stat-card-icon" style="background: rgba(0,120,212,0.1);">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="#0078D4">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="#0078D4">
                             <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                         </svg>
                     </div>
@@ -105,20 +103,19 @@ $content = ob_start();
                         <div class="stat-card-label">Outlook</div>
                     </div>
                     <div class="stat-card-arrow">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
                 </a>
-                <!-- Pocoyoni -->
-                <a href="/admin/email-accounts?filter=pocoyoni" class="stat-card stat-card-grey stat-card-link" title="Ver correos Pocoyoni" style="border-radius: 0 12px 12px 0;">
+                <a href="/admin/email-accounts?filter=pocoyoni" class="stat-card stat-card-grey stat-card-link stat-card-email" title="Ver correos Pocoyoni">
                     <div class="stat-card-icon" style="background: rgba(255,193,7,0.15);">
-                        <div style="width: 32px; height: 32px; background: #FFC107; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #333; font-size: 14px;">P</div>
+                        <div style="width: 28px; height: 28px; background: #FFC107; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #333; font-size: 13px;">P</div>
                     </div>
                     <div class="stat-card-content">
                         <div class="stat-card-value"><?= number_format($stats['pocoyoni_count'] ?? 0) ?></div>
                         <div class="stat-card-label">Pocoyoni</div>
                     </div>
                     <div class="stat-card-arrow">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
                 </a>
             </div>

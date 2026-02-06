@@ -114,6 +114,28 @@
     gap: var(--spacing-lg);
 }
 
+/* Wrapper de los 3 tipos de correo: mismo ancho que una stat-card, 3 columnas iguales + gap */
+.stats-emails-wrapper {
+    display: flex;
+    gap: 10px;
+    min-width: 0; /* permite que el flex item se encoja dentro del grid */
+}
+
+.stats-emails-wrapper .stat-card-email {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: var(--spacing-md) var(--spacing-sm);
+}
+
+.stats-emails-wrapper .stat-card-email .stat-card-icon {
+    width: 48px;
+    height: 48px;
+}
+
+.stats-emails-wrapper .stat-card-email .stat-card-value {
+    font-size: var(--font-size-2xl);
+}
+
 .stat-card {
     background: rgba(26, 35, 50, 0.95); /* Gris oscuro del sistema original */
     backdrop-filter: blur(10px);
