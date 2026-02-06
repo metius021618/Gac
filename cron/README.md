@@ -102,20 +102,44 @@ python3 update_old_emails_body.py
 
 ---
 
-## ⚡ Sincronización cada 30 segundos (consultar código al instante)
+## ⚡ Consultar código al instante (sincronización automática)
 
-Para que el botón **Consultar código** responda al instante (sin esperar 1–2 minutos), los lectores de correo deben estar actualizando la BD continuamente. Usa el script **sync_loop.py**, que ejecuta los 3 lectores (Pocoyoni/IMAP, Gmail, Outlook) en paralelo cada **30 segundos**.
+El botón **Consultar código** solo consulta la BD (respuesta inmediata). Para que los datos estén siempre recientes, los **3 lectores** (Pocoyoni/IMAP, Gmail, Outlook) deben ejecutarse de forma automática.
 
-### Ejecución manual (desde la raíz SISTEMA_GAC)
+---
 
-```bash
-cd /ruta/a/SISTEMA_GAC
-python cron/sync_loop.py
-```
+### En cPanel (tu caso)
 
-### Dejar corriendo en segundo plano
+En cPanel el cron solo permite **cada 1 minuto** como mínimo (no cada 30 segundos). Configura **un solo Cron Job** que ejecute los 3 lectores cada minuto:
 
-**Linux / Mac:**
+1. En cPanel ve a **Cron Jobs**.
+2. **Nueva tarea cron:**
+   - **Frecuencia:** cada minuto → Minuto: `*`, Hora: `*`, Día: `*`, Mes: `*`, Día semana: `*`
+   - **Comando:** (ajusta la ruta a la de tu cuenta; suele ser `/home/usuario/...`):
+
+   ```bash
+   /home/TU_USUARIO/public_html/gac/cron/run_all_readers.sh >> /home/TU_USUARIO/public_html/gac/logs/cron.log 2>&1
+   ```
+
+   Si tu proyecto está en otra ruta (por ejemplo `app.pocoyoni.com` o `SISTEMA_GAC`), usa esa carpeta:
+
+   ```bash
+   cd /home/TU_USUARIO/app.pocoyoni.com && bash cron/run_all_readers.sh >> logs/cron.log 2>&1
+   ```
+
+3. La primera vez, en **Terminal** de cPanel (o por SSH) da permisos de ejecución al script:
+
+   ```bash
+   chmod +x /home/TU_USUARIO/public_html/gac/cron/run_all_readers.sh
+   ```
+
+Con eso, cada minuto se ejecutan los 3 lectores en paralelo, la BD se actualiza y **Consultar código** sigue siendo instantáneo con datos de como máximo 1 minuto.
+
+---
+
+### En VPS/SSH (cada 30 segundos con sync_loop)
+
+Si tienes acceso SSH y quieres actualización **cada 30 segundos**, puedes usar **sync_loop.py** (se queda corriendo para siempre):
 
 ```bash
 cd /ruta/a/SISTEMA_GAC
@@ -123,15 +147,7 @@ mkdir -p logs
 nohup python3 cron/sync_loop.py >> logs/sync_loop.log 2>&1 &
 ```
 
-**Windows (CMD o PowerShell):**
-
-```cmd
-cd C:\ruta\a\SISTEMA_GAC
-if not exist logs mkdir logs
-start /B python cron/sync_loop.py >> logs/sync_loop.log 2>&1
-```
-
-Con el loop corriendo, el botón **Consultar código** en la web solo consulta la BD (respuesta inmediata) y los datos tienen como máximo ~30 segundos de antigüedad.
+Para que se reinicie solo si el servidor se reinicia, puedes crear un servicio systemd o un cron que cada 5 minutos compruebe si el proceso existe y lo arranque si no.
 
 ---
 
