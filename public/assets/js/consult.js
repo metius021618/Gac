@@ -21,8 +21,8 @@
     
     // Ya no se usan estos elementos - solo se muestra el modal
 
-    // API Endpoint: consult-with-sync ejecuta el lector de correos antes de consultar (~30-60 s)
-    const API_ENDPOINT = '/api/v1/codes/consult-with-sync';
+    // API Endpoint: consult solo consulta la BD (instantáneo). Los lectores deben correr cada 30 s con cron/sync_loop.py
+    const API_ENDPOINT = '/api/v1/codes/consult';
 
     /**
      * Inicialización
@@ -237,7 +237,7 @@
         if (loading) {
             submitBtn.disabled = true;
             btnLoader?.classList.add('active');
-            if (btnText) btnText.textContent = 'Sincronizando correos...';
+            if (btnText) btnText.textContent = 'Consultando...';
             consultForm.classList.add('loading');
         } else {
             submitBtn.disabled = false;

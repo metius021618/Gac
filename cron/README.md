@@ -102,6 +102,39 @@ python3 update_old_emails_body.py
 
 ---
 
+## ⚡ Sincronización cada 30 segundos (consultar código al instante)
+
+Para que el botón **Consultar código** responda al instante (sin esperar 1–2 minutos), los lectores de correo deben estar actualizando la BD continuamente. Usa el script **sync_loop.py**, que ejecuta los 3 lectores (Pocoyoni/IMAP, Gmail, Outlook) en paralelo cada **30 segundos**.
+
+### Ejecución manual (desde la raíz SISTEMA_GAC)
+
+```bash
+cd /ruta/a/SISTEMA_GAC
+python cron/sync_loop.py
+```
+
+### Dejar corriendo en segundo plano
+
+**Linux / Mac:**
+
+```bash
+cd /ruta/a/SISTEMA_GAC
+mkdir -p logs
+nohup python3 cron/sync_loop.py >> logs/sync_loop.log 2>&1 &
+```
+
+**Windows (CMD o PowerShell):**
+
+```cmd
+cd C:\ruta\a\SISTEMA_GAC
+if not exist logs mkdir logs
+start /B python cron/sync_loop.py >> logs/sync_loop.log 2>&1
+```
+
+Con el loop corriendo, el botón **Consultar código** en la web solo consulta la BD (respuesta inmediata) y los datos tienen como máximo ~30 segundos de antigüedad.
+
+---
+
 ## ⏰ Configurar Cron Jobs
 
 ### Linux / Unix
