@@ -278,6 +278,16 @@
                 }
                 formGroup?.classList.remove('has-error');
             });
+
+            // Limpiar error de plataforma al cambiar
+            const deletePlatformSelect = document.getElementById('delete_platform_id');
+            deletePlatformSelect?.addEventListener('change', function() {
+                const platError = document.getElementById('deletePlatformError');
+                if (platError) {
+                    platError.textContent = '';
+                    platError.style.display = 'none';
+                }
+            });
         }
     }
 
@@ -287,13 +297,28 @@
     async function handleDeleteSubmit(e) {
         e.preventDefault();
 
+        const deletePlatformSelect = document.getElementById('delete_platform_id');
+        const deletePlatformId = deletePlatformSelect ? parseInt(deletePlatformSelect.value) : 0;
+
+        // Validar plataforma
+        if (!deletePlatformId || deletePlatformId <= 0) {
+            const platError = document.getElementById('deletePlatformError');
+            if (platError) {
+                platError.textContent = 'Selecciona una plataforma';
+                platError.style.display = 'block';
+            }
+            await window.GAC.error('Debes seleccionar una plataforma para saber qué asignaciones eliminar.', 'Error de Validación');
+            return;
+        }
+
         if (!validateDeleteEmails({ target: emailsDeleteTextarea })) {
             await window.GAC.error('Por favor corrige los errores en el formulario.', 'Error de Validación');
             return;
         }
 
+        const platformName = deletePlatformSelect.options[deletePlatformSelect.selectedIndex]?.text || '';
         const confirmResult = await window.GAC.confirm(
-            '¿Estás seguro de que deseas eliminar estos correos? Esta acción no se puede deshacer.',
+            `¿Estás seguro de que deseas eliminar las asignaciones de "${platformName}" para estos correos?\n\nEsta acción no se puede deshacer.`,
             'Confirmar Eliminación Masiva'
         );
 
@@ -304,7 +329,8 @@
         setDeleteLoadingState(true);
 
         const formData = {
-            emails: emailsDeleteTextarea.value.trim()
+            emails: emailsDeleteTextarea.value.trim(),
+            platform_id: deletePlatformId
         };
 
         try {
@@ -323,7 +349,7 @@
                 let message = result.message;
                 
                 if (result.not_found_emails && result.not_found_emails.length > 0) {
-                    message += '\n\nCorreos no encontrados:\n' + result.not_found_emails.join('\n');
+                    message += '\n\nCorreos sin esa plataforma:\n' + result.not_found_emails.join('\n');
                 }
                 
                 await window.GAC.success(message, 'Eliminación Masiva Exitosa');
@@ -333,6 +359,11 @@
                 if (errorElement) {
                     errorElement.textContent = '';
                     errorElement.style.display = 'none';
+                }
+                const platError = document.getElementById('deletePlatformError');
+                if (platError) {
+                    platError.textContent = '';
+                    platError.style.display = 'none';
                 }
             } else {
                 let errorMessage = result.message || 'Error al procesar la eliminación masiva';

@@ -380,6 +380,48 @@ class UserAccessRepository
     }
 
     /**
+     * Eliminar acceso por email y plataforma específica
+     *
+     * @param string $email
+     * @param int $platformId
+     * @return bool
+     */
+    public function deleteByEmailAndPlatform(string $email, int $platformId): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("DELETE FROM user_access WHERE email = :email AND platform_id = :platform_id");
+            return $stmt->execute([
+                'email' => strtolower(trim($email)),
+                'platform_id' => $platformId
+            ]);
+        } catch (PDOException $e) {
+            error_log("Error al eliminar acceso por email y plataforma: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Contar cuántas asignaciones tiene un email en user_access
+     *
+     * @param string $email
+     * @return int
+     */
+    public function countByEmail(string $email): int
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("SELECT COUNT(*) as total FROM user_access WHERE email = :email");
+            $stmt->execute(['email' => strtolower(trim($email))]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)($row['total'] ?? 0);
+        } catch (PDOException $e) {
+            error_log("Error al contar accesos por email: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * Eliminar múltiples accesos por ID
      */
     public function bulkDelete(array $ids): bool

@@ -597,7 +597,9 @@ class EmailAccountController
     }
 
     /**
-     * Procesar eliminación masiva
+     * Procesar eliminación masiva (filtrada por plataforma)
+     * Solo elimina la asignación email+plataforma de user_access.
+     * Si el correo no tiene más asignaciones en user_access, también se elimina de email_accounts.
      */
     public function bulkDeleteStore(Request $request): void
     {
@@ -610,11 +612,31 @@ class EmailAccountController
         }
 
         $emailsInput = trim($request->input('emails', ''));
+        $platformId = (int)$request->input('platform_id', 0);
 
         if (empty($emailsInput)) {
             json_response([
                 'success' => false,
                 'message' => 'Debes proporcionar al menos un correo'
+            ], 400);
+            return;
+        }
+
+        if ($platformId <= 0) {
+            json_response([
+                'success' => false,
+                'message' => 'Debes seleccionar una plataforma'
+            ], 400);
+            return;
+        }
+
+        // Validar que la plataforma exista
+        $platformRepository = new \Gac\Repositories\PlatformRepository();
+        $platform = $platformRepository->findById($platformId);
+        if (!$platform) {
+            json_response([
+                'success' => false,
+                'message' => 'La plataforma seleccionada no existe'
             ], 400);
             return;
         }
@@ -640,29 +662,40 @@ class EmailAccountController
 
         $deletedCount = 0;
         $notFoundEmails = [];
+        $alsoRemovedFromAccounts = 0;
         $userAccessRepository = new \Gac\Repositories\UserAccessRepository();
 
         foreach ($emailsArray as $email) {
-            $account = $this->emailAccountRepository->findByEmail($email);
-            if ($account) {
-                // Eliminar de user_access
-                $userAccessRepository->deleteByEmail($email);
-                // Eliminar de email_accounts
-                if ($this->emailAccountRepository->deleteByEmail($email)) {
-                    $deletedCount++;
+            // Eliminar solo la asignación de esta plataforma en user_access
+            $deleted = $userAccessRepository->deleteByEmailAndPlatform($email, $platformId);
+
+            if ($deleted) {
+                $deletedCount++;
+
+                // Si ya no tiene más asignaciones en user_access, eliminar de email_accounts
+                $remaining = $userAccessRepository->countByEmail($email);
+                if ($remaining === 0) {
+                    $this->emailAccountRepository->deleteByEmail($email);
+                    $alsoRemovedFromAccounts++;
                 }
             } else {
                 $notFoundEmails[] = $email;
             }
         }
 
+        $platformName = htmlspecialchars($platform['display_name'] ?? $platform['name'] ?? '');
         $message = sprintf(
-            'Se eliminaron %d correo(s) correctamente.',
-            $deletedCount
+            'Se eliminaron %d asignación(es) de "%s" correctamente.',
+            $deletedCount,
+            $platformName
         );
 
+        if ($alsoRemovedFromAccounts > 0) {
+            $message .= sprintf(' %d correo(s) sin más plataformas fueron eliminados completamente.', $alsoRemovedFromAccounts);
+        }
+
         if (!empty($notFoundEmails)) {
-            $message .= ' ' . count($notFoundEmails) . ' correo(s) no se encontraron en la base de datos.';
+            $message .= sprintf(' %d correo(s) no tenían asignación en "%s".', count($notFoundEmails), $platformName);
         }
 
         json_response([
@@ -671,6 +704,7 @@ class EmailAccountController
             'stats' => [
                 'total' => count($emailsArray),
                 'deleted' => $deletedCount,
+                'removed_from_accounts' => $alsoRemovedFromAccounts,
                 'not_found' => count($notFoundEmails)
             ],
             'not_found_emails' => $notFoundEmails

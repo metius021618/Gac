@@ -124,6 +124,33 @@ $content = ob_start();
         <!-- Formulario Eliminar -->
         <div class="form-container" id="deleteFormContainer" style="display: none;">
             <form id="bulkDeleteForm" class="admin-form bulk-register-form" novalidate>
+                <!-- Filtro de Plataforma -->
+                <div class="form-group">
+                    <label for="delete_platform_id" class="form-label">
+                        <svg class="form-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                        Plataforma <span class="required">*</span>
+                    </label>
+                    <select 
+                        id="delete_platform_id" 
+                        name="platform_id" 
+                        class="form-select" 
+                        required
+                    >
+                        <option value="" disabled selected>Seleccione plataforma a eliminar...</option>
+                        <?php foreach ($platforms as $platform): ?>
+                            <option value="<?= $platform['id'] ?>">
+                                <?= htmlspecialchars($platform['display_name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <span class="form-error" id="deletePlatformError"></span>
+                    <small class="form-help">Solo se eliminarán las asignaciones de esta plataforma. Si el correo tiene otras plataformas, esas se mantienen.</small>
+                </div>
+
                 <!-- Campo Correos Electrónicos -->
                 <div class="form-group">
                     <label for="emails_delete" class="form-label">
@@ -142,7 +169,7 @@ $content = ob_start();
                         required
                     ></textarea>
                     <span class="form-error" id="emailsDeleteError"></span>
-                    <small class="form-help">Ingresa un correo por línea. Se eliminarán de la base de datos.</small>
+                    <small class="form-help">Ingresa un correo por línea. Solo se eliminarán las asignaciones de la plataforma seleccionada.</small>
                 </div>
 
                 <!-- Botones de acción -->
