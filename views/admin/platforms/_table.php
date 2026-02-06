@@ -16,12 +16,13 @@
                 <th>Act/Desc</th>
                 <th>Fecha Creación</th>
                 <th>Última Actualización</th>
+                <th style="width: 90px;">Eliminar</th>
             </tr>
         </thead>
         <tbody>
             <?php if (empty($platforms)): ?>
                 <tr>
-                    <td colspan="7" class="text-center">
+                    <td colspan="8" class="text-center">
                         <p class="empty-message">No hay plataformas registradas</p>
                     </td>
                 </tr>
@@ -51,6 +52,14 @@
                         </td>
                         <td>
                             <?= $platform['updated_at'] ? date('d/m/Y H:i', strtotime($platform['updated_at'])) : '-' ?>
+                        </td>
+                        <td class="actions-cell">
+                            <button type="button" class="btn-icon btn-delete btn-delete-platform" data-id="<?= (int)$platform['id'] ?>" data-name="<?= htmlspecialchars($platform['display_name']) ?>" title="Eliminar plataforma">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
                         </td>
                     </tr>
                 <?php endforeach; ?>

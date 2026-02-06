@@ -99,6 +99,30 @@ class PlatformController
     }
 
     /**
+     * Eliminar plataforma (AJAX)
+     */
+    public function destroy(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+
+        $id = (int)$request->input('id', 0);
+        if ($id <= 0) {
+            json_response(['success' => false, 'message' => 'ID inválido'], 400);
+            return;
+        }
+
+        $deleted = $this->platformRepository->delete($id);
+        if ($deleted) {
+            json_response(['success' => true, 'message' => 'Plataforma eliminada correctamente']);
+        } else {
+            json_response(['success' => false, 'message' => 'Error al eliminar la plataforma'], 500);
+        }
+    }
+
+    /**
      * Crear nueva plataforma (AJAX)
      */
     public function store(Request $request): void

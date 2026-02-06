@@ -13,15 +13,6 @@ $content = ob_start();
     </div>
 
     <div class="admin-content">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-            <button type="button" id="btnAddPlatform" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Agregar Plataforma
-            </button>
-        </div>
         <div class="table-controls">
             <div class="search-input-wrapper">
                 <span class="search-icon">
@@ -34,15 +25,24 @@ $content = ob_start();
                     </button>
                 <?php endif; ?>
             </div>
-            <div class="per-page-selector">
-                <label for="perPage">Mostrar:</label>
-                <select id="perPage" class="form-select">
-                    <?php foreach ($valid_per_page as $option): ?>
-                        <option value="<?= $option ?>" <?= $per_page == $option ? 'selected' : '' ?>>
-                            <?= $option == 0 ? 'Todos' : $option ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+            <div class="table-controls-right table-controls-platforms">
+                <button type="button" id="btnAddPlatform" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Agregar Plataforma
+                </button>
+                <div class="per-page-selector">
+                    <label for="perPage">Mostrar:</label>
+                    <select id="perPage" class="form-select">
+                        <?php foreach ($valid_per_page as $option): ?>
+                            <option value="<?= $option ?>" <?= $per_page == $option ? 'selected' : '' ?>>
+                                <?= $option == 0 ? 'Todos' : $option ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
         </div>
 

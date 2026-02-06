@@ -69,6 +69,7 @@ class Application
         $router->get('/admin/platforms', 'PlatformController@index', ['auth']);
         $router->post('/admin/platforms/toggle-status', 'PlatformController@toggleStatus', ['auth']);
         $router->post('/admin/platforms/store', 'PlatformController@store', ['auth']);
+        $router->post('/admin/platforms/delete', 'PlatformController@destroy', ['auth']);
         
         // Rutas de asuntos de email
         $router->get('/admin/email-subjects', 'EmailSubjectController@index', ['auth']);

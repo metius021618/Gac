@@ -24,6 +24,7 @@
             renderCallback: function(html) {
                 window.SearchAJAX.updateTableContent(html);
                 initToggles();
+                initDeleteButtons();
             },
             onSearchComplete: function() {
                 console.log('Búsqueda completada');
@@ -39,6 +40,58 @@
             toggle.removeEventListener('change', handleToggle);
             toggle.addEventListener('change', handleToggle);
         });
+    }
+
+    // ========================================
+    // ELIMINAR PLATAFORMA
+    // ========================================
+    function initDeleteButtons() {
+        document.querySelectorAll('.btn-delete-platform').forEach(function(btn) {
+            btn.removeEventListener('click', handleDeletePlatform);
+            btn.addEventListener('click', handleDeletePlatform);
+        });
+    }
+
+    async function handleDeletePlatform(e) {
+        const btn = e.currentTarget;
+        const id = parseInt(btn.dataset.id);
+        const name = btn.dataset.name || 'esta plataforma';
+        if (!id) return;
+
+        try {
+            const confirmed = window.GAC && window.GAC.confirm
+                ? await window.GAC.confirm('¿Eliminar la plataforma "' + name + '"? Esta acción no se puede deshacer.', 'Eliminar plataforma')
+                : confirm('¿Eliminar la plataforma "' + name + '"?');
+            if (!confirmed) return;
+        } catch (err) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/admin/platforms/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ id: id })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                const row = btn.closest('tr');
+                if (row) row.remove();
+                if (window.GAC && window.GAC.success) {
+                    await window.GAC.success(result.message || 'Plataforma eliminada', 'Listo');
+                }
+            } else {
+                if (window.GAC && window.GAC.error) {
+                    await window.GAC.error(result.message || 'Error al eliminar', 'Error');
+                }
+            }
+        } catch (err) {
+            console.error('Error eliminar:', err);
+            if (window.GAC && window.GAC.error) {
+                await window.GAC.error('Error de conexión', 'Error');
+            }
+        }
     }
 
     async function handleToggle(e) {
@@ -74,6 +127,7 @@
     }
 
     initToggles();
+    initDeleteButtons();
 
     // ========================================
     // MODAL AGREGAR PLATAFORMA

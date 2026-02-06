@@ -156,6 +156,21 @@ class PlatformRepository
     }
 
     /**
+     * Eliminar plataforma por ID
+     */
+    public function delete(int $id): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("DELETE FROM platforms WHERE id = :id");
+            return $stmt->execute(['id' => $id]);
+        } catch (PDOException $e) {
+            error_log("Error al eliminar plataforma: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Crear nueva plataforma
      */
     public function create(string $name, string $displayName, bool $enabled = true): int|false
