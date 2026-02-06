@@ -34,21 +34,44 @@
     </table>
 </div>
 
-<?php if (isset($total_pages) && $total_pages > 1): ?>
+<?php
+$total_records = (int)($total_records ?? 0);
+$total_pages = (int)($total_pages ?? 1);
+$current_page = (int)($current_page ?? 1);
+$per_page = (int)($per_page ?? 15);
+$from = $total_records === 0 ? 0 : (($current_page - 1) * $per_page) + 1;
+$to = $per_page > 0 ? min($current_page * $per_page, $total_records) : $total_records;
+?>
 <div class="pagination-container">
     <div class="pagination-info">
-        Mostrando <?= min($per_page > 0 ? $per_page : $total_records, $total_records) ?> de <?= $total_records ?> registros
+        Mostrando <strong><?= $from ?></strong> - <strong><?= $to ?></strong> de <strong><?= number_format($total_records) ?></strong> registros
     </div>
+    <?php if ($total_pages > 1): ?>
     <div class="pagination-controls">
-        <?php if ($current_page > 1): ?>
-            <button class="btn btn-secondary btn-sm" data-page="<?= $current_page - 1 ?>">Anterior</button>
-        <?php endif; ?>
-        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-            <button class="btn btn-sm <?= $i == $current_page ? 'btn-primary' : 'btn-secondary' ?>" data-page="<?= $i ?>"><?= $i ?></button>
-        <?php endfor; ?>
-        <?php if ($current_page < $total_pages): ?>
-            <button class="btn btn-secondary btn-sm" data-page="<?= $current_page + 1 ?>">Siguiente</button>
-        <?php endif; ?>
+        <button class="pagination-btn" data-page="<?= $current_page - 1 ?>" <?= $current_page <= 1 ? 'disabled' : '' ?>>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Anterior
+        </button>
+        <div class="pagination-pages">
+            <?php
+            $startPage = max(1, $current_page - 2);
+            $endPage = min($total_pages, $current_page + 2);
+            if ($startPage > 1): ?>
+                <button class="pagination-page" data-page="1">1</button>
+                <?php if ($startPage > 2): ?><span class="pagination-ellipsis">...</span><?php endif; ?>
+            <?php endif; ?>
+            <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                <button class="pagination-page <?= $i === $current_page ? 'active' : '' ?>" data-page="<?= $i ?>"><?= $i ?></button>
+            <?php endfor; ?>
+            <?php if ($endPage < $total_pages): ?>
+                <?php if ($endPage < $total_pages - 1): ?><span class="pagination-ellipsis">...</span><?php endif; ?>
+                <button class="pagination-page" data-page="<?= $total_pages ?>"><?= $total_pages ?></button>
+            <?php endif; ?>
+        </div>
+        <button class="pagination-btn" data-page="<?= $current_page + 1 ?>" <?= $current_page >= $total_pages ? 'disabled' : '' ?>>
+            Siguiente
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
     </div>
+    <?php endif; ?>
 </div>
-<?php endif; ?>

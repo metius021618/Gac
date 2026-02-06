@@ -51,33 +51,33 @@ $content = ob_start();
     </div>
 </div>
 
-<!-- Modal Agregar Plataforma -->
-<div id="addPlatformModal" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
-    <div style="background:white; border-radius:12px; padding:2rem; width:90%; max-width:450px; box-shadow:0 8px 32px rgba(0,0,0,0.2);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h2 style="margin:0; font-size:1.25rem;">Agregar Plataforma</h2>
-            <button type="button" id="closeModal" style="background:none; border:none; cursor:pointer; color:#888; font-size:1.5rem; line-height:1;">&times;</button>
+<!-- Modal Agregar Plataforma (tema oscuro) -->
+<div id="addPlatformModal" class="admin-modal-overlay" style="display:none;">
+    <div class="admin-modal-content">
+        <div class="admin-modal-header">
+            <h2 class="admin-modal-title">Agregar Plataforma</h2>
+            <button type="button" id="closeModal" class="admin-modal-close" aria-label="Cerrar">&times;</button>
         </div>
         <form id="addPlatformForm" novalidate>
-            <div class="form-group" style="margin-bottom:1rem;">
+            <div class="form-group">
                 <label for="platName" class="form-label">Nombre</label>
                 <input type="text" id="platName" class="form-input" placeholder="Ej: Netflix" required>
                 <span class="form-error" id="platNameError"></span>
             </div>
-            <div class="form-group" style="margin-bottom:1rem;">
+            <div class="form-group">
                 <label for="platSlug" class="form-label">Slug</label>
                 <input type="text" id="platSlug" class="form-input" placeholder="Ej: netflix" required>
+                <small class="admin-modal-hint">Identificador único (minúsculas, sin espacios)</small>
                 <span class="form-error" id="platSlugError"></span>
-                <small style="color:#888;">Identificador único (minúsculas, sin espacios)</small>
             </div>
-            <div class="form-group" style="margin-bottom:1.5rem;">
+            <div class="form-group">
                 <label for="platEnabled" class="form-label">Estado</label>
                 <select id="platEnabled" class="form-select" required>
                     <option value="1" selected>Activa</option>
                     <option value="0">Inactiva</option>
                 </select>
             </div>
-            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+            <div class="admin-modal-actions">
                 <button type="button" id="cancelModal" class="btn btn-secondary">Cancelar</button>
                 <button type="submit" class="btn btn-primary">Guardar</button>
             </div>
