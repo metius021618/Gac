@@ -1,7 +1,7 @@
 /**
  * GAC - JavaScript para Registro de Accesos
  * Permite guardar solo email (Stock) o email + usuario + plataforma.
- * Bloquea @gmail / @hotmail / @outlook en el input (deben usar los botones).
+ * Gmail, Outlook y Hotmail se pueden escribir en el formulario o conectar con los botones OAuth.
  */
 
 (function() {
@@ -12,41 +12,11 @@
     const passwordInput = document.getElementById('password');
     const platformSelect = document.getElementById('platform_id');
     const submitBtn = form?.querySelector('button[type="submit"]');
-    const emailDomainWarning = document.getElementById('emailDomainWarning');
-
-    const USE_BUTTONS_DOMAINS = ['gmail.com', 'hotmail.com', 'outlook.com', 'live.com'];
-
-    function getEmailDomain(email) {
-        const at = (email || '').trim().toLowerCase().lastIndexOf('@');
-        return at >= 0 ? (email.trim().toLowerCase().slice(at + 1)) : '';
-    }
-
-    function isDomainRequiringButtons(email) {
-        return USE_BUTTONS_DOMAINS.includes(getEmailDomain(email));
-    }
-
-    function updateDomainWarningAndSubmitState() {
-        const email = emailInput.value.trim();
-        const requireButtons = email && isDomainRequiringButtons(email);
-        if (emailDomainWarning) {
-            emailDomainWarning.style.display = requireButtons ? 'block' : 'none';
-        }
-        if (submitBtn) {
-            submitBtn.disabled = !!requireButtons;
-            submitBtn.classList.toggle('btn-disabled-domain', !!requireButtons);
-        }
-    }
 
     if (!form) {
         console.error('Formulario de acceso no encontrado');
         return;
     }
-
-    if (emailInput) {
-        emailInput.addEventListener('input', updateDomainWarningAndSubmitState);
-        emailInput.addEventListener('change', updateDomainWarningAndSubmitState);
-    }
-    updateDomainWarningAndSubmitState();
 
     // Manejar envío del formulario
     form.addEventListener('submit', async function(e) {
