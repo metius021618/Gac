@@ -11,7 +11,7 @@ cd "$ROOT_DIR" || exit 1
 
 mkdir -p "$ROOT_DIR/logs"
 LOG="$ROOT_DIR/logs/cron.log"
-PYTHON="${PYTHON:-/usr/bin/python3}"
+PYTHON="${PYTHON:-/bin/python3}"
 RUN_FOR_SECONDS=240   # 4 minutos (deja margen antes del siguiente cron a los 5 min)
 INTERVAL_SECONDS=30
 
