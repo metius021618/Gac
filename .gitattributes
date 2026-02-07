@@ -1,0 +1,2 @@
+# Scripts shell siempre en LF (evita "local changes" al pull en el servidor)
+*.sh text eol=lf
