@@ -1,7 +1,6 @@
 /**
  * GAC - JavaScript para Registro de Accesos
- * Permite guardar solo email (Stock) o email + usuario + plataforma.
- * Gmail, Outlook y Hotmail se pueden escribir en el formulario o conectar con los botones OAuth.
+ * Stock si falta acceso o plataforma (popup). Si pone acceso, debe poner plataforma. Gmail/Outlook por botones.
  */
 
 (function() {
@@ -12,11 +11,41 @@
     const passwordInput = document.getElementById('password');
     const platformSelect = document.getElementById('platform_id');
     const submitBtn = form?.querySelector('button[type="submit"]');
+    const emailDomainWarning = document.getElementById('emailDomainWarning');
+
+    const USE_BUTTONS_DOMAINS = ['gmail.com', 'hotmail.com', 'outlook.com', 'live.com'];
+
+    function getEmailDomain(email) {
+        const at = (email || '').trim().toLowerCase().lastIndexOf('@');
+        return at >= 0 ? (email.trim().toLowerCase().slice(at + 1)) : '';
+    }
+
+    function isDomainRequiringButtons(email) {
+        return USE_BUTTONS_DOMAINS.includes(getEmailDomain(email));
+    }
+
+    function updateDomainWarningAndSubmitState() {
+        const email = emailInput.value.trim();
+        const requireButtons = email && isDomainRequiringButtons(email);
+        if (emailDomainWarning) {
+            emailDomainWarning.style.display = requireButtons ? 'block' : 'none';
+        }
+        if (submitBtn) {
+            submitBtn.disabled = !!requireButtons;
+            submitBtn.classList.toggle('btn-disabled-domain', !!requireButtons);
+        }
+    }
 
     if (!form) {
         console.error('Formulario de acceso no encontrado');
         return;
     }
+
+    if (emailInput) {
+        emailInput.addEventListener('input', updateDomainWarningAndSubmitState);
+        emailInput.addEventListener('change', updateDomainWarningAndSubmitState);
+    }
+    updateDomainWarningAndSubmitState();
 
     // Manejar envío del formulario
     form.addEventListener('submit', async function(e) {
@@ -35,9 +64,9 @@
         const isStock = !password || !platformId;
         if (isStock && window.GAC && window.GAC.confirm) {
             const missing = [];
-            if (!password) missing.push('usuario (contraseña)');
+            if (!password) missing.push('acceso (contraseña)');
             if (!platformId) missing.push('plataforma');
-            const msg = 'Este correo se guardará como Stock ya que no tiene asignado ' + (missing.join(' ni ')) + '. Estará disponible en la sección que le corresponda (Gmail, Outlook o Pocoyoni). ¿Continuar?';
+            const msg = 'Este correo se guardará como Stock al no tener asignado ' + (missing.join(' ni ')) + '. Estará disponible en la sección Pocoyoni. ¿Continuar?';
             try {
                 const ok = await window.GAC.confirm(msg, 'Guardar como Stock');
                 if (!ok) return;
@@ -61,6 +90,7 @@
             if (data.success) {
                 await window.GAC.success(data.message || 'Acceso registrado correctamente', 'Éxito');
                 form.reset();
+                updateDomainWarningAndSubmitState();
             } else {
                 await window.GAC.error(data.message || 'Error al registrar el acceso', 'Error');
             }
@@ -69,6 +99,7 @@
             await window.GAC.error('Error de conexión. Por favor intenta nuevamente.', 'Error de Conexión');
         } finally {
             setLoadingState(false);
+            updateDomainWarningAndSubmitState();
         }
     });
 
@@ -79,6 +110,9 @@
         if (!email) {
             showError('emailError', 'El correo es requerido');
             isValid = false;
+        } else if (isDomainRequiringButtons(email)) {
+            showError('emailError', 'Para este dominio use los botones Conectar Gmail o Conectar Outlook.');
+            isValid = false;
         } else if (!window.GAC?.validateEmail?.(email)) {
             showError('emailError', 'El correo electrónico no es válido');
             isValid = false;
@@ -86,16 +120,12 @@
 
         const password = passwordInput.value.trim();
         const platformId = platformSelect.value || '';
+        if (password && !platformId) {
+            showError('platformError', 'Si indica acceso (contraseña), debe seleccionar una plataforma.');
+            isValid = false;
+        }
         if (password && password.length < 3) {
             showError('passwordError', 'La contraseña debe tener al menos 3 caracteres');
-            isValid = false;
-        }
-        if (password && !platformId) {
-            showError('platformError', 'Si indica contraseña, debe seleccionar una plataforma');
-            isValid = false;
-        }
-        if (platformId && !password) {
-            showError('passwordError', 'Si selecciona plataforma, debe indicar la contraseña');
             isValid = false;
         }
 

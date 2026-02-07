@@ -62,23 +62,42 @@ class UserAccessController
         }
 
         $domain = strtolower(substr($email, strrpos($email, '@') + 1));
+        $useButtonsDomains = ['gmail.com', 'hotmail.com', 'outlook.com', 'live.com'];
+        if (in_array($domain, $useButtonsDomains, true)) {
+            json_response([
+                'success' => false,
+                'message' => 'Para registrar este dominio debe usar los botones Conectar Gmail o Conectar Outlook.'
+            ], 400);
+            return;
+        }
+
         $hasUser = $password !== '';
         $hasPlatform = $platformId > 0;
 
-        // Modo stock: solo email (sin usuario o sin plataforma) → solo email_accounts, no user_access
+        // Si pone acceso (contraseña) debe poner plataforma
+        if ($hasUser && !$hasPlatform) {
+            json_response(['success' => false, 'message' => 'Si indica acceso (contraseña), debe seleccionar una plataforma.'], 400);
+            return;
+        }
+
+        // Modo stock: solo email, o solo plataforma sin acceso → solo email_accounts, no user_access
         if (!$hasUser || !$hasPlatform) {
-            $type = 'imap';
-            if (str_contains($domain, 'gmail.com')) {
-                $type = 'gmail';
-            } elseif (in_array($domain, ['outlook.com', 'hotmail.com', 'live.com'], true)) {
-                $type = 'outlook';
-            }
             $existing = $this->emailAccountRepository->findByEmail($email);
             if (!$existing) {
+                $masterAccount = $this->emailAccountRepository->findByEmail('streaming@pocoyoni.com');
+                $masterConfig = $masterAccount && !empty($masterAccount['provider_config']) ? json_decode($masterAccount['provider_config'], true) : [];
                 $accountData = [
                     'email' => $email,
-                    'type' => $type,
-                    'provider_config' => [],
+                    'type' => 'imap',
+                    'provider_config' => [
+                        'imap_server' => $masterConfig['imap_server'] ?? 'premium211.web-hosting.com',
+                        'imap_port' => $masterConfig['imap_port'] ?? 993,
+                        'imap_encryption' => $masterConfig['imap_encryption'] ?? 'ssl',
+                        'imap_user' => $email,
+                        'imap_password' => $password ?: '',
+                        'is_master' => false,
+                        'filter_by_recipient' => true
+                    ],
                     'enabled' => 1,
                     'sync_status' => 'pending'
                 ];
@@ -89,14 +108,14 @@ class UserAccessController
                 }
             }
             $missing = [];
-            if (!$hasUser) $missing[] = 'usuario (contraseña)';
+            if (!$hasUser) $missing[] = 'acceso (contraseña)';
             if (!$hasPlatform) $missing[] = 'plataforma';
-            $msg = 'Este correo se ha guardado como Stock al no tener asignado ' . implode(' ni ', $missing) . '. Estará disponible en la sección que le corresponda (Gmail, Outlook o Pocoyoni).';
+            $msg = 'Este correo se ha guardado como Stock al no tener asignado ' . implode(' ni ', $missing) . '. Estará disponible en la sección Pocoyoni.';
             json_response(['success' => true, 'message' => $msg, 'stock' => true]);
             return;
         }
 
-        // Con usuario y plataforma: flujo normal (email_accounts si no existe + user_access)
+        // Con acceso y plataforma: flujo normal (email_accounts si no existe + user_access)
         $platform = $this->platformRepository->findById($platformId);
         if (!$platform) {
             json_response(['success' => false, 'message' => 'La plataforma seleccionada no existe'], 400);
@@ -105,23 +124,12 @@ class UserAccessController
 
         $emailAccount = $this->emailAccountRepository->findByEmail($email);
         if (!$emailAccount) {
-            $type = 'imap';
-            if (str_contains($domain, 'gmail.com')) {
-                $type = 'gmail';
-            } elseif (in_array($domain, ['outlook.com', 'hotmail.com', 'live.com'], true)) {
-                $type = 'outlook';
-            }
+            $masterAccount = $this->emailAccountRepository->findByEmail('streaming@pocoyoni.com');
+            $masterConfig = $masterAccount && !empty($masterAccount['provider_config']) ? json_decode($masterAccount['provider_config'], true) : [];
             $accountData = [
                 'email' => $email,
-                'type' => $type,
-                'provider_config' => [],
-                'enabled' => 1,
-                'sync_status' => 'pending'
-            ];
-            if ($type === 'imap') {
-                $masterAccount = $this->emailAccountRepository->findByEmail('streaming@pocoyoni.com');
-                $masterConfig = $masterAccount && !empty($masterAccount['provider_config']) ? json_decode($masterAccount['provider_config'], true) : [];
-                $accountData['provider_config'] = [
+                'type' => 'imap',
+                'provider_config' => [
                     'imap_server' => $masterConfig['imap_server'] ?? 'premium211.web-hosting.com',
                     'imap_port' => $masterConfig['imap_port'] ?? 993,
                     'imap_encryption' => $masterConfig['imap_encryption'] ?? 'ssl',
@@ -129,8 +137,10 @@ class UserAccessController
                     'imap_password' => $password,
                     'is_master' => false,
                     'filter_by_recipient' => true
-                ];
-            }
+                ],
+                'enabled' => 1,
+                'sync_status' => 'pending'
+            ];
             if (!$this->emailAccountRepository->save($accountData)) {
                 json_response(['success' => false, 'message' => 'Error al crear la cuenta de email'], 500);
                 return;

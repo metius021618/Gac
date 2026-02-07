@@ -95,8 +95,8 @@ $content = ob_start();
                         autocomplete="email"
                     >
                     <span class="form-error" id="emailError"></span>
-                    <p class="form-hint" style="margin-top: 0.5rem; color: var(--text-muted, #6c757d); font-size: 0.875rem;">
-                        Puedes escribir cualquier correo (Gmail, Outlook, Hotmail, etc.) o usar los botones de arriba para conectar con OAuth.
+                    <p id="emailDomainWarning" class="form-hint" style="margin-top: 0.5rem; color: var(--warning, #856404); font-size: 0.875rem; display: none;">
+                        Para Gmail, Hotmail u Outlook use los botones <strong>Conectar Gmail</strong> o <strong>Conectar Outlook</strong> de arriba.
                     </p>
                 </div>
 
