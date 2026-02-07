@@ -76,7 +76,7 @@ class CodeService
             ];
         }
 
-        // Acceso maestro: admin logueado + usuario maestro configurado → ver último código de la plataforma (cualquier cuenta)
+        // Acceso maestro: admin + clave maestra → ver último código leído por la cuenta maestra IMAP (no Gmail/Outlook)
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -84,11 +84,11 @@ class CodeService
         $masterUsername = trim($this->settingsRepository->getValue('master_consult_username', ''));
         $isAdminLoggedIn = !empty($_SESSION['logged_in']);
         if ($masterEnabled && $masterUsername !== '' && $isAdminLoggedIn && trim($username) === $masterUsername) {
-            $lastEmail = $this->codeRepository->findLastEmailForPlatform($platform['id']);
+            $lastEmail = $this->codeRepository->findLastEmailForPlatformByOrigin($platform['id'], 'imap');
             if ($lastEmail) {
                 return [
                     'success' => true,
-                    'message' => 'Vista maestra (último código de esta plataforma)',
+                    'message' => 'Vista maestra (último código recibido en la cuenta maestra IMAP)',
                     'platform' => $platform['display_name'],
                     'received_at' => $lastEmail['received_at'],
                     'minutes_ago' => $lastEmail['minutes_ago'] ?? 0,
@@ -102,7 +102,7 @@ class CodeService
             }
             return [
                 'success' => false,
-                'message' => 'No hay correos para esta plataforma.'
+                'message' => 'No hay correos para esta plataforma en la cuenta maestra (IMAP).'
             ];
         }
 

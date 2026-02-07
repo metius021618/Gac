@@ -245,6 +245,55 @@ class CodeRepository
     }
 
     /**
+     * Último correo de una plataforma filtrado por origen (imap, gmail, outlook). Para vista maestra.
+     *
+     * @param int $platformId ID de la plataforma
+     * @param string $origin 'imap', 'gmail' u 'outlook'
+     * @return array|null Datos del último correo con time_ago_text y recipient_email
+     */
+    public function findLastEmailForPlatformByOrigin(int $platformId, string $origin): ?array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                SELECT 
+                    c.id,
+                    c.code,
+                    c.email_from,
+                    c.subject,
+                    c.email_body,
+                    c.received_at,
+                    c.status,
+                    c.recipient_email,
+                    TIMESTAMPDIFF(MINUTE, c.received_at, NOW()) as minutes_ago
+                FROM codes c
+                WHERE c.platform_id = :platform_id AND c.origin = :origin
+                ORDER BY c.received_at DESC, c.id DESC
+                LIMIT 1
+            ");
+            $stmt->execute(['platform_id' => $platformId, 'origin' => $origin]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$result) {
+                return null;
+            }
+            $minutesAgo = (int) $result['minutes_ago'];
+            if ($minutesAgo < 60) {
+                $result['time_ago_text'] = "hace {$minutesAgo} minuto(s)";
+            } elseif ($minutesAgo < 1440) {
+                $hoursAgo = floor($minutesAgo / 60);
+                $result['time_ago_text'] = "hace {$hoursAgo} hora(s)";
+            } else {
+                $daysAgo = floor($minutesAgo / 1440);
+                $result['time_ago_text'] = "hace {$daysAgo} día(s)";
+            }
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error al buscar último correo por plataforma/origen: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Último correo de una plataforma (cualquier destinatario). Para acceso maestro admin.
      *
      * @param int $platformId ID de la plataforma
