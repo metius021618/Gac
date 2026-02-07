@@ -70,9 +70,12 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(formData),
+                cache: 'no-store'
             });
 
             // Verificar si la respuesta es JSON

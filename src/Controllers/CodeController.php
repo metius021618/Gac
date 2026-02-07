@@ -106,7 +106,11 @@ class CodeController
 
         // Determinar código HTTP
         $httpCode = $result['success'] ? 200 : 404;
-        
+
+        // Evitar caché: cada consulta debe traer el código más reciente de la BD
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('Expires: 0');
         json_response($result, $httpCode);
     }
 
