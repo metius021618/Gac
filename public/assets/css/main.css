@@ -366,6 +366,22 @@ body {
     font-size: var(--font-size-sm);
 }
 
+.footer-legal-links {
+    margin-top: var(--spacing-sm);
+}
+.footer-legal-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+.footer-legal-links a:hover {
+    color: var(--color-primary-light);
+    text-decoration: underline;
+}
+.footer-sep {
+    margin: 0 var(--spacing-sm);
+    color: var(--text-muted);
+}
+
 /* ============================================
    RESPONSIVE
    ============================================ */

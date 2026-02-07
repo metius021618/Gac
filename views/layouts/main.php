@@ -114,6 +114,11 @@
             </div>
             <div class="footer-bottom">
                 <p>&copy; <?= date('Y') ?> <?= gac_name() ?>. Todos los derechos reservados.</p>
+                <p class="footer-legal-links">
+                    <a href="/politica-privacidad">Política de privacidad</a>
+                    <span class="footer-sep">·</span>
+                    <a href="/condiciones-servicio">Condiciones del servicio</a>
+                </p>
             </div>
         </div>
     </footer>
