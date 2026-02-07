@@ -43,7 +43,8 @@ class UserAccessController
     }
 
     /**
-     * Crear o actualizar acceso. Permite guardar solo email (stock) o email + usuario + plataforma.
+     * Crear o actualizar acceso. Cualquier correo permitido (Gmail, Outlook, Hotmail, etc.).
+     * Permite guardar solo email (stock) o email + contraseña + plataforma.
      */
     public function store(Request $request): void
     {
@@ -138,12 +139,12 @@ class UserAccessController
             }
         }
 
+        // Si había una fila OAuth (Gmail/Outlook conectado antes), la borramos y guardamos con la contraseña/plataforma que el usuario indicó
         $oauthRow = $this->userAccessRepository->findOAuthPlaceholderByEmail($email);
         if ($oauthRow && (int)($oauthRow['id'] ?? 0) > 0) {
-            $success = $this->userAccessRepository->updateById((int) $oauthRow['id'], $email, $password, $platformId);
-        } else {
-            $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId);
+            $this->userAccessRepository->delete((int) $oauthRow['id']);
         }
+        $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId);
 
         if ($success) {
             json_response(['success' => true, 'message' => 'Acceso registrado correctamente']);
