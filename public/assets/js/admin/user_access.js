@@ -61,6 +61,9 @@
                 await window.GAC.success(data.message || 'Acceso registrado correctamente', 'Éxito');
                 form.reset();
             } else {
+                if (data.detail) {
+                    console.error('[Registro acceso] Detalle del error:', data.detail);
+                }
                 await window.GAC.error(data.message || 'Error al registrar el acceso', 'Error');
             }
         } catch (error) {

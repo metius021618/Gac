@@ -13,11 +13,21 @@ use PDOException;
 
 class UserAccessRepository
 {
+    /** Último error para poder devolverlo en la respuesta (ej. en modo debug) */
+    private static string $lastError = '';
+
+    public static function getLastError(): string
+    {
+        return self::$lastError;
+    }
+
     /**
      * Crear o actualizar acceso de usuario
      */
     public function createOrUpdate(string $email, string $password, int $platformId): bool
     {
+        self::$lastError = '';
+        $stmt = null;
         try {
             $db = Database::getConnection();
             $emailNorm = strtolower(trim($email));
@@ -36,13 +46,27 @@ class UserAccessRepository
             $stmt->bindValue(':password_update', $password, PDO::PARAM_STR);
             $ok = $stmt->execute();
             if (!$ok && $stmt->errorInfo()) {
-                error_log("UserAccessRepository::createOrUpdate execute failed: " . json_encode($stmt->errorInfo()));
+                $info = $stmt->errorInfo();
+                self::$lastError = 'execute failed: ' . json_encode($info);
+                self::writeLog('createOrUpdate', $emailNorm, $platformId, self::$lastError);
+                error_log("UserAccessRepository::createOrUpdate execute failed: " . json_encode($info));
             }
             return $ok;
         } catch (PDOException $e) {
-            $info = isset($stmt) && $stmt ? $stmt->errorInfo() : [];
-            error_log("Error al crear/actualizar acceso de usuario: " . $e->getMessage() . " | errorInfo: " . json_encode($info));
+            $info = $stmt ? $stmt->errorInfo() : [];
+            self::$lastError = $e->getMessage() . ' | errorInfo: ' . json_encode($info);
+            self::writeLog('createOrUpdate', strtolower(trim($email)), $platformId, self::$lastError);
+            error_log("Error al crear/actualizar acceso de usuario: " . self::$lastError);
             return false;
+        }
+    }
+
+    private static function writeLog(string $action, string $email, int $platformId, string $error): void
+    {
+        $logFile = defined('BASE_PATH') ? BASE_PATH . '/logs/user_access.log' : '';
+        if ($logFile !== '') {
+            $line = date('Y-m-d H:i:s') . " [{$action}] email={$email} platform_id={$platformId} " . $error . "\n";
+            @file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
         }
     }
 

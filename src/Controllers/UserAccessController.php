@@ -148,11 +148,39 @@ class UserAccessController
         if ($success) {
             json_response(['success' => true, 'message' => 'Acceso registrado correctamente']);
         } else {
-            json_response(['success' => false, 'message' => 'Error al registrar el acceso'], 500);
+            $detail = \Gac\Repositories\UserAccessRepository::getLastError();
+            self::logUserAccessError('store_failed', $email, $platformId, $detail ?: 'createOrUpdate/updateById devolvió false');
+            $payload = [
+                'success' => false,
+                'message' => 'Error al registrar el acceso.',
+                'detail' => (defined('APP_DEBUG') && APP_DEBUG) ? $detail : null
+            ];
+            if ($payload['detail'] === null) {
+                unset($payload['detail']);
+            }
+            json_response($payload, 500);
         }
         } catch (\Throwable $e) {
+            self::logUserAccessError('exception', isset($email) ? $email : '', isset($platformId) ? $platformId : 0, $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             error_log('UserAccessController::store exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            json_response(['success' => false, 'message' => 'Error al registrar el acceso. Revisa los datos e intenta de nuevo.'], 500);
+            $payload = [
+                'success' => false,
+                'message' => 'Error al registrar el acceso. Revisa los datos e intenta de nuevo.',
+                'detail' => (defined('APP_DEBUG') && APP_DEBUG) ? $e->getMessage() : null
+            ];
+            if ($payload['detail'] === null) {
+                unset($payload['detail']);
+            }
+            json_response($payload, 500);
+        }
+    }
+
+    private static function logUserAccessError(string $context, string $email, int $platformId, string $error): void
+    {
+        $logFile = defined('BASE_PATH') ? BASE_PATH . '/logs/user_access.log' : '';
+        if ($logFile !== '') {
+            $line = date('Y-m-d H:i:s') . " [{$context}] email={$email} platform_id={$platformId} " . $error . "\n";
+            @file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
         }
     }
 

@@ -32,6 +32,7 @@ tail -f ~/logs/access_log
 2. **Logs de Apache**: `/usr/local/apache/logs/error_log`
 3. **Logs del usuario**: `~/logs/error_log` (puede no existir)
 4. **Logs del proyecto**: `~/public_html/gac/SISTEMA_GAC/logs/`
+5. **Log de registro de acceso (errores 500)**: Dentro del proyecto, carpeta `logs/`, archivo `user_access.log`. Cada error al guardar acceso se escribe ahí con fecha, email, platform_id y detalle (ej. error de BD). En cPanel: File Manager → app.pocoyoni.com → logs → user_access.log
 
 ## Verificar configuración de PHP:
 
