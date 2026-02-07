@@ -58,6 +58,17 @@
     }
 }
 
+/* Descripción del propósito de la app (visible para verificación Google) */
+.consult-app-purpose {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    max-width: 520px;
+    margin: 0 auto var(--spacing-md);
+    padding: 0 var(--spacing-sm);
+}
+
 /* ============================================
    CARD PRINCIPAL
    ============================================ */
@@ -390,6 +401,25 @@
 
 .info-text svg {
     flex-shrink: 0;
+}
+
+/* Enlaces legales en página principal (Política de privacidad, Condiciones) */
+.consult-legal-links {
+    margin-top: var(--spacing-lg);
+    text-align: center;
+    font-size: var(--font-size-sm);
+}
+.consult-legal-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+.consult-legal-links a:hover {
+    color: var(--color-primary-light);
+    text-decoration: underline;
+}
+.consult-legal-sep {
+    margin: 0 var(--spacing-sm);
+    color: var(--text-muted);
 }
 
 /* ============================================

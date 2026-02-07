@@ -13,13 +13,16 @@ $content = ob_start();
     <div class="consult-wrapper">
         <!-- Logo Section -->
         <div class="logo-section">
-            <img src="/assets/images/logocamb.png" alt="<?= gac_name() ?>" class="consult-logo">
+            <img src="/assets/images/logocamb.png" alt="GAC" class="consult-logo">
         </div>
+
+        <!-- Propósito de la app (visible para verificación Google) -->
+        <p class="consult-app-purpose">GAC es la aplicación que te permite consultar de forma rápida y segura los códigos de acceso que has recibido por correo electrónico (por ejemplo de Disney+, Netflix u otras plataformas). Ingresa tu correo, usuario y plataforma para ver tu código.</p>
 
         <!-- Main Card -->
         <div class="consult-card">
             <div class="card-header">
-                <h1 class="card-title">Consulta tu Código</h1>
+                <h1 class="card-title">GAC — Consulta tu Código</h1>
                 <p class="card-subtitle">Ingresa tu correo electrónico, usuario y selecciona la plataforma</p>
             </div>
 
@@ -155,15 +158,22 @@ $content = ob_start();
                 Ingresa tu correo, usuario y selecciona la plataforma para ver el email completo
             </p>
         </div>
+
+        <!-- Enlaces legales en página principal (requerido para verificación Google) -->
+        <div class="consult-legal-links">
+            <a href="/politica-privacidad">Política de privacidad</a>
+            <span class="consult-legal-sep">·</span>
+            <a href="/condiciones-servicio">Condiciones del servicio</a>
+        </div>
     </div>
 </div>
 
 <?php
 $content = ob_get_clean();
 
-// Configurar variables para el layout
-$title = $title ?? 'Consulta tu Código';
-$description = 'Consulta tus códigos de acceso para plataformas de streaming y servicios digitales';
+// Configurar variables para el layout (nombre GAC y propósito para verificación Google)
+$title = $title ?? 'GAC — Consulta tu Código';
+$description = 'GAC es la aplicación para consultar códigos de acceso recibidos por correo (Disney+, Netflix y otras plataformas). Consulta tu código de forma rápida y segura.';
 $show_nav = false;
 $footer_text = 'Tienes alguna duda, comunicate conmigo';
 $footer_contact = false;
