@@ -20,7 +20,7 @@ class UserAccessRepository
     {
         try {
             $db = Database::getConnection();
-            
+            $emailNorm = strtolower(trim($email));
             $sql = "
                 INSERT INTO user_access (email, password, platform_id, enabled)
                 VALUES (:email, :password, :platform_id, 1)
@@ -29,16 +29,19 @@ class UserAccessRepository
                     enabled = 1,
                     updated_at = NOW()
             ";
-            
             $stmt = $db->prepare($sql);
-            $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+            $stmt->bindValue(':email', $emailNorm, PDO::PARAM_STR);
             $stmt->bindValue(':password', $password, PDO::PARAM_STR);
             $stmt->bindValue(':platform_id', $platformId, PDO::PARAM_INT);
             $stmt->bindValue(':password_update', $password, PDO::PARAM_STR);
-            
-            return $stmt->execute();
+            $ok = $stmt->execute();
+            if (!$ok && $stmt->errorInfo()) {
+                error_log("UserAccessRepository::createOrUpdate execute failed: " . json_encode($stmt->errorInfo()));
+            }
+            return $ok;
         } catch (PDOException $e) {
-            error_log("Error al crear/actualizar acceso de usuario: " . $e->getMessage());
+            $info = isset($stmt) && $stmt ? $stmt->errorInfo() : [];
+            error_log("Error al crear/actualizar acceso de usuario: " . $e->getMessage() . " | errorInfo: " . json_encode($info));
             return false;
         }
     }

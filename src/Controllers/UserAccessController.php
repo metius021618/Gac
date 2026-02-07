@@ -47,11 +47,12 @@ class UserAccessController
      */
     public function store(Request $request): void
     {
-        $email = trim($request->input('email', ''));
-        $password = trim($request->input('password', ''));
-        $platformId = (int)$request->input('platform_id', 0);
+        try {
+            $email = strtolower(trim($request->input('email', '')));
+            $password = trim($request->input('password', ''));
+            $platformId = (int)$request->input('platform_id', 0);
 
-        if (empty($email)) {
+            if (empty($email)) {
             json_response(['success' => false, 'message' => 'El correo es obligatorio'], 400);
             return;
         }
@@ -148,6 +149,10 @@ class UserAccessController
             json_response(['success' => true, 'message' => 'Acceso registrado correctamente']);
         } else {
             json_response(['success' => false, 'message' => 'Error al registrar el acceso'], 500);
+        }
+        } catch (\Throwable $e) {
+            error_log('UserAccessController::store exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            json_response(['success' => false, 'message' => 'Error al registrar el acceso. Revisa los datos e intenta de nuevo.'], 500);
         }
     }
 
