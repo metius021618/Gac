@@ -61,16 +61,6 @@ class UserAccessController
             return;
         }
 
-        $domain = strtolower(substr($email, strrpos($email, '@') + 1));
-        $useButtonsDomains = ['gmail.com', 'hotmail.com', 'outlook.com', 'live.com'];
-        if (in_array($domain, $useButtonsDomains, true)) {
-            json_response([
-                'success' => false,
-                'message' => 'Para registrar este dominio debe usar los botones Conectar Gmail o Conectar Outlook.'
-            ], 400);
-            return;
-        }
-
         $hasUser = $password !== '';
         $hasPlatform = $platformId > 0;
 

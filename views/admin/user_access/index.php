@@ -95,9 +95,6 @@ $content = ob_start();
                         autocomplete="email"
                     >
                     <span class="form-error" id="emailError"></span>
-                    <p id="emailDomainWarning" class="form-hint" style="margin-top: 0.5rem; color: var(--warning, #856404); font-size: 0.875rem; display: none;">
-                        Para Gmail, Hotmail u Outlook use los botones <strong>Conectar Gmail</strong> o <strong>Conectar Outlook</strong> de arriba.
-                    </p>
                 </div>
 
                 <!-- Campo Contraseña -->
