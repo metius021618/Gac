@@ -95,8 +95,8 @@ $content = ob_start();
                         autocomplete="email"
                     >
                     <span class="form-error" id="emailError"></span>
-                    <p class="form-hint form-hint-domain-warning" id="emailDomainWarning" style="display: none; margin-top: 0.5rem; color: var(--color-warning, #f59e0b); font-size: 0.875rem;">
-                        Para registrar este dominio debe usar los botones Conectar Gmail o Conectar Outlook de arriba.
+                    <p class="form-hint" style="margin-top: 0.5rem; color: var(--text-muted, #6c757d); font-size: 0.875rem;">
+                        Puedes escribir cualquier correo (Gmail, Outlook, Hotmail, etc.) o usar los botones de arriba para conectar con OAuth.
                     </p>
                 </div>
 

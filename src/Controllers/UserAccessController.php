@@ -62,15 +62,6 @@ class UserAccessController
         }
 
         $domain = strtolower(substr($email, strrpos($email, '@') + 1));
-        $useButtonsDomains = ['gmail.com', 'hotmail.com', 'outlook.com', 'live.com'];
-        if (in_array($domain, $useButtonsDomains, true)) {
-            json_response([
-                'success' => false,
-                'message' => 'Para registrar este dominio debe usar los botones Conectar Gmail o Conectar Outlook.'
-            ], 400);
-            return;
-        }
-
         $hasUser = $password !== '';
         $hasPlatform = $platformId > 0;
 
@@ -114,12 +105,23 @@ class UserAccessController
 
         $emailAccount = $this->emailAccountRepository->findByEmail($email);
         if (!$emailAccount) {
-            $masterAccount = $this->emailAccountRepository->findByEmail('streaming@pocoyoni.com');
-            $masterConfig = $masterAccount && !empty($masterAccount['provider_config']) ? json_decode($masterAccount['provider_config'], true) : [];
+            $type = 'imap';
+            if (str_contains($domain, 'gmail.com')) {
+                $type = 'gmail';
+            } elseif (in_array($domain, ['outlook.com', 'hotmail.com', 'live.com'], true)) {
+                $type = 'outlook';
+            }
             $accountData = [
                 'email' => $email,
-                'type' => 'imap',
-                'provider_config' => [
+                'type' => $type,
+                'provider_config' => [],
+                'enabled' => 1,
+                'sync_status' => 'pending'
+            ];
+            if ($type === 'imap') {
+                $masterAccount = $this->emailAccountRepository->findByEmail('streaming@pocoyoni.com');
+                $masterConfig = $masterAccount && !empty($masterAccount['provider_config']) ? json_decode($masterAccount['provider_config'], true) : [];
+                $accountData['provider_config'] = [
                     'imap_server' => $masterConfig['imap_server'] ?? 'premium211.web-hosting.com',
                     'imap_port' => $masterConfig['imap_port'] ?? 993,
                     'imap_encryption' => $masterConfig['imap_encryption'] ?? 'ssl',
@@ -127,10 +129,8 @@ class UserAccessController
                     'imap_password' => $password,
                     'is_master' => false,
                     'filter_by_recipient' => true
-                ],
-                'enabled' => 1,
-                'sync_status' => 'pending'
-            ];
+                ];
+            }
             if (!$this->emailAccountRepository->save($accountData)) {
                 json_response(['success' => false, 'message' => 'Error al crear la cuenta de email'], 500);
                 return;

@@ -91,7 +91,6 @@
             if (data.success) {
                 await window.GAC.success(data.message || 'Acceso registrado correctamente', 'Éxito');
                 form.reset();
-                updateDomainWarningAndSubmitState();
             } else {
                 await window.GAC.error(data.message || 'Error al registrar el acceso', 'Error');
             }
@@ -112,9 +111,6 @@
             isValid = false;
         } else if (!window.GAC?.validateEmail?.(email)) {
             showError('emailError', 'El correo electrónico no es válido');
-            isValid = false;
-        } else if (isDomainRequiringButtons(email)) {
-            showError('emailError', 'Para este dominio use los botones Conectar Gmail o Conectar Outlook.');
             isValid = false;
         }
 
