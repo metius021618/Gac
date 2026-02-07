@@ -14,12 +14,14 @@ LOG="$ROOT_DIR/logs/cron.log"
 PYTHON="${PYTHON:-/bin/python3}"
 RUN_FOR_SECONDS=240   # 4 minutos (deja margen antes del siguiente cron a los 5 min)
 INTERVAL_SECONDS=30
+# Prioridad baja para no competir con la web (shared hosting)
+NICE="nice -n 19"
 
+# Secuencial (uno tras otro): menos pico de CPU/RAM y la página se lentea menos
 run_readers() {
-  "$PYTHON" "$SCRIPT_DIR/email_reader.py" >> "$LOG" 2>&1 &
-  "$PYTHON" "$SCRIPT_DIR/email_reader_gmail.py" >> "$LOG" 2>&1 &
-  "$PYTHON" "$SCRIPT_DIR/email_reader_outlook.py" >> "$LOG" 2>&1 &
-  wait
+  $NICE "$PYTHON" "$SCRIPT_DIR/email_reader.py" >> "$LOG" 2>&1
+  $NICE "$PYTHON" "$SCRIPT_DIR/email_reader_gmail.py" >> "$LOG" 2>&1
+  $NICE "$PYTHON" "$SCRIPT_DIR/email_reader_outlook.py" >> "$LOG" 2>&1
 }
 
 start=$(date +%s)
