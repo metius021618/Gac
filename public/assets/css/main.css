@@ -406,3 +406,43 @@ body {
         gap: var(--spacing-xs);
     }
 }
+
+/* Páginas legales (Política de privacidad, Condiciones) */
+.legal-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--spacing-xl) var(--spacing-md);
+}
+.legal-content h1 {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-primary);
+}
+.legal-updated {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-xl);
+}
+.legal-content h2 {
+    font-size: var(--font-size-lg);
+    margin-top: var(--spacing-xl);
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-primary);
+}
+.legal-content p,
+.legal-content li {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--spacing-md);
+}
+.legal-content ul {
+    margin-bottom: var(--spacing-md);
+    padding-left: var(--spacing-xl);
+}
+.legal-content a {
+    color: var(--color-primary-light);
+    text-decoration: none;
+}
+.legal-content a:hover {
+    text-decoration: underline;
+}

@@ -32,7 +32,9 @@ class Application
         // Rutas públicas
         $router->get('/', 'CodeController@consult');
         $router->post('/codes/consult', 'CodeController@consult');
-        
+        $router->get('/politica-privacidad', 'LegalController@politicaPrivacidad');
+        $router->get('/condiciones-servicio', 'LegalController@condicionesServicio');
+
         // Rutas API
         $router->post('/api/v1/codes/consult', 'CodeController@apiConsult');
         $router->post('/api/v1/codes/consult-with-sync', 'CodeController@apiConsultWithSync');
