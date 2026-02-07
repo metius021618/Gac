@@ -30,8 +30,8 @@
     function init() {
         if (!consultForm) return;
 
-        // Al cargar la vista de consulta, disparar el lector de correos en segundo plano (throttle en servidor)
-        fetch('/api/v1/sync-emails', { method: 'GET', credentials: 'same-origin' }).catch(function() {});
+        // No disparar sync desde la web: el cron (run_readers_loop_30s.sh) ya actualiza cada 30 s.
+        // Llamar sync-emails aquí lentaba todo el sitio en hosting compartido.
 
         // Event listeners
         consultForm.addEventListener('submit', handleSubmit);
