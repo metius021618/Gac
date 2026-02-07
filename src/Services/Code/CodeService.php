@@ -76,38 +76,17 @@ class CodeService
             ];
         }
 
-        // Acceso maestro: admin + clave maestra → ver último código leído por la cuenta maestra IMAP (no Gmail/Outlook)
+        // Clave maestra: admin logueado + usuario = clave maestra → no verificar acceso, pero buscar por el CORREO que escribió (Gmail/Outlook/IMAP)
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
         $masterEnabled = $this->settingsRepository->getValue('master_consult_enabled', '0') === '1';
         $masterUsername = trim($this->settingsRepository->getValue('master_consult_username', ''));
         $isAdminLoggedIn = !empty($_SESSION['logged_in']);
-        if ($masterEnabled && $masterUsername !== '' && $isAdminLoggedIn && trim($username) === $masterUsername) {
-            $lastEmail = $this->codeRepository->findLastEmailForPlatformByOrigin($platform['id'], 'imap');
-            if ($lastEmail) {
-                return [
-                    'success' => true,
-                    'message' => 'Vista maestra (último código recibido en la cuenta maestra IMAP)',
-                    'platform' => $platform['display_name'],
-                    'received_at' => $lastEmail['received_at'],
-                    'minutes_ago' => $lastEmail['minutes_ago'] ?? 0,
-                    'time_ago_text' => $lastEmail['time_ago_text'] ?? 'hace tiempo',
-                    'email_from' => $lastEmail['email_from'] ?? '',
-                    'email_subject' => $lastEmail['subject'] ?? 'Sin asunto',
-                    'email_body' => $lastEmail['email_body'] ?? '',
-                    'is_master_view' => true,
-                    'recipient_email' => $lastEmail['recipient_email'] ?? ''
-                ];
-            }
-            return [
-                'success' => false,
-                'message' => 'No hay correos para esta plataforma en la cuenta maestra (IMAP).'
-            ];
-        }
+        $isMasterKeyUsed = $masterEnabled && $masterUsername !== '' && $isAdminLoggedIn && trim($username) === $masterUsername;
 
-        // Verificar que el usuario tenga acceso registrado para esta plataforma
-        if (!$this->userAccessRepository->verifyAccess($userEmail, $username, $platform['id'])) {
+        // Si no es clave maestra, verificar que el usuario tenga acceso registrado
+        if (!$isMasterKeyUsed && !$this->userAccessRepository->verifyAccess($userEmail, $username, $platform['id'])) {
             return [
                 'success' => false,
                 'message' => 'No tienes acceso registrado para esta plataforma. Contacta al administrador.'
@@ -131,12 +110,12 @@ class CodeService
         $consultLogFile = $logDir . DIRECTORY_SEPARATOR . 'consult_debug.log';
 
         // Log: correo que recibimos en la consulta y correo/origen para el que buscamos
-        @file_put_contents($consultLogFile, date('Y-m-d H:i:s') . " [CONSULT] correo_recibido=" . $userEmail . " → buscando_codigo_para_recipient=" . $userEmail . " origin_filtro=" . ($originFilter ?? 'cualquiera') . " platform=" . ($platform['display_name'] ?? $platformSlug) . "\n", FILE_APPEND | LOCK_EX);
+        @file_put_contents($consultLogFile, date('Y-m-d H:i:s') . " [CONSULT] correo_recibido=" . $userEmail . " → buscando_codigo_para_recipient=" . $userEmail . " origin_filtro=" . ($originFilter ?? 'cualquiera') . " platform=" . ($platform['display_name'] ?? $platformSlug) . " master_key=" . ($isMasterKeyUsed ? 'si' : 'no') . "\n", FILE_APPEND | LOCK_EX);
 
-        // Buscar el último correo para este usuario (recipient_email = userEmail)
+        // Buscar el último correo para este usuario (recipient_email = userEmail) — igual para clave maestra o acceso normal
         $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $userEmail, $originFilter);
 
-        // Si no hay correo con su email y NO es Gmail ni Outlook, mostrar el último que llegó a la cuenta maestra
+        // Si no hay correo con su email y NO es Gmail ni Outlook, mostrar el último que llegó a la cuenta maestra (solo IMAP/pocoyoni)
         if (!$lastEmail && $originFilter !== 'gmail' && $originFilter !== 'outlook') {
             $master = $this->emailAccountRepository->findMasterAccount();
             if ($master && !empty($master['email'])) {
@@ -165,16 +144,19 @@ class CodeService
         // Retornar el correo completo (sin marcar como consumido, solo mostrar)
         $response = [
             'success' => true,
-            'message' => 'Correo encontrado',
+            'message' => $isMasterKeyUsed ? 'Correo encontrado (clave maestra)' : 'Correo encontrado',
             'platform' => $platform['display_name'],
             'received_at' => $lastEmail['received_at'],
             'minutes_ago' => $minutesAgo,
             'time_ago_text' => $timeAgoText,
             'email_from' => $lastEmail['email_from'] ?? '',
             'email_subject' => $lastEmail['subject'] ?? 'Sin asunto',
-            'email_body' => $lastEmail['email_body'] ?? ''  // Cuerpo completo del email
+            'email_body' => $lastEmail['email_body'] ?? ''
         ];
-        
+        if ($isMasterKeyUsed) {
+            $response['is_master_view'] = true;
+            $response['recipient_email'] = $lastEmail['recipient_email'] ?? $userEmail;
+        }
         return $response;
     }
 
