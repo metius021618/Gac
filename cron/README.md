@@ -110,30 +110,59 @@ El botón **Consultar código** solo consulta la BD (respuesta inmediata). Para 
 
 ### En cPanel (tu caso)
 
-En cPanel el cron solo permite **cada 1 minuto** como mínimo (no cada 30 segundos). Configura **un solo Cron Job** que ejecute los 3 lectores cada minuto:
+#### Opción A: Cron cada 1 minuto (si tu cPanel lo permite)
+
+Configura **un solo Cron Job** que ejecute los 3 lectores cada minuto:
 
 1. En cPanel ve a **Cron Jobs**.
 2. **Nueva tarea cron:**
    - **Frecuencia:** cada minuto → Minuto: `*`, Hora: `*`, Día: `*`, Mes: `*`, Día semana: `*`
-   - **Comando:** (ajusta la ruta a la de tu cuenta; suele ser `/home/usuario/...`):
+   - **Comando:** (ajusta la ruta a la de tu cuenta):
 
    ```bash
    /home/TU_USUARIO/public_html/gac/cron/run_all_readers.sh >> /home/TU_USUARIO/public_html/gac/logs/cron.log 2>&1
    ```
 
-   Si tu proyecto está en otra ruta (por ejemplo `app.pocoyoni.com` o `SISTEMA_GAC`), usa esa carpeta:
+   Si tu proyecto está en otra ruta (ej. `app.pocoyoni.com`):
 
    ```bash
    cd /home/TU_USUARIO/app.pocoyoni.com && bash cron/run_all_readers.sh >> logs/cron.log 2>&1
    ```
 
-3. La primera vez, en **Terminal** de cPanel (o por SSH) da permisos de ejecución al script:
+3. Da permisos de ejecución al script:
 
    ```bash
    chmod +x /home/TU_USUARIO/public_html/gac/cron/run_all_readers.sh
    ```
 
-Con eso, cada minuto se ejecutan los 3 lectores en paralelo, la BD se actualiza y **Consultar código** sigue siendo instantáneo con datos de como máximo 1 minuto.
+Con eso, cada minuto se ejecutan los 3 lectores en paralelo y **Consultar código** tiene datos de como máximo 1 minuto.
+
+#### Opción B: Cron cada 5 minutos con bucle cada 30 segundos (recomendado si solo tienes “cada 5 min”)
+
+Si en cPanel solo puedes elegir **cada 5 minutos** (p. ej. “Once Per Five Minutes”), usa el script que hace **bucle cada 30 segundos durante 4 minutos** y luego termina. Así, en cada ventana de 5 min obtienes varias sincronizaciones (cada 30 s) en lugar de una sola.
+
+1. En cPanel → **Cron Jobs**.
+2. **Nueva tarea cron:**
+   - **Frecuencia:** cada 5 minutos → Minuto: `*/5`, Hora: `*`, Día: `*`, Mes: `*`, Día semana: `*`
+   - **Comando:** (ajusta la ruta):
+
+   ```bash
+   /home/TU_USUARIO/public_html/gac/cron/run_readers_loop_30s.sh >> /home/TU_USUARIO/public_html/gac/logs/cron.log 2>&1
+   ```
+
+   O con `cd` si el proyecto está en otra carpeta:
+
+   ```bash
+   cd /home/TU_USUARIO/app.pocoyoni.com && bash cron/run_readers_loop_30s.sh >> logs/cron.log 2>&1
+   ```
+
+3. Da permisos de ejecución:
+
+   ```bash
+   chmod +x /home/TU_USUARIO/public_html/gac/cron/run_readers_loop_30s.sh
+   ```
+
+Comportamiento: cada 5 minutos el cron lanza el script; el script ejecuta los 3 lectores, espera 30 s, vuelve a ejecutarlos, y así hasta completar ~4 minutos y salir. No se solapa con la siguiente ejecución del cron. **Consultar código** tendrá datos actualizados cada 30 s durante esa ventana (y como máximo ~1 minuto de retraso hasta el siguiente ciclo de 5 min).
 
 ---
 
