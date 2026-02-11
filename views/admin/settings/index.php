@@ -47,14 +47,12 @@ $content = ob_start();
                         La cuenta Gmail desde la que se leen todos los correos reenviados. Solo puede haber una. El destinatario real de cada correo se obtiene de los headers (To, X-Original-To).
                     </p>
                 </div>
-                <div class="form-card" style="padding: 1.25rem;">
-                    <?php if (!empty($gmail_matrix_account)): ?>
-                        <p style="margin-bottom: 1rem;">
-                            <strong>Cuenta configurada:</strong>
-                            <code style="background: #f0f0f0; padding: 0.2rem 0.5rem; border-radius: 4px;"><?= htmlspecialchars($gmail_matrix_account['email']) ?></code>
-                        </p>
+                <div class="form-card gmail-matrix-card">
+                    <?php if (!empty($gmail_matrix_account) && !empty($gmail_matrix_account['email'])): ?>
+                        <p class="gmail-matrix-label">Cuenta configurada:</p>
+                        <p class="gmail-matrix-email"><?= htmlspecialchars($gmail_matrix_account['email']) ?></p>
                     <?php else: ?>
-                        <p style="margin-bottom: 1rem; color: #666;">Aún no hay ninguna cuenta Gmail configurada.</p>
+                        <p class="gmail-matrix-empty">Aún no hay ninguna cuenta Gmail configurada.</p>
                     <?php endif; ?>
                     <a href="/gmail/connect?from=settings" class="btn btn-primary" style="background-color: #ea4335;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 6px;">

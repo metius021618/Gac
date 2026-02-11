@@ -222,6 +222,40 @@
 }
 
 /* ============================================
+   CUENTA GMAIL MATRIZ (bloque visible)
+   ============================================ */
+.gmail-matrix-card {
+    padding: 1.25rem 1.5rem;
+}
+
+.gmail-matrix-label {
+    margin: 0 0 0.35rem 0;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.gmail-matrix-email {
+    margin: 0 0 1rem 0;
+    padding: 0.5rem 0.75rem;
+    background: #e5e7eb;
+    color: #1f2937;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: ui-monospace, monospace;
+    font-weight: 500;
+    border: 1px solid #d1d5db;
+    display: inline-block;
+    min-height: 1.5em;
+}
+
+.gmail-matrix-empty {
+    margin: 0 0 1rem 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-base);
+}
+
+/* ============================================
    RESPONSIVE
    ============================================ */
 @media (max-width: 768px) {
