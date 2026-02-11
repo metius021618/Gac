@@ -248,50 +248,40 @@
     }
 
     /**
-     * Búsqueda por GET: al escribir (debounce) o Enter recarga la página con ?search=... así siempre filtra en el servidor.
+     * Búsqueda dinámica: mismo patrón que correos (email_accounts) con SearchAJAX.
      */
     function initSearch() {
-        var searchForm = document.getElementById('searchForm');
         if (!searchInput || !perPageSelect) return;
-
-        var debounceTimer = null;
-        var baseUrl = (searchForm && searchForm.getAttribute('action')) || window.location.pathname || '/admin/email-subjects';
-        baseUrl = baseUrl.split('?')[0];
-
-        function goToSearch(page) {
-            var q = searchInput.value.trim();
-            var perPage = perPageSelect.value;
-            if (perPage === 'all') perPage = '0';
-            var params = 'per_page=' + encodeURIComponent(perPage) + '&page=' + (page || 1);
-            if (q) params = 'search=' + encodeURIComponent(q) + '&' + params;
-            window.location.href = baseUrl + '?' + params;
-        }
-
-        runSearch = function(page) {
-            goToSearch(page || 1);
-        };
-
-        searchInput.addEventListener('input', function() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(function() { goToSearch(1); }, 450);
-        });
-
-        if (clearSearchBtn) {
-            clearSearchBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                searchInput.value = '';
-                clearSearchBtn.style.display = 'none';
-                var perPage = perPageSelect.value;
-                if (perPage === 'all') perPage = '0';
-                window.location.href = baseUrl + '?' + 'per_page=' + encodeURIComponent(perPage);
+        if (window.SearchAJAX) {
+            window.SearchAJAX.init({
+                searchInput: searchInput,
+                perPageSelect: perPageSelect,
+                clearSearchBtn: clearSearchBtn,
+                endpoint: window.location.pathname,
+                minSearchLength: 0,
+                renderCallback: function(html) {
+                    window.SearchAJAX.updateTableContent(html);
+                    emailSubjectsTable = document.getElementById('emailSubjectsTable');
+                    if (emailSubjectsTable) initTable();
+                    initPagination();
+                },
+                onSearchComplete: function() {
+                    if (clearSearchBtn) clearSearchBtn.style.display = searchInput.value.trim() ? 'flex' : 'none';
+                }
             });
+            runSearch = function(page) {
+                window.SearchAJAX.performSearch(window.location.pathname, {
+                    search: searchInput.value.trim(),
+                    page: page || 1,
+                    per_page: perPageSelect.value
+                }, function(html) {
+                    window.SearchAJAX.updateTableContent(html);
+                    emailSubjectsTable = document.getElementById('emailSubjectsTable');
+                    if (emailSubjectsTable) initTable();
+                    initPagination();
+                });
+            };
         }
-
-        perPageSelect.addEventListener('change', function() {
-            var formPerPage = document.getElementById('searchFormPerPage');
-            if (formPerPage) formPerPage.value = this.value === 'all' ? '0' : this.value;
-            goToSearch(1);
-        });
     }
 
     /**
@@ -374,16 +364,10 @@
     }
 
     /**
-     * Manejar clic en paginación: misma lógica que la búsqueda (fetch y reemplazar tabla).
+     * Paginación: la maneja SearchAJAX (listener en document). Solo re-asignamos por si se reemplazó el DOM.
      */
-    function handlePaginationClick(e) {
-        const btn = e.target.closest('.pagination-btn[data-page], .pagination-page[data-page]');
-        if (!btn || btn.disabled) return;
-        e.preventDefault();
-        e.stopPropagation();
-        const page = parseInt(btn.dataset.page, 10);
-        if (!page || isNaN(page) || page < 1) return;
-        runSearch(page);
+    function handlePaginationClick() {
+        // SearchAJAX.init ya registró un listener en document para paginación; no duplicar.
     }
 
     /**
