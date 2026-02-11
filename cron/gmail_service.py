@@ -1,7 +1,8 @@
 """
 GAC - Servicio Gmail API para Python
 Lee correos de cuentas Gmail usando OAuth (refresh_token guardado en email_accounts).
-El destinatario (to_primary) es siempre la cuenta Gmail que estamos leyendo.
+Soporta correo matriz: cuando muchos correos se reenvían a una sola cuenta, el destinatario
+original se extrae de los headers (To, X-Original-To) para guardar recipient_email correcto.
 """
 
 import base64
@@ -132,7 +133,8 @@ class GmailService:
         """
         Leer emails de una cuenta Gmail.
         account: dict con id, email, oauth_refresh_token (y opcional oauth_token).
-        El destinatario (to_primary) es siempre account['email'] (el buzón que leemos).
+        Si la cuenta es correo matriz (recibe reenvíos), el destinatario original se obtiene
+        de los headers To / X-Original-To; si no, se usa account['email'].
         Devuelve lista de dicts con el mismo formato que ImapService para reutilizar filtro y guardado.
         """
         refresh_token = (account.get('oauth_refresh_token') or '').strip()
@@ -194,19 +196,26 @@ class GmailService:
 
     def _parse_message(self, msg, account_email):
         """Convertir mensaje Gmail API al formato usado por ImapService (subject, from, to_primary, date, body_*).
-        Usamos internalDate (fecha real de recepción en Gmail) para que Consulta tu código muestre el correo más reciente."""
+        Destinatario (to_primary): en correo matriz con reenvíos se usa el destinatario original
+        desde To o X-Original-To; si no hay, se usa account_email. internalDate = fecha real de recepción."""
         payload = msg.get('payload') or {}
         headers = payload.get('headers') or []
 
         subject = _get_header(headers, 'Subject')
         from_raw = _get_header(headers, 'From')
         to_raw = _get_header(headers, 'To')
+        x_original_to = _get_header(headers, 'X-Original-To')
         date_header_str = _get_header(headers, 'Date')
 
         from_email = _extract_email(from_raw)
         from_name = _extract_name(from_raw)
         to_list = [e.strip().lower() for e in re.findall(r'[\w.+-]+@[\w.-]+\.\w+', to_raw or '') if e]
-        to_primary = account_email
+        # Correo matriz: destinatario original desde X-Original-To (reenvíos) o To; si no, buzón que leemos
+        if x_original_to:
+            to_primary = _extract_email(x_original_to) or (to_list[0] if to_list else account_email)
+        else:
+            to_primary = (to_list[0] if to_list else account_email)
+        to_primary = (to_primary or account_email).strip().lower()
 
         body_text, body_html = _get_body_from_payload(payload)
         body = body_text or body_html or ''

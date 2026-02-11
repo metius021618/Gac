@@ -142,9 +142,57 @@ class EmailAccountRepository:
             return False
 
 
+class EmailSubjectRepository:
+    """Repositorio de asuntos de email (tabla email_subjects). Fuente única para filtrar correos en Gmail, Outlook e IMAP."""
+
+    @staticmethod
+    def get_all_subjects_by_platform():
+        """
+        Obtener todos los asuntos activos por plataforma (solo plataformas habilitadas).
+        Devuelve dict: { 'netflix': ['asunto1', 'asunto2'], 'disney': [...], ... }
+        Usado por EmailFilterService para filtrar correos SOLO por los asuntos definidos en la página de asuntos.
+        """
+        try:
+            db = Database.get_connection()
+            if USE_PYMYSQL:
+                cursor = db.cursor(DictCursor)
+            else:
+                cursor = db.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT p.name AS platform_name, es.subject_line
+                FROM email_subjects es
+                INNER JOIN platforms p ON es.platform_id = p.id
+                WHERE es.active = 1 AND p.enabled = 1
+                ORDER BY p.name, es.subject_line
+            """)
+            rows = cursor.fetchall()
+            cursor.close()
+            result = {}
+            for row in rows:
+                name = (row.get('platform_name') or '').strip().lower()
+                if not name:
+                    continue
+                line = (row.get('subject_line') or '').strip()
+                if not line:
+                    continue
+                if name not in result:
+                    result[name] = []
+                result[name].append(line)
+            return result
+        except Error as e:
+            logger.error(f"Error al obtener asuntos desde email_subjects: {e}")
+            return {}
+
+    @staticmethod
+    def get_subjects_for_platform(platform_name):
+        """Obtener lista de asuntos para una plataforma por nombre (compatibilidad)."""
+        all_subjects = EmailSubjectRepository.get_all_subjects_by_platform()
+        return all_subjects.get((platform_name or '').strip().lower(), [])
+
+
 class PlatformRepository:
     """Repositorio de plataformas"""
-    
+
     @staticmethod
     def find_by_name(name):
         """Obtener plataforma por nombre"""
@@ -205,41 +253,12 @@ class SettingsRepository:
         except Error as e:
             logger.error(f"Error al obtener setting '{name}': {e}")
             return default
-    
+
     @staticmethod
     def get_email_subjects_for_platform(platform):
-        """Obtener asuntos de email para una plataforma"""
-        try:
-            db = Database.get_connection()
-            if USE_PYMYSQL:
-                cursor = db.cursor(DictCursor)
-            else:
-                cursor = db.cursor(dictionary=True)
-            
-            platform_upper = platform.upper()
-            pattern = f"{platform_upper}_%"
-            
-            cursor.execute("""
-                SELECT name, value
-                FROM settings
-                WHERE name LIKE %s
-                ORDER BY name ASC
-            """, (pattern,))
-            
-            results = cursor.fetchall()
-            cursor.close()
-            
-            # Filtrar solo los que son asuntos (_1, _2, _3, _4)
-            subjects = []
-            for result in results:
-                if result['name'].endswith(('_1', '_2', '_3', '_4')):
-                    subjects.append(result['value'])
-            
-            return subjects
-        except Error as e:
-            logger.error(f"Error al obtener asuntos para plataforma '{platform}': {e}")
-            return []
-    
+        """Obtener asuntos para una plataforma desde tabla email_subjects (misma fuente que la página de asuntos)."""
+        return EmailSubjectRepository.get_subjects_for_platform(platform)
+
     @staticmethod
     def is_platform_enabled(platform):
         """Verificar si plataforma está habilitada"""
