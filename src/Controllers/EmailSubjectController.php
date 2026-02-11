@@ -31,9 +31,13 @@ class EmailSubjectController
         $perPageRaw = $request->get('per_page', '15');
         $perPage = $perPageRaw === 'all' ? 0 : (int)$perPageRaw;
         $search = $request->get('search', '');
+        if ($search === '' && !empty($_SERVER['QUERY_STRING'])) {
+            parse_str($_SERVER['QUERY_STRING'], $q);
+            $search = isset($q['search']) ? (string)$q['search'] : '';
+        }
         if ($search === '' && !empty($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '?') !== false) {
             parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY) ?: '', $q);
-            $search = isset($q['search']) ? (string)$q['search'] : '';
+            $search = isset($q['search']) ? (string)$q['search'] : $search;
         }
 
         $validPerPage = [10, 15, 30, 60, 100, 0]; // 0 para "Todos"

@@ -32,8 +32,9 @@ class EmailSubjectRepository
 
             $searchTrim = trim($search);
             if ($searchTrim !== '') {
-                $whereClause .= " AND (LOWER(es.subject_line) LIKE :q OR LOWER(p.display_name) LIKE :q OR LOWER(p.name) LIKE :q)";
-                $params[':q'] = '%' . mb_strtolower($searchTrim) . '%';
+                // Búsqueda por asunto o nombre de plataforma (LIKE; collation de la BD suele ser case-insensitive)
+                $whereClause .= " AND (es.subject_line LIKE :q OR COALESCE(p.display_name,'') LIKE :q OR COALESCE(p.name,'') LIKE :q)";
+                $params[':q'] = '%' . $searchTrim . '%';
             }
 
             // Contar total
