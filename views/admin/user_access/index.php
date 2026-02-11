@@ -52,16 +52,10 @@ $content = ob_start();
     <?php endif; ?>
 
     <div class="admin-content">
-        <!-- Conectar Gmail y Outlook -->
+        <!-- Conectar Outlook (Gmail usa el correo matriz ya administrado) -->
         <div class="form-card" style="margin-bottom: 1.5rem;">
-            <p class="form-label" style="margin-bottom: 0.75rem;">Conectar cuenta Gmail o Outlook para que el sistema pueda leer correos de esa cuenta</p>
+            <p class="form-label" style="margin-bottom: 0.75rem;">Conectar cuenta Outlook para que el sistema pueda leer correos de esa cuenta. Gmail usa el correo matriz ya configurado.</p>
             <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
-                <a href="/gmail/connect" class="btn btn-primary" id="gmailConnectBtn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.636H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.313l8.073-5.82C21.69 2.28 24 3.434 24 5.457z"/>
-                    </svg>
-                    Conectar Gmail
-                </a>
                 <a href="/outlook/connect" class="btn btn-primary" id="outlookConnectBtn" style="background-color: #0078d4;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                         <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
