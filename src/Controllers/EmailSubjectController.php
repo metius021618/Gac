@@ -28,7 +28,8 @@ class EmailSubjectController
     public function index(Request $request): void
     {
         $page = (int)$request->get('page', 1);
-        $perPage = (int)$request->get('per_page', 15);
+        $perPageRaw = $request->get('per_page', '15');
+        $perPage = $perPageRaw === 'all' ? 0 : (int)$perPageRaw;
         $search = $request->get('search', '');
 
         $validPerPage = [10, 15, 30, 60, 100, 0]; // 0 para "Todos"
@@ -36,8 +37,14 @@ class EmailSubjectController
             $perPage = 15; // Default
         }
 
+        $logFile = base_path('logs' . DIRECTORY_SEPARATOR . 'email_subjects_search.log');
+        $logLine = date('Y-m-d H:i:s') . ' [email-subjects] GET=' . json_encode($_GET) . ' isAjax=' . ($request->isAjax() ? '1' : '0') . ' search="' . $search . '" page=' . $page . ' per_page=' . $perPage . "\n";
+        @file_put_contents($logFile, $logLine, FILE_APPEND | LOCK_EX);
+
         $paginationData = $this->emailSubjectRepository->searchAndPaginate($search, $page, $perPage);
-        
+
+        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [email-subjects] total=' . $paginationData['total'] . ' rows=' . count($paginationData['data']) . "\n", FILE_APPEND | LOCK_EX);
+
         // Si es petición AJAX, devolver solo la tabla y paginación
         if ($request->isAjax()) {
             ob_start();

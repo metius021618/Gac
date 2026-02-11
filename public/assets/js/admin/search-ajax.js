@@ -23,7 +23,10 @@
                     }
                 });
 
-                const response = await fetch(url.toString(), {
+                const urlStr = url.toString();
+                console.log('[SearchAJAX] GET', urlStr);
+
+                const response = await fetch(urlStr, {
                     method: 'GET',
                     cache: 'no-store',
                     headers: {
@@ -32,26 +35,30 @@
                     }
                 });
 
+                console.log('[SearchAJAX] status=', response.status, 'content-type=', response.headers.get('content-type'));
+
                 if (!response.ok) {
-                    throw new Error('Error en la respuesta del servidor');
+                    const text = await response.text();
+                    console.error('[SearchAJAX] error response:', text.substring(0, 500));
+                    throw new Error('Error en la respuesta del servidor: ' + response.status);
                 }
 
                 const html = await response.text();
-                
+                console.log('[SearchAJAX] html length=', html.length, 'has .admin-content=', html.indexOf('admin-content') !== -1);
+
                 // Actualizar URL sin recargar
-                window.history.pushState({}, '', url.toString());
-                
+                window.history.pushState({}, '', urlStr);
+
                 // Renderizar resultados
                 if (renderCallback) {
                     renderCallback(html);
                 } else {
-                    // Por defecto, reemplazar el contenido de la tabla
                     this.updateTableContent(html);
                 }
 
                 return true;
             } catch (error) {
-                console.error('Error en búsqueda AJAX:', error);
+                console.error('[SearchAJAX] Error:', error);
                 return false;
             }
         },
@@ -67,6 +74,7 @@
             const newPagination = adminContent.querySelector('.pagination-container');
             const currentTable = document.querySelector('.admin-content .table-container') || document.querySelector('.table-container');
             const currentPagination = document.querySelector('.admin-content .pagination-container') || document.querySelector('.pagination-container');
+            console.log('[SearchAJAX] updateTableContent: newTable=', !!newTable, 'currentTable=', !!currentTable, 'newPagination=', !!newPagination, 'currentPagination=', !!currentPagination);
             if (newTable && currentTable) currentTable.innerHTML = newTable.innerHTML;
             if (newPagination && currentPagination) currentPagination.innerHTML = newPagination.innerHTML;
             if (this.reinitializeTableEvents) this.reinitializeTableEvents();
@@ -118,16 +126,18 @@
                     searchTimeout = setTimeout(() => {
                         if (!isLoading) {
                             if (searchValue.length > 0 && searchValue.length < minLen) {
+                                console.log('[SearchAJAX] skip: search length', searchValue.length, '< minLen', minLen);
                                 return;
                             }
-                            
+
+                            console.log('[SearchAJAX] firing search:', { search: searchValue, endpoint });
                             isLoading = true;
                             const params = {
                                 search: searchValue,
                                 page: 1,
                                 per_page: perPageSelect?.value || 15
                             };
-                            
+
                             window.SearchAJAX.performSearch(endpoint, params, renderCallback)
                                 .then(() => {
                                     if (onSearchComplete) onSearchComplete();
