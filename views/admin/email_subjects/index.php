@@ -20,7 +20,9 @@ $content = ob_start();
     <div class="admin-content">
         <div class="table-controls">
             <div class="table-controls-left">
-                <div class="search-input-wrapper">
+                <?php $searchFormAction = parse_url($_SERVER['REQUEST_URI'] ?? '/admin/email-subjects', PHP_URL_PATH) ?: '/admin/email-subjects'; ?>
+                <form method="get" action="<?= htmlspecialchars($searchFormAction) ?>" id="searchForm" class="search-input-wrapper" style="display: flex; align-items: center; gap: 0.25rem;">
+                    <input type="hidden" name="per_page" id="searchFormPerPage" value="<?= (int)($per_page ?? 15) ?>">
                     <span class="search-icon">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="11" cy="11" r="8"></circle>
@@ -30,18 +32,19 @@ $content = ob_start();
                     <input 
                         type="text" 
                         id="searchInput" 
+                        name="search" 
                         class="search-input" 
                         placeholder="Buscar por plataforma o asunto..." 
                         value="<?= htmlspecialchars($search_query ?? '') ?>"
                         autocomplete="off"
                     >
-                    <button type="button" id="clearSearch" class="clear-search-btn" style="display: <?= !empty($search_query) ? 'flex' : 'none' ?>;">
+                    <button type="button" id="clearSearch" class="clear-search-btn" title="Limpiar" style="display: <?= !empty($search_query) ? 'flex' : 'none' ?>;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
                         </svg>
                     </button>
-                </div>
+                </form>
             </div>
             
             <div class="table-controls-right">

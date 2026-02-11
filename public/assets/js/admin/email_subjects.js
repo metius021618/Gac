@@ -248,72 +248,49 @@
     }
 
     /**
-     * Búsqueda simple: al escribir o Enter, pide al servidor la tabla filtrada y la reemplaza.
+     * Búsqueda por GET: al escribir (debounce) o Enter recarga la página con ?search=... así siempre filtra en el servidor.
      */
     function initSearch() {
+        var searchForm = document.getElementById('searchForm');
         if (!searchInput || !perPageSelect) return;
 
         var debounceTimer = null;
+        var baseUrl = (searchForm && searchForm.getAttribute('action')) || window.location.pathname || '/admin/email-subjects';
+        baseUrl = baseUrl.split('?')[0];
+
+        function goToSearch(page) {
+            var q = searchInput.value.trim();
+            var perPage = perPageSelect.value;
+            if (perPage === 'all') perPage = '0';
+            var params = 'per_page=' + encodeURIComponent(perPage) + '&page=' + (page || 1);
+            if (q) params = 'search=' + encodeURIComponent(q) + '&' + params;
+            window.location.href = baseUrl + '?' + params;
+        }
 
         runSearch = function(page) {
-            var url = new URL(window.location.href);
-            url.searchParams.set('search', searchInput.value.trim());
-            url.searchParams.set('page', page || 1);
-            var perPage = perPageSelect.value;
-            url.searchParams.set('per_page', perPage === 'all' ? 0 : perPage);
-
-            fetch(url.toString(), {
-                method: 'GET',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                cache: 'no-store'
-            })
-                .then(function(r) { return r.text(); })
-                .then(function(html) {
-                    var wrap = document.createElement('div');
-                    wrap.innerHTML = html;
-                    var content = wrap.querySelector('.admin-content');
-                    if (!content) return;
-                    var newTable = content.querySelector('.table-container');
-                    var newPagination = content.querySelector('.pagination-container');
-                    var curTable = document.querySelector('.admin-content .table-container');
-                    var curPagination = document.querySelector('.admin-content .pagination-container');
-                    if (newTable && curTable) curTable.innerHTML = newTable.innerHTML;
-                    if (newPagination && curPagination) {
-                        curPagination.innerHTML = newPagination.innerHTML;
-                    } else if (curPagination && !newPagination) {
-                        curPagination.innerHTML = '';
-                    }
-                    emailSubjectsTable = document.getElementById('emailSubjectsTable');
-                    if (emailSubjectsTable) initTable();
-                    initPagination();
-                })
-                .catch(function(err) { console.error('Búsqueda asuntos:', err); });
-
-            if (clearSearchBtn) clearSearchBtn.style.display = searchInput.value.trim() ? 'flex' : 'none';
-        }
+            goToSearch(page || 1);
+        };
 
         searchInput.addEventListener('input', function() {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(function() { runSearch(1); }, 300);
-        });
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                clearTimeout(debounceTimer);
-                runSearch(1);
-            }
+            debounceTimer = setTimeout(function() { goToSearch(1); }, 450);
         });
 
         if (clearSearchBtn) {
-            clearSearchBtn.addEventListener('click', function() {
+            clearSearchBtn.addEventListener('click', function(e) {
+                e.preventDefault();
                 searchInput.value = '';
                 clearSearchBtn.style.display = 'none';
-                runSearch(1);
+                var perPage = perPageSelect.value;
+                if (perPage === 'all') perPage = '0';
+                window.location.href = baseUrl + '?' + 'per_page=' + encodeURIComponent(perPage);
             });
         }
 
         perPageSelect.addEventListener('change', function() {
-            runSearch(1);
+            var formPerPage = document.getElementById('searchFormPerPage');
+            if (formPerPage) formPerPage.value = this.value === 'all' ? '0' : this.value;
+            goToSearch(1);
         });
     }
 
