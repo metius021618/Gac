@@ -17,8 +17,54 @@ $content = ob_start();
         </h1>
     </div>
 
+    <?php if (!empty($_SESSION['gmail_success'])): ?>
+        <div class="alert alert-success" role="alert">
+            <?= htmlspecialchars($_SESSION['gmail_success']) ?>
+            <?php unset($_SESSION['gmail_success']); ?>
+        </div>
+    <?php endif; ?>
+    <?php if (!empty($_SESSION['gmail_error'])): ?>
+        <div class="alert alert-danger" role="alert">
+            <?= htmlspecialchars($_SESSION['gmail_error']) ?>
+            <?php unset($_SESSION['gmail_error']); ?>
+        </div>
+    <?php endif; ?>
+
     <div class="admin-content">
         <div class="settings-container">
+
+            <!-- Cuenta Gmail matriz (solo una) -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <h2 class="settings-section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        Configurar cuenta Google (Gmail matriz)
+                    </h2>
+                    <p class="settings-section-description">
+                        La cuenta Gmail desde la que se leen todos los correos reenviados. Solo puede haber una. El destinatario real de cada correo se obtiene de los headers (To, X-Original-To).
+                    </p>
+                </div>
+                <div class="form-card" style="padding: 1.25rem;">
+                    <?php if (!empty($gmail_matrix_account)): ?>
+                        <p style="margin-bottom: 1rem;">
+                            <strong>Cuenta configurada:</strong>
+                            <code style="background: #f0f0f0; padding: 0.2rem 0.5rem; border-radius: 4px;"><?= htmlspecialchars($gmail_matrix_account['email']) ?></code>
+                        </p>
+                    <?php else: ?>
+                        <p style="margin-bottom: 1rem; color: #666;">Aún no hay ninguna cuenta Gmail configurada.</p>
+                    <?php endif; ?>
+                    <a href="/gmail/connect?from=settings" class="btn btn-primary" style="background-color: #ea4335;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 6px;">
+                            <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.636H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.313l8.073-5.82C21.69 2.28 24 3.434 24 5.457z"/>
+                        </svg>
+                        <?= !empty($gmail_matrix_account) ? 'Cambiar cuenta Gmail matriz' : 'Configurar cuenta Gmail matriz' ?>
+                    </a>
+                </div>
+            </div>
+
             <!-- Sección de Sesión -->
             <div class="settings-section">
                 <div class="settings-section-header">

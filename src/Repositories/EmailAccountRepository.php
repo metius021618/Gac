@@ -85,6 +85,36 @@ class EmailAccountRepository
     }
 
     /**
+     * Obtener la cuenta Gmail matriz (solo hay una en el sistema).
+     *
+     * @return array|null Primera cuenta con type=gmail y enabled=1, o null
+     */
+    public function getGmailMatrixAccount(): ?array
+    {
+        $accounts = $this->findByType('gmail');
+        return $accounts[0] ?? null;
+    }
+
+    /**
+     * Eliminar todas las cuentas Gmail excepto la indicada (para dejar una sola cuenta matriz).
+     *
+     * @param int $keepId ID de la cuenta a conservar
+     * @return int Número de filas eliminadas
+     */
+    public function deleteOtherGmailAccountsExcept(int $keepId): int
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("DELETE FROM email_accounts WHERE type = 'gmail' AND id != :id");
+            $stmt->execute(['id' => $keepId]);
+            return $stmt->rowCount();
+        } catch (PDOException $e) {
+            error_log("Error al eliminar otras cuentas Gmail: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * Obtener una cuenta de email por ID
      * 
      * @param int $id

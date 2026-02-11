@@ -35,7 +35,7 @@ class GmailController
     {
         if (!defined('GMAIL_CLIENT_ID') || !GMAIL_CLIENT_ID || !defined('GMAIL_CLIENT_SECRET') || !GMAIL_CLIENT_SECRET) {
             $_SESSION['gmail_error'] = 'Gmail API no está configurada. Añade GMAIL_CLIENT_ID y GMAIL_CLIENT_SECRET en .env';
-            redirect('/admin/email-accounts?filter=gmail');
+            redirect($request->get('from') === 'settings' ? '/admin/settings' : '/admin/email-accounts?filter=gmail');
             return;
         }
 
@@ -51,6 +51,9 @@ class GmailController
         $client->addScope(Gmail::GMAIL_READONLY);
         $client->setAccessType('offline');
         $client->setPrompt('consent');
+        if ($request->get('from') === 'settings') {
+            $client->setState('from=settings');
+        }
 
         $authUrl = $client->createAuthUrl();
         header('Location: ' . filter_var($authUrl, FILTER_SANITIZE_URL));
@@ -64,24 +67,27 @@ class GmailController
     {
         $code = $_GET['code'] ?? null;
         $error = $_GET['error'] ?? null;
+        $state = $_GET['state'] ?? '';
+        $fromSettings = ($state === 'from=settings');
+        $redirectAfter = $fromSettings ? '/admin/settings' : '/admin/email-accounts?filter=gmail';
 
         if ($error) {
             $_SESSION['gmail_error'] = $error === 'access_denied'
                 ? 'Has cancelado la autorización de Gmail.'
                 : 'Error de Google: ' . htmlspecialchars($error);
-            redirect('/admin/email-accounts?filter=gmail');
+            redirect($redirectAfter);
             return;
         }
 
         if (empty($code)) {
             $_SESSION['gmail_error'] = 'No se recibió el código de autorización.';
-            redirect('/admin/email-accounts?filter=gmail');
+            redirect($redirectAfter);
             return;
         }
 
         if (!defined('GMAIL_CLIENT_ID') || !GMAIL_CLIENT_ID || !defined('GMAIL_CLIENT_SECRET') || !GMAIL_CLIENT_SECRET) {
             $_SESSION['gmail_error'] = 'Gmail API no está configurada.';
-            redirect('/admin/email-accounts?filter=gmail');
+            redirect($redirectAfter);
             return;
         }
 
@@ -96,13 +102,13 @@ class GmailController
             $token = $client->fetchAccessTokenWithAuthCode($code);
         } catch (\Exception $e) {
             $_SESSION['gmail_error'] = 'Error al obtener tokens: ' . $e->getMessage();
-            redirect('/admin/email-accounts?filter=gmail');
+            redirect($redirectAfter);
             return;
         }
 
         if (isset($token['error'])) {
             $_SESSION['gmail_error'] = 'Error de Google: ' . ($token['error_description'] ?? $token['error']);
-            redirect('/admin/email-accounts?filter=gmail');
+            redirect($redirectAfter);
             return;
         }
 
@@ -112,7 +118,7 @@ class GmailController
 
         if (empty($refreshToken)) {
             $_SESSION['gmail_error'] = 'No se recibió refresh token. Asegúrate de usar access_type=offline y prompt=consent.';
-            redirect('/admin/email-accounts?filter=gmail');
+            redirect($redirectAfter);
             return;
         }
 
@@ -122,21 +128,25 @@ class GmailController
             $email = $profile->getEmailAddress();
         } catch (\Exception $e) {
             $_SESSION['gmail_error'] = 'Error al obtener perfil de Gmail: ' . $e->getMessage();
-            redirect('/admin/email-accounts?filter=gmail');
+            redirect($redirectAfter);
             return;
         }
 
         if (empty($email)) {
             $_SESSION['gmail_error'] = 'No se pudo obtener el correo de la cuenta Gmail.';
-            redirect('/admin/email-accounts?filter=gmail');
+            redirect($redirectAfter);
             return;
         }
 
         $id = $this->emailAccountRepository->createOrUpdateGmailAccount($email, $accessToken, $refreshToken);
         if ($id === false) {
             $_SESSION['gmail_error'] = 'Error al guardar la cuenta en la base de datos.';
-            redirect('/admin/email-accounts?filter=gmail');
+            redirect($redirectAfter);
             return;
+        }
+
+        if ($fromSettings) {
+            $this->emailAccountRepository->deleteOtherGmailAccountsExcept($id);
         }
 
         // Registrar también en user_access para que aparezca en "Correos Registrados"
@@ -147,8 +157,8 @@ class GmailController
         }
 
         unset($_SESSION['gmail_error']);
-        $_SESSION['gmail_success'] = 'Cuenta Gmail conectada correctamente: ' . htmlspecialchars($email) . '. El cron la leerá automáticamente.';
-        redirect('/admin/email-accounts?filter=gmail');
+        $_SESSION['gmail_success'] = 'Cuenta Gmail matriz configurada correctamente: ' . htmlspecialchars($email) . '. El cron la leerá automáticamente.';
+        redirect($redirectAfter);
     }
 
     /**

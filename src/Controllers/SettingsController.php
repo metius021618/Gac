@@ -10,14 +10,17 @@ namespace Gac\Controllers;
 
 use Gac\Core\Request;
 use Gac\Repositories\SettingsRepository;
+use Gac\Repositories\EmailAccountRepository;
 
 class SettingsController
 {
     private SettingsRepository $settingsRepository;
+    private EmailAccountRepository $emailAccountRepository;
 
     public function __construct()
     {
         $this->settingsRepository = new SettingsRepository();
+        $this->emailAccountRepository = new EmailAccountRepository();
     }
 
     /**
@@ -28,12 +31,14 @@ class SettingsController
         $sessionTimeoutHours = (int) $this->settingsRepository->getValue('session_timeout_hours', '1');
         $masterConsultEnabled = $this->settingsRepository->getValue('master_consult_enabled', '0');
         $masterConsultUsername = $this->settingsRepository->getValue('master_consult_username', '');
+        $gmailMatrixAccount = $this->emailAccountRepository->getGmailMatrixAccount();
 
         $this->renderView('admin/settings/index', [
             'title' => 'Configuración del Sistema',
             'session_timeout_hours' => $sessionTimeoutHours,
             'master_consult_enabled' => $masterConsultEnabled,
-            'master_consult_username' => $masterConsultUsername
+            'master_consult_username' => $masterConsultUsername,
+            'gmail_matrix_account' => $gmailMatrixAccount
         ]);
     }
 
