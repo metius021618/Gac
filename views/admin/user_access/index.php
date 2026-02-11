@@ -53,7 +53,14 @@ $content = ob_start();
 
     <div class="admin-content">
         <div class="form-card" style="margin-bottom: 1.5rem;">
+            <p style="margin-bottom: 1rem; color: #666;">Conecta la <strong>cuenta Gmail matriz</strong> (la que recibe los reenvíos) para que el sistema la lea. El destinatario real se obtiene de los headers del correo.</p>
             <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                <a href="/gmail/connect" class="btn btn-primary" id="gmailConnectBtn" style="background-color: #ea4335;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.636H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.313l8.073-5.82C21.69 2.28 24 3.434 24 5.457z"/>
+                    </svg>
+                    Conectar Gmail (cuenta matriz)
+                </a>
                 <a href="/outlook/connect" class="btn btn-primary" id="outlookConnectBtn" style="background-color: #0078d4;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                         <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>

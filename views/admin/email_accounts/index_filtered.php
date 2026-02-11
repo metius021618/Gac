@@ -12,6 +12,19 @@ $content = ob_start();
         <h1 class="admin-title">Correos <?= htmlspecialchars($filter_label ?? '') ?></h1>
     </div>
 
+    <?php if (!empty($_SESSION['gmail_success']) && ($filter ?? '') === 'gmail'): ?>
+        <div class="alert alert-success" role="alert">
+            <?= htmlspecialchars($_SESSION['gmail_success']) ?>
+            <?php unset($_SESSION['gmail_success']); ?>
+        </div>
+    <?php endif; ?>
+    <?php if (!empty($_SESSION['gmail_error']) && ($filter ?? '') === 'gmail'): ?>
+        <div class="alert alert-danger" role="alert">
+            <?= htmlspecialchars($_SESSION['gmail_error']) ?>
+            <?php unset($_SESSION['gmail_error']); ?>
+        </div>
+    <?php endif; ?>
+
     <div class="admin-content">
         <div class="table-controls">
             <div class="search-input-wrapper">
