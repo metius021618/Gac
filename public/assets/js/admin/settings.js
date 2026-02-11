@@ -29,6 +29,12 @@
         }
     }
 
+    function fetchWithTimeout(url, options, ms) {
+        const ctrl = new AbortController();
+        const id = setTimeout(function() { ctrl.abort(); }, ms || 8000);
+        return fetch(url, { ...options, signal: ctrl.signal }).finally(function() { clearTimeout(id); });
+    }
+
     /**
      * Actualizar estado del lector continuo
      */
@@ -37,7 +43,7 @@
         const btnEl = document.getElementById('btnStartReaderLoop');
         if (!statusEl) return;
         try {
-            const res = await fetch('/admin/reader-loop/status', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const res = await fetchWithTimeout('/admin/reader-loop/status', { headers: { 'X-Requested-With': 'XMLHttpRequest' } }, 5000);
             const data = await res.json();
             if (data.running) {
                 statusEl.textContent = 'Corriendo';
@@ -50,7 +56,7 @@
             }
         } catch (e) {
             statusEl.textContent = '—';
-            if (btnEl) btnEl.disabled = false;
+            if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Iniciar lector continuo'; }
         }
     }
 
@@ -64,16 +70,18 @@
         btnEl.disabled = true;
         if (msgEl) msgEl.textContent = 'Iniciando...';
         try {
-            const res = await fetch('/admin/reader-loop/start', {
+            const res = await fetchWithTimeout('/admin/reader-loop/start', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-            });
+            }, 10000);
             const data = await res.json();
-            if (msgEl) msgEl.textContent = data.message || '';
+            if (msgEl) msgEl.textContent = data.message || (data.success ? 'Solicitud enviada.' : (data.message || ''));
             await updateReaderLoopStatus();
         } catch (e) {
-            if (msgEl) msgEl.textContent = 'Error al conectar.';
+            if (msgEl) msgEl.textContent = 'Timeout o error. Si el lector arrancó, el estado se actualizará al recargar. Usa el cron ensure_reader_loop.sh para inicio automático.';
             btnEl.disabled = false;
+            btnEl.textContent = 'Iniciar lector continuo';
+            updateReaderLoopStatus();
         }
     }
 

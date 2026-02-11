@@ -336,16 +336,16 @@ Los patrones se pueden actualizar desde la interfaz web o directamente en `code_
 
 Para que el **lector continuo** (sync_loop.py) se arranque solo al subir el servidor y se vuelva a levantar si se cae, usa el script `ensure_reader_loop.sh`:
 
-1. **Dar permisos de ejecución** (una vez):
+1. **Dar permisos de ejecución** (una vez), ej. para app.pocoyoni.com:
    ```bash
-   chmod +x /ruta/a/SISTEMA_GAC/cron/ensure_reader_loop.sh
+   chmod +x /home/pocoavbb/app.pocoyoni.com/cron/ensure_reader_loop.sh
    ```
 
-2. **Añadir una sola línea al cron** (cada 2 minutos):
+2. **Añadir una sola línea al cron** (cada 2 minutos). Ejemplo para app.pocoyoni.com:
    ```bash
-   */2 * * * * /ruta/a/SISTEMA_GAC/cron/ensure_reader_loop.sh >> /ruta/a/SISTEMA_GAC/logs/ensure_reader.log 2>&1
+   */2 * * * * /home/pocoavbb/app.pocoyoni.com/cron/ensure_reader_loop.sh >> /home/pocoavbb/app.pocoyoni.com/logs/ensure_reader.log 2>&1
    ```
-   Sustituye `/ruta/a/SISTEMA_GAC` por la ruta real del proyecto (ej. en cPanel: `$HOME/public_html` o la carpeta donde esté la app).
+   En otro servidor, sustituye por la ruta real del proyecto (ej. `$HOME/app.pocoyoni.com` o la carpeta donde esté la app).
 
 El script comprueba si el lector ya está corriendo (archivo PID). Si no está, lanza `sync_loop.py` en segundo plano. Así, tras un reinicio del servidor, en la primera ejecución del cron (como mucho 2 minutos) el lector vuelve a estar activo sin hacer nada manual.
 

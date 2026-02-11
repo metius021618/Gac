@@ -227,6 +227,7 @@ class CodeController
             json_response(['success' => false, 'message' => 'Método no permitido'], 405);
             return;
         }
+        @set_time_limit(15);
         $pidFile = base_path('logs' . DIRECTORY_SEPARATOR . 'reader_loop.pid');
         $logDir = base_path('logs');
         if (!is_dir($logDir)) {
@@ -252,7 +253,8 @@ class CodeController
         if (DIRECTORY_SEPARATOR === '\\') {
             @exec('start /B cd /d ' . escapeshellarg($root) . ' && python ' . $script . ' >> ' . escapeshellarg($logFile) . ' 2>&1');
         } else {
-            @exec(sprintf('cd %s && nohup python3 %s >> %s 2>&1 &', escapeshellarg($root), escapeshellarg($script), escapeshellarg($logFile)));
+            // Subshell ( ... ) para que exec retorne enseguida sin esperar al proceso en background
+            @exec(sprintf('(cd %s && nohup python3 %s >> %s 2>&1 &)', escapeshellarg($root), escapeshellarg($script), escapeshellarg($logFile)));
         }
         json_response(['success' => true, 'message' => 'Lector continuo iniciado. Ejecutará los lectores cada pocos segundos.']);
     }
