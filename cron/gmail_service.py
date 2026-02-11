@@ -205,14 +205,16 @@ class GmailService:
         from_raw = _get_header(headers, 'From')
         to_raw = _get_header(headers, 'To')
         x_original_to = _get_header(headers, 'X-Original-To')
+        original_recipient = _get_header(headers, 'Original-Recipient')  # Algunos reenvíos (RFC 2298)
         date_header_str = _get_header(headers, 'Date')
 
         from_email = _extract_email(from_raw)
         from_name = _extract_name(from_raw)
         to_list = [e.strip().lower() for e in re.findall(r'[\w.+-]+@[\w.-]+\.\w+', to_raw or '') if e]
-        # Correo matriz: destinatario original desde X-Original-To (reenvíos) o To; si no, buzón que leemos
-        if x_original_to:
-            to_primary = _extract_email(x_original_to) or (to_list[0] if to_list else account_email)
+        # Correo matriz: destinatario original desde X-Original-To, Original-Recipient (reenvíos) o To; si no, buzón
+        orig = x_original_to or original_recipient
+        if orig:
+            to_primary = _extract_email(orig) or (to_list[0] if to_list else account_email)
         else:
             to_primary = (to_list[0] if to_list else account_email)
         to_primary = (to_primary or account_email).strip().lower()
