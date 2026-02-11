@@ -127,7 +127,12 @@ class GmailController
             $profile = $gmail->users->getProfile('me');
             $email = $profile->getEmailAddress();
         } catch (\Exception $e) {
-            $_SESSION['gmail_error'] = 'Error al obtener perfil de Gmail: ' . $e->getMessage();
+            $msg = $e->getMessage();
+            if (strpos($msg, '429') !== false || stripos($msg, 'rate limit') !== false || stripos($msg, 'RESOURCE_EXHAUSTED') !== false) {
+                $_SESSION['gmail_error'] = 'Límite de solicitudes de Google alcanzado. Espera 5-10 minutos y vuelve a intentar configurar la cuenta Gmail.';
+            } else {
+                $_SESSION['gmail_error'] = 'Error al obtener perfil de Gmail: ' . $msg;
+            }
             redirect($redirectAfter);
             return;
         }
