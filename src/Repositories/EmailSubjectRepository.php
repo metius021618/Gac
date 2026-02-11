@@ -32,9 +32,13 @@ class EmailSubjectRepository
 
             $searchTrim = trim($search);
             if ($searchTrim !== '') {
-                // Búsqueda case-insensitive: LOWER(column) vs patrón en minúsculas (por si la BD es case-sensitive)
-                $whereClause .= " AND (LOWER(es.subject_line) LIKE :q OR LOWER(COALESCE(p.display_name,'')) LIKE :q OR LOWER(COALESCE(p.name,'')) LIKE :q)";
-                $params[':q'] = '%' . mb_strtolower($searchTrim) . '%';
+                // CONCAT en SQL para el patrón; término en minúsculas para búsqueda case-insensitive
+                $whereClause .= " AND (
+                    LOWER(es.subject_line) LIKE CONCAT('%', :q, '%')
+                    OR LOWER(COALESCE(p.display_name,'')) LIKE CONCAT('%', :q, '%')
+                    OR LOWER(COALESCE(p.name,'')) LIKE CONCAT('%', :q, '%')
+                )";
+                $params[':q'] = mb_strtolower($searchTrim);
             }
 
             // Contar total
@@ -98,7 +102,12 @@ class EmailSubjectRepository
                 'total_pages' => $totalPages
             ];
         } catch (PDOException $e) {
-            error_log("Error al buscar y paginar asuntos de email: " . $e->getMessage());
+            $msg = $e->getMessage();
+            error_log("Error al buscar y paginar asuntos de email: " . $msg);
+            $logFile = defined('BASE_PATH') ? BASE_PATH . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'email_subjects_search.log' : '';
+            if ($logFile) {
+                @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [repository ERROR] ' . $msg . "\n", FILE_APPEND | LOCK_EX);
+            }
             return [
                 'data' => [],
                 'total' => 0,
