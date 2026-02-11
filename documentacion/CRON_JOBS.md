@@ -187,7 +187,24 @@ Los servicios Python son independientes pero complementan los servicios PHP:
 
 ## ⚙️ Configuración
 
-### Variables de Entorno
+### Variables de Entorno (lector continuo y optimización)
+
+```env
+# Intervalo del bucle (sync_loop): cada cuántos segundos se ejecutan los lectores (default 5)
+CRON_READER_LOOP_SECONDS=5
+
+# Gmail: solo leer últimos N mensajes y solo de los últimos N días (menos = más rápido por ciclo)
+CRON_GMAIL_MAX_MESSAGES=20
+CRON_GMAIL_NEWER_THAN_DAYS=1
+```
+
+**Tiempo desde que llega un correo hasta que se registra:** como máximo un ciclo del bucle (ej. 5 s) más el tiempo de esa ejecución (lectura + filtro + guardado). Con 20 mensajes y `newer_than:1d`, un ciclo Gmail suele ser de pocos segundos. Total típico: **menos de 10–15 segundos** desde que el correo llega a la matriz hasta que está en BD.
+
+**Recomendaciones:** Mantener `CRON_READER_LOOP_SECONDS=5`; si Gmail devuelve muchos 429, subir a 10. `CRON_GMAIL_MAX_MESSAGES=20` y `CRON_GMAIL_NEWER_THAN_DAYS=1` reducen tiempo y llamadas a la API.
+
+---
+
+### Variables de Entorno (resto)
 
 ```env
 # Base de Datos

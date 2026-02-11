@@ -157,13 +157,24 @@ class GmailService:
 
         service = build('gmail', 'v1', credentials=creds, cache_discovery=False)
 
-        # Listar IDs de mensajes (INBOX, últimos max_messages)
+        # Filtro por fecha: solo correos recientes (menos llamadas y más rápido)
         try:
-            result = service.users().messages().list(
-                userId='me',
-                labelIds=['INBOX'],
-                maxResults=min(max_messages, 100)
-            ).execute()
+            from cron.config import CRON_CONFIG
+            newer_days = CRON_CONFIG.get('gmail_newer_than_days', 1)
+            query = 'newer_than:{}d'.format(newer_days) if newer_days else None
+        except Exception:
+            query = 'newer_than:1d'
+        list_params = {
+            'userId': 'me',
+            'labelIds': ['INBOX'],
+            'maxResults': min(max_messages, 100),
+        }
+        if query:
+            list_params['q'] = query
+
+        # Listar IDs de mensajes (INBOX, filtrado por fecha, últimos max_messages)
+        try:
+            result = service.users().messages().list(**list_params).execute()
         except Exception as e:
             logger.error(f"Gmail list messages error: {e}")
             raise

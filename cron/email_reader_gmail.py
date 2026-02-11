@@ -96,7 +96,8 @@ def main():
             logger.info(f"Procesando cuenta Gmail: {gaccount_email} (ID: {gaccount_id})")
             try:
                 gmail_service = GmailService()
-                emails = gmail_service.read_account(gaccount, max_messages=50)
+                max_msg = CRON_CONFIG.get('gmail_max_messages', 20)
+                emails = gmail_service.read_account(gaccount, max_messages=max_msg)
                 logger.info(f"  - Emails leídos: {len(emails)}")
                 if not emails:
                     EmailAccountRepository.update_sync_status(gaccount_id, 'success')
