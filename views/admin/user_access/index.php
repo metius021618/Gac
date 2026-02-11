@@ -52,9 +52,7 @@ $content = ob_start();
     <?php endif; ?>
 
     <div class="admin-content">
-        <!-- Conectar Outlook (Gmail usa el correo matriz ya administrado) -->
         <div class="form-card" style="margin-bottom: 1.5rem;">
-            <p class="form-label" style="margin-bottom: 0.75rem;">Conectar cuenta Outlook para que el sistema pueda leer correos de esa cuenta. Gmail usa el correo matriz ya configurado.</p>
             <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
                 <a href="/outlook/connect" class="btn btn-primary" id="outlookConnectBtn" style="background-color: #0078d4;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

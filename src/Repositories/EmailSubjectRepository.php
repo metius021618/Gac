@@ -32,17 +32,17 @@ class EmailSubjectRepository
 
             $searchTrim = trim($search);
             if ($searchTrim !== '') {
-                // Dividir en palabras (una o más) y buscar que cada palabra coincida en plataforma o asunto
+                // Dividir en palabras y filtrar: cada palabra busca en asunto Y en plataforma (name, display_name)
                 $words = preg_split('/\s+/u', $searchTrim, -1, PREG_SPLIT_NO_EMPTY);
                 if (!empty($words)) {
                     $conditions = [];
                     foreach ($words as $i => $word) {
                         $paramKey = ':search_' . $i;
                         $params[$paramKey] = '%' . $word . '%';
-                        // Cada palabra debe coincidir en asunto, display_name o name de plataforma
                         $conditions[] = "(es.subject_line LIKE {$paramKey} OR p.display_name LIKE {$paramKey} OR p.name LIKE {$paramKey})";
                     }
-                    $whereClause .= ' AND (' . implode(' AND ', $conditions) . ')';
+                    // Cualquier palabra que coincida en plataforma o asunto incluye la fila (OR entre palabras)
+                    $whereClause .= ' AND (' . implode(' OR ', $conditions) . ')';
                 }
             }
 

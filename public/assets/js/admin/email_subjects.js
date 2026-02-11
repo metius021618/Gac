@@ -250,29 +250,45 @@
     function initSearch() {
         if (!searchInput || !perPageSelect) return;
 
-        // Inicializar búsqueda AJAX usando la utilidad común
+        const endpoint = window.location.pathname;
+        const doSearch = function() {
+            const params = {
+                search: searchInput.value.trim(),
+                page: 1,
+                per_page: perPageSelect.value || 15
+            };
+            window.SearchAJAX.performSearch(endpoint, params, function(html) {
+                window.SearchAJAX.updateTableContent(html);
+                emailSubjectsTable = document.getElementById('emailSubjectsTable');
+                if (emailSubjectsTable) initTable();
+                initPagination();
+            });
+            if (clearSearchBtn) clearSearchBtn.style.display = searchInput.value.trim() ? 'flex' : 'none';
+        };
+
+        // Inicializar búsqueda AJAX (búsqueda dinámica por plataforma y asunto)
         if (window.SearchAJAX) {
             window.SearchAJAX.init({
                 searchInput: searchInput,
                 perPageSelect: perPageSelect,
                 clearSearchBtn: clearSearchBtn,
-                endpoint: window.location.pathname,
+                endpoint: endpoint,
                 minSearchLength: 0,
                 renderCallback: function(html) {
                     window.SearchAJAX.updateTableContent(html);
-                    // Actualizar referencia a la tabla después de actualización AJAX
                     emailSubjectsTable = document.getElementById('emailSubjectsTable');
-                    // Re-inicializar eventos (la delegación ya está activa, pero por si acaso)
-                    if (emailSubjectsTable) {
-                        initTable();
-                    }
-                    initPagination(); // Re-inicializar paginación
+                    if (emailSubjectsTable) initTable();
+                    initPagination();
                 },
                 onSearchComplete: function() {
-                    const searchValue = searchInput.value.trim();
-                    if (clearSearchBtn) {
-                        clearSearchBtn.style.display = searchValue ? 'flex' : 'none';
-                    }
+                    if (clearSearchBtn) clearSearchBtn.style.display = searchInput.value.trim() ? 'flex' : 'none';
+                }
+            });
+            // Buscar también al pulsar Enter
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    doSearch();
                 }
             });
         } else {
