@@ -21,6 +21,9 @@
     const modalPlatformSelect = document.getElementById('modal_platform_id');
     const modalSubjectLineInput = document.getElementById('modal_subject_line');
 
+    /** Función de búsqueda (se asigna en initSearch, la usa la paginación) */
+    var runSearch = function() {};
+
     /**
      * Inicialización
      */
@@ -245,55 +248,73 @@
     }
 
     /**
-     * Inicializar búsqueda AJAX
+     * Búsqueda simple: al escribir o Enter, pide al servidor la tabla filtrada y la reemplaza.
      */
     function initSearch() {
         if (!searchInput || !perPageSelect) return;
 
-        const endpoint = window.location.pathname;
-        const doSearch = function() {
-            const params = {
-                search: searchInput.value.trim(),
-                page: 1,
-                per_page: perPageSelect.value || 15
-            };
-            window.SearchAJAX.performSearch(endpoint, params, function(html) {
-                window.SearchAJAX.updateTableContent(html);
-                emailSubjectsTable = document.getElementById('emailSubjectsTable');
-                if (emailSubjectsTable) initTable();
-                initPagination();
-            });
-            if (clearSearchBtn) clearSearchBtn.style.display = searchInput.value.trim() ? 'flex' : 'none';
-        };
+        var debounceTimer = null;
 
-        // Inicializar búsqueda AJAX (búsqueda dinámica por plataforma y asunto)
-        if (window.SearchAJAX) {
-            window.SearchAJAX.init({
-                searchInput: searchInput,
-                perPageSelect: perPageSelect,
-                clearSearchBtn: clearSearchBtn,
-                endpoint: endpoint,
-                minSearchLength: 0,
-                renderCallback: function(html) {
-                    window.SearchAJAX.updateTableContent(html);
+        runSearch = function(page) {
+            var url = new URL(window.location.href);
+            url.searchParams.set('search', searchInput.value.trim());
+            url.searchParams.set('page', page || 1);
+            var perPage = perPageSelect.value;
+            url.searchParams.set('per_page', perPage === 'all' ? 0 : perPage);
+
+            fetch(url.toString(), {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                cache: 'no-store'
+            })
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    var wrap = document.createElement('div');
+                    wrap.innerHTML = html;
+                    var content = wrap.querySelector('.admin-content');
+                    if (!content) return;
+                    var newTable = content.querySelector('.table-container');
+                    var newPagination = content.querySelector('.pagination-container');
+                    var curTable = document.querySelector('.admin-content .table-container');
+                    var curPagination = document.querySelector('.admin-content .pagination-container');
+                    if (newTable && curTable) curTable.innerHTML = newTable.innerHTML;
+                    if (newPagination && curPagination) {
+                        curPagination.innerHTML = newPagination.innerHTML;
+                    } else if (curPagination && !newPagination) {
+                        curPagination.innerHTML = '';
+                    }
                     emailSubjectsTable = document.getElementById('emailSubjectsTable');
                     if (emailSubjectsTable) initTable();
                     initPagination();
-                },
-                onSearchComplete: function() {
-                    if (clearSearchBtn) clearSearchBtn.style.display = searchInput.value.trim() ? 'flex' : 'none';
-                }
-            });
-            // Buscar también al pulsar Enter
-            searchInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    doSearch();
-                }
-            });
-        } else {
-            console.error('SearchAJAX no está disponible');
+                })
+                .catch(function(err) { console.error('Búsqueda asuntos:', err); });
+
+            if (clearSearchBtn) clearSearchBtn.style.display = searchInput.value.trim() ? 'flex' : 'none';
         }
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function() { runSearch(1); }, 300);
+        });
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(debounceTimer);
+                runSearch(1);
+            }
+        });
+
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                clearSearchBtn.style.display = 'none';
+                runSearch(1);
+            });
+        }
+
+        perPageSelect.addEventListener('change', function() {
+            runSearch(1);
+        });
     }
 
     /**
@@ -353,57 +374,14 @@
     }
 
     /**
-     * Actualizar tabla dinámicamente
+     * Actualizar tabla después de crear/editar (misma búsqueda, página 1).
      */
     function refreshTable() {
-        if (!window.SearchAJAX) {
-            // Si SearchAJAX no está disponible, recargar la página
+        if (typeof runSearch === 'function') {
+            runSearch(1);
+        } else {
             location.reload();
-            return;
         }
-        
-        // Obtener valores actuales de búsqueda y paginación
-        const currentSearch = searchInput?.value || '';
-        const currentPerPage = perPageSelect?.value || '15';
-        const currentPage = 1; // Resetear a página 1 después de agregar
-        
-        // Construir URL con parámetros
-        const params = new URLSearchParams();
-        if (currentSearch) {
-            params.set('search', currentSearch);
-        }
-        params.set('per_page', currentPerPage);
-        params.set('page', currentPage);
-        params.set('ajax', '1');
-        
-        // Hacer petición AJAX para actualizar la tabla
-        fetch(`${window.location.pathname}?${params.toString()}`, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.text())
-        .then(html => {
-            // Actualizar contenido de la tabla
-            if (window.SearchAJAX && window.SearchAJAX.updateTableContent) {
-                window.SearchAJAX.updateTableContent(html);
-                // Actualizar referencia a la tabla después de actualización AJAX
-                emailSubjectsTable = document.getElementById('emailSubjectsTable');
-                // Re-inicializar eventos con delegación (funciona con elementos dinámicos)
-                if (emailSubjectsTable) {
-                    initTable();
-                }
-                initPagination(); // Re-inicializar paginación
-            } else {
-                // Fallback: recargar página
-                location.reload();
-            }
-        })
-        .catch(error => {
-            console.error('Error al actualizar tabla:', error);
-            location.reload();
-        });
     }
 
     /**
@@ -419,56 +397,16 @@
     }
 
     /**
-     * Manejar clic en paginación (con delegación de eventos)
+     * Manejar clic en paginación: misma lógica que la búsqueda (fetch y reemplazar tabla).
      */
     function handlePaginationClick(e) {
         const btn = e.target.closest('.pagination-btn[data-page], .pagination-page[data-page]');
         if (!btn || btn.disabled) return;
-        
         e.preventDefault();
         e.stopPropagation();
-        
-        const page = parseInt(btn.dataset.page);
+        const page = parseInt(btn.dataset.page, 10);
         if (!page || isNaN(page) || page < 1) return;
-        
-        // Construir URL con parámetros
-        const params = new URLSearchParams();
-        const currentSearch = searchInput?.value || '';
-        const currentPerPage = perPageSelect?.value || '15';
-        
-        if (currentSearch) {
-            params.set('search', currentSearch);
-        }
-        params.set('per_page', currentPerPage);
-        params.set('page', page);
-        params.set('ajax', '1');
-        
-        // Hacer petición AJAX
-        fetch(`${window.location.pathname}?${params.toString()}`, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.text())
-            .then(html => {
-                if (window.SearchAJAX && window.SearchAJAX.updateTableContent) {
-                    window.SearchAJAX.updateTableContent(html);
-                    // Actualizar referencia a la tabla después de actualización AJAX
-                    emailSubjectsTable = document.getElementById('emailSubjectsTable');
-                    // Re-inicializar eventos con delegación
-                    if (emailSubjectsTable) {
-                        initTable();
-                    }
-                    initPagination();
-                    
-                    // Actualizar URL sin recargar
-                    window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
-                }
-            })
-        .catch(error => {
-            console.error('Error al cambiar de página:', error);
-        });
+        runSearch(page);
     }
 
     /**

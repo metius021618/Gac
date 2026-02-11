@@ -172,7 +172,7 @@ $show_footer = true;
 $footer_text = '';
 $footer_whatsapp = false;
 $additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/email_subjects.css'];
-$additional_js = ['/assets/js/admin/search-ajax.js', '/assets/js/admin/email_subjects.js'];
+$additional_js = ['/assets/js/admin/email_subjects.js'];
 
 require base_path('views/layouts/main.php');
 ?>
