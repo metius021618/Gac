@@ -137,10 +137,7 @@ def main():
             logger.info("--- Ciclo %d ---", cycle)
             run_all_parallel()
             elapsed = time.time() - start
-            logger.info(
-                "Ciclo %d terminado en %.1f s. Pausa %d s hasta próximo ciclo.",
-                cycle, elapsed, INTERVAL_SECONDS
-            )
+            logger.info("Ciclo %d terminado en %.1f s. Esperando %d s...", cycle, elapsed, INTERVAL_SECONDS)
             time.sleep(INTERVAL_SECONDS)
     finally:
         remove_pid()

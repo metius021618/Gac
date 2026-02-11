@@ -239,7 +239,7 @@
         }
 
         try {
-            const response = await fetch('/admin/email-accounts/bulk-delete', {
+            const response = await fetch('/admin/email-accounts/bulk-delete-ids', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
