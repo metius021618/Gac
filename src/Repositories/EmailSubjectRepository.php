@@ -32,13 +32,16 @@ class EmailSubjectRepository
 
             $searchTrim = trim($search);
             if ($searchTrim !== '') {
-                // CONCAT en SQL para el patrón; término en minúsculas para búsqueda case-insensitive
+                $term = mb_strtolower($searchTrim);
+                // Tres placeholders (PDO no permite repetir el mismo :q en una sola sentencia)
                 $whereClause .= " AND (
-                    LOWER(es.subject_line) LIKE CONCAT('%', :q, '%')
-                    OR LOWER(COALESCE(p.display_name,'')) LIKE CONCAT('%', :q, '%')
-                    OR LOWER(COALESCE(p.name,'')) LIKE CONCAT('%', :q, '%')
+                    LOWER(es.subject_line) LIKE CONCAT('%', :q1, '%')
+                    OR LOWER(COALESCE(p.display_name,'')) LIKE CONCAT('%', :q2, '%')
+                    OR LOWER(COALESCE(p.name,'')) LIKE CONCAT('%', :q3, '%')
                 )";
-                $params[':q'] = mb_strtolower($searchTrim);
+                $params[':q1'] = $term;
+                $params[':q2'] = $term;
+                $params[':q3'] = $term;
             }
 
             // Contar total
