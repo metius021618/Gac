@@ -55,8 +55,8 @@ CRON_CONFIG = {
     'enabled': os.getenv('CRON_ENABLED', 'true').lower() == 'true',
     'email_reader_interval': int(os.getenv('CRON_EMAIL_READER_INTERVAL', 5)),
     'warehouse_sync_interval': int(os.getenv('CRON_WAREHOUSE_SYNC_INTERVAL', 60)),
-    # Intervalo en segundos del bucle continuo (sync_loop.py). Mínimo 5 (límites Gmail API).
-    'reader_loop_seconds': max(5, int(os.getenv('CRON_READER_LOOP_SECONDS', 5))),
+    # Intervalo en segundos de espera entre ciclo y ciclo (sync_loop.py). Tras ejecutar ~6s, espera esto. Mínimo 2.
+    'reader_loop_seconds': max(2, int(os.getenv('CRON_READER_LOOP_SECONDS', 2))),
     # Lectura Gmail: solo últimos N mensajes y solo de los últimos N días (optimiza tiempo por ciclo).
     'gmail_max_messages': min(100, max(10, int(os.getenv('CRON_GMAIL_MAX_MESSAGES', 20)))),
     'gmail_newer_than_days': max(1, min(30, int(os.getenv('CRON_GMAIL_NEWER_THAN_DAYS', 1)))),
