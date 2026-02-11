@@ -31,6 +31,10 @@ class EmailSubjectController
         $perPageRaw = $request->get('per_page', '15');
         $perPage = $perPageRaw === 'all' ? 0 : (int)$perPageRaw;
         $search = $request->get('search', '');
+        if ($search === '' && !empty($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '?') !== false) {
+            parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY) ?: '', $q);
+            $search = isset($q['search']) ? (string)$q['search'] : '';
+        }
 
         $validPerPage = [10, 15, 30, 60, 100, 0]; // 0 para "Todos"
         if (!in_array($perPage, $validPerPage)) {
@@ -38,7 +42,7 @@ class EmailSubjectController
         }
 
         $logFile = base_path('logs' . DIRECTORY_SEPARATOR . 'email_subjects_search.log');
-        $logLine = date('Y-m-d H:i:s') . ' [email-subjects] GET=' . json_encode($_GET) . ' isAjax=' . ($request->isAjax() ? '1' : '0') . ' search="' . $search . '" page=' . $page . ' per_page=' . $perPage . "\n";
+        $logLine = date('Y-m-d H:i:s') . ' [email-subjects] GET=' . json_encode($_GET) . ' REQUEST_URI=' . ($_SERVER['REQUEST_URI'] ?? '') . ' isAjax=' . ($request->isAjax() ? '1' : '0') . ' search="' . $search . '" page=' . $page . ' per_page=' . $perPage . "\n";
         @file_put_contents($logFile, $logLine, FILE_APPEND | LOCK_EX);
 
         $paginationData = $this->emailSubjectRepository->searchAndPaginate($search, $page, $perPage);

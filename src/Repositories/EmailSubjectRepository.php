@@ -32,8 +32,8 @@ class EmailSubjectRepository
 
             $searchTrim = trim($search);
             if ($searchTrim !== '') {
-                $whereClause .= " AND (es.subject_line LIKE :q OR p.display_name LIKE :q OR p.name LIKE :q)";
-                $params[':q'] = '%' . $searchTrim . '%';
+                $whereClause .= " AND (LOWER(es.subject_line) LIKE :q OR LOWER(p.display_name) LIKE :q OR LOWER(p.name) LIKE :q)";
+                $params[':q'] = '%' . mb_strtolower($searchTrim) . '%';
             }
 
             // Contar total
@@ -51,7 +51,12 @@ class EmailSubjectRepository
             }
             $countStmt->execute();
             $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
-            
+
+            $logFile = defined('BASE_PATH') ? BASE_PATH . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'email_subjects_search.log' : '';
+            if ($logFile) {
+                @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [repository] search="' . $searchTrim . '" total=' . $total . "\n", FILE_APPEND | LOCK_EX);
+            }
+
             // Calcular paginación
             $totalPages = $perPage > 0 ? ceil($total / $perPage) : 1;
             $offset = ($page - 1) * $perPage;
