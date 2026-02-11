@@ -16,14 +16,10 @@ $content = ob_start();
             <img src="/assets/images/logocamb.png" alt="GAC" class="consult-logo">
         </div>
 
-        <!-- Propósito de la app (visible para verificación Google) -->
-        <p class="consult-app-purpose">GAC es la aplicación que te permite consultar de forma rápida y segura los códigos de acceso que has recibido por correo electrónico (por ejemplo de Disney+, Netflix u otras plataformas). Ingresa tu correo, usuario y plataforma para ver tu código.</p>
-
         <!-- Main Card -->
         <div class="consult-card">
             <div class="card-header">
-                <h1 class="card-title">GAC — Consulta tu Código</h1>
-                <p class="card-subtitle">Ingresa tu correo electrónico, usuario y selecciona la plataforma</p>
+                <h1 class="card-title">Consulta tu Código</h1>
             </div>
 
             <!-- Form -->
@@ -146,25 +142,6 @@ $content = ob_start();
                 </div>
             </div>
         </div>
-
-        <!-- Info Section -->
-        <div class="info-section">
-            <p class="info-text">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                </svg>
-                Ingresa tu correo, usuario y selecciona la plataforma para ver el email completo
-            </p>
-        </div>
-
-        <!-- Enlaces legales en página principal (requerido para verificación Google) -->
-        <div class="consult-legal-links">
-            <a href="/politica-privacidad">Política de privacidad</a>
-            <span class="consult-legal-sep">·</span>
-            <a href="/condiciones-servicio">Condiciones del servicio</a>
-        </div>
     </div>
 </div>
 
@@ -172,7 +149,7 @@ $content = ob_start();
 $content = ob_get_clean();
 
 // Configurar variables para el layout (nombre GAC y propósito para verificación Google)
-$title = $title ?? 'GAC — Consulta tu Código';
+$title = $title ?? 'Consulta tu Código';
 $description = 'GAC es la aplicación para consultar códigos de acceso recibidos por correo (Disney+, Netflix y otras plataformas). Consulta tu código de forma rápida y segura.';
 $show_nav = false;
 $footer_text = 'Tienes alguna duda, comunicate conmigo';
