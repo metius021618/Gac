@@ -26,6 +26,7 @@ os.chdir(ROOT_DIR)
 
 LOG_DIR = os.path.join(ROOT_DIR, 'logs')
 LOG_FILE = os.path.join(LOG_DIR, 'sync_loop.log')
+PID_FILE = os.path.join(LOG_DIR, 'reader_loop.pid')
 if not os.path.isdir(LOG_DIR):
     os.makedirs(LOG_DIR, exist_ok=True)
 
@@ -45,7 +46,11 @@ READERS = [
     ('cron/email_reader_outlook.py', 'Outlook'),
 ]
 
-INTERVAL_SECONDS = 30
+try:
+    from cron.config import CRON_CONFIG
+    INTERVAL_SECONDS = CRON_CONFIG.get('reader_loop_seconds', 10)
+except Exception:
+    INTERVAL_SECONDS = 10
 
 
 def run_reader(script_path: str, name: str) -> bool:
@@ -100,17 +105,39 @@ def run_all_parallel():
             logger.warning("%s: %s", name, e)
 
 
+def write_pid():
+    """Escribir PID para que el panel sepa si el lector está corriendo."""
+    try:
+        with open(PID_FILE, 'w') as f:
+            f.write(str(os.getpid()))
+    except Exception as e:
+        logger.warning("No se pudo escribir PID: %s", e)
+
+
+def remove_pid():
+    """Eliminar archivo PID al salir."""
+    try:
+        if os.path.isfile(PID_FILE):
+            os.remove(PID_FILE)
+    except Exception:
+        pass
+
+
 def main():
     logger.info("Sync loop iniciado (cada %d s). Raíz: %s", INTERVAL_SECONDS, ROOT_DIR)
+    write_pid()
     cycle = 0
-    while True:
-        cycle += 1
-        start = time.time()
-        logger.info("--- Ciclo %d ---", cycle)
-        run_all_parallel()
-        elapsed = time.time() - start
-        logger.info("Ciclo %d terminado en %.1f s. Esperando %d s...", cycle, elapsed, INTERVAL_SECONDS)
-        time.sleep(INTERVAL_SECONDS)
+    try:
+        while True:
+            cycle += 1
+            start = time.time()
+            logger.info("--- Ciclo %d ---", cycle)
+            run_all_parallel()
+            elapsed = time.time() - start
+            logger.info("Ciclo %d terminado en %.1f s. Esperando %d s...", cycle, elapsed, INTERVAL_SECONDS)
+            time.sleep(INTERVAL_SECONDS)
+    finally:
+        remove_pid()
 
 
 if __name__ == '__main__':
@@ -118,4 +145,5 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         logger.info("Sync loop detenido por el usuario")
+        remove_pid()
         sys.exit(0)

@@ -196,6 +196,68 @@ class CodeController
     }
 
     /**
+     * Estado del lector continuo (sync_loop.py): si está corriendo o no.
+     */
+    public function readerLoopStatus(Request $request): void
+    {
+        $pidFile = base_path('logs' . DIRECTORY_SEPARATOR . 'reader_loop.pid');
+        $running = false;
+        if (file_exists($pidFile)) {
+            $pid = (int) trim((string) @file_get_contents($pidFile));
+            if ($pid > 0) {
+                if (DIRECTORY_SEPARATOR === '\\') {
+                    @exec('tasklist /FI "PID eq ' . $pid . '" 2>NUL', $out);
+                    $running = !empty($out) && count($out) > 1 && stripos(implode(' ', $out), (string) $pid) !== false;
+                } else {
+                    @exec('kill -0 ' . $pid . ' 2>/dev/null', $_, $code);
+                    $running = ($code === 0);
+                }
+            }
+        }
+        json_response(['running' => $running]);
+    }
+
+    /**
+     * Iniciar el lector continuo en segundo plano (sync_loop.py).
+     * Ejecuta Gmail, Outlook e IMAP cada X segundos sin usar cron.
+     */
+    public function startReaderLoop(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+        $pidFile = base_path('logs' . DIRECTORY_SEPARATOR . 'reader_loop.pid');
+        $logDir = base_path('logs');
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+        $logFile = $logDir . DIRECTORY_SEPARATOR . 'sync_loop.log';
+        $root = base_path();
+        $script = 'cron' . DIRECTORY_SEPARATOR . 'sync_loop.py';
+        if (!file_exists($root . DIRECTORY_SEPARATOR . $script)) {
+            json_response(['success' => false, 'message' => 'No se encontró sync_loop.py']);
+            return;
+        }
+        if (file_exists($pidFile)) {
+            $pid = (int) trim((string) @file_get_contents($pidFile));
+            if ($pid > 0 && DIRECTORY_SEPARATOR !== '\\') {
+                @exec('kill -0 ' . $pid . ' 2>/dev/null', $_, $code);
+                if ($code === 0) {
+                    json_response(['success' => false, 'message' => 'El lector continuo ya está en ejecución.', 'running' => true]);
+                    return;
+                }
+            }
+        }
+        if (DIRECTORY_SEPARATOR === '\\') {
+            @exec('start /B cd /d ' . escapeshellarg($root) . ' && python ' . $script . ' >> ' . escapeshellarg($logFile) . ' 2>&1');
+        } else {
+            @exec(sprintf('cd %s && nohup python3 %s >> %s 2>&1 &', escapeshellarg($root), escapeshellarg($script), escapeshellarg($logFile)));
+        }
+        json_response(['success' => true, 'message' => 'Lector continuo iniciado. Ejecutará los lectores cada pocos segundos.']);
+    }
+
+    /**
      * Renderizar vista
      */
     private function renderView(string $view, array $data = []): void

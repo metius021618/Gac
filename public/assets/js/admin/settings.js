@@ -21,6 +21,60 @@
         if (cancelBtn) {
             cancelBtn.addEventListener('click', handleCancel);
         }
+
+        const btnStartReaderLoop = document.getElementById('btnStartReaderLoop');
+        if (btnStartReaderLoop) {
+            updateReaderLoopStatus();
+            btnStartReaderLoop.addEventListener('click', handleStartReaderLoop);
+        }
+    }
+
+    /**
+     * Actualizar estado del lector continuo
+     */
+    async function updateReaderLoopStatus() {
+        const statusEl = document.getElementById('readerLoopStatus');
+        const btnEl = document.getElementById('btnStartReaderLoop');
+        if (!statusEl) return;
+        try {
+            const res = await fetch('/admin/reader-loop/status', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const data = await res.json();
+            if (data.running) {
+                statusEl.textContent = 'Corriendo';
+                statusEl.style.color = '#059669';
+                if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Ya está en ejecución'; }
+            } else {
+                statusEl.textContent = 'Detenido';
+                statusEl.style.color = '#6b7280';
+                if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Iniciar lector continuo'; }
+            }
+        } catch (e) {
+            statusEl.textContent = '—';
+            if (btnEl) btnEl.disabled = false;
+        }
+    }
+
+    /**
+     * Iniciar lector continuo
+     */
+    async function handleStartReaderLoop() {
+        const btnEl = document.getElementById('btnStartReaderLoop');
+        const msgEl = document.getElementById('readerLoopMessage');
+        if (!btnEl) return;
+        btnEl.disabled = true;
+        if (msgEl) msgEl.textContent = 'Iniciando...';
+        try {
+            const res = await fetch('/admin/reader-loop/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await res.json();
+            if (msgEl) msgEl.textContent = data.message || '';
+            await updateReaderLoopStatus();
+        } catch (e) {
+            if (msgEl) msgEl.textContent = 'Error al conectar.';
+            btnEl.disabled = false;
+        }
     }
 
     /**

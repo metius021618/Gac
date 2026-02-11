@@ -63,6 +63,30 @@ $content = ob_start();
                 </div>
             </div>
 
+            <!-- Lector continuo (sin cron) -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <h2 class="settings-section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        Lector continuo de correos
+                    </h2>
+                    <p class="settings-section-description">
+                        Ejecuta los lectores (Gmail, Outlook, IMAP) cada pocos segundos en segundo plano, sin depender del cron del servidor. El intervalo se configura en <code>.env</code> con <code>CRON_READER_LOOP_SECONDS</code> (por defecto 10 segundos).
+                    </p>
+                </div>
+                <div class="form-card gmail-matrix-card">
+                    <p class="gmail-matrix-label">Estado:</p>
+                    <p id="readerLoopStatus" class="gmail-matrix-email" style="margin-bottom: 0.5rem;">—</p>
+                    <button type="button" id="btnStartReaderLoop" class="btn btn-primary">
+                        Iniciar lector continuo
+                    </button>
+                    <p id="readerLoopMessage" class="gmail-matrix-empty" style="margin-top: 0.5rem; margin-bottom: 0;"></p>
+                </div>
+            </div>
+
             <!-- Sección de Sesión -->
             <div class="settings-section">
                 <div class="settings-section-header">

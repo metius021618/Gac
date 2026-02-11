@@ -54,7 +54,9 @@ IMAP_CONFIG = {
 CRON_CONFIG = {
     'enabled': os.getenv('CRON_ENABLED', 'true').lower() == 'true',
     'email_reader_interval': int(os.getenv('CRON_EMAIL_READER_INTERVAL', 5)),
-    'warehouse_sync_interval': int(os.getenv('CRON_WAREHOUSE_SYNC_INTERVAL', 60))
+    'warehouse_sync_interval': int(os.getenv('CRON_WAREHOUSE_SYNC_INTERVAL', 60)),
+    # Intervalo en segundos del bucle continuo (sync_loop.py). Mínimo recomendado 5 (Gmail API límites).
+    'reader_loop_seconds': max(5, int(os.getenv('CRON_READER_LOOP_SECONDS', 10))),
 }
 
 # Configuración de Logging
