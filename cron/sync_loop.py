@@ -48,9 +48,9 @@ READERS = [
 
 try:
     from cron.config import CRON_CONFIG
-    INTERVAL_SECONDS = CRON_CONFIG.get('reader_loop_seconds', 10)
+    INTERVAL_SECONDS = CRON_CONFIG.get('reader_loop_seconds', 2)
 except Exception:
-    INTERVAL_SECONDS = 10
+    INTERVAL_SECONDS = 2
 
 
 def run_reader(script_path: str, name: str) -> bool:
@@ -124,7 +124,10 @@ def remove_pid():
 
 
 def main():
-    logger.info("Sync loop iniciado (cada %d s). Raíz: %s", INTERVAL_SECONDS, ROOT_DIR)
+    logger.info(
+        "Sync loop iniciado (cada %d s). Raíz: %s | env CRON_READER_LOOP_SECONDS=%s",
+        INTERVAL_SECONDS, ROOT_DIR, os.getenv('CRON_READER_LOOP_SECONDS', 'no definido')
+    )
     write_pid()
     cycle = 0
     try:
