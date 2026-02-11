@@ -60,7 +60,7 @@ def run_reader(script_path: str, name: str) -> bool:
             [sys.executable, script_path],
             cwd=ROOT_DIR,
             capture_output=True,
-            text=True,
+            universal_newlines=True,
             timeout=120
         )
         if result.returncode != 0 and result.stderr:
@@ -88,7 +88,7 @@ def run_all_parallel():
                 cwd=ROOT_DIR,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
-                text=True
+                universal_newlines=True
             )
             procs.append((p, name, script_rel))
         except Exception as e:
