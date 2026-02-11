@@ -32,9 +32,9 @@ class EmailSubjectRepository
 
             $searchTrim = trim($search);
             if ($searchTrim !== '') {
-                // Búsqueda por asunto o nombre de plataforma (LIKE; collation de la BD suele ser case-insensitive)
-                $whereClause .= " AND (es.subject_line LIKE :q OR COALESCE(p.display_name,'') LIKE :q OR COALESCE(p.name,'') LIKE :q)";
-                $params[':q'] = '%' . $searchTrim . '%';
+                // Búsqueda case-insensitive: LOWER(column) vs patrón en minúsculas (por si la BD es case-sensitive)
+                $whereClause .= " AND (LOWER(es.subject_line) LIKE :q OR LOWER(COALESCE(p.display_name,'')) LIKE :q OR LOWER(COALESCE(p.name,'')) LIKE :q)";
+                $params[':q'] = '%' . mb_strtolower($searchTrim) . '%';
             }
 
             // Contar total
