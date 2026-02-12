@@ -112,16 +112,12 @@ class CodeService
         // Log: correo que recibimos en la consulta y correo/origen para el que buscamos
         @file_put_contents($consultLogFile, date('Y-m-d H:i:s') . " [CONSULT] correo_recibido=" . $userEmail . " → buscando_codigo_para_recipient=" . $userEmail . " origin_filtro=" . ($originFilter ?? 'cualquiera') . " platform=" . ($platform['display_name'] ?? $platformSlug) . " master_key=" . ($isMasterKeyUsed ? 'si' : 'no') . "\n", FILE_APPEND | LOCK_EX);
 
-        // Buscar el último correo para este usuario (recipient_email = userEmail) — igual para clave maestra o acceso normal
+        // Buscar el último correo para este usuario (recipient_email = userEmail). Solo ese correo, sin fallback a otra cuenta.
         $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $userEmail, $originFilter);
 
-        // Si no hay correo con su email y NO es Gmail ni Outlook, mostrar el último que llegó a la cuenta maestra (solo IMAP/pocoyoni)
-        if (!$lastEmail && $originFilter !== 'gmail' && $originFilter !== 'outlook') {
-            $master = $this->emailAccountRepository->findMasterAccount();
-            if ($master && !empty($master['email'])) {
-                @file_put_contents($consultLogFile, date('Y-m-d H:i:s') . " [CONSULT] FALLBACK: no encontrado para " . $userEmail . " → buscando con cuenta_maestra=" . $master['email'] . "\n", FILE_APPEND | LOCK_EX);
-                $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $master['email'], null);
-            }
+        // Nunca devolver un código de otro destinatario (por si hubiera algún fallo en BD o en otra ruta)
+        if ($lastEmail && strtolower(trim($lastEmail['recipient_email'] ?? '')) !== $userEmailLower) {
+            $lastEmail = null;
         }
 
         if ($lastEmail) {
