@@ -463,7 +463,8 @@ class UserAccessRepository
     }
 
     /**
-     * Contar correos por dominio(s)
+     * Contar registros (filas) en user_access por dominio(s).
+     * Mismo criterio que la lista al hacer clic en Gmail/Outlook/Pocoyoni en el dashboard.
      */
     public function countByDomains(array $domains): int
     {
@@ -477,7 +478,7 @@ class UserAccessRepository
                 $conditions[] = "email LIKE :{$key}";
                 $params[$key] = '%@' . strtolower(trim($domain));
             }
-            $sql = "SELECT COUNT(DISTINCT email) FROM user_access WHERE " . implode(' OR ', $conditions);
+            $sql = "SELECT COUNT(*) FROM user_access WHERE " . implode(' OR ', $conditions);
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
             return (int)$stmt->fetchColumn();

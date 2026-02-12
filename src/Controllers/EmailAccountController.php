@@ -59,12 +59,8 @@ class EmailAccountController
             $filterLabel = 'Pocoyoni';
         }
 
-        // Vista principal "Listar correos": solo emails con user_access (asignados). Vistas filtradas: todos los emails de email_accounts (stock + asignados).
-        if (!empty($filterDomains)) {
-            $result = $this->emailAccountRepository->listByDomainsPaginate($filterDomains, $search, $page, $perPageInt);
-        } else {
-            $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, []);
-        }
+        // Listar siempre desde user_access (correos registrados). Con filtro = solo los de ese dominio; el contador del dashboard usa el mismo criterio.
+        $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, $filterDomains);
         
         @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [EmailAccountController] total=' . $result['total'] . ' rows=' . count($result['data']) . "\n", FILE_APPEND | LOCK_EX);
         
@@ -82,11 +78,7 @@ class EmailAccountController
                 'filter' => $filter,
                 'filter_label' => $filterLabel
             ]);
-            if (!empty($filter)) {
-                require base_path('views/admin/email_accounts/_table_simple.php');
-            } else {
-                require base_path('views/admin/email_accounts/_table.php');
-            }
+            require base_path('views/admin/email_accounts/_table.php');
             $tableHtml = ob_get_clean();
             echo '<div class="admin-content">' . $tableHtml . '</div>';
             return;
