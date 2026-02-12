@@ -28,6 +28,52 @@
             accessCodeInput?.addEventListener('input', clearFieldError);
             platformSelect?.addEventListener('change', clearFieldError);
         }
+
+        const btnAddStock = document.getElementById('btnAddStock');
+        if (btnAddStock && emailsTextarea) {
+            btnAddStock.addEventListener('click', handleAddStock);
+        }
+    }
+
+    /**
+     * Agregar correos como stock (solo en email_accounts, sin asignar plataforma)
+     */
+    async function handleAddStock() {
+        const emails = emailsTextarea.value.trim();
+        if (!emails) {
+            await window.GAC.warning('Ingresa al menos un correo en el cuadro de texto.', 'Correos vacíos');
+            return;
+        }
+
+        const btn = document.getElementById('btnAddStock');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Agregando...';
+        }
+        try {
+            const response = await fetch('/admin/email-accounts/add-stock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ emails: emails })
+            });
+            const result = await response.json();
+            if (result.success) {
+                await window.GAC.success(result.message || 'Correos agregados como stock.', 'Stock actualizado');
+            } else {
+                await window.GAC.error(result.message || 'Error al agregar como stock', 'Error');
+            }
+        } catch (err) {
+            console.error(err);
+            await window.GAC.error('Error de conexión', 'Error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Agregar como stock';
+            }
+        }
     }
 
     /**

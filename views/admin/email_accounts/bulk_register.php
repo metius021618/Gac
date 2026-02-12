@@ -52,6 +52,12 @@ $content = ob_start();
                     ></textarea>
                     <span class="form-error" id="emailsError"></span>
                     <small class="form-help">Ingresa un correo por línea. Solo se aceptan correos del dominio pocoyoni.com</small>
+                    <div class="form-group" style="margin-top: 0.5rem;">
+                        <button type="button" id="btnAddStock" class="btn btn-secondary">
+                            Agregar como stock
+                        </button>
+                        <small class="form-help" style="display: block; margin-top: 0.25rem;">Registra los correos en el listado (sin asignar plataforma). Se mostrarán en Gmail, Hotmail o Pocoyoni según el dominio.</small>
+                    </div>
                 </div>
 
                 <!-- Campo Código de Acceso -->

@@ -59,8 +59,12 @@ class EmailAccountController
             $filterLabel = 'Pocoyoni';
         }
 
-        // Listar siempre desde user_access (correos registrados). Con filtro = solo los de ese dominio; el contador del dashboard usa el mismo criterio.
-        $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, $filterDomains);
+        // Vista principal "Listar correos": solo emails con user_access (asignados). Vistas filtradas: todos los emails de email_accounts (stock + asignados).
+        if (!empty($filterDomains)) {
+            $result = $this->emailAccountRepository->listByDomainsPaginate($filterDomains, $search, $page, $perPageInt);
+        } else {
+            $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, []);
+        }
         
         @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [EmailAccountController] total=' . $result['total'] . ' rows=' . count($result['data']) . "\n", FILE_APPEND | LOCK_EX);
         
@@ -78,7 +82,11 @@ class EmailAccountController
                 'filter' => $filter,
                 'filter_label' => $filterLabel
             ]);
-            require base_path('views/admin/email_accounts/_table.php');
+            if (!empty($filter)) {
+                require base_path('views/admin/email_accounts/_table_simple.php');
+            } else {
+                require base_path('views/admin/email_accounts/_table.php');
+            }
             $tableHtml = ob_get_clean();
             echo '<div class="admin-content">' . $tableHtml . '</div>';
             return;
@@ -371,7 +379,16 @@ class EmailAccountController
             return;
         }
 
+        $emailsAffected = $this->userAccessRepository->getEmailsByIds($ids);
         $deleted = $this->userAccessRepository->bulkDelete($ids);
+
+        if ($deleted && !empty($emailsAffected)) {
+            foreach (array_keys($emailsAffected) as $email) {
+                if ($this->userAccessRepository->countByEmail($email) === 0) {
+                    $this->emailAccountRepository->deleteByEmail($email);
+                }
+            }
+        }
 
         if ($deleted) {
             json_response([
@@ -409,9 +426,18 @@ class EmailAccountController
             return;
         }
 
+        $email = $this->userAccessRepository->getEmailById($id);
         $deleted = $this->userAccessRepository->delete($id);
 
-        if ($deleted) {
+        if ($deleted && $email !== null) {
+            if ($this->userAccessRepository->countByEmail($email) === 0) {
+                $this->emailAccountRepository->deleteByEmail($email);
+            }
+            json_response([
+                'success' => true,
+                'message' => 'Registro eliminado correctamente'
+            ], 200);
+        } elseif ($deleted) {
             json_response([
                 'success' => true,
                 'message' => 'Registro eliminado correctamente'
@@ -476,6 +502,39 @@ class EmailAccountController
             'title' => 'Asignar Correos Masivamente',
             'platforms' => $platforms
         ]);
+    }
+
+    /**
+     * Agregar correos como stock (solo en email_accounts). Aparecen en el listado por dominio (Gmail/Hotmail/Pocoyoni).
+     */
+    public function addStock(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+        $emailsInput = trim($request->input('emails', ''));
+        if ($emailsInput === '') {
+            json_response(['success' => false, 'message' => 'Ingresa al menos un correo'], 400);
+            return;
+        }
+        $emails = array_filter(array_map('trim', explode("\n", $emailsInput)));
+        $emails = array_unique($emails);
+        $result = $this->emailAccountRepository->addStockEmails($emails);
+        $msg = 'Agregados: ' . $result['added'] . '. Ya existían: ' . $result['skipped'];
+        if (!empty($result['errors'])) {
+            $msg .= '. Errores: ' . implode('; ', array_slice($result['errors'], 0, 5));
+            if (count($result['errors']) > 5) {
+                $msg .= '...';
+            }
+        }
+        json_response([
+            'success' => true,
+            'message' => $msg,
+            'added' => $result['added'],
+            'skipped' => $result['skipped'],
+            'errors' => $result['errors']
+        ], 200);
     }
 
     /**

@@ -435,6 +435,51 @@ class EmailAccountRepository
     }
 
     /**
+     * Agregar correos como stock (solo en email_accounts, sin user_access).
+     * El tipo se deduce del dominio: @gmail.com -> gmail, @outlook/@hotmail/@live -> outlook, resto -> imap.
+     * Aparecerán en el listado filtrado por dominio (Gmail, Hotmail, Pocoyoni).
+     *
+     * @param array $emails Lista de correos (uno por elemento)
+     * @return array ['added' => int, 'skipped' => int, 'errors' => string[]]
+     */
+    public function addStockEmails(array $emails): array
+    {
+        $added = 0;
+        $skipped = 0;
+        $errors = [];
+        $allowedTypes = ['imap', 'gmail', 'outlook'];
+        foreach ($emails as $raw) {
+            $email = trim(strtolower((string) $raw));
+            if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+            $domain = substr($email, strrpos($email, '@') + 1);
+            $type = 'imap';
+            if ($domain === 'gmail.com') {
+                $type = 'gmail';
+            } elseif (in_array($domain, ['outlook.com', 'hotmail.com', 'live.com', 'hotmail.es', 'live.es'], true)) {
+                $type = 'outlook';
+            }
+            try {
+                if ($this->findByEmail($email)) {
+                    $skipped++;
+                    continue;
+                }
+                $db = Database::getConnection();
+                $stmt = $db->prepare("
+                    INSERT INTO email_accounts (email, type, provider_config, enabled, sync_status, created_at, updated_at)
+                    VALUES (:email, :type, '{}', 1, 'pending', NOW(), NOW())
+                ");
+                $stmt->execute(['email' => $email, 'type' => $type]);
+                $added++;
+            } catch (PDOException $e) {
+                $errors[] = $email . ': ' . $e->getMessage();
+            }
+        }
+        return ['added' => $added, 'skipped' => $skipped, 'errors' => $errors];
+    }
+
+    /**
      * Guardar nueva cuenta de email
      * 
      * @param array $data

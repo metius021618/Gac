@@ -54,6 +54,7 @@ class Application
         $router->post('/admin/email-accounts/toggle-status', 'EmailAccountController@toggleStatus', ['auth']);
         $router->get('/admin/email-accounts/bulk-register', 'EmailAccountController@bulkRegister', ['auth']);
         $router->post('/admin/email-accounts/bulk-register', 'EmailAccountController@bulkRegisterStore', ['auth']);
+        $router->post('/admin/email-accounts/add-stock', 'EmailAccountController@addStock', ['auth']);
         
         // Rutas de autenticación
         $router->get('/login', 'AuthController@showLogin');

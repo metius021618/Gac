@@ -384,6 +384,48 @@ class UserAccessRepository
     }
 
     /**
+     * Obtener el email de un registro por ID (para poder borrar también de email_accounts si corresponde).
+     */
+    public function getEmailById(int $id): ?string
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("SELECT email FROM user_access WHERE id = :id");
+            $stmt->execute([':id' => $id]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ? trim($row['email']) : null;
+        } catch (PDOException $e) {
+            error_log("Error getEmailById: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Obtener emails de varios registros por IDs.
+     * @return array [email => true, ...] (sin duplicados)
+     */
+    public function getEmailsByIds(array $ids): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+        try {
+            $db = Database::getConnection();
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $stmt = $db->prepare("SELECT DISTINCT email FROM user_access WHERE id IN ({$placeholders})");
+            $stmt->execute(array_values($ids));
+            $out = [];
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $out[trim($row['email'])] = true;
+            }
+            return $out;
+        } catch (PDOException $e) {
+            error_log("Error getEmailsByIds: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Eliminar acceso
      */
     public function delete(int $id): bool
@@ -463,8 +505,7 @@ class UserAccessRepository
     }
 
     /**
-     * Contar registros (filas) en user_access por dominio(s).
-     * Mismo criterio que la lista al hacer clic en Gmail/Outlook/Pocoyoni en el dashboard.
+     * Contar correos por dominio(s)
      */
     public function countByDomains(array $domains): int
     {
@@ -478,7 +519,7 @@ class UserAccessRepository
                 $conditions[] = "email LIKE :{$key}";
                 $params[$key] = '%@' . strtolower(trim($domain));
             }
-            $sql = "SELECT COUNT(*) FROM user_access WHERE " . implode(' OR ', $conditions);
+            $sql = "SELECT COUNT(DISTINCT email) FROM user_access WHERE " . implode(' OR ', $conditions);
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
             return (int)$stmt->fetchColumn();
