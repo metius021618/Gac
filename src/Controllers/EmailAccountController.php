@@ -60,10 +60,13 @@ class EmailAccountController
         }
 
         // Vista principal "Listar correos": solo emails con user_access (asignados). Vistas filtradas: todos los emails de email_accounts (stock + asignados).
+        // La cuenta Gmail matriz se oculta en todo: no se muestra en listado ni en filtros.
         if (!empty($filterDomains)) {
             $result = $this->emailAccountRepository->listByDomainsPaginate($filterDomains, $search, $page, $perPageInt);
         } else {
-            $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, []);
+            $matrixAccount = $this->emailAccountRepository->getGmailMatrixAccount();
+            $excludeEmail = $matrixAccount && !empty($matrixAccount['email']) ? $matrixAccount['email'] : null;
+            $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, [], $excludeEmail);
         }
         
         @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [EmailAccountController] total=' . $result['total'] . ' rows=' . count($result['data']) . "\n", FILE_APPEND | LOCK_EX);
@@ -234,6 +237,11 @@ class EmailAccountController
                 echo "Cuenta no encontrada";
                 return;
             }
+            if ($this->emailAccountRepository->getGmailMatrixAccountId() === $id) {
+                http_response_code(404);
+                echo "Cuenta no encontrada";
+                return;
+            }
 
             // Parsear provider_config de manera segura
             $providerConfig = $emailAccount['provider_config'] ?? '{}';
@@ -294,6 +302,14 @@ class EmailAccountController
                 'success' => false,
                 'message' => 'Correo y acceso son requeridos'
             ], 400);
+            return;
+        }
+
+        if ($this->emailAccountRepository->getGmailMatrixAccountId() === $id) {
+            json_response([
+                'success' => false,
+                'message' => 'No se puede editar la cuenta Gmail matriz'
+            ], 403);
             return;
         }
 
@@ -366,9 +382,10 @@ class EmailAccountController
             return;
         }
 
-        // Validar que todos sean números
-        $ids = array_filter(array_map('intval', $ids), function($id) {
-            return $id > 0;
+        // Validar que todos sean números y excluir la cuenta matriz (no se puede eliminar)
+        $matrixId = $this->emailAccountRepository->getGmailMatrixAccountId();
+        $ids = array_filter(array_map('intval', $ids), function($id) use ($matrixId) {
+            return $id > 0 && $id !== $matrixId;
         });
 
         if (empty($ids)) {

@@ -179,14 +179,15 @@ class UserAccessRepository
 
     /**
      * Listar/buscar en user_access. Si hay texto, filtra por email o usuario (password).
+     * @param string|null $excludeEmail Si se indica, se excluye este email (ej. cuenta Gmail matriz).
      */
-    public function searchAndPaginate(string $search = '', int $page = 1, int $perPage = 15, array $filterDomains = []): array
+    public function searchAndPaginate(string $search = '', int $page = 1, int $perPage = 15, array $filterDomains = [], ?string $excludeEmail = null): array
     {
         $logFile = defined('BASE_PATH') ? BASE_PATH . '/logs/search_debug.log' : (__DIR__ . '/../../logs/search_debug.log');
         $log = function ($msg) use ($logFile) {
             @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [UserAccessRepository] ' . $msg . "\n", FILE_APPEND | LOCK_EX);
         };
-        $log('searchAndPaginate called: search="' . $search . '" page=' . $page . ' perPage=' . $perPage . ' domains=' . implode(',', $filterDomains));
+        $log('searchAndPaginate called: search="' . $search . '" page=' . $page . ' perPage=' . $perPage . ' domains=' . implode(',', $filterDomains) . ' excludeEmail=' . ($excludeEmail ?? ''));
         try {
             $db = Database::getConnection();
             $q = trim($search);
@@ -203,6 +204,12 @@ class UserAccessRepository
                 $log('no search term, listing all');
             }
 
+            // Excluir cuenta matriz (no debe verse en ningún listado)
+            if ($excludeEmail !== null && $excludeEmail !== '') {
+                $conditions[] = "LOWER(ua.email) != LOWER(:exclude_email)";
+                $params[':exclude_email'] = $excludeEmail;
+            }
+
             // Filtro por dominios
             if (!empty($filterDomains)) {
                 $domainConds = [];
@@ -215,10 +222,7 @@ class UserAccessRepository
                 $log('domain filter: ' . implode(', ', $filterDomains));
             }
 
-            // Ocultar cuenta Gmail matriz: no debe aparecer en Correos Registrados
-            $conditions[] = "(NOT EXISTS (SELECT 1 FROM gmail_matrix WHERE id = 1) OR ua.email != (SELECT ea.email FROM email_accounts ea INNER JOIN gmail_matrix gm ON gm.email_account_id = ea.id WHERE gm.id = 1 LIMIT 1))";
-
-            $whereClause = 'WHERE ' . implode(' AND ', $conditions);
+            $whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
 
             // Contar total (tabla user_access)
             $countSql = "

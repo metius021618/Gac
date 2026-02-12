@@ -49,7 +49,6 @@ class GmailController
         $client->setClientSecret(GMAIL_CLIENT_SECRET);
         $client->setRedirectUri($redirectUri);
         $client->addScope(Gmail::GMAIL_READONLY);
-        $client->addScope('https://www.googleapis.com/auth/userinfo.email');
         $client->setAccessType('offline');
         $client->setPrompt('consent');
         if ($request->get('from') === 'settings') {
@@ -98,7 +97,6 @@ class GmailController
         $client->setClientSecret(GMAIL_CLIENT_SECRET);
         $client->setRedirectUri($redirectUri);
         $client->addScope(Gmail::GMAIL_READONLY);
-        $client->addScope('https://www.googleapis.com/auth/userinfo.email');
 
         try {
             $token = $client->fetchAccessTokenWithAuthCode($code);
@@ -124,26 +122,22 @@ class GmailController
             return;
         }
 
-        // Obtener email: primero del id_token (evita llamar a Gmail API y el límite 429 por cuenta)
-        $email = $this->getEmailFromIdToken($token['id_token'] ?? '');
-        if (empty($email)) {
-            try {
-                $gmail = new Gmail($client);
-                $profile = $gmail->users->getProfile('me');
-                $email = $profile->getEmailAddress();
-            } catch (\Exception $e) {
-                $msg = $e->getMessage();
-                if (strpos($msg, '429') !== false || stripos($msg, 'rate limit') !== false || stripos($msg, 'RESOURCE_EXHAUSTED') !== false) {
-                    $_SESSION['gmail_error'] = 'Google ha limitado las solicitudes para esta cuenta de correo. Suele ser temporal por uso reciente de esa cuenta. Espera 1-2 horas (o hasta 24 h si persiste) y vuelve a intentar, o configura otra cuenta Gmail como matriz.';
-                } else {
-                    $_SESSION['gmail_error'] = 'Error al obtener perfil de Gmail: ' . $msg;
-                }
-                redirect($redirectAfter);
-                return;
+        try {
+            $gmail = new Gmail($client);
+            $profile = $gmail->users->getProfile('me');
+            $email = $profile->getEmailAddress();
+        } catch (\Exception $e) {
+            $msg = $e->getMessage();
+            if (strpos($msg, '429') !== false || stripos($msg, 'rate limit') !== false || stripos($msg, 'RESOURCE_EXHAUSTED') !== false) {
+                $_SESSION['gmail_error'] = 'Límite de solicitudes de Google alcanzado. Espera 5-10 minutos y vuelve a intentar configurar la cuenta Gmail.';
+            } else {
+                $_SESSION['gmail_error'] = 'Error al obtener perfil de Gmail: ' . $msg;
             }
+            redirect($redirectAfter);
+            return;
         }
 
-        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (empty($email)) {
             $_SESSION['gmail_error'] = 'No se pudo obtener el correo de la cuenta Gmail.';
             redirect($redirectAfter);
             return;
@@ -172,31 +166,6 @@ class GmailController
         unset($_SESSION['gmail_error']);
         $_SESSION['gmail_success'] = 'Cuenta Gmail matriz configurada correctamente: ' . htmlspecialchars($email) . '. El cron la leerá automáticamente.';
         redirect($redirectAfter);
-    }
-
-    /**
-     * Extraer email del id_token (JWT) que devuelve Google al intercambiar el código.
-     * Evita tener que llamar a Gmail API getProfile(), que puede devolver 429 por cuenta.
-     */
-    private function getEmailFromIdToken(string $idToken): ?string
-    {
-        if ($idToken === '') {
-            return null;
-        }
-        $parts = explode('.', $idToken);
-        if (count($parts) !== 3) {
-            return null;
-        }
-        $payload = base64_decode(strtr($parts[1], '-_', '+/'), true);
-        if ($payload === false) {
-            return null;
-        }
-        $data = json_decode($payload, true);
-        if (!is_array($data)) {
-            return null;
-        }
-        $email = $data['email'] ?? null;
-        return is_string($email) && filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
     }
 
     /**

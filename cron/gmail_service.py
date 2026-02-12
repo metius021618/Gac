@@ -7,65 +7,14 @@ original se extrae de los headers (To, X-Original-To) para guardar recipient_ema
 
 import base64
 import logging
-import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime
 from email.header import decode_header as email_decode_header
 from email.utils import parsedate_tz, mktime_tz
 
-from cron.config import GMAIL_CONFIG, LOG_CONFIG
+from cron.config import GMAIL_CONFIG
 
 logger = logging.getLogger(__name__)
-
-# Archivo donde guardamos "no llamar Gmail API hasta esta hora" cuando Google devuelve 429
-GMAIL_RATE_LIMIT_FILE = os.path.join(os.path.dirname(LOG_CONFIG['file']), 'gmail_rate_limit_until.txt')
-
-# Regex para extraer "Retry after 2026-02-12T22:58:40.059Z" del error 429
-RETRY_AFTER_RE = re.compile(r'[Rr]etry after\s+([\dT:\-.]+Z)', re.I)
-
-
-def _parse_retry_after_from_error(error_msg):
-    """Si el mensaje contiene 'Retry after <ISO timestamp>', devuelve ese datetime (UTC). Si no, None."""
-    m = RETRY_AFTER_RE.search(error_msg)
-    if not m:
-        return None
-    try:
-        s = m.group(1).strip()
-        # Aceptar con o sin milisegundos
-        for fmt in ('%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%SZ'):
-            try:
-                return datetime.strptime(s[:26] if '.' in s else s, fmt).replace(tzinfo=timezone.utc)
-            except ValueError:
-                continue
-        return None
-    except Exception:
-        return None
-
-
-def _save_gmail_rate_limit_until(retry_after_utc):
-    """Guarda en disco la hora hasta la que no debemos llamar a Gmail API."""
-    try:
-        with open(GMAIL_RATE_LIMIT_FILE, 'w') as f:
-            f.write(retry_after_utc.strftime('%Y-%m-%dT%H:%M:%SZ'))
-    except Exception as e:
-        logger.warning("No se pudo guardar gmail rate limit until: %s", e)
-
-
-def is_gmail_rate_limited():
-    """True si debemos omitir la llamada a Gmail API (cooldown por 429)."""
-    if not os.path.isfile(GMAIL_RATE_LIMIT_FILE):
-        return False, None
-    try:
-        with open(GMAIL_RATE_LIMIT_FILE) as f:
-            line = (f.read() or '').strip()
-        if not line:
-            return False, None
-        until = datetime.strptime(line[:19], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
-        if datetime.now(timezone.utc) < until:
-            return True, until
-        return False, None
-    except Exception:
-        return False, None
 
 # Imports opcionales de Google (solo si están instalados)
 try:
@@ -251,12 +200,6 @@ class GmailService:
         try:
             result = service.users().messages().list(**list_params).execute()
         except Exception as e:
-            err_str = str(e)
-            if '429' in err_str or 'rateLimitExceeded' in err_str or 'rate limit' in err_str.lower():
-                retry_after = _parse_retry_after_from_error(err_str)
-                if retry_after:
-                    _save_gmail_rate_limit_until(retry_after)
-                    logger.warning("Gmail 429: no se llamará a Gmail API hasta %s UTC", retry_after.strftime('%Y-%m-%d %H:%M:%S'))
             logger.error(f"Gmail list messages error: {e}")
             raise
 

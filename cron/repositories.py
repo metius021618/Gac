@@ -89,7 +89,32 @@ class EmailAccountRepository:
         except Error as e:
             logger.error(f"Error al obtener cuentas por tipo: {e}")
             return []
-    
+
+    @staticmethod
+    def get_gmail_matrix_account():
+        """Obtener la cuenta Gmail matriz desde la tabla gmail_matrix (única que lee el lector)."""
+        try:
+            db = Database.get_connection()
+            if USE_PYMYSQL:
+                cursor = db.cursor(DictCursor)
+            else:
+                cursor = db.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT ea.id, ea.email, ea.type, ea.provider_config,
+                       ea.oauth_token, ea.oauth_refresh_token, ea.enabled,
+                       ea.last_sync_at, ea.sync_status, ea.error_message
+                FROM gmail_matrix gm
+                INNER JOIN email_accounts ea ON ea.id = gm.email_account_id AND ea.enabled = 1
+                WHERE gm.id = 1
+                LIMIT 1
+            """)
+            row = cursor.fetchone()
+            cursor.close()
+            return row
+        except Exception as e:
+            logger.error(f"Error al obtener cuenta Gmail matriz: {e}")
+            return None
+
     @staticmethod
     def update_sync_status(account_id, status, error_message=None):
         """Actualizar estado de sincronización"""

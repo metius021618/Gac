@@ -18,7 +18,7 @@ from cron.config import CRON_CONFIG, LOG_CONFIG
 from cron.database import Database
 from cron.repositories import EmailAccountRepository, PlatformRepository, CodeRepository
 from cron.email_filter import EmailFilterService
-from cron.gmail_service import GmailService, is_gmail_rate_limited
+from cron.gmail_service import GmailService
 
 logging.basicConfig(
     level=getattr(logging, LOG_CONFIG['level'].upper(), logging.INFO),
@@ -82,18 +82,14 @@ def main():
         logger.warning("Cron deshabilitado en configuración")
         return
 
-    limited, until_utc = is_gmail_rate_limited()
-    if limited and until_utc:
-        logger.info("Gmail omitido (límite 429): no se llamará a la API hasta %s UTC", until_utc.strftime('%Y-%m-%d %H:%M:%S'))
-        return
-
     try:
         filter_service = EmailFilterService()
-        gmail_accounts = EmailAccountRepository.find_by_type('gmail')
-        if not gmail_accounts:
-            logger.info("No hay cuentas Gmail habilitadas.")
+        gaccount = EmailAccountRepository.get_gmail_matrix_account()
+        if not gaccount:
+            logger.info("No hay cuenta Gmail matriz configurada (tabla gmail_matrix).")
             return
 
+        gmail_accounts = [gaccount]
         total_codes_saved = 0
         for gaccount in gmail_accounts:
             gaccount_id = gaccount['id']

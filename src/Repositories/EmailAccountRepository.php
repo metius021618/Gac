@@ -111,6 +111,23 @@ class EmailAccountRepository
     }
 
     /**
+     * ID de la cuenta Gmail matriz (desde gmail_matrix). Null si no hay tabla o fila.
+     * Usado para excluir la matriz de listados y conteos (debe estar oculta).
+     */
+    public function getGmailMatrixAccountId(): ?int
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("SELECT email_account_id FROM gmail_matrix WHERE id = 1 LIMIT 1");
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ? (int) $row['email_account_id'] : null;
+        } catch (PDOException $e) {
+            return null;
+        }
+    }
+
+    /**
      * Guardar o actualizar la cuenta Gmail matriz en la tabla gmail_matrix.
      * Solo se escribe en esa tabla; la cuenta debe existir en email_accounts (p. ej. tras OAuth).
      *
@@ -441,11 +458,15 @@ class EmailAccountRepository
                 $params[$key] = strtolower(trim($d));
             }
             $whereDomain = '(' . implode(' OR ', $domainConds) . ')';
-            $sql = "SELECT COUNT(*) as total FROM email_accounts WHERE {$whereDomain}
-                AND (id != COALESCE((SELECT email_account_id FROM gmail_matrix WHERE id = 1 LIMIT 1), 0))";
+            $matrixId = $this->getGmailMatrixAccountId();
+            $sql = "SELECT COUNT(*) as total FROM email_accounts WHERE {$whereDomain}";
+            if ($matrixId !== null) {
+                $sql .= " AND id != :matrix_id";
+                $params[':matrix_id'] = $matrixId;
+            }
             $stmt = $db->prepare($sql);
             foreach ($params as $k => $v) {
-                $stmt->bindValue($k, $v, PDO::PARAM_STR);
+                $stmt->bindValue($k, $v, is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR);
             }
             $stmt->execute();
             return (int) $stmt->fetch(PDO::FETCH_ASSOC)['total'];
@@ -471,17 +492,21 @@ class EmailAccountRepository
             }
             $whereDomain = '(' . implode(' OR ', $domainConds) . ')';
             $searchTerm = '%' . trim($search) . '%';
-            $excludeMatrix = " AND (ea.id != COALESCE((SELECT email_account_id FROM gmail_matrix WHERE id = 1 LIMIT 1), 0))";
             if ($search !== '') {
                 $params[':search'] = $searchTerm;
-                $whereClause = "WHERE {$whereDomain} AND (ea.email LIKE :search){$excludeMatrix}";
+                $whereClause = "WHERE {$whereDomain} AND (ea.email LIKE :search)";
             } else {
-                $whereClause = "WHERE {$whereDomain}{$excludeMatrix}";
+                $whereClause = "WHERE {$whereDomain}";
+            }
+            $matrixId = $this->getGmailMatrixAccountId();
+            if ($matrixId !== null) {
+                $whereClause .= " AND ea.id != :matrix_id";
+                $params[':matrix_id'] = $matrixId;
             }
             $countSql = "SELECT COUNT(*) as total FROM email_accounts ea {$whereClause}";
             $countStmt = $db->prepare($countSql);
             foreach ($params as $k => $v) {
-                $countStmt->bindValue($k, $v, PDO::PARAM_STR);
+                $countStmt->bindValue($k, $v, is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR);
             }
             $countStmt->execute();
             $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
@@ -493,7 +518,7 @@ class EmailAccountRepository
                     FROM email_accounts ea {$whereClause} ORDER BY ea.created_at DESC {$limitClause}";
             $stmt = $db->prepare($sql);
             foreach ($params as $k => $v) {
-                $stmt->bindValue($k, $v, PDO::PARAM_STR);
+                $stmt->bindValue($k, $v, is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR);
             }
             $stmt->execute();
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -658,6 +683,9 @@ class EmailAccountRepository
      */
     public function delete(int $id): bool
     {
+        if ($this->getGmailMatrixAccountId() === $id) {
+            return false;
+        }
         try {
             $db = Database::getConnection();
             $stmt = $db->prepare("DELETE FROM email_accounts WHERE id = :id");
@@ -678,6 +706,10 @@ class EmailAccountRepository
     {
         $email = strtolower(trim($email));
         if ($email === '') {
+            return false;
+        }
+        $account = $this->findByEmail($email);
+        if ($account && $this->getGmailMatrixAccountId() === (int) $account['id']) {
             return false;
         }
         try {
