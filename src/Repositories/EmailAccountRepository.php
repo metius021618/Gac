@@ -414,7 +414,9 @@ class EmailAccountRepository
             $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
             $offset = ($page - 1) * $perPage;
             $limitClause = $perPage > 0 ? "LIMIT " . (int) $perPage . " OFFSET " . (int) $offset : '';
-            $sql = "SELECT ea.id, ea.email, ea.created_at FROM email_accounts ea {$whereClause} ORDER BY ea.created_at DESC {$limitClause}";
+            $sql = "SELECT ea.id, ea.email, ea.created_at,
+                    (SELECT 1 FROM user_access ua WHERE LOWER(ua.email) = LOWER(ea.email) LIMIT 1) AS asignado
+                    FROM email_accounts ea {$whereClause} ORDER BY ea.created_at DESC {$limitClause}";
             $stmt = $db->prepare($sql);
             foreach ($params as $k => $v) {
                 $stmt->bindValue($k, $v, PDO::PARAM_STR);

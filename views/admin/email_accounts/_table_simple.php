@@ -11,21 +11,30 @@
             <tr>
                 <th style="width: 60px;">ID</th>
                 <th class="text-center">Correo</th>
+                <th style="width: 14%;">Asignado</th>
                 <th style="width: 18%;">Fecha registro</th>
             </tr>
         </thead>
         <tbody id="tableBody">
             <?php if (empty($email_accounts)): ?>
                 <tr>
-                    <td colspan="3" class="text-center">
+                    <td colspan="4" class="text-center">
                         <p class="empty-message">No hay correos registrados.</p>
                     </td>
                 </tr>
             <?php else: ?>
                 <?php foreach ($email_accounts as $account): ?>
+                    <?php $asignado = !empty($account['asignado']); ?>
                     <tr>
                         <td><?= (int)$account['id'] ?></td>
                         <td class="email-cell text-center"><?= htmlspecialchars($account['email'] ?? '') ?></td>
+                        <td class="text-center">
+                            <?php if ($asignado): ?>
+                                <span class="badge status-active">Sí</span>
+                            <?php else: ?>
+                                <span class="badge status-inactive">No</span>
+                            <?php endif; ?>
+                        </td>
                         <td><span class="sync-time"><?= !empty($account['created_at']) ? date('d/m/Y H:i', strtotime($account['created_at'])) : '—' ?></span></td>
                     </tr>
                 <?php endforeach; ?>
