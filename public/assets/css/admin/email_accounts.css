@@ -51,6 +51,11 @@
     cursor: pointer;
 }
 
+/* Columna Correo: tipografía Franklin Gothic Medium Cond */
+.admin-table .email-cell {
+    font-family: "Franklin Gothic Medium Cond", "Franklin Gothic", "Arial Narrow", sans-serif;
+}
+
 /* ============================================
    BOTÓN ELIMINAR MASIVO
    ============================================ */
