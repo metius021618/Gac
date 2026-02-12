@@ -85,38 +85,54 @@ class EmailAccountRepository
     }
 
     /**
-     * Obtener la cuenta Gmail matriz (la que está conectada por OAuth y lee correos).
-     * Prioridad: 1) cuenta con oauth_refresh_token (conectada), 2) primera por created_at.
-     * Así, correos agregados masivamente (sin token) no se muestran como matriz.
+     * Obtener la cuenta Gmail matriz desde la tabla gmail_matrix (única fuente de verdad).
+     * Solo interactúa con esa tabla; no usa user_access ni provider_config.is_master.
      *
-     * @return array|null Cuenta Gmail matriz o null
+     * @return array|null Cuenta Gmail matriz o null si no hay fila en gmail_matrix
      */
     public function getGmailMatrixAccount(): ?array
     {
         try {
             $db = Database::getConnection();
-            // Primero la que tiene OAuth conectado (la que realmente es la matriz)
             $stmt = $db->prepare("
-                SELECT id, email, type, provider_config, oauth_token, oauth_refresh_token,
-                       enabled, last_sync_at, sync_status, error_message
-                FROM email_accounts
-                WHERE type = 'gmail' AND enabled = 1
-                  AND oauth_refresh_token IS NOT NULL AND TRIM(oauth_refresh_token) != ''
-                ORDER BY created_at ASC
-                LIMIT 1
+                SELECT ea.id, ea.email, ea.type, ea.provider_config, ea.oauth_token, ea.oauth_refresh_token,
+                       ea.enabled, ea.last_sync_at, ea.sync_status, ea.error_message
+                FROM gmail_matrix gm
+                INNER JOIN email_accounts ea ON ea.id = gm.email_account_id AND ea.enabled = 1
+                WHERE gm.id = 1
             ");
             $stmt->execute();
             $account = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($account) {
-                return $account;
-            }
-            // Fallback: primera Gmail por fecha (comportamiento anterior)
-            $accounts = $this->findByType('gmail');
-            return $accounts[0] ?? null;
+            return $account ?: null;
         } catch (PDOException $e) {
             error_log("Error en getGmailMatrixAccount: " . $e->getMessage());
-            $accounts = $this->findByType('gmail');
-            return $accounts[0] ?? null;
+            return null;
+        }
+    }
+
+    /**
+     * Guardar o actualizar la cuenta Gmail matriz en la tabla gmail_matrix.
+     * Solo se escribe en esa tabla; la cuenta debe existir en email_accounts (p. ej. tras OAuth).
+     *
+     * @param int $emailAccountId ID de la fila en email_accounts que será la matriz
+     * @return bool
+     */
+    public function setGmailMatrixAccount(int $emailAccountId): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                INSERT INTO gmail_matrix (id, email_account_id, created_at, updated_at)
+                VALUES (1, :email_account_id, NOW(), NOW())
+                ON DUPLICATE KEY UPDATE email_account_id = :email_account_id2, updated_at = NOW()
+            ");
+            return $stmt->execute([
+                'email_account_id' => $emailAccountId,
+                'email_account_id2' => $emailAccountId
+            ]);
+        } catch (PDOException $e) {
+            error_log("Error en setGmailMatrixAccount: " . $e->getMessage());
+            return false;
         }
     }
 

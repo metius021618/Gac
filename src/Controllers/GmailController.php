@@ -151,14 +151,16 @@ class GmailController
         }
 
         if ($fromSettings) {
-            $this->emailAccountRepository->deleteOtherGmailAccountsExcept($id);
-        }
-
-        // Registrar también en user_access para que aparezca en "Correos Registrados"
-        $platforms = $this->platformRepository->findAllEnabled();
-        $firstPlatformId = !empty($platforms) ? (int) $platforms[0]['id'] : 0;
-        if ($firstPlatformId > 0) {
-            $this->userAccessRepository->createOrUpdate($email, 'Gmail (OAuth)', $firstPlatformId);
+            // Cuenta matriz: solo se guarda en gmail_matrix; no se registra en user_access ni se usa email_accounts como "matriz"
+            $this->emailAccountRepository->setGmailMatrixAccount((int) $id);
+            $this->emailAccountRepository->deleteOtherGmailAccountsExcept((int) $id);
+        } else {
+            // Conectar desde listado de correos: sí registrar en user_access para que aparezca en Correos Registrados
+            $platforms = $this->platformRepository->findAllEnabled();
+            $firstPlatformId = !empty($platforms) ? (int) $platforms[0]['id'] : 0;
+            if ($firstPlatformId > 0) {
+                $this->userAccessRepository->createOrUpdate($email, 'Gmail (OAuth)', $firstPlatformId);
+            }
         }
 
         unset($_SESSION['gmail_error']);
