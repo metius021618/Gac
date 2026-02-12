@@ -64,21 +64,32 @@ class EmailFilterService:
         
         return None
     
+    # Máximo de caracteres extra permitidos cuando el asunto contiene el patrón.
+    # Evita aceptar correos promocionales tipo "Tu código Netflix - Oferta 50% descuento..."
+    MAX_EXTRA_CHARS = 20
+
     def _matches_subject(self, subject, pattern):
-        """Verificar si asunto coincide con patrón"""
+        """Verificar si asunto coincide con patrón. Solo asuntos que son los guardados (o variación corta), no otros."""
+        subject = (subject or '').strip()
+        pattern = (pattern or '').strip()
+        if not subject or not pattern:
+            return False
         # Comparación exacta
         if subject == pattern:
             return True
-        
-        # Contains
-        if pattern in subject or subject in pattern:
-            return True
-        
-        # Similitud (simplificado)
-        similarity = self._calculate_similarity(subject, pattern)
-        if similarity >= 0.8:
-            return True
-        
+        # El asunto del correo contiene nuestro patrón: solo OK si no añade mucho (evitar promos)
+        if pattern in subject:
+            if len(subject) <= len(pattern) + self.MAX_EXTRA_CHARS:
+                return True
+            return False
+        # Nuestro patrón contiene el asunto (asunto más corto): OK si es variación mínima
+        if subject in pattern:
+            return len(pattern) <= len(subject) + self.MAX_EXTRA_CHARS
+        # Similitud: solo si longitudes parecidas (evitar que un asunto largo promocional coincida)
+        if abs(len(subject) - len(pattern)) <= self.MAX_EXTRA_CHARS:
+            similarity = self._calculate_similarity(subject, pattern)
+            if similarity >= 0.8:
+                return True
         return False
     
     def _calculate_similarity(self, str1, str2):
