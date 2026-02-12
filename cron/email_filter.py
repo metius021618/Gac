@@ -51,78 +51,21 @@ class EmailFilterService:
         return None
     
     def find_matching_subject(self, subject, platform):
-        """Encontrar asunto que coincide"""
+        """Encontrar asunto guardado que coincide exactamente con el del correo."""
         if platform not in self.subject_patterns_cache:
             return None
-        
-        subject_lower = subject.lower()
-        subjects = self.subject_patterns_cache[platform]
-        
-        for pattern in subjects:
-            if self._matches_subject(subject_lower, pattern.lower()):
+        subject_norm = (subject or '').strip()
+        for pattern in self.subject_patterns_cache[platform]:
+            if self._matches_subject_exact(subject_norm, (pattern or '').strip()):
                 return pattern
-        
         return None
-    
-    # Máximo de caracteres extra permitidos cuando el asunto contiene el patrón.
-    # Evita aceptar correos promocionales tipo "Tu código Netflix - Oferta 50% descuento..."
-    MAX_EXTRA_CHARS = 20
 
     def _matches_subject(self, subject, pattern):
-        """Verificar si asunto coincide con patrón. Solo asuntos que son los guardados (o variación corta), no otros."""
-        subject = (subject or '').strip()
-        pattern = (pattern or '').strip()
+        """Comparación exacta: el asunto del correo debe ser igual a uno de los guardados en la vista de asuntos."""
+        return self._matches_subject_exact((subject or '').strip(), (pattern or '').strip())
+
+    def _matches_subject_exact(self, subject, pattern):
+        """Igualdad exacta (ignorando mayúsculas/minúsculas) para no leer ni guardar otro correo."""
         if not subject or not pattern:
             return False
-        # Comparación exacta
-        if subject == pattern:
-            return True
-        # El asunto del correo contiene nuestro patrón: solo OK si no añade mucho (evitar promos)
-        if pattern in subject:
-            if len(subject) <= len(pattern) + self.MAX_EXTRA_CHARS:
-                return True
-            return False
-        # Nuestro patrón contiene el asunto (asunto más corto): OK si es variación mínima
-        if subject in pattern:
-            return len(pattern) <= len(subject) + self.MAX_EXTRA_CHARS
-        # Similitud: solo si longitudes parecidas (evitar que un asunto largo promocional coincida)
-        if abs(len(subject) - len(pattern)) <= self.MAX_EXTRA_CHARS:
-            similarity = self._calculate_similarity(subject, pattern)
-            if similarity >= 0.8:
-                return True
-        return False
-    
-    def _calculate_similarity(self, str1, str2):
-        """Calcular similitud entre strings"""
-        if str1 == str2:
-            return 1.0
-        
-        if not str1 or not str2:
-            return 0.0
-        
-        # Distancia de Levenshtein simplificada
-        max_len = max(len(str1), len(str2))
-        distance = self._levenshtein_distance(str1, str2)
-        
-        similarity = 1 - (distance / max_len)
-        return max(0.0, min(1.0, similarity))
-    
-    def _levenshtein_distance(self, s1, s2):
-        """Calcular distancia de Levenshtein"""
-        if len(s1) < len(s2):
-            return self._levenshtein_distance(s2, s1)
-        
-        if len(s2) == 0:
-            return len(s1)
-        
-        previous_row = range(len(s2) + 1)
-        for i, c1 in enumerate(s1):
-            current_row = [i + 1]
-            for j, c2 in enumerate(s2):
-                insertions = previous_row[j + 1] + 1
-                deletions = current_row[j] + 1
-                substitutions = previous_row[j] + (c1 != c2)
-                current_row.append(min(insertions, deletions, substitutions))
-            previous_row = current_row
-        
-        return previous_row[-1]
+        return subject.lower() == pattern.lower()
