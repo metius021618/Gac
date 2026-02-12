@@ -441,7 +441,8 @@ class EmailAccountRepository
                 $params[$key] = strtolower(trim($d));
             }
             $whereDomain = '(' . implode(' OR ', $domainConds) . ')';
-            $sql = "SELECT COUNT(*) as total FROM email_accounts WHERE {$whereDomain}";
+            $sql = "SELECT COUNT(*) as total FROM email_accounts WHERE {$whereDomain}
+                AND (id != COALESCE((SELECT email_account_id FROM gmail_matrix WHERE id = 1 LIMIT 1), 0))";
             $stmt = $db->prepare($sql);
             foreach ($params as $k => $v) {
                 $stmt->bindValue($k, $v, PDO::PARAM_STR);
@@ -470,11 +471,12 @@ class EmailAccountRepository
             }
             $whereDomain = '(' . implode(' OR ', $domainConds) . ')';
             $searchTerm = '%' . trim($search) . '%';
+            $excludeMatrix = " AND (ea.id != COALESCE((SELECT email_account_id FROM gmail_matrix WHERE id = 1 LIMIT 1), 0))";
             if ($search !== '') {
                 $params[':search'] = $searchTerm;
-                $whereClause = "WHERE {$whereDomain} AND (ea.email LIKE :search)";
+                $whereClause = "WHERE {$whereDomain} AND (ea.email LIKE :search){$excludeMatrix}";
             } else {
-                $whereClause = "WHERE {$whereDomain}";
+                $whereClause = "WHERE {$whereDomain}{$excludeMatrix}";
             }
             $countSql = "SELECT COUNT(*) as total FROM email_accounts ea {$whereClause}";
             $countStmt = $db->prepare($countSql);

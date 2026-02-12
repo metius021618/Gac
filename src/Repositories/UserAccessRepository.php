@@ -215,7 +215,10 @@ class UserAccessRepository
                 $log('domain filter: ' . implode(', ', $filterDomains));
             }
 
-            $whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
+            // Ocultar cuenta Gmail matriz: no debe aparecer en Correos Registrados
+            $conditions[] = "(NOT EXISTS (SELECT 1 FROM gmail_matrix WHERE id = 1) OR ua.email != (SELECT ea.email FROM email_accounts ea INNER JOIN gmail_matrix gm ON gm.email_account_id = ea.id WHERE gm.id = 1 LIMIT 1))";
+
+            $whereClause = 'WHERE ' . implode(' AND ', $conditions);
 
             // Contar total (tabla user_access)
             $countSql = "
