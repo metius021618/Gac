@@ -116,9 +116,11 @@ def main():
                 for email_data in filtered:
                     platform = email_data.get('matched_platform')
                     if not platform:
+                        logger.info(f"  - Saltado (sin plataforma): asunto=%s", (email_data.get('subject') or '')[:50])
                         continue
                     platform_obj = PlatformRepository.find_by_name(platform)
                     if not platform_obj or not platform_obj.get('enabled'):
+                        logger.info(f"  - Saltado (plataforma %s no existe o deshabilitada): asunto=%s", platform, (email_data.get('subject') or '')[:50])
                         continue
                     email_from = email_data.get('from', '') or ''
                     recipient_email = (email_data.get('to_primary') or gaccount_email).strip().lower()
@@ -130,6 +132,8 @@ def main():
                             gaccount_id, email_from, recipient_email, subject, received_at, email_body
                         ):
                             logger.info(f"  - ✓ Cuerpo actualizado para {recipient_email}")
+                        else:
+                            logger.info(f"  - Ya existía en BD (no se guarda de nuevo): asunto=%s → %s", subject[:50], recipient_email)
                         continue
                     save_data = {
                         'email_account_id': gaccount_id,
@@ -146,6 +150,8 @@ def main():
                     if code_id:
                         records_saved += 1
                         logger.info(f"  - ✓ Correo guardado: DE={email_from[:40]} → {recipient_email}")
+                    else:
+                        logger.warning(f"  - ✗ Save falló (BD): asunto=%s → %s", subject[:50], recipient_email)
                 total_codes_saved += records_saved
                 backfill_count = _backfill_email_bodies(emails, limit=100)
                 if backfill_count:

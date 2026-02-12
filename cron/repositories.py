@@ -290,7 +290,10 @@ class CodeRepository:
         try:
             db = Database.get_connection()
             cursor = db.cursor()
-            
+            received_at = code_data.get('received_at') or ''
+            if not received_at or not str(received_at).strip():
+                from datetime import datetime
+                received_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             cursor.execute("""
                 INSERT INTO codes (
                     email_account_id,
@@ -313,7 +316,7 @@ class CodeRepository:
                 code_data.get('email_from'),
                 code_data.get('subject'),
                 code_data.get('email_body'),  # Cuerpo del email (HTML o texto)
-                code_data.get('received_at'),
+                received_at,
                 code_data.get('origin', 'imap'),
                 code_data.get('recipient_email')
             ))
