@@ -131,10 +131,6 @@ $content = ob_start();
                             <span class="email-info-label">Fecha:</span>
                             <span class="email-info-value" id="emailModalDate">-</span>
                         </div>
-                        <div class="email-info-row hidden" id="emailModalRecipientRow">
-                            <span class="email-info-label">Destinatario (vista maestra):</span>
-                            <span class="email-info-value" id="emailModalRecipient">-</span>
-                        </div>
                     </div>
                     <div class="email-body-container">
                         <div class="email-body" id="emailModalBody"></div>
