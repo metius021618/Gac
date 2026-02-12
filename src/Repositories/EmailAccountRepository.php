@@ -382,6 +382,37 @@ class EmailAccountRepository
      * @param int $perPage
      * @return array ['data' => [['id','email','created_at']], 'total', 'page', 'per_page', 'total_pages']
      */
+    /**
+     * Contar correos en email_accounts por dominio(s). Usado para los contadores del dashboard (Gmail, Outlook, Pocoyoni).
+     */
+    public function countByDomains(array $domains): int
+    {
+        if (empty($domains)) {
+            return 0;
+        }
+        try {
+            $db = Database::getConnection();
+            $domainConds = [];
+            $params = [];
+            foreach ($domains as $i => $d) {
+                $key = ':dom' . $i;
+                $domainConds[] = "LOWER(SUBSTRING_INDEX(email, '@', -1)) = {$key}";
+                $params[$key] = strtolower(trim($d));
+            }
+            $whereDomain = '(' . implode(' OR ', $domainConds) . ')';
+            $sql = "SELECT COUNT(*) as total FROM email_accounts WHERE {$whereDomain}";
+            $stmt = $db->prepare($sql);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v, PDO::PARAM_STR);
+            }
+            $stmt->execute();
+            return (int) $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        } catch (PDOException $e) {
+            error_log("Error countByDomains email_accounts: " . $e->getMessage());
+            return 0;
+        }
+    }
+
     public function listByDomainsPaginate(array $domains, string $search = '', int $page = 1, int $perPage = 15): array
     {
         if (empty($domains)) {

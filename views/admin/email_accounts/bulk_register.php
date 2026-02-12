@@ -46,12 +46,12 @@ $content = ob_start();
                         id="emails" 
                         name="emails" 
                         class="form-textarea" 
-                        placeholder="correo1@pocoyoni.com&#10;correo2@pocoyoni.com&#10;correo3@pocoyoni.com"
+                        placeholder="correo1@pocoyoni.com&#10;correo2@gmail.com&#10;correo3@hotmail.com"
                         rows="8"
                         required
                     ></textarea>
                     <span class="form-error" id="emailsError"></span>
-                    <small class="form-help">Ingresa un correo por línea. Solo se aceptan correos del dominio pocoyoni.com</small>
+                    <small class="form-help">Ingresa un correo por línea. Dominios permitidos: Pocoyoni, Gmail, Outlook, Hotmail, Live.</small>
                     <div class="form-group" style="margin-top: 0.5rem;">
                         <button type="button" id="btnAddStock" class="btn btn-secondary">
                             Agregar como stock

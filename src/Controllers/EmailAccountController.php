@@ -595,30 +595,27 @@ class EmailAccountController
             return;
         }
 
-        // Validar dominio pocoyoni.com
+        $allowedDomains = ['pocoyoni.com', 'gmail.com', 'outlook.com', 'hotmail.com', 'hotmail.es', 'live.com', 'live.es'];
         $invalidEmails = [];
         $validEmails = [];
-        
+
         foreach ($emailsArray as $email) {
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $invalidEmails[] = $email;
                 continue;
             }
-            
-            // Verificar dominio pocoyoni.com
-            $domain = substr(strrchr($email, "@"), 1);
-            if (strtolower($domain) !== 'pocoyoni.com') {
+            $domain = strtolower(trim(substr(strrchr($email, "@"), 1)));
+            if (!in_array($domain, $allowedDomains, true)) {
                 $invalidEmails[] = $email;
                 continue;
             }
-            
             $validEmails[] = $email;
         }
 
         if (empty($validEmails)) {
             json_response([
                 'success' => false,
-                'message' => 'No se encontraron correos válidos del dominio pocoyoni.com',
+                'message' => 'No se encontraron correos válidos. Dominios permitidos: Pocoyoni, Gmail, Outlook, Hotmail, Live.',
                 'invalid_emails' => $invalidEmails
             ], 400);
             return;
@@ -641,9 +638,16 @@ class EmailAccountController
         foreach ($validEmails as $email) {
             $existingAccount = $this->emailAccountRepository->findByEmail($email);
             if (!$existingAccount) {
+                $domain = strtolower(trim(substr(strrchr($email, "@"), 1)));
+                $type = 'imap';
+                if ($domain === 'gmail.com') {
+                    $type = 'gmail';
+                } elseif (in_array($domain, ['outlook.com', 'hotmail.com', 'hotmail.es', 'live.com', 'live.es'], true)) {
+                    $type = 'outlook';
+                }
                 $accountData = [
                     'email' => $email,
-                    'type' => 'imap',
+                    'type' => $type,
                     'provider_config' => [
                         'imap_server' => $masterConfig['imap_server'] ?? '',
                         'imap_port' => $masterConfig['imap_port'] ?? 993,
@@ -676,7 +680,7 @@ class EmailAccountController
         );
 
         if (!empty($invalidEmails)) {
-            $message .= ' ' . count($invalidEmails) . ' correo(s) fueron rechazados por formato inválido o dominio incorrecto.';
+            $message .= ' ' . count($invalidEmails) . ' correo(s) rechazados (formato inválido o dominio no permitido).';
         }
 
         json_response([

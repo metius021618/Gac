@@ -179,21 +179,20 @@
             if (emailsArray.length === 0) {
                 errorMessage = 'Debes ingresar al menos un correo electrónico';
             } else {
-                // Validar formato y dominio
+                const allowedDomains = ['pocoyoni.com', 'gmail.com', 'outlook.com', 'hotmail.com', 'hotmail.es', 'live.com', 'live.es'];
                 const invalidEmails = [];
                 emailsArray.forEach(email => {
                     if (!filter_var(email)) {
                         invalidEmails.push(email);
                     } else {
-                        const domain = email.split('@')[1];
-                        if (!domain || domain.toLowerCase() !== 'pocoyoni.com') {
+                        const domain = (email.split('@')[1] || '').toLowerCase().trim();
+                        if (!domain || !allowedDomains.includes(domain)) {
                             invalidEmails.push(email);
                         }
                     }
                 });
-                
                 if (invalidEmails.length > 0) {
-                    errorMessage = `${invalidEmails.length} correo(s) inválido(s) o que no pertenecen al dominio pocoyoni.com`;
+                    errorMessage = `${invalidEmails.length} correo(s) inválido(s) o con dominio no permitido. Permitidos: Pocoyoni, Gmail, Outlook, Hotmail, Live.`;
                 }
             }
         }

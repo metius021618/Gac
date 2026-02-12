@@ -8,6 +8,7 @@
 namespace Gac\Controllers;
 
 use Gac\Core\Request;
+use Gac\Repositories\EmailAccountRepository;
 use Gac\Repositories\PlatformRepository;
 use Gac\Repositories\UserRepository;
 use Gac\Repositories\UserAccessRepository;
@@ -15,12 +16,14 @@ use Gac\Repositories\UserAccessRepository;
 class DashboardController
 {
     private UserAccessRepository $userAccessRepo;
+    private EmailAccountRepository $emailAccountRepo;
     private PlatformRepository $platformRepo;
     private UserRepository $userRepo;
 
     public function __construct()
     {
         $this->userAccessRepo = new UserAccessRepository();
+        $this->emailAccountRepo = new EmailAccountRepository();
         $this->platformRepo = new PlatformRepository();
         $this->userRepo = new UserRepository();
     }
@@ -34,9 +37,9 @@ class DashboardController
             'email_accounts' => $this->getEmailAccountsCount(),
             'platforms_active' => $this->getPlatformsActiveCount(),
             'administrators' => $this->getAdministratorsCount(),
-            'gmail_count' => $this->getEmailCountByDomain(['gmail.com']),
-            'outlook_count' => $this->getEmailCountByDomain(['outlook.com', 'hotmail.com', 'live.com']),
-            'pocoyoni_count' => $this->getEmailCountByDomain(['pocoyoni.com'])
+            'gmail_count' => $this->emailAccountRepo->countByDomains(['gmail.com']),
+            'outlook_count' => $this->emailAccountRepo->countByDomains(['outlook.com', 'hotmail.com', 'hotmail.es', 'live.com', 'live.es']),
+            'pocoyoni_count' => $this->emailAccountRepo->countByDomains(['pocoyoni.com'])
         ];
 
         $this->renderView('admin/dashboard/index', [
@@ -80,19 +83,6 @@ class DashboardController
             return $this->userRepo->countAdministrators();
         } catch (\Exception $e) {
             error_log("Error al contar administradores: " . $e->getMessage());
-            return 0;
-        }
-    }
-
-    /**
-     * Contar correos por dominio(s) en user_access
-     */
-    private function getEmailCountByDomain(array $domains): int
-    {
-        try {
-            return $this->userAccessRepo->countByDomains($domains);
-        } catch (\Exception $e) {
-            error_log("Error al contar correos por dominio: " . $e->getMessage());
             return 0;
         }
     }
