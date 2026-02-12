@@ -49,7 +49,7 @@ class Application
         $router->get('/admin/email-accounts/edit', 'EmailAccountController@edit', ['auth']);
         $router->post('/admin/email-accounts/update', 'EmailAccountController@update', ['auth']);
         $router->post('/admin/email-accounts/delete', 'EmailAccountController@destroy', ['auth']);
-        $router->post('/admin/email-accounts/bulk-delete', 'EmailAccountController@bulkDeleteStore', ['auth']);
+        $router->post('/admin/email-accounts/bulk-delete', 'EmailAccountController@bulkDeleteDispatch', ['auth']);
         $router->post('/admin/email-accounts/bulk-delete-ids', 'EmailAccountController@bulkDelete', ['auth']);
         $router->post('/admin/email-accounts/toggle-status', 'EmailAccountController@toggleStatus', ['auth']);
         $router->get('/admin/email-accounts/bulk-register', 'EmailAccountController@bulkRegister', ['auth']);

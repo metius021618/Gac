@@ -641,6 +641,25 @@ class EmailAccountController
     }
 
     /**
+     * Eliminación masiva: si llega 'ids' (array) → eliminar por IDs (vista Correos registrados);
+     * si llega 'emails' + 'platform_id' → flujo registro masivo.
+     * Así funciona tanto con el JS actual (bulk-delete-ids) como con caché antigua que llame a bulk-delete con ids.
+     */
+    public function bulkDeleteDispatch(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+        $ids = $request->input('ids', []);
+        if (!empty($ids) && is_array($ids)) {
+            $this->bulkDelete($request);
+            return;
+        }
+        $this->bulkDeleteStore($request);
+    }
+
+    /**
      * Procesar eliminación masiva (filtrada por plataforma)
      * Solo elimina la asignación email+plataforma de user_access.
      * Si el correo no tiene más asignaciones en user_access, también se elimina de email_accounts.
