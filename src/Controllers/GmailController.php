@@ -129,7 +129,7 @@ class GmailController
         } catch (\Exception $e) {
             $msg = $e->getMessage();
             if (strpos($msg, '429') !== false || stripos($msg, 'rate limit') !== false || stripos($msg, 'RESOURCE_EXHAUSTED') !== false) {
-                $_SESSION['gmail_error'] = 'Límite de solicitudes de Google alcanzado. Espera 5-10 minutos y vuelve a intentar configurar la cuenta Gmail.';
+                $_SESSION['gmail_error'] = 'Google ha limitado las solicitudes para esta cuenta de correo. Suele ser temporal por uso reciente de esa cuenta. Espera 1-2 horas (o hasta 24 h si persiste) y vuelve a intentar, o configura otra cuenta Gmail como matriz.';
             } else {
                 $_SESSION['gmail_error'] = 'Error al obtener perfil de Gmail: ' . $msg;
             }
