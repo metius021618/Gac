@@ -7,6 +7,7 @@ import base64
 import json
 import logging
 import re
+import time
 import requests
 from datetime import datetime
 from email.utils import parsedate_tz, mktime_tz
@@ -15,6 +16,10 @@ from cron.config import OUTLOOK_CONFIG
 from cron.repositories import EmailAccountRepository
 
 logger = logging.getLogger(__name__)
+
+# Timeouts: Graph API a veces tarda; 60s + 1 reintento evita "Read timed out" ocasional
+OUTLOOK_TOKEN_TIMEOUT = 45
+OUTLOOK_GRAPH_TIMEOUT = 60
 
 
 def _decode_jwt_payload(token):
@@ -73,7 +78,7 @@ class OutlookService:
             'redirect_uri': self.redirect_uri
         }
 
-        response = requests.post(token_url, data=data, timeout=30)
+        response = requests.post(token_url, data=data, timeout=OUTLOOK_TOKEN_TIMEOUT)
 
         if response.status_code != 200:
             raise Exception(f"Token refresh rechazado: {response.text[:300]}")
@@ -127,7 +132,15 @@ class OutlookService:
             '$select': 'id,subject,from,toRecipients,receivedDateTime,body,bodyPreview'
         }
 
-        response = requests.get(inbox_url, headers=headers, params=params, timeout=30)
+        def _fetch_inbox():
+            return requests.get(inbox_url, headers=headers, params=params, timeout=OUTLOOK_GRAPH_TIMEOUT)
+
+        try:
+            response = _fetch_inbox()
+        except (requests.exceptions.Timeout, requests.exceptions.ReadTimeout) as e:
+            logger.warning("Outlook Graph timeout, reintentando en 3s: %s", e)
+            time.sleep(3)
+            response = _fetch_inbox()
 
         if response.status_code == 401:
             logger.warning("401 Graph → retry refresh")
@@ -138,7 +151,12 @@ class OutlookService:
                 EmailAccountRepository.update_oauth_tokens(account_id, access_token, new_refresh)
 
             headers['Authorization'] = f'Bearer {access_token}'
-            response = requests.get(inbox_url, headers=headers, params=params, timeout=30)
+            try:
+                response = requests.get(inbox_url, headers=headers, params=params, timeout=OUTLOOK_GRAPH_TIMEOUT)
+            except (requests.exceptions.Timeout, requests.exceptions.ReadTimeout) as e:
+                logger.warning("Outlook Graph timeout (tras refresh), reintentando: %s", e)
+                time.sleep(3)
+                response = requests.get(inbox_url, headers=headers, params=params, timeout=OUTLOOK_GRAPH_TIMEOUT)
 
         if response.status_code == 401:
             raise Exception("Microsoft Graph rechazó Mail.Read — reautorizar")
