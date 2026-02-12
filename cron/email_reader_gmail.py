@@ -104,6 +104,9 @@ def main():
                     continue
                 filtered = filter_service.filter_by_subject(emails)
                 logger.info(f"  - Emails filtrados: {len(filtered)}")
+                if not filtered and emails:
+                    subs = [e.get('subject', '')[:60] for e in emails[:5]]
+                    logger.info(f"  - Asuntos no coinciden con BD (añádelos en Asuntos de correo): %s", subs)
                 if not filtered:
                     EmailAccountRepository.update_sync_status(gaccount_id, 'success')
                     continue

@@ -4,6 +4,8 @@ Filtra correos SOLO por los asuntos definidos en la página de asuntos (tabla em
 Usado por Gmail, Outlook e IMAP (Pocoyoni) de forma consistente.
 """
 
+import re
+import unicodedata
 import logging
 from cron.repositories import EmailSubjectRepository
 
@@ -64,8 +66,23 @@ class EmailFilterService:
         """Comparación exacta: el asunto del correo debe ser igual a uno de los guardados en la vista de asuntos."""
         return self._matches_subject_exact((subject or '').strip(), (pattern or '').strip())
 
+    @staticmethod
+    def _normalize_subject(s):
+        """Normalizar asunto: espacios colapsados, unicode NFC, para comparar igual aunque Gmail/BD difieran en espacios o acentos."""
+        if not s or not isinstance(s, str):
+            return ''
+        s = (s or '').strip()
+        s = re.sub(r'\s+', ' ', s)
+        try:
+            s = unicodedata.normalize('NFC', s)
+        except Exception:
+            pass
+        return s
+
     def _matches_subject_exact(self, subject, pattern):
-        """Igualdad exacta (ignorando mayúsculas/minúsculas) para no leer ni guardar otro correo."""
+        """Igualdad exacta (ignorando mayúsculas/minúsculas) tras normalizar, para no leer ni guardar otro correo."""
         if not subject or not pattern:
             return False
-        return subject.lower() == pattern.lower()
+        a = self._normalize_subject(subject).lower()
+        b = self._normalize_subject(pattern).lower()
+        return a == b

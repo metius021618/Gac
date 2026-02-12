@@ -9,6 +9,7 @@ import base64
 import logging
 import re
 from datetime import datetime
+from email.header import decode_header as email_decode_header
 from email.utils import parsedate_tz, mktime_tz
 
 from cron.config import GMAIL_CONFIG
@@ -32,6 +33,25 @@ def _get_header(headers, name):
         if (h.get('name') or '').lower() == name:
             return h.get('value') or ''
     return ''
+
+
+def _decode_header_value(value):
+    """Decodificar header MIME (=?UTF-8?B?...?=) a string para comparar asuntos correctamente."""
+    if not value or not isinstance(value, str):
+        return value or ''
+    if '=?' not in value:
+        return value.strip()
+    try:
+        parts = email_decode_header(value)
+        result = []
+        for part, charset in parts:
+            if isinstance(part, bytes):
+                result.append(part.decode(charset or 'utf-8', errors='replace'))
+            else:
+                result.append(part or '')
+        return ''.join(result).strip()
+    except Exception:
+        return value.strip()
 
 
 def _decode_body(data):
@@ -216,7 +236,7 @@ class GmailService:
         payload = msg.get('payload') or {}
         headers = payload.get('headers') or []
 
-        subject = _get_header(headers, 'Subject')
+        subject = _decode_header_value(_get_header(headers, 'Subject'))
         from_raw = _get_header(headers, 'From')
         to_raw = _get_header(headers, 'To')
         x_original_to = _get_header(headers, 'X-Original-To')
