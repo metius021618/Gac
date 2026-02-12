@@ -84,7 +84,6 @@
             const logoutItem = document.getElementById('logoutMenuItem');
 
             if (!trigger || !dropdown) {
-                console.log('User menu elements not found');
                 return;
             }
 
