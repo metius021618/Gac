@@ -602,10 +602,14 @@ class EmailAccountRepository
      */
     public function deleteByEmail(string $email): bool
     {
+        $email = strtolower(trim($email));
+        if ($email === '') {
+            return false;
+        }
         try {
             $db = Database::getConnection();
-            $stmt = $db->prepare("DELETE FROM email_accounts WHERE email = :email");
-            return $stmt->execute(['email' => strtolower(trim($email))]);
+            $stmt = $db->prepare("DELETE FROM email_accounts WHERE LOWER(email) = :email");
+            return $stmt->execute(['email' => $email]);
         } catch (PDOException $e) {
             error_log("Error al eliminar cuenta de email por email: " . $e->getMessage());
             return false;

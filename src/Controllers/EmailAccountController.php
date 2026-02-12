@@ -384,8 +384,9 @@ class EmailAccountController
 
         if ($deleted && !empty($emailsAffected)) {
             foreach (array_keys($emailsAffected) as $email) {
-                if ($this->userAccessRepository->countByEmail($email) === 0) {
-                    $this->emailAccountRepository->deleteByEmail($email);
+                $emailNorm = strtolower(trim($email));
+                if ($this->userAccessRepository->countByEmail($emailNorm) === 0) {
+                    $this->emailAccountRepository->deleteByEmail($emailNorm);
                 }
             }
         }
@@ -430,8 +431,9 @@ class EmailAccountController
         $deleted = $this->userAccessRepository->delete($id);
 
         if ($deleted && $email !== null) {
-            if ($this->userAccessRepository->countByEmail($email) === 0) {
-                $this->emailAccountRepository->deleteByEmail($email);
+            $emailNorm = strtolower(trim($email));
+            if ($this->userAccessRepository->countByEmail($emailNorm) === 0) {
+                $this->emailAccountRepository->deleteByEmail($emailNorm);
             }
             json_response([
                 'success' => true,
