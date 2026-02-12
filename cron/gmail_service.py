@@ -158,19 +158,23 @@ class GmailService:
         service = build('gmail', 'v1', credentials=creds, cache_discovery=False)
 
         # Filtro por fecha: solo correos recientes (menos llamadas y más rápido)
+        # Excluir categoría Promociones para no leer códigos de correos promocionales (mostraría ese en vez del de verificación)
         try:
             from cron.config import CRON_CONFIG
             newer_days = CRON_CONFIG.get('gmail_newer_than_days', 1)
             query = 'newer_than:{}d'.format(newer_days) if newer_days else None
         except Exception:
             query = 'newer_than:1d'
+        if query:
+            query = query + ' -category:promotions'
+        else:
+            query = '-category:promotions'
         list_params = {
             'userId': 'me',
             'labelIds': ['INBOX'],
             'maxResults': min(max_messages, 100),
         }
-        if query:
-            list_params['q'] = query
+        list_params['q'] = query
 
         # Listar IDs de mensajes (INBOX, filtrado por fecha, últimos max_messages)
         try:
