@@ -99,6 +99,8 @@ def main():
                 max_msg = CRON_CONFIG.get('gmail_max_messages', 20)
                 emails = gmail_service.read_account(gaccount, max_messages=max_msg)
                 logger.info(f"  - Emails leídos: {len(emails)}")
+                for i, e in enumerate(emails[:5]):
+                    logger.info(f"  - Recibido[{i}]: asunto=%r → destinatario=%s", (e.get('subject') or '')[:70], e.get('to_primary') or '')
                 if not emails:
                     EmailAccountRepository.update_sync_status(gaccount_id, 'success')
                     continue
