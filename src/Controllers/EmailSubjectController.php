@@ -150,10 +150,13 @@ class EmailSubjectController
                 'id' => $subjectId
             ], 201);
         } else {
+            $isDuplicate = \Gac\Repositories\EmailSubjectRepository::getLastError() === 'duplicate';
             json_response([
                 'success' => false,
-                'message' => 'Error al guardar el asunto. Puede que ya exista para esta plataforma.'
-            ], 500);
+                'message' => $isDuplicate
+                    ? 'Ya existe un asunto con el mismo texto para esta plataforma.'
+                    : 'Error al guardar el asunto.'
+            ], $isDuplicate ? 409 : 500);
         }
     }
 

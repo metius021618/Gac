@@ -23,23 +23,30 @@ class SessionRepository
             $db = Database::getConnection();
             $lastActivity = time();
             
+            // PDO no permite el mismo nombre de parámetro dos veces; usar nombres distintos en UPDATE
             $stmt = $db->prepare("
                 INSERT INTO sessions (id, user_id, ip_address, user_agent, payload, last_activity)
                 VALUES (:id, :user_id, :ip_address, :user_agent, :payload, :last_activity)
                 ON DUPLICATE KEY UPDATE
-                    last_activity = :last_activity,
-                    ip_address = :ip_address,
-                    user_agent = :user_agent,
-                    payload = :payload
+                    last_activity = :last_activity_up,
+                    ip_address = :ip_address_up,
+                    user_agent = :user_agent_up,
+                    payload = :payload_up
             ");
             
+            $ip = $ipAddress ?? $_SERVER['REMOTE_ADDR'] ?? null;
+            $ua = $userAgent ?? $_SERVER['HTTP_USER_AGENT'] ?? null;
             return $stmt->execute([
                 ':id' => $sessionId,
                 ':user_id' => $userId,
-                ':ip_address' => $ipAddress ?? $_SERVER['REMOTE_ADDR'] ?? null,
-                ':user_agent' => $userAgent ?? $_SERVER['HTTP_USER_AGENT'] ?? null,
+                ':ip_address' => $ip,
+                ':user_agent' => $ua,
                 ':payload' => $payload,
-                ':last_activity' => $lastActivity
+                ':last_activity' => $lastActivity,
+                ':last_activity_up' => $lastActivity,
+                ':ip_address_up' => $ip,
+                ':user_agent_up' => $ua,
+                ':payload_up' => $payload
             ]);
         } catch (PDOException $e) {
             error_log("Error al crear/actualizar sesión: " . $e->getMessage());

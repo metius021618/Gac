@@ -15,6 +15,14 @@ use PDOException;
 
 class EmailSubjectRepository
 {
+    /** Último error: 'duplicate' si fue violación de unique_platform_subject */
+    private static string $lastError = '';
+
+    public static function getLastError(): string
+    {
+        return self::$lastError;
+    }
+
     /**
      * Buscar y paginar asuntos de email con filtros
      * 
@@ -52,12 +60,7 @@ class EmailSubjectRepository
                 {$whereClause}
             ";
             $countStmt = $db->prepare($countSql);
-            if (!empty($params)) {
-                foreach ($params as $key => $value) {
-                    $countStmt->bindValue($key, $value, PDO::PARAM_STR);
-                }
-            }
-            $countStmt->execute();
+            $countStmt->execute($params);
             $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
             $logFile = defined('BASE_PATH') ? BASE_PATH . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'email_subjects_search.log' : '';
@@ -89,12 +92,7 @@ class EmailSubjectRepository
             ";
             
             $stmt = $db->prepare($sql);
-            if (!empty($params)) {
-                foreach ($params as $key => $value) {
-                    $stmt->bindValue($key, $value, PDO::PARAM_STR);
-                }
-            }
-            $stmt->execute();
+            $stmt->execute($params);
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             return [
@@ -164,6 +162,7 @@ class EmailSubjectRepository
      */
     public function save(array $data): int|false
     {
+        self::$lastError = '';
         try {
             $db = Database::getConnection();
             $stmt = $db->prepare("
@@ -178,7 +177,12 @@ class EmailSubjectRepository
             
             return (int) $db->lastInsertId();
         } catch (PDOException $e) {
-            error_log("Error al guardar asunto de email: " . $e->getMessage());
+            $msg = $e->getMessage();
+            $code = $e->getCode();
+            if ($code === '23000' || strpos($msg, '1062') !== false || stripos($msg, 'Duplicate') !== false) {
+                self::$lastError = 'duplicate';
+            }
+            error_log("Error al guardar asunto de email: " . $msg);
             return false;
         }
     }

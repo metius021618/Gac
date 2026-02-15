@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS gmail_matrix (
 
 -- Opcional: si ya tenías una cuenta Gmail conectada (con token), asignarla como matriz inicial
 -- (ejecutar solo una vez después de crear la tabla)
+
 -- INSERT INTO gmail_matrix (id, email_account_id, created_at, updated_at)
 -- SELECT 1, id, NOW(), NOW() FROM email_accounts
 -- WHERE type = 'gmail' AND enabled = 1
