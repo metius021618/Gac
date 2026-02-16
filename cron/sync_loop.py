@@ -80,11 +80,18 @@ def run_reader(script_path: str, name: str) -> bool:
 
 
 def run_all_parallel():
-    """Lanza los lectores en paralelo. Gmail solo se ejecuta cada GMAIL_MIN_INTERVAL s para no superar cuota API."""
+    """Lanza los lectores en paralelo. Gmail se omite si CRON_GMAIL_EVENT_DRIVEN=true (solo webhook)."""
+    try:
+        from cron.config import CRON_CONFIG
+        gmail_event_driven = CRON_CONFIG.get('gmail_event_driven', False)
+    except Exception:
+        gmail_event_driven = False
     now = time.time()
     to_run = []
     for script_rel, name in READERS:
         if name == 'Gmail':
+            if gmail_event_driven:
+                continue  # No polling: solo eventos vía webhook
             if now - _last_gmail_run[0] < GMAIL_MIN_INTERVAL:
                 continue
             _last_gmail_run[0] = now

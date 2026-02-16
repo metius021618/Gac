@@ -202,6 +202,7 @@ class CodeRepository
                 $originClause = ' AND c.origin = :origin';
                 $params['origin'] = $origin;
             }
+            // Preferir is_current = 1 (último OTP por cuenta+plataforma) si existe la columna
             $stmt = $db->prepare("
                 SELECT 
                     c.id,
@@ -218,7 +219,7 @@ class CodeRepository
                 WHERE c.platform_id = :platform_id
                   AND c.recipient_email = :recipient_email
                   {$originClause}
-                ORDER BY c.received_at DESC, c.id DESC
+                ORDER BY (COALESCE(c.is_current, 0) = 1) DESC, c.received_at DESC, c.id DESC
                 LIMIT 1
             ");
             

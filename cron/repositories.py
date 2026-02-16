@@ -280,6 +280,29 @@ class SettingsRepository:
             return default
 
     @staticmethod
+    def set(name, value, value_type='string'):
+        """Guardar o actualizar un setting (para gmail_last_history_id, gmail_watch_expiration, etc.)."""
+        try:
+            db = Database.get_connection()
+            cursor = db.cursor()
+            value_str = str(value) if value is not None else ''
+            cursor.execute("""
+                INSERT INTO settings (name, value, type)
+                VALUES (%s, %s, %s)
+                ON DUPLICATE KEY UPDATE value = VALUES(value), type = VALUES(type)
+            """, (name, value_str, value_type))
+            db.commit()
+            cursor.close()
+            return True
+        except Error as e:
+            logger.error(f"Error al guardar setting '{name}': {e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            return False
+
+    @staticmethod
     def get_email_subjects_for_platform(platform):
         """Obtener asuntos para una plataforma desde tabla email_subjects (misma fuente que la página de asuntos)."""
         return EmailSubjectRepository.get_subjects_for_platform(platform)
@@ -357,6 +380,25 @@ class CodeRepository:
             return None
     
     @staticmethod
+    def gmail_message_id_exists(gmail_message_id):
+        """True si ya existe un código con este gmail_message_id (evitar duplicados)."""
+        if not gmail_message_id:
+            return False
+        try:
+            db = Database.get_connection()
+            if USE_PYMYSQL:
+                cursor = db.cursor(DictCursor)
+            else:
+                cursor = db.cursor(dictionary=True)
+            cursor.execute("SELECT 1 FROM codes WHERE gmail_message_id = %s LIMIT 1", (gmail_message_id,))
+            row = cursor.fetchone()
+            cursor.close()
+            return row is not None
+        except Error as e:
+            logger.error(f"Error gmail_message_id_exists: {e}")
+            return False
+
+    @staticmethod
     def email_record_exists(email_account_id, email_from, recipient_email, subject, received_at):
         """Verificar si ya existe un registro para este email (DE, destinatario, asunto, fecha)."""
         if not recipient_email or not subject:
@@ -379,6 +421,74 @@ class CodeRepository:
         except Error as e:
             logger.error(f"Error al verificar email existente: {e}")
             return False
+
+    @staticmethod
+    def mark_current_for_account_platform(email_account_id, platform_id):
+        """Poner is_current=0 en todos los códigos de esta cuenta y plataforma (antes de insertar el nuevo OTP)."""
+        try:
+            db = Database.get_connection()
+            cursor = db.cursor()
+            cursor.execute("""
+                UPDATE codes SET is_current = 0
+                WHERE email_account_id = %s AND platform_id = %s
+            """, (email_account_id, platform_id))
+            db.commit()
+            cursor.close()
+            return True
+        except Error as e:
+            logger.error(f"Error mark_current_for_account_platform: {e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            return False
+
+    @staticmethod
+    def save_otp_current(code_data):
+        """
+        Guardar OTP nuevo con lógica is_current: marca anteriores como no actuales e inserta con is_current=1.
+        code_data debe incluir: email_account_id, platform_id, code, email_from, subject, email_body,
+        received_at, origin, recipient_email, y opcionalmente email_date, gmail_message_id.
+        """
+        try:
+            db = Database.get_connection()
+            cursor = db.cursor()
+            email_account_id = code_data['email_account_id']
+            platform_id = code_data['platform_id']
+            CodeRepository.mark_current_for_account_platform(email_account_id, platform_id)
+            received_at = code_data.get('received_at') or ''
+            if not received_at or not str(received_at).strip():
+                from datetime import datetime
+                received_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            email_date = code_data.get('email_date')
+            gmail_message_id = code_data.get('gmail_message_id')
+            cursor.execute("""
+                INSERT INTO codes (
+                    email_account_id, platform_id, code, email_from, subject, email_body,
+                    received_at, origin, status, recipient_email,
+                    email_date, gmail_message_id, is_current
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, 'available', %s,
+                    %s, %s, 1
+                )
+            """, (
+                email_account_id, platform_id,
+                code_data['code'], code_data.get('email_from'), code_data.get('subject'),
+                code_data.get('email_body'), received_at, code_data.get('origin', 'gmail'),
+                code_data.get('recipient_email'),
+                email_date, gmail_message_id
+            ))
+            code_id = cursor.lastrowid
+            db.commit()
+            cursor.close()
+            return code_id
+        except Error as e:
+            logger.error(f"Error save_otp_current: {e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            return None
 
     @staticmethod
     def update_email_body_by_email(email_account_id, email_from, recipient_email, subject, received_at, email_body):

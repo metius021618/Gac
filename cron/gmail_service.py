@@ -299,6 +299,158 @@ class GmailService:
         emails.sort(key=lambda e: e.get('date', ''), reverse=True)
         return emails
 
+    def setup_watch(self, account):
+        """
+        Registrar Gmail Watch (users.watch) para la cuenta. Gmail notificará cambios vía Pub/Sub.
+        account: dict con oauth_refresh_token, email.
+        Returns: dict con historyId (str) y expiration (str, ms desde epoch) o None si falla.
+        Requiere GMAIL_PUBSUB_TOPIC en config (projects/PROJECT_ID/topics/TOPIC_NAME).
+        """
+        topic = (GMAIL_CONFIG.get('pubsub_topic') or '').strip()
+        if not topic or not topic.startswith('projects/'):
+            logger.warning("Gmail Watch: GMAIL_PUBSUB_TOPIC no configurado o inválido. Configure .env con el topic completo.")
+            return None
+        refresh_token = (account.get('oauth_refresh_token') or '').strip()
+        if not refresh_token:
+            logger.warning("Gmail Watch: cuenta sin oauth_refresh_token")
+            return None
+        if not self.client_id or not self.client_secret:
+            logger.warning("Gmail Watch: GMAIL_CLIENT_ID / GMAIL_CLIENT_SECRET no configurados")
+            return None
+        creds = Credentials(
+            token=None,
+            refresh_token=refresh_token,
+            token_uri='https://oauth2.googleapis.com/token',
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+            scopes=['https://www.googleapis.com/auth/gmail.readonly']
+        )
+        creds.refresh(Request())
+        if _HAS_HTTPLIB2:
+            base_http = httplib2.Http()
+            fixed_http = _fix_alt_param_http(base_http)
+            auth_http = AuthorizedHttp(creds, http=fixed_http)
+            service = build('gmail', 'v1', http=auth_http, cache_discovery=False)
+        else:
+            _install_alt_param_fix_for_requests()
+            service = build('gmail', 'v1', credentials=creds, cache_discovery=False)
+        try:
+            body = {'topicName': topic, 'labelIds': ['INBOX']}
+            resp = service.users().watch(userId='me', body=body).execute()
+            history_id = resp.get('historyId')
+            expiration = resp.get('expiration')  # string, ms
+            if history_id is not None:
+                logger.info("Gmail Watch registrado: historyId=%s expiration=%s", history_id, expiration)
+                return {'historyId': str(history_id), 'expiration': str(expiration) if expiration else ''}
+            return None
+        except Exception as e:
+            logger.error("Gmail Watch error: %s", e)
+            return None
+
+    def _build_service(self, account):
+        """Construir cliente Gmail API autenticado para la cuenta (para history.list y messages.get)."""
+        refresh_token = (account.get('oauth_refresh_token') or '').strip()
+        if not refresh_token or not self.client_id or not self.client_secret:
+            return None
+        creds = Credentials(
+            token=None,
+            refresh_token=refresh_token,
+            token_uri='https://oauth2.googleapis.com/token',
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+            scopes=['https://www.googleapis.com/auth/gmail.readonly']
+        )
+        creds.refresh(Request())
+        if _HAS_HTTPLIB2:
+            base_http = httplib2.Http()
+            fixed_http = _fix_alt_param_http(base_http)
+            auth_http = AuthorizedHttp(creds, http=fixed_http)
+            return build('gmail', 'v1', http=auth_http, cache_discovery=False)
+        _install_alt_param_fix_for_requests()
+        return build('gmail', 'v1', credentials=creds, cache_discovery=False)
+
+    def fetch_history_message_ids(self, account, start_history_id):
+        """
+        history.list desde start_history_id; devuelve (list of message ids, new_history_id).
+        new_history_id es el del último response (para guardar en BD).
+        """
+        service = self._build_service(account)
+        if not service:
+            return [], None
+        try:
+            start = int(start_history_id) if start_history_id else None
+            if start is None:
+                return [], None
+            msg_ids = []
+            page_token = None
+            last_history_id = None
+            while True:
+                params = {'userId': 'me', 'startHistoryId': start}
+                if page_token:
+                    params['pageToken'] = page_token
+                resp = service.users().history().list(**params).execute()
+                last_history_id = resp.get('historyId')
+                for h in resp.get('history', []):
+                    for m in h.get('messages', []):
+                        mid = m.get('id')
+                        if mid and mid not in msg_ids:
+                            msg_ids.append(mid)
+                page_token = resp.get('nextPageToken')
+                if not page_token:
+                    break
+            return msg_ids, last_history_id
+        except Exception as e:
+            logger.error("fetch_history_message_ids error: %s", e)
+            return [], None
+
+    def get_message_metadata(self, service, msg_id, account_email):
+        """Obtener solo metadata (subject, from, to, date) para filtrar por asunto sin descargar cuerpo."""
+        if not service or not msg_id:
+            return None
+        try:
+            msg = service.users().messages().get(
+                userId='me', id=msg_id, format='metadata',
+                metadataHeaders=['Subject', 'From', 'To', 'Date', 'X-Original-To', 'Original-Recipient']
+            ).execute()
+            payload = msg.get('payload') or {}
+            headers = payload.get('headers') or []
+            subject = _decode_header_value(_get_header(headers, 'Subject'))
+            from_raw = _get_header(headers, 'From')
+            to_raw = _get_header(headers, 'To')
+            x_original_to = _get_header(headers, 'X-Original-To')
+            original_recipient = _get_header(headers, 'Original-Recipient')
+            date_header_str = _get_header(headers, 'Date')
+            from_email = _extract_email(from_raw)
+            to_list = [e.strip().lower() for e in re.findall(r'[\w.+-]+@[\w.-]+\.\w+', to_raw or '') if e]
+            orig = x_original_to or original_recipient
+            to_primary = (_extract_email(orig) or (to_list[0] if to_list else account_email) or account_email).strip().lower()
+            internal_date = msg.get('internalDate')
+            date = _parse_internal_date(internal_date) if internal_date else _parse_date(date_header_str)
+            return {
+                'message_number': msg_id,
+                'subject': subject,
+                'from': from_email,
+                'to_primary': to_primary,
+                'date': date,
+                'to': to_list or [account_email],
+            }
+        except Exception as e:
+            logger.debug("get_message_metadata %s: %s", msg_id, e)
+            return None
+
+    def get_message_full(self, service, msg_id, account_email):
+        """Descargar mensaje completo y parsear (para cuando el asunto ya hizo match)."""
+        if not service or not msg_id:
+            return None
+        try:
+            msg = service.users().messages().get(
+                userId='me', id=msg_id, format='full'
+            ).execute()
+            return self._parse_message(msg, account_email)
+        except Exception as e:
+            logger.debug("get_message_full %s: %s", msg_id, e)
+            return None
+
     def _parse_message(self, msg, account_email):
         """Convertir mensaje Gmail API al formato usado por ImapService (subject, from, to_primary, date, body_*).
         Destinatario (to_primary): en correo matriz con reenvíos se usa el destinatario original

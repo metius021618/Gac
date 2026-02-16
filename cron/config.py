@@ -31,7 +31,9 @@ GMAIL_CONFIG = {
     'client_id': os.getenv('GMAIL_CLIENT_ID', ''),
     'client_secret': os.getenv('GMAIL_CLIENT_SECRET', ''),
     'redirect_uri': os.getenv('GMAIL_REDIRECT_URI', ''),
-    'scopes': [os.getenv('GMAIL_SCOPES', 'https://www.googleapis.com/auth/gmail.readonly')]
+    'scopes': [os.getenv('GMAIL_SCOPES', 'https://www.googleapis.com/auth/gmail.readonly')],
+    # Topic Pub/Sub para Gmail Watch (event-driven). Formato: projects/PROJECT_ID/topics/TOPIC_NAME
+    'pubsub_topic': os.getenv('GMAIL_PUBSUB_TOPIC', ''),
 }
 
 # Configuración Outlook/Microsoft Graph API
@@ -63,6 +65,8 @@ CRON_CONFIG = {
     # Mínimo segundos entre ejecuciones del lector Gmail (evita 429: límite 15.000 unidades/usuario/minuto).
     # IMAP y Outlook siguen cada ciclo; solo Gmail se espacia. Por defecto 60 s.
     'gmail_min_interval_seconds': max(30, int(os.getenv('CRON_GMAIL_MIN_INTERVAL_SECONDS', '60'))),
+    # Si true, NO ejecutar el lector Gmail en el sync_loop (solo eventos vía webhook + process_gmail_history).
+    'gmail_event_driven': os.getenv('CRON_GMAIL_EVENT_DRIVEN', 'false').lower() in ('true', '1', 'yes'),
 }
 
 # Configuración de Logging
