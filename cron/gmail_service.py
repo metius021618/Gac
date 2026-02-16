@@ -33,16 +33,53 @@ except ImportError:
     _HAS_HTTPLIB2 = False
 
 
+def _fix_alt_param_uri(uri):
+    """Corregir parámetro alt en la URI: solo 'json' es válido (origen del error: librería/proxy puede enviar jso, jsonn)."""
+    if not uri:
+        return uri
+    # Solo tocar URLs de Google API que llevan alt
+    if 'alt=' not in uri and 'alt%3D' not in uri:
+        return uri
+    # Normalizar: cualquier valor de alt por alt=json (evita 400 Invalid value "jso"/"jsonn" for query parameter 'alt')
+    new_uri = re.sub(r'alt=([^&]*)', 'alt=json', uri)
+    new_uri = re.sub(r'alt%3D([^&]*)', 'alt%3Djson', new_uri)
+    if new_uri != uri:
+        logger.debug("Gmail API: corregido parámetro alt en la petición")
+    return new_uri
+
+
+_requests_alt_fix_applied = False
+
+
+def _install_alt_param_fix_for_requests():
+    """Parche para transporte por defecto (requests): corregir alt en la URL antes de enviar.
+    Se usa cuando no está disponible google-auth-httplib2; así el fix aplica siempre."""
+    global _requests_alt_fix_applied
+    if _requests_alt_fix_applied:
+        return
+    try:
+        import requests
+        _orig = requests.Session.request
+
+        def _patched_request(self, method, url, **kwargs):
+            url = _fix_alt_param_uri(url or '')
+            return _orig(self, method, url, **kwargs)
+
+        requests.Session.request = _patched_request
+        _requests_alt_fix_applied = True
+        logger.debug("Gmail API: parche aplicado a requests.Session para corregir alt")
+    except Exception as e:
+        logger.warning("Gmail API: no se pudo aplicar parche a requests: %s", e)
+
+
 def _fix_alt_param_http(base_http):
-    """Envuelve el Http para corregir alt=jso -> alt=json (bug en algunos entornos que truncan el parámetro)."""
+    """Envuelve el Http (httplib2) para normalizar alt=... a alt=json."""
     class FixAltHttp(object):
         def __init__(self, http):
             self._http = http
 
         def request(self, uri, method='GET', body=None, headers=None, redirections=5, connection_type=None):
-            if uri and ('alt=jso' in uri or 'alt%3Djso' in uri):
-                uri = uri.replace('alt=jso', 'alt=json').replace('alt%3Djso', 'alt%3Djson')
-                logger.debug("Gmail API: corregido parámetro alt=jso -> alt=json en la petición")
+            uri = _fix_alt_param_uri(uri or '')
             return self._http.request(uri, method=method, body=body, headers=headers,
                                       redirections=redirections, connection_type=connection_type)
 
@@ -200,13 +237,14 @@ class GmailService:
         )
         creds.refresh(Request())
 
-        # Usar Http que corrige alt=jso -> alt=json si en el entorno el parámetro se trunca (Invalid value "jso" for query parameter 'alt')
+        # Corregir parámetro alt (jso/jsonn -> json): origen del error en algunos entornos al construir la URI.
         if _HAS_HTTPLIB2:
             base_http = httplib2.Http()
             fixed_http = _fix_alt_param_http(base_http)
             auth_http = AuthorizedHttp(creds, http=fixed_http)
             service = build('gmail', 'v1', http=auth_http, cache_discovery=False)
         else:
+            _install_alt_param_fix_for_requests()
             service = build('gmail', 'v1', credentials=creds, cache_discovery=False)
 
         # Filtro por fecha: solo correos recientes (menos llamadas y más rápido)
