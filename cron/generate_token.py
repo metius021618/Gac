@@ -5,8 +5,8 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 
 CLIENT_CONFIG = {
     "web": {
-        "client_id": "<TU_CLIENT_ID_GAC-S>",
-        "client_secret": "<TU_CLIENT_SECRET_GAC-S>",
+        "client_id": "32967724133-cctibkr6ccnofkil4k81a0eadatr0gjb.apps.googleusercontent.com",
+        "client_secret": "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",
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
         "token_uri": "https://oauth2.googleapis.com/token",
         "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob"]
