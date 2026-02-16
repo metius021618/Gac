@@ -34,7 +34,7 @@
         const isStock = !password || !platformId;
         if (isStock && window.GAC && window.GAC.confirm) {
             const missing = [];
-            if (!password) missing.push('acceso (contraseña)');
+            if (!password) missing.push('acceso (usuario)');
             if (!platformId) missing.push('plataforma');
             const msg = 'Este correo se guardará como Stock al no tener asignado ' + (missing.join(' ni ')) + '. Estará disponible en la sección Pocoyoni. ¿Continuar?';
             try {
@@ -89,11 +89,11 @@
         const password = passwordInput.value.trim();
         const platformId = platformSelect.value || '';
         if (password && !platformId) {
-            showError('platformError', 'Si indica acceso (contraseña), debe seleccionar una plataforma.');
+            showError('platformError', 'Si indica acceso (usuario), debe seleccionar una plataforma.');
             isValid = false;
         }
         if (password && password.length < 3) {
-            showError('passwordError', 'La contraseña debe tener al menos 3 caracteres');
+            showError('passwordError', 'El usuario debe tener al menos 3 caracteres');
             isValid = false;
         }
 

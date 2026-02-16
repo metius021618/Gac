@@ -24,7 +24,7 @@
             <?php if (empty($email_accounts)): ?>
                 <tr>
                     <td colspan="7" class="text-center">
-                        <p class="empty-message">No hay registros de acceso. Usa "Asignar/Actualizar Contraseña" o "Registro masivo" para agregar.</p>
+                        <p class="empty-message">No hay registros de acceso. Usa "Asignar/Actualizar Usuario" o "Registro masivo" para agregar.</p>
                     </td>
                 </tr>
             <?php else: ?>

@@ -1,7 +1,7 @@
 <?php
 /**
  * GAC - Vista de Registro de Accesos
- * Formulario para asignar/actualizar contraseñas de acceso
+ * Formulario para asignar/actualizar usuario de acceso
  */
 
 $content = ob_start();
@@ -14,7 +14,7 @@ $content = ob_start();
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
-            Asignar/Actualizar Contraseña
+            Asignar/Actualizar Usuario
         </h1>
     </div>
 
@@ -89,21 +89,21 @@ $content = ob_start();
                     <span class="form-error" id="emailError"></span>
                 </div>
 
-                <!-- Campo Contraseña -->
+                <!-- Campo Usuario -->
                 <div class="form-group">
                     <label for="password" class="form-label">
                         <svg class="form-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
-                        Contraseña
+                        Usuario
                     </label>
                     <input 
                         type="text" 
                         id="password" 
                         name="password" 
                         class="form-input" 
-                        placeholder="Clave para el buzón (opcional: si no se asigna, el correo se guarda como Stock)"
+                        placeholder="Usuario de acceso (opcional: si no se asigna, el correo se guarda como Stock)"
                         autocomplete="off"
                     >
                     <span class="form-error" id="passwordError"></span>
