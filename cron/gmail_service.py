@@ -21,9 +21,34 @@ try:
     from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
     from googleapiclient.discovery import build
+    try:
+        from google_auth_httplib2 import AuthorizedHttp
+        import httplib2
+        _HAS_HTTPLIB2 = True
+    except ImportError:
+        _HAS_HTTPLIB2 = False
     GMAIL_AVAILABLE = True
 except ImportError:
     GMAIL_AVAILABLE = False
+    _HAS_HTTPLIB2 = False
+
+
+def _fix_alt_param_http(base_http):
+    """Envuelve el Http para corregir alt=jso -> alt=json (bug en algunos entornos que truncan el parámetro)."""
+    class FixAltHttp(object):
+        def __init__(self, http):
+            self._http = http
+
+        def request(self, uri, method='GET', body=None, headers=None, redirections=5, connection_type=None):
+            if uri and ('alt=jso' in uri or 'alt%3Djso' in uri):
+                uri = uri.replace('alt=jso', 'alt=json').replace('alt%3Djso', 'alt%3Djson')
+                logger.debug("Gmail API: corregido parámetro alt=jso -> alt=json en la petición")
+            return self._http.request(uri, method=method, body=body, headers=headers,
+                                      redirections=redirections, connection_type=connection_type)
+
+        def __getattr__(self, name):
+            return getattr(self._http, name)
+    return FixAltHttp(base_http)
 
 
 def _get_header(headers, name):
@@ -175,7 +200,14 @@ class GmailService:
         )
         creds.refresh(Request())
 
-        service = build('gmail', 'v1', credentials=creds, cache_discovery=False)
+        # Usar Http que corrige alt=jso -> alt=json si en el entorno el parámetro se trunca (Invalid value "jso" for query parameter 'alt')
+        if _HAS_HTTPLIB2:
+            base_http = httplib2.Http()
+            fixed_http = _fix_alt_param_http(base_http)
+            auth_http = AuthorizedHttp(creds, http=fixed_http)
+            service = build('gmail', 'v1', http=auth_http, cache_discovery=False)
+        else:
+            service = build('gmail', 'v1', credentials=creds, cache_discovery=False)
 
         # Filtro por fecha: solo correos recientes (menos llamadas y más rápido)
         # Excluir categoría Promociones para no leer códigos de correos promocionales (mostraría ese en vez del de verificación)
