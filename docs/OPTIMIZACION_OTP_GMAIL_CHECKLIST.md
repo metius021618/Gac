@@ -24,7 +24,7 @@ Seguir en orden. Cada ítem es una acción concreta.
 ## Webhook receiver
 
 - [ ] **2.1** Usar `cron/gmail_webhook_receiver.py`: recibe POST de Pub/Sub, decodifica `message.data` (base64url) y extrae `historyId`.
-- [ ] **2.2** Configurar la URL de push de la suscripción Pub/Sub a `https://tu-dominio/gmail/push` (o el puerto que uses). Arrancar con `python cron/gmail_webhook_receiver.py` o `flask --app cron.gmail_webhook_receiver run --host 0.0.0.0 --port 5050`. El webhook solo dispara `process_gmail_history.py`; no parsea correos ni escribe en BD.
+- [ ] **2.2** Configurar la URL de push de la suscripción Pub/Sub a **`https://app.pocoyoni.com/gmail/push`**. Arrancar el receptor con `python cron/gmail_webhook_receiver.py` o `flask --app cron.gmail_webhook_receiver run --host 0.0.0.0 --port 5050` (y exponer ese puerto vía proxy HTTPS). El webhook solo dispara `process_gmail_history.py`; no parsea correos ni escribe en BD.
 
 ---
 

@@ -5,11 +5,13 @@ Recibe el POST de Google Cloud Pub/Sub cuando Gmail detecta cambios en la bandej
 Responsabilidad única: validar payload, extraer historyId y disparar el worker de procesamiento.
 NO parsea correos ni escribe en BD.
 
-Uso como servidor HTTP (para configurar como URL de push en la suscripción Pub/Sub):
+URL del webhook (configurar en la suscripción Push de Pub/Sub): https://app.pocoyoni.com/gmail/push
+
+Uso como servidor HTTP:
   python cron/gmail_webhook_receiver.py
   o con Flask: flask --app cron.gmail_webhook_receiver run --host 0.0.0.0 --port 5050
 
-Variable de entorno opcional: GMAIL_WEBHOOK_PORT (default 5050).
+Variables de entorno opcionales: GMAIL_WEBHOOK_PORT (5050), GMAIL_WEBHOOK_URL (URL pública).
 """
 
 import os
@@ -207,6 +209,12 @@ def run_standalone_server():
 
 
 if __name__ == '__main__':
+    try:
+        from cron.config import GMAIL_CONFIG
+        webhook_url = GMAIL_CONFIG.get('webhook_url', 'https://app.pocoyoni.com/gmail/push')
+    except Exception:
+        webhook_url = 'https://app.pocoyoni.com/gmail/push'
+    logger.info("Webhook URL (configurar en Pub/Sub): %s", webhook_url)
     app = create_app()
     if app is not None:
         port = int(os.getenv('GMAIL_WEBHOOK_PORT', '5050'))
