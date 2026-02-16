@@ -18,11 +18,17 @@ import base64
 import json
 import logging
 import subprocess
+import time
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(script_dir)
 sys.path.insert(0, parent_dir)
 os.chdir(parent_dir)
+
+# Lock para event bursts: solo un worker a la vez (solución futura: cola Redis/DB)
+LOCK_DIR = os.path.join(parent_dir, 'logs')
+LOCK_FILE = os.path.join(LOCK_DIR, 'gmail_worker.lock')
+LOCK_MAX_AGE_SEC = 120  # si el lock tiene más de esto, considerarlo stale
 
 logging.basicConfig(
     level=logging.INFO,
@@ -67,10 +73,52 @@ def handle_notification(body: dict):
         return False, ''
 
 
+def _worker_lock_acquire():
+    """Intentar adquirir lock (un solo worker a la vez). Returns True si lock adquirido."""
+    if not os.path.isdir(LOCK_DIR):
+        try:
+            os.makedirs(LOCK_DIR, exist_ok=True)
+        except OSError:
+            return False
+    if os.path.isfile(LOCK_FILE):
+        try:
+            age = time.time() - os.path.getmtime(LOCK_FILE)
+            if age < LOCK_MAX_AGE_SEC:
+                return False  # otro worker en curso
+        except OSError:
+            pass
+        try:
+            os.remove(LOCK_FILE)
+        except OSError:
+            pass
+    try:
+        with open(LOCK_FILE, 'w') as f:
+            f.write(str(time.time()))
+        return True
+    except OSError:
+        return False
+
+
+def _worker_lock_release():
+    try:
+        if os.path.isfile(LOCK_FILE):
+            os.remove(LOCK_FILE)
+    except OSError:
+        pass
+
+
 def trigger_worker(new_history_id: str) -> bool:
-    """Dispara el worker de procesamiento (history.list + metadata + full si match)."""
+    """
+    Dispara el worker de procesamiento (history.list + metadata + full si match).
+    Solo un worker a la vez (lock file) para evitar bursts de eventos; si ya hay uno en curso, se omite
+    y el próximo push traerá el historyId más reciente. Solución futura: cola interna (Redis o DB).
+    """
+    if not _worker_lock_acquire():
+        logger.info("Worker ya en ejecución (event burst), omitiendo este push. Próximo push procesará el historyId más reciente.")
+        return True  # 200 para no reintentar
     worker_script = os.path.join(script_dir, 'process_gmail_history.py')
     if not os.path.isfile(worker_script):
+        _worker_lock_release()
         logger.error("Worker no encontrado: %s", worker_script)
         return False
     try:
@@ -90,6 +138,8 @@ def trigger_worker(new_history_id: str) -> bool:
     except Exception as e:
         logger.exception("Trigger worker failed: %s", e)
         return False
+    finally:
+        _worker_lock_release()
 
 
 # --- Flask app (recomendado para producción como URL push) ---

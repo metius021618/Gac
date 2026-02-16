@@ -67,6 +67,8 @@ CRON_CONFIG = {
     'gmail_min_interval_seconds': max(30, int(os.getenv('CRON_GMAIL_MIN_INTERVAL_SECONDS', '60'))),
     # Si true, NO ejecutar el lector Gmail en el sync_loop (solo eventos vía webhook + process_gmail_history).
     'gmail_event_driven': os.getenv('CRON_GMAIL_EVENT_DRIVEN', 'false').lower() in ('true', '1', 'yes'),
+    # Monitor: alertar si no llegan eventos Gmail en esta cantidad de horas (check_gmail_watch_health.py).
+    'gmail_no_event_alert_hours': max(1, int(os.getenv('CRON_GMAIL_NO_EVENT_ALERT_HOURS', '24'))),
 }
 
 # Configuración de Logging

@@ -9,6 +9,7 @@ Este archivo es la **única referencia** para todos los cambios de BD de la opti
 | Qué | Dónde | Para qué |
 |-----|--------|----------|
 | Nuevos campos en `codes` | tabla `codes` | email_date, gmail_message_id, is_current, expires_at |
+| **gmail_message_id UNIQUE** | índice en `codes` | **Duplication safe:** si Pub/Sub reenvía el mismo evento, el INSERT falla por duplicado y no se inserta dos veces el mismo OTP. |
 | Último historyId de Gmail | tabla `settings` | Lectura incremental con history.list (evitar polling) |
 | Lógica de inserción | aplicación (Python/PHP) | Marcar anteriores is_current=0, insertar nuevo con is_current=1 |
 | Consulta del panel cliente | aplicación | Filtrar por is_current=1 para mostrar solo el OTP más reciente |

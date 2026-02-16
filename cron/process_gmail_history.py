@@ -11,6 +11,7 @@ import os
 import sys
 import argparse
 import logging
+import time
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(script_dir)
@@ -54,6 +55,7 @@ def main():
     if not last_history_id:
         logger.info("No hay gmail_last_history_id en BD; guardando el recibido y saliendo (próximo push usará history.list).")
         SettingsRepository.set('gmail_last_history_id', new_history_id)
+        SettingsRepository.set('gmail_last_event_at', str(int(time.time())))
         return 0
 
     gmail = GmailService()
@@ -66,12 +68,14 @@ def main():
     if not msg_ids:
         logger.info("history.list no devolvió mensajes nuevos; actualizando historyId.")
         SettingsRepository.set('gmail_last_history_id', new_history_id)
+        SettingsRepository.set('gmail_last_event_at', str(int(time.time())))
         return 0
 
     account_email = (gaccount.get('email') or '').strip().lower()
     filter_service = EmailFilterService()
     saved = 0
     for msg_id in msg_ids:
+        # Duplication safe: si Pub/Sub reenvía evento, gmail_message_id UNIQUE evita insert duplicado
         if CodeRepository.gmail_message_id_exists(msg_id):
             continue
         meta = gmail.get_message_metadata(service, msg_id, account_email)
@@ -111,6 +115,8 @@ def main():
             logger.info("OTP guardado: msg_id=%s -> %s", msg_id, recipient_email)
 
     SettingsRepository.set('gmail_last_history_id', new_history_id)
+    # Para monitor de salud: último evento procesado (check_gmail_watch_health.py alerta si no hay eventos en X h)
+    SettingsRepository.set('gmail_last_event_at', str(int(time.time())))
     logger.info("Procesados %d mensajes, guardados %d. historyId actualizado.", len(msg_ids), saved)
     return 0
 

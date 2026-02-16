@@ -52,6 +52,15 @@ Seguir en orden. Cada ítem es una acción concreta.
 
 ---
 
+## Riesgos y mitigaciones (recomendación senior)
+
+- **Refresher:** `renew_gmail_watch.py` loguea la **expiration** recibida (fecha legible) y hace **ALERT** + exit(1) si falla la renovación, para que cron pueda enviar mail. Si falla 2–3 días, el sistema deja de recibir OTP; configurar cron con salida a mail.
+- **Event bursts:** Si llegan muchos correos, el webhook puede disparar múltiples workers. **Mitigación actual:** lock file (`logs/gmail_worker.lock`): solo un worker a la vez; si otro está en curso se omite el push y el siguiente trae el historyId más reciente. Solución futura: cola interna (Redis o DB).
+- **Duplication safe:** Si Pub/Sub reenvía el mismo evento, es seguro gracias a **gmail_message_id UNIQUE** en `codes` (el INSERT falla por duplicado). ✔ Ya cubierto.
+- **Watch expiration silencioso:** Monitor `cron/check_gmail_watch_health.py`: verifica si no llegan eventos en X horas (`CRON_GMAIL_NO_EVENT_ALERT_HOURS`, default 24) y si la expiración del watch está próxima o pasada. Ejecutar desde cron cada 6 h; exit(1) en alerta para poder enviar mail.
+
+---
+
 ## Verificación final
 
 - [ ] **V.1** Probar que un correo OTP que cumple el filtro de asunto llega al panel y se muestra como “último código” (is_current = 1).
