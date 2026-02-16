@@ -470,6 +470,45 @@ class EmailAccountController
     }
 
     /**
+     * Eliminar cuenta de email por ID de cuenta (vista filtrada Gmail/Outlook/Pocoyoni).
+     * Solo elimina de email_accounts y user_access; la cuenta Gmail matriz no se puede eliminar.
+     */
+    public function destroyByAccountId(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+
+        $id = (int) $request->input('id', 0);
+        if ($id <= 0) {
+            json_response(['success' => false, 'message' => 'ID de cuenta inválido'], 400);
+            return;
+        }
+
+        $account = $this->emailAccountRepository->findById($id);
+        if (!$account) {
+            json_response(['success' => false, 'message' => 'Cuenta no encontrada'], 404);
+            return;
+        }
+
+        if ($this->emailAccountRepository->getGmailMatrixAccountId() === $id) {
+            json_response(['success' => false, 'message' => 'No se puede eliminar la cuenta Gmail matriz'], 403);
+            return;
+        }
+
+        $email = strtolower(trim($account['email'] ?? ''));
+        $this->userAccessRepository->deleteByEmail($email);
+        $deleted = $this->emailAccountRepository->delete($id);
+
+        if ($deleted) {
+            json_response(['success' => true, 'message' => 'Correo eliminado correctamente'], 200);
+        } else {
+            json_response(['success' => false, 'message' => 'Error al eliminar el correo'], 500);
+        }
+    }
+
+    /**
      * Cambiar estado (habilitar/deshabilitar) en user_access
      */
     public function toggleStatus(Request $request): void

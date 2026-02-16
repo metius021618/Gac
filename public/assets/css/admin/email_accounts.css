@@ -410,6 +410,11 @@ select.per-page-select {
     width: 150px;
 }
 
+.actions-cell .btn-delete-filtered:hover {
+    border-color: var(--color-danger, #dc3545);
+    color: var(--color-danger, #dc3545);
+}
+
 /* ============================================
    PLATAFORMAS (BADGES)
    ============================================ */

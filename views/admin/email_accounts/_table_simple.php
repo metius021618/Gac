@@ -13,19 +13,23 @@
                 <th class="text-center">Correo</th>
                 <th style="width: 14%;">Asignado</th>
                 <th style="width: 18%;">Fecha registro</th>
+                <th style="width: 80px;">Acciones</th>
             </tr>
         </thead>
         <tbody id="tableBody">
             <?php if (empty($email_accounts)): ?>
                 <tr>
-                    <td colspan="4" class="text-center">
+                    <td colspan="5" class="text-center">
                         <p class="empty-message">No hay correos registrados.</p>
                     </td>
                 </tr>
             <?php else: ?>
                 <?php foreach ($email_accounts as $account): ?>
-                    <?php $asignado = !empty($account['asignado']); ?>
-                    <tr>
+                    <?php 
+                    $asignado = !empty($account['asignado']);
+                    $filterType = $filter ?? '';
+                    ?>
+                    <tr data-id="<?= (int)$account['id'] ?>" data-filter="<?= htmlspecialchars($filterType) ?>">
                         <td><?= (int)$account['id'] ?></td>
                         <td class="email-cell text-center"><?= htmlspecialchars($account['email'] ?? '') ?></td>
                         <td class="text-center">
@@ -36,6 +40,19 @@
                             <?php endif; ?>
                         </td>
                         <td><span class="sync-time"><?= !empty($account['created_at']) ? date('d/m/Y H:i', strtotime($account['created_at'])) : '—' ?></span></td>
+                        <td class="actions-cell text-center">
+                            <button type="button" 
+                                    class="btn-icon btn-delete-filtered" 
+                                    data-id="<?= (int)$account['id'] ?>"
+                                    data-email="<?= htmlspecialchars($account['email'] ?? '') ?>"
+                                    data-filter="<?= htmlspecialchars($filterType) ?>"
+                                    title="Eliminar este correo">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>
