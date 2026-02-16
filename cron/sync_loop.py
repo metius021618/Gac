@@ -49,8 +49,13 @@ READERS = [
 try:
     from cron.config import CRON_CONFIG
     INTERVAL_SECONDS = CRON_CONFIG.get('reader_loop_seconds', 0.5)
+    GMAIL_MIN_INTERVAL = CRON_CONFIG.get('gmail_min_interval_seconds', 60)
 except Exception:
     INTERVAL_SECONDS = 0.5
+    GMAIL_MIN_INTERVAL = 60
+
+# Última vez que se lanzó el lector Gmail (para no superar cuota API: 15.000 unidades/usuario/min)
+_last_gmail_run = [0.0]
 
 
 def run_reader(script_path: str, name: str) -> bool:
@@ -75,9 +80,18 @@ def run_reader(script_path: str, name: str) -> bool:
 
 
 def run_all_parallel():
-    """Lanza los 3 lectores en paralelo y espera a que terminen todos."""
-    procs = []
+    """Lanza los lectores en paralelo. Gmail solo se ejecuta cada GMAIL_MIN_INTERVAL s para no superar cuota API."""
+    now = time.time()
+    to_run = []
     for script_rel, name in READERS:
+        if name == 'Gmail':
+            if now - _last_gmail_run[0] < GMAIL_MIN_INTERVAL:
+                continue
+            _last_gmail_run[0] = now
+        to_run.append((script_rel, name))
+
+    procs = []
+    for script_rel, name in to_run:
         script_abs = os.path.join(ROOT_DIR, script_rel.replace('/', os.sep))
         if not os.path.isfile(script_abs):
             logger.warning("No encontrado: %s", script_abs)
@@ -125,8 +139,10 @@ def remove_pid():
 
 def main():
     logger.info(
-        "Sync loop iniciado (cada %.1f s). Raíz: %s | env CRON_READER_LOOP_SECONDS=%s",
-        INTERVAL_SECONDS, ROOT_DIR, os.getenv('CRON_READER_LOOP_SECONDS', 'no definido')
+        "Sync loop iniciado (cada %.1f s). Gmail como mínimo cada %d s. Raíz: %s | CRON_READER_LOOP_SECONDS=%s | CRON_GMAIL_MIN_INTERVAL_SECONDS=%s",
+        INTERVAL_SECONDS, GMAIL_MIN_INTERVAL, ROOT_DIR,
+        os.getenv('CRON_READER_LOOP_SECONDS', 'no definido'),
+        os.getenv('CRON_GMAIL_MIN_INTERVAL_SECONDS', 'no definido')
     )
     write_pid()
     cycle = 0

@@ -60,6 +60,9 @@ CRON_CONFIG = {
     # Lectura Gmail: solo últimos N mensajes y solo de los últimos N días (optimiza tiempo por ciclo).
     'gmail_max_messages': min(100, max(10, int(os.getenv('CRON_GMAIL_MAX_MESSAGES', 20)))),
     'gmail_newer_than_days': max(1, min(30, int(os.getenv('CRON_GMAIL_NEWER_THAN_DAYS', 1)))),
+    # Mínimo segundos entre ejecuciones del lector Gmail (evita 429: límite 15.000 unidades/usuario/minuto).
+    # IMAP y Outlook siguen cada ciclo; solo Gmail se espacia. Por defecto 60 s.
+    'gmail_min_interval_seconds': max(30, int(os.getenv('CRON_GMAIL_MIN_INTERVAL_SECONDS', '60'))),
 }
 
 # Configuración de Logging
