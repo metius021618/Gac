@@ -43,14 +43,14 @@ Guía paso a paso para dejar el sistema OTP Gmail funcionando con **una sola cue
 5. **Tipo de aplicación:** “Aplicación web”.
 6. **Nombre:** p. ej. `GAC Web`.
 7. **URIs de redirección autorizados** → “+ Añadir URI”:
-   - `http://localhost:8090/`  
-   (es el que usa `cron/generate_token.py`; si cambias el puerto en el script, usa el mismo aquí).
+   - **`https://app.pocoyoni.com/gmail/callback`** — La que usa la app al hacer clic en "Conectar Gmail" o "Configurar cuenta Gmail matriz". Google redirige a tu dominio. Debe coincidir con `GMAIL_REDIRECT_URI` en `.env`. **Principal.**
+   - **`http://localhost:8090/`** (opcional) — Solo para el script `generate_token.py` en tu PC; ese script usa un servidor local, por eso localhost.
 8. **“Crear”**.
 9. Copia y guarda:
    - **ID de cliente** (termina en `.apps.googleusercontent.com`).
    - **Secreto de cliente** (empieza por `GOCSPX-`).
 
-Estos valores irán en `.env` como `GMAIL_CLIENT_ID` y `GMAIL_CLIENT_SECRET`, y en `generate_token.py` si quieres generar el refresh token con ellos.
+En `.env` del servidor: `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET` y **`GMAIL_REDIRECT_URI=https://app.pocoyoni.com/gmail/callback`** (para que "Conectar Gmail" desde el panel funcione).
 
 ---
 
@@ -96,7 +96,7 @@ El refresh token debe generarse con la cuenta que luego usará Gmail (la cuenta 
 
 1. En tu **PC** (donde tengas navegador), clona o copia el proyecto y entra en la carpeta del proyecto (donde está `cron/`).
 2. Opcional: en `cron/generate_token.py` asegúrate de que `CLIENT_CONFIG` use el **mismo** Client ID y Client Secret que creaste en el paso 3 (o que los lea de `.env` si lo adaptas).
-3. En Google Cloud, el cliente OAuth debe tener en “URIs de redirección autorizados” exactamente la URL que usa el script (p. ej. `http://localhost:8090/`).
+3. En Google Cloud, el cliente OAuth debe tener en “URIs de redirección autorizados” la URL del script si usas generate_token.py (`http://localhost:8090/`) y la de la app: `https://app.pocoyoni.com/gmail/callback`.
 4. Ejecuta:
    ```bash
    python3 cron/generate_token.py
@@ -118,6 +118,8 @@ En el servidor donde corre la app (app.pocoyoni.com), edita el `.env` en la raí
 # Gmail (cuenta lenninstreaming - proyecto GAC-StreaminLenin)
 GMAIL_CLIENT_ID=32967724133-xxxx.apps.googleusercontent.com
 GMAIL_CLIENT_SECRET=GOCSPX-xxxx
+# Redirect para "Conectar Gmail" desde el panel (debe estar en Google Console)
+GMAIL_REDIRECT_URI=https://app.pocoyoni.com/gmail/callback
 
 # Topic Pub/Sub (el que creaste en el paso 4)
 # Formato: projects/<ID_PROYECTO>/topics/<TOPIC_ID>
@@ -183,7 +185,7 @@ curl -X POST https://app.pocoyoni.com/gmail/push -H "Content-Type: application/j
 |-------|-----|
 | Google Cloud – Proyecto | Creado con lenninstreaming@gmail.com |
 | APIs | Gmail API y Pub/Sub API habilitadas |
-| Credenciales OAuth | Client ID (Web) + Client Secret + URI de redirección `http://localhost:8090/` |
+| Credenciales OAuth | Client ID (Web) + Client Secret + URIs: `https://app.pocoyoni.com/gmail/callback` y (opcional) `http://localhost:8090/` |
 | Pub/Sub | Topic (ej. `gac-gmail-push`) + permiso a `gmail-api-push@system.gserviceaccount.com` |
 | Pub/Sub | Suscripción Push con endpoint `https://app.pocoyoni.com/gmail/push` |
 | generate_token.py | Refresh token generado con lenninstreaming@gmail.com |
