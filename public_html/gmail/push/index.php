@@ -44,19 +44,24 @@ if ($rawInput !== false && $rawInput !== '') {
 }
 
 // Raíz del proyecto: public_html está al lado de cron/ (ajustar si tu estructura es distinta)
-// Ejemplo: /var/www/app.pocoyoni.com o /home/user/app.pocoyoni.com
 $basePath = dirname(__DIR__, 2);
 $python3 = 'python3';
 $workerScript = $basePath . DIRECTORY_SEPARATOR . 'cron' . DIRECTORY_SEPARATOR . 'process_gmail_history.py';
 
 if ($historyId !== null && $historyId !== '' && is_file($workerScript)) {
+    // Log para ver en servidor que el webhook recibió el push (tail -f logs/gmail_webhook.log)
+    $logFile = $basePath . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'gmail_webhook.log';
+    if (is_dir(dirname($logFile))) {
+        @file_put_contents($logFile, date('Y-m-d H:i:s') . " push historyId=" . $historyId . "\n", FILE_APPEND | LOCK_EX);
+    }
     $historyIdEscaped = escapeshellarg($historyId);
     $cmd = sprintf(
-        'cd %s && %s cron%sprocess_gmail_history.py --history-id %s > /dev/null 2>&1 &',
+        'cd %s && %s cron%sprocess_gmail_history.py --history-id %s >> logs%sgmail_push_worker.log 2>&1 &',
         escapeshellarg($basePath),
         $python3,
         DIRECTORY_SEPARATOR,
-        $historyIdEscaped
+        $historyIdEscaped,
+        DIRECTORY_SEPARATOR
     );
     exec($cmd);
 }
