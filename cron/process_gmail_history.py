@@ -77,23 +77,31 @@ def main():
     for msg_id in msg_ids:
         # Duplication safe: si Pub/Sub reenvía evento, gmail_message_id UNIQUE evita insert duplicado
         if CodeRepository.gmail_message_id_exists(msg_id):
+            logger.info("msg_id=%s omitido (ya guardado)", msg_id)
             continue
         meta = gmail.get_message_metadata(service, msg_id, account_email)
         if not meta:
+            logger.info("msg_id=%s sin metadata, omitido", msg_id)
             continue
         # Un solo “email” para filtrar por asunto
+        subject = meta.get('subject', '') or '(sin asunto)'
+        logger.info("leyendo msg_id=%s asunto=%s", msg_id, subject[:80] + ('...' if len(subject) > 80 else ''))
         filtered = filter_service.filter_by_subject([meta])
         if not filtered:
+            logger.info("msg_id=%s no guardado: asunto no coincide con ninguno de email_subjects (coincidencia exacta)", msg_id)
             continue
         email_data = filtered[0]
         platform = email_data.get('matched_platform')
         if not platform:
+            logger.info("msg_id=%s no guardado: sin plataforma asignada", msg_id)
             continue
         platform_obj = PlatformRepository.find_by_name(platform)
         if not platform_obj or not platform_obj.get('enabled'):
+            logger.info("msg_id=%s no guardado: plataforma %s no existe o está deshabilitada", msg_id, platform)
             continue
         full = gmail.get_message_full(service, msg_id, account_email)
         if not full:
+            logger.info("msg_id=%s no guardado: no se pudo obtener cuerpo del mensaje", msg_id)
             continue
         recipient_email = (full.get('to_primary') or account_email).strip().lower()
         save_data = {
@@ -112,7 +120,7 @@ def main():
         code_id = CodeRepository.save_otp_current(save_data)
         if code_id:
             saved += 1
-            logger.info("OTP guardado: msg_id=%s -> %s", msg_id, recipient_email)
+            logger.info("OTP guardado: msg_id=%s plataforma=%s -> %s", msg_id, platform, recipient_email)
 
     SettingsRepository.set('gmail_last_history_id', new_history_id)
     # Para monitor de salud: último evento procesado (check_gmail_watch_health.py alerta si no hay eventos en X h)
