@@ -41,8 +41,8 @@ if ($rawInput !== false && $rawInput !== '') {
     }
 }
 
-// Raíz del proyecto (public/gmail/push/index.php -> dos niveles arriba)
-$basePath = dirname(__DIR__, 2);
+// Raíz del proyecto: desde public/gmail/push/ son 3 niveles arriba (push->gmail->public->raíz)
+$basePath = dirname(__DIR__, 3);
 $python3 = 'python3';
 $workerScript = $basePath . DIRECTORY_SEPARATOR . 'cron' . DIRECTORY_SEPARATOR . 'process_gmail_history.py';
 

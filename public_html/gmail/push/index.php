@@ -43,8 +43,8 @@ if ($rawInput !== false && $rawInput !== '') {
     }
 }
 
-// Raíz del proyecto: public_html está al lado de cron/ (ajustar si tu estructura es distinta)
-$basePath = dirname(__DIR__, 2);
+// Raíz del proyecto: desde public_html/gmail/push/ son 3 niveles arriba (push->gmail->public_html->raíz)
+$basePath = dirname(__DIR__, 3);
 $python3 = 'python3';
 $workerScript = $basePath . DIRECTORY_SEPARATOR . 'cron' . DIRECTORY_SEPARATOR . 'process_gmail_history.py';
 
