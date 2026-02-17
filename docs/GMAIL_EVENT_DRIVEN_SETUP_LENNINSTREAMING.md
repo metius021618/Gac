@@ -78,6 +78,8 @@ Anota el **ID del proyecto** (p. ej. `gac-streaminlenin-123456`). El nombre comp
 
 ### 4.3 Suscripción tipo Push (webhook)
 
+**Si ya tienes la suscripción** (p. ej. `gac-gmail-push-sub`) en el proyecto, omite este paso y usa la existente.
+
 1. Menú Pub/Sub → **“Subscriptions”** / **“Suscripciones”**.
 2. **“Create subscription”** / **“Crear suscripción”**.
 3. **Subscription ID:** p. ej. `gac-gmail-push-sub`.
