@@ -31,7 +31,7 @@ GMAIL_CONFIG = {
     'client_id': os.getenv('GMAIL_CLIENT_ID', ''),
     'client_secret': os.getenv('GMAIL_CLIENT_SECRET', ''),
     'redirect_uri': os.getenv('GMAIL_REDIRECT_URI', ''),
-    'scopes': [os.getenv('GMAIL_SCOPES', 'https://www.googleapis.com/auth/gmail.readonly')],
+    'scopes': [os.getenv('GMAIL_SCOPES', 'https://www.googleapis.com/auth/gmail.modify')],
     # Topic Pub/Sub para Gmail Watch (event-driven). Formato: projects/PROJECT_ID/topics/TOPIC_NAME
     'pubsub_topic': os.getenv('GMAIL_PUBSUB_TOPIC', ''),
     # URL pública del webhook (configurar esta misma URL en la suscripción Push de Pub/Sub)

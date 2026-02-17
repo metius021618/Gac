@@ -17,8 +17,9 @@ load_dotenv(_env_path)
 SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 
 # Este script abre un servidor local; la redirección es a localhost (no a app.pocoyoni.com).
-# En Google Cloud Console añade en "URIs de redirección autorizados": http://localhost:8090/
-PORT = 8090
+# En Google Cloud Console añade en "URIs de redirección autorizados": http://localhost:8091/
+# (si 8091 está en uso, cambia PORT y añade la nueva URI en Google)
+PORT = 8091
 
 _client_id = os.getenv("GMAIL_CLIENT_ID", "").strip()
 _client_secret = os.getenv("GMAIL_CLIENT_SECRET", "").strip()
