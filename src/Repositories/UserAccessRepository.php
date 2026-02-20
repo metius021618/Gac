@@ -112,10 +112,28 @@ class UserAccessRepository
             $stmt->bindValue(':email', trim(strtolower($email)), PDO::PARAM_STR);
             $stmt->bindValue(':password', $password, PDO::PARAM_STR);
             $stmt->bindValue(':platform_id', $platformId, PDO::PARAM_INT);
-            return $stmt->execute();
+            $ok = $stmt->execute();
+            if ($ok) {
+                $this->touchEmailAccountUpdatedAt(trim(strtolower($email)));
+            }
+            return $ok;
         } catch (PDOException $e) {
             error_log("Error al actualizar acceso por ID: " . $e->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Actualizar updated_at de email_accounts para que la columna Actividad refleje la última modificación.
+     */
+    private function touchEmailAccountUpdatedAt(string $email): void
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("UPDATE email_accounts SET updated_at = NOW() WHERE LOWER(email) = LOWER(:email)");
+            $stmt->execute([':email' => $email]);
+        } catch (PDOException $e) {
+            error_log("Error al actualizar actividad de email_accounts: " . $e->getMessage());
         }
     }
 
@@ -373,14 +391,21 @@ class UserAccessRepository
             }
             
             $db->commit();
-            
+            foreach ($emails as $e) {
+                $e = trim(strtolower((string) $e));
+                if ($e !== '') {
+                    $this->touchEmailAccountUpdatedAt($e);
+                }
+            }
             return [
                 'success' => $success,
                 'duplicates' => $duplicates,
                 'errors' => $errors
             ];
         } catch (PDOException $e) {
-            $db->rollBack();
+            if (isset($db)) {
+                $db->rollBack();
+            }
             error_log("Error al crear accesos masivamente: " . $e->getMessage());
             return [
                 'success' => 0,
@@ -562,8 +587,15 @@ class UserAccessRepository
     {
         try {
             $db = Database::getConnection();
+            $row = $db->prepare("SELECT email FROM user_access WHERE id = ?");
+            $row->execute([$id]);
+            $email = $row->fetchColumn();
             $stmt = $db->prepare("UPDATE user_access SET enabled = :enabled, updated_at = NOW() WHERE id = :id");
-            return $stmt->execute([':id' => $id, ':enabled' => $enabled ? 1 : 0]);
+            $ok = $stmt->execute([':id' => $id, ':enabled' => $enabled ? 1 : 0]);
+            if ($ok && $email) {
+                $this->touchEmailAccountUpdatedAt($email);
+            }
+            return $ok;
         } catch (PDOException $e) {
             error_log("Error al cambiar estado de acceso: " . $e->getMessage());
             return false;

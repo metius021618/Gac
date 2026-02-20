@@ -16,7 +16,7 @@
                 <th style="width: 25%;">Correo</th>
                 <th style="width: 15%;">Usuario (acceso)</th>
                 <th style="width: 20%;">Plataforma</th>
-                <th style="width: 18%;">Fecha registro</th>
+                <th style="width: 18%;">Actividad</th>
                 <th style="width: 150px;">Acciones</th>
             </tr>
         </thead>
@@ -33,7 +33,7 @@
                     // Datos desde user_access: email, password (usuario), platform_display_name
                     $usuario = $account['password'] ?? '';
                     $plataforma = $account['platform_display_name'] ?? $account['platform_name'] ?? '—';
-                    $fechaRegistro = !empty($account['created_at']) ? date('d/m/Y H:i', strtotime($account['created_at'])) : '—';
+                    $actividad = !empty($account['updated_at']) ? date('d/m/Y H:i', strtotime($account['updated_at'])) : (!empty($account['created_at']) ? date('d/m/Y H:i', strtotime($account['created_at'])) : '—');
                     ?>
                     <tr data-id="<?= (int)$account['id'] ?>" class="table-row">
                         <td class="checkbox-column" style="display: none;">
@@ -45,7 +45,7 @@
                         <td class="platform-cell">
                             <span class="platform-badge"><?= htmlspecialchars($plataforma) ?></span>
                         </td>
-                        <td><span class="sync-time"><?= $fechaRegistro ?></span></td>
+                        <td><span class="sync-time"><?= $actividad ?></span></td>
                         <td class="actions-cell">
                             <button class="btn-icon btn-toggle" 
                                     data-id="<?= (int)$account['id'] ?>"

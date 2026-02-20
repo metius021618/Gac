@@ -12,7 +12,7 @@
                 <th style="width: 60px;">ID</th>
                 <th class="text-center">Correo</th>
                 <th style="width: 14%;">Asignado</th>
-                <th style="width: 18%;">Fecha registro</th>
+                <th style="width: 18%;">Actividad</th>
                 <th style="width: 80px;">Acciones</th>
             </tr>
         </thead>
@@ -39,7 +39,7 @@
                                 <span class="badge status-inactive">No</span>
                             <?php endif; ?>
                         </td>
-                        <td><span class="sync-time"><?= !empty($account['created_at']) ? date('d/m/Y H:i', strtotime($account['created_at'])) : '—' ?></span></td>
+                        <td><span class="sync-time"><?= !empty($account['updated_at']) ? date('d/m/Y H:i', strtotime($account['updated_at'])) : (!empty($account['created_at']) ? date('d/m/Y H:i', strtotime($account['created_at'])) : '—') ?></span></td>
                         <td class="actions-cell text-center">
                             <button type="button" 
                                     class="btn-icon btn-delete-filtered" 
