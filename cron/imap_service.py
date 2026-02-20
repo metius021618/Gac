@@ -86,8 +86,9 @@ class ImapService:
             raise
     
     def _read_email(self, mail, email_id, account_email=''):
-        """Leer un email específico. account_email = cuenta maestra para detectar destinatario real."""
-        status, msg_data = mail.fetch(email_id, '(RFC822)')
+        """Leer un email específico sin marcar como leído (BODY.PEEK[] no setea \\Seen)."""
+        # BODY.PEEK[] evita que el servidor marque el mensaje como leído; RFC822 suele setear \Seen
+        status, msg_data = mail.fetch(email_id, '(BODY.PEEK[])')
         
         if status != 'OK':
             return None
