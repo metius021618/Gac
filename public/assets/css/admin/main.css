@@ -209,12 +209,13 @@
 
 .form-input,
 .form-select,
-select.form-select {
+select.form-select,
+select.form-input {
     width: 100%;
     padding: var(--spacing-md);
     padding-right: calc(var(--spacing-md) + 20px);
-    background: rgba(255, 255, 255, 0.05) !important;
-    background-color: rgba(255, 255, 255, 0.05) !important;
+    background: var(--bg-card) !important;
+    background-color: var(--bg-card) !important;
     border: 2px solid var(--border-color) !important;
     border-radius: var(--border-radius);
     color: var(--text-primary) !important;
@@ -224,26 +225,36 @@ select.form-select {
     -webkit-appearance: none;
     -moz-appearance: none;
     cursor: pointer;
+    color-scheme: dark;
 }
 
 .form-input:focus,
 .form-select:focus,
-select.form-select:focus {
+select.form-select:focus,
+select.form-input:focus {
     outline: none;
     border-color: var(--color-primary) !important;
-    background: rgba(255, 255, 255, 0.08) !important;
-    background-color: rgba(255, 255, 255, 0.08) !important;
+    background: var(--bg-card-hover) !important;
+    background-color: var(--bg-card-hover) !important;
 }
 
-/* Estilos para options del select */
+/* Estilos para options del select: fondo oscuro acorde al tema */
 .form-select option,
 select.form-select option,
+select.form-input option,
+.form-input option,
 .per-page-select option,
 select.per-page-select option {
     background: var(--bg-card) !important;
     background-color: var(--bg-card) !important;
     color: var(--text-primary) !important;
     padding: var(--spacing-sm);
+}
+
+/* Tema oscuro en desplegable nativo del select (Chrome/Edge/Firefox) */
+.admin-container select,
+.modal select {
+    color-scheme: dark;
 }
 
 /* Selector wrapper para icono de flecha */
