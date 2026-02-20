@@ -13,6 +13,131 @@
     const newPasswordInput = document.getElementById('newPassword');
     const confirmPasswordInput = document.getElementById('confirmPassword');
 
+    // --- Modal Nuevo Usuario ---
+    const newUserModal = document.getElementById('newUserModal');
+    const btnNewUser = document.getElementById('btnNewUser');
+    const closeNewUserModal = document.getElementById('closeNewUserModal');
+    const cancelNewUserBtn = document.getElementById('cancelNewUserBtn');
+    const newUserForm = document.getElementById('newUserForm');
+    const newUserUsername = document.getElementById('newUserUsername');
+    const newUserPassword = document.getElementById('newUserPassword');
+    const newUserRole = document.getElementById('newUserRole');
+    const previewUsernamePlaceholder = document.getElementById('previewUsernamePlaceholder');
+    const previewDashboardEmpty = document.getElementById('previewDashboardEmpty');
+    const previewDashboardContent = document.getElementById('previewDashboardContent');
+
+    function openNewUserModal() {
+        if (newUserModal) {
+            newUserModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            updatePreviewView();
+        }
+    }
+
+    function closeNewUserModalFn() {
+        if (newUserModal) {
+            newUserModal.classList.add('hidden');
+            document.body.style.overflow = '';
+            if (newUserForm) newUserForm.reset();
+            previewDashboardContent.classList.add('hidden');
+            if (previewDashboardEmpty) previewDashboardEmpty.classList.remove('hidden');
+        }
+    }
+
+    function getRoleKey() {
+        if (!newUserRole || !newUserRole.value) return '';
+        const opt = newUserRole.options[newUserRole.selectedIndex];
+        return (opt && opt.dataset.name) ? String(opt.dataset.name).toLowerCase() : '';
+    }
+
+    function updatePreviewView() {
+        const username = (newUserUsername && newUserUsername.value.trim()) ? newUserUsername.value.trim() : '—';
+        if (previewUsernamePlaceholder) previewUsernamePlaceholder.textContent = username;
+
+        const roleKey = getRoleKey();
+        if (!previewDashboardContent || !previewDashboardEmpty) return;
+
+        if (!roleKey) {
+            previewDashboardContent.classList.add('hidden');
+            previewDashboardEmpty.classList.remove('hidden');
+            previewDashboardEmpty.textContent = 'Seleccione un rol para ver la vista previa.';
+            return;
+        }
+
+        previewDashboardEmpty.classList.add('hidden');
+        previewDashboardContent.classList.remove('hidden');
+        previewDashboardContent.innerHTML = '';
+
+        // Ícono genérico para ítems
+        const iconSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>';
+
+        if (roleKey === 'admin' || roleKey === 'administrador' || roleKey === 'super_admin') {
+            ['Dashboard', 'Correos', 'Usuarios', 'Administradores', 'Configuración'].forEach(function (label) {
+                const item = document.createElement('span');
+                item.className = 'preview-dashboard-item';
+                item.innerHTML = iconSvg + ' ' + label;
+                previewDashboardContent.appendChild(item);
+            });
+        } else if (roleKey === 'comprador') {
+            const item = document.createElement('span');
+            item.className = 'preview-dashboard-item';
+            item.innerHTML = iconSvg + ' Consulta tu código';
+            previewDashboardContent.appendChild(item);
+        } else {
+            const item = document.createElement('span');
+            item.className = 'preview-dashboard-item';
+            item.innerHTML = iconSvg + ' Vista según rol';
+            previewDashboardContent.appendChild(item);
+        }
+    }
+
+    if (btnNewUser) btnNewUser.addEventListener('click', openNewUserModal);
+    if (closeNewUserModal) closeNewUserModal.addEventListener('click', closeNewUserModalFn);
+    if (cancelNewUserBtn) cancelNewUserBtn.addEventListener('click', closeNewUserModalFn);
+    if (newUserModal) {
+        newUserModal.addEventListener('click', function (e) {
+            if (e.target === newUserModal) closeNewUserModalFn();
+        });
+    }
+    if (newUserUsername) newUserUsername.addEventListener('input', updatePreviewView);
+    if (newUserUsername) newUserUsername.addEventListener('change', updatePreviewView);
+    if (newUserRole) newUserRole.addEventListener('change', updatePreviewView);
+
+    if (newUserForm) {
+        newUserForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const formData = new FormData(newUserForm);
+            try {
+                const response = await fetch('/admin/administrators/store', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    closeNewUserModalFn();
+                    if (typeof window.GAC !== 'undefined' && window.GAC.success) {
+                        await window.GAC.success('Usuario creado correctamente', 'Éxito');
+                    }
+                    window.location.reload();
+                } else {
+                    if (typeof window.GAC !== 'undefined' && window.GAC.error) {
+                        await window.GAC.error(data.message || 'Error al crear usuario', 'Error');
+                    } else {
+                        alert(data.message || 'Error al crear usuario');
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                if (typeof window.GAC !== 'undefined' && window.GAC.error) {
+                    await window.GAC.error('Error de conexión. Intenta de nuevo.', 'Error');
+                } else {
+                    alert('Error de conexión.');
+                }
+            }
+        });
+    }
+
     // Abrir modal de contraseña
     document.querySelectorAll('.btn-password').forEach(btn => {
         btn.addEventListener('click', function() {

@@ -7,9 +7,11 @@ $content = ob_start();
 ?>
 
 <div class="admin-container">
-    <div class="admin-header">
+    <div class="admin-header admin-header--with-action">
         <h1 class="admin-title">Administradores</h1>
-        <p class="admin-subtitle">Gestiona los administradores del sistema</p>
+        <button type="button" class="btn btn-primary" id="btnNewUser" title="Agregar usuario">
+            + Usuario
+        </button>
     </div>
 
     <div class="admin-content">
@@ -81,6 +83,59 @@ $content = ob_start();
                     <?php endif; ?>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Usuario -->
+<div id="newUserModal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-container modal-container--wide">
+        <div class="modal-header">
+            <h2 class="modal-title">Nuevo Usuario</h2>
+            <button type="button" class="modal-close" id="closeNewUserModal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-content">
+            <form id="newUserForm">
+                <div class="form-row form-row--two">
+                    <div class="form-group">
+                        <label for="newUserUsername" class="form-label">Usuario</label>
+                        <input type="text" id="newUserUsername" name="username" class="form-input" required placeholder="Nombre de usuario">
+                    </div>
+                    <div class="form-group">
+                        <label for="newUserPassword" class="form-label">Contraseña</label>
+                        <input type="password" id="newUserPassword" name="password" class="form-input" required minlength="6" placeholder="Mínimo 6 caracteres">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="newUserRole" class="form-label">Rol</label>
+                    <select id="newUserRole" name="role_id" class="form-input" required>
+                        <option value="">Seleccione un rol</option>
+                        <?php foreach ($roles ?? [] as $role): ?>
+                            <option value="<?= (int)$role['id'] ?>" data-name="<?= htmlspecialchars($role['name'] ?? '') ?>"><?= htmlspecialchars($role['display_name'] ?? $role['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Vista que podrá ver el usuario</label>
+                    <div class="preview-view-box" id="previewViewBox">
+                        <p class="preview-view-title" id="previewViewTitle">Vista de: <span id="previewUsernamePlaceholder">—</span></p>
+                        <div class="preview-dashboard" id="previewDashboard">
+                            <p class="preview-dashboard-empty" id="previewDashboardEmpty">Seleccione un rol para ver la vista previa.</p>
+                            <div class="preview-dashboard-content hidden" id="previewDashboardContent"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelNewUserBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Crear usuario</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

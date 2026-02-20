@@ -106,8 +106,7 @@ class UserRepository
     }
 
     /**
-     * Obtener todos los administradores
-     * 
+     * Obtener todos los administradores (roles admin / SUPER_ADMIN)
      * @return array
      */
     public function findAllAdministrators(): array
@@ -126,13 +125,42 @@ class UserRepository
                 FROM users u
                 INNER JOIN roles r ON u.role_id = r.id
                 WHERE u.active = 1 
-                  AND (r.name = 'SUPER_ADMIN' OR r.name = 'ADMIN')
+                  AND (r.name = 'SUPER_ADMIN' OR r.name = 'ADMIN' OR r.name = 'admin')
                 ORDER BY u.created_at DESC
             ");
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Error al obtener administradores: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtener todos los usuarios con su rol (para lista de administradores que incluye Comprador, etc.)
+     * @return array
+     */
+    public function findAllUsersWithRoles(): array
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    u.id,
+                    u.username,
+                    u.email,
+                    u.active,
+                    u.last_login,
+                    u.created_at,
+                    r.name as role_name,
+                    r.display_name as role_display_name
+                FROM users u
+                LEFT JOIN roles r ON u.role_id = r.id
+                ORDER BY u.created_at DESC
+            ");
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (PDOException $e) {
+            error_log("Error al obtener usuarios con roles: " . $e->getMessage());
             return [];
         }
     }

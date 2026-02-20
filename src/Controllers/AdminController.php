@@ -9,26 +9,31 @@ namespace Gac\Controllers;
 
 use Gac\Core\Request;
 use Gac\Repositories\UserRepository;
+use Gac\Repositories\RoleRepository;
 
 class AdminController
 {
     private UserRepository $userRepository;
+    private RoleRepository $roleRepository;
 
     public function __construct()
     {
         $this->userRepository = new UserRepository();
+        $this->roleRepository = new RoleRepository();
     }
 
     /**
-     * Listar administradores
+     * Listar administradores y usuarios (todos los roles)
      */
     public function index(Request $request): void
     {
-        $administrators = $this->userRepository->findAllAdministrators();
+        $administrators = $this->userRepository->findAllUsersWithRoles();
+        $roles = $this->roleRepository->findAll();
         
         $this->renderView('admin/administrators/index', [
             'title' => 'Administradores',
-            'administrators' => $administrators
+            'administrators' => $administrators,
+            'roles' => $roles
         ]);
     }
 
@@ -141,6 +146,64 @@ class AdminController
             json_response([
                 'success' => false,
                 'message' => 'Error al actualizar contraseña'
+            ], 500);
+        }
+    }
+
+    /**
+     * Crear nuevo usuario (Administrador o Comprador)
+     */
+    public function store(Request $request): void
+    {
+        $username = trim((string) $request->input('username'));
+        $password = $request->input('password');
+        $roleId = (int) $request->input('role_id');
+        $email = trim((string) $request->input('email', $username . '@sistema.local'));
+
+        if (!$username || !$password || !$roleId) {
+            json_response([
+                'success' => false,
+                'message' => 'Usuario, contraseña y rol son obligatorios'
+            ], 400);
+            return;
+        }
+
+        if (strlen($password) < 6) {
+            json_response([
+                'success' => false,
+                'message' => 'La contraseña debe tener al menos 6 caracteres'
+            ], 400);
+            return;
+        }
+
+        $existing = $this->userRepository->findByUsername($username);
+        if ($existing) {
+            json_response([
+                'success' => false,
+                'message' => 'Ya existe un usuario con ese nombre'
+            ], 400);
+            return;
+        }
+
+        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+        $userId = $this->userRepository->save([
+            'username' => $username,
+            'email' => $email ?: $username . '@sistema.local',
+            'password' => $hashedPassword,
+            'role_id' => $roleId,
+            'active' => 1
+        ]);
+
+        if ($userId) {
+            json_response([
+                'success' => true,
+                'message' => 'Usuario creado correctamente',
+                'id' => $userId
+            ]);
+        } else {
+            json_response([
+                'success' => false,
+                'message' => 'Error al crear usuario'
             ], 500);
         }
     }

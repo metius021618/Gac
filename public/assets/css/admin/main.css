@@ -153,6 +153,10 @@
     z-index: 2;
 }
 
+.modal-container--wide {
+    max-width: 560px;
+}
+
 .modal-header {
     display: flex;
     align-items: center;
@@ -493,6 +497,75 @@ select.per-page-select option {
     border-top: 1px solid var(--border-color);
 }
 
+.form-row--two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+/* Vista previa por rol (modal nuevo usuario) */
+.preview-view-box {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-xs);
+}
+
+.preview-view-title {
+    margin: 0 0 var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.preview-view-title span {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.preview-dashboard {
+    min-height: 100px;
+    border-radius: var(--border-radius-sm);
+    background: rgba(26, 35, 50, 0.8);
+    padding: var(--spacing-sm);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+.preview-dashboard-empty {
+    margin: 0;
+    padding: var(--spacing-md);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+}
+
+.preview-dashboard-content.hidden {
+    display: none;
+}
+
+.preview-dashboard-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
+.preview-dashboard-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.preview-dashboard-item svg {
+    flex-shrink: 0;
+    opacity: 0.8;
+}
+
 /* ============================================
    RESPONSIVE
    ============================================ */
@@ -510,7 +583,8 @@ select.per-page-select option {
         font-size: var(--font-size-2xl);
     }
     
-    .form-row {
+    .form-row,
+    .form-row--two {
         grid-template-columns: 1fr;
     }
     

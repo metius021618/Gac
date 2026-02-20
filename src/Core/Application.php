@@ -90,6 +90,7 @@ class Application
         $router->get('/admin/administrators/edit', 'AdminController@edit', ['auth']);
         $router->post('/admin/administrators/update', 'AdminController@update', ['auth']);
         $router->post('/admin/administrators/update-password', 'AdminController@updatePassword', ['auth']);
+        $router->post('/admin/administrators/store', 'AdminController@store', ['auth']);
         
         // Rutas de Registro de Accesos
         $router->get('/admin/user-access', 'UserAccessController@index', ['auth']);
