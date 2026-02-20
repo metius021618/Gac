@@ -68,6 +68,9 @@ class Application
         $router->get('/admin/users', 'UserController@index', ['auth']);
         $router->get('/admin/settings', 'SettingsController@index', ['auth']);
         $router->post('/admin/settings/update', 'SettingsController@update', ['auth']);
+        $router->get('/admin/settings/role-views', 'SettingsController@roleViews', ['auth']);
+        $router->post('/admin/settings/role-views', 'SettingsController@saveRoleViews', ['auth']);
+        $router->get('/admin/role-preview', 'SettingsController@rolePreview', ['auth']);
         $router->get('/admin/reader-loop/status', 'CodeController@readerLoopStatus', ['auth']);
         $router->post('/admin/reader-loop/start', 'CodeController@startReaderLoop', ['auth']);
         

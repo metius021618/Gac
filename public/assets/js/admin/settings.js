@@ -27,6 +27,135 @@
             updateReaderLoopStatus();
             btnStartReaderLoop.addEventListener('click', handleStartReaderLoop);
         }
+
+        initRoleViewsEditor();
+    }
+
+    /**
+     * Personalización de roles: modal con vista demo + checkboxes
+     */
+    function initRoleViewsEditor() {
+        const modal = document.getElementById('roleViewsModal');
+        const frame = document.getElementById('rolePreviewFrame');
+        const checkboxesContainer = document.getElementById('roleViewsCheckboxes');
+        const modalTitle = document.getElementById('roleViewsModalTitle');
+        const closeBtn = document.getElementById('closeRoleViewsModal');
+        const cancelBtn = document.getElementById('cancelRoleViewsBtn');
+        const saveBtn = document.getElementById('saveRoleViewsBtn');
+        let currentRoleId = null;
+
+        function getCheckedViewKeys() {
+            if (!checkboxesContainer) return [];
+            const inputs = checkboxesContainer.querySelectorAll('.role-view-checkbox:checked');
+            return Array.from(inputs).map(function (el) { return el.value; });
+        }
+
+        function updatePreviewUrl() {
+            if (!frame) return;
+            const keys = getCheckedViewKeys();
+            const q = keys.length ? 'views=' + encodeURIComponent(keys.join(',')) : 'views=';
+            frame.src = '/admin/role-preview?' + q;
+        }
+
+        function openModal(roleId, roleName) {
+            currentRoleId = roleId;
+            if (modalTitle) modalTitle.textContent = 'Vista que verá el rol: ' + (roleName || '');
+            if (modal) modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            fetch('/admin/settings/role-views?role_id=' + encodeURIComponent(roleId), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (!checkboxesContainer) return;
+                    const allowed = (data.view_keys || []);
+                    checkboxesContainer.querySelectorAll('.role-view-checkbox').forEach(function (cb) {
+                        cb.checked = allowed.indexOf(cb.value) !== -1;
+                    });
+                    updatePreviewUrl();
+                })
+                .catch(function () {
+                    checkboxesContainer.querySelectorAll('.role-view-checkbox').forEach(function (cb) {
+                        cb.checked = false;
+                    });
+                    updatePreviewUrl();
+                });
+        }
+
+        function closeModal() {
+            currentRoleId = null;
+            if (modal) modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function saveRoleViews() {
+            if (!currentRoleId) return;
+            const keys = getCheckedViewKeys();
+            const body = new FormData();
+            body.append('role_id', currentRoleId);
+            keys.forEach(function (k) { body.append('view_keys[]', k); });
+
+            saveBtn.disabled = true;
+            fetch('/admin/settings/role-views', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: body
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        if (typeof window.GAC !== 'undefined' && window.GAC.success) {
+                            window.GAC.success(data.message || 'Vistas guardadas.', 'Guardado');
+                        } else {
+                            alert(data.message || 'Vistas guardadas.');
+                        }
+                        closeModal();
+                    } else {
+                        if (typeof window.GAC !== 'undefined' && window.GAC.error) {
+                            window.GAC.error(data.message || 'Error al guardar', 'Error');
+                        } else {
+                            alert(data.message || 'Error al guardar');
+                        }
+                    }
+                })
+                .catch(function () {
+                    if (typeof window.GAC !== 'undefined' && window.GAC.error) {
+                        window.GAC.error('Error de conexión.', 'Error');
+                    } else {
+                        alert('Error de conexión.');
+                    }
+                })
+                .finally(function () {
+                    saveBtn.disabled = false;
+                });
+        }
+
+        document.querySelectorAll('.btn-edit-role').forEach(function (btn) {
+            var row = btn.closest('.role-row');
+            if (!row) return;
+            var roleId = row.dataset.roleId;
+            var roleName = row.dataset.roleName || '';
+            btn.addEventListener('click', function () {
+                openModal(roleId, roleName);
+            });
+        });
+
+        if (checkboxesContainer) {
+            checkboxesContainer.addEventListener('change', function () {
+                updatePreviewUrl();
+            });
+        }
+
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+        if (saveBtn) saveBtn.addEventListener('click', saveRoleViews);
+
+        if (modal) {
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) closeModal();
+            });
+        }
     }
 
     function fetchWithTimeout(url, options, ms) {

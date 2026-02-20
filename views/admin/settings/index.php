@@ -180,6 +180,80 @@ $content = ob_start();
                     </div>
                 </form>
             </div>
+
+            <!-- Personalización de roles -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <h2 class="settings-section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        Personalización de roles
+                    </h2>
+                    <p class="settings-section-description">
+                        Asigna qué vistas puede ver cada rol. Haz clic en el lápiz para editar las secciones visibles y ver la vista demo en tiempo real.
+                    </p>
+                </div>
+                <div class="roles-panel">
+                    <div class="roles-list">
+                        <?php foreach ($roles ?? [] as $role): ?>
+                            <div class="role-row" data-role-id="<?= (int)$role['id'] ?>" data-role-name="<?= htmlspecialchars($role['display_name'] ?? $role['name']) ?>">
+                                <span class="role-name"><?= htmlspecialchars($role['display_name'] ?? $role['name']) ?></span>
+                                <button type="button" class="btn-icon btn-edit-role" title="Editar vistas de este rol">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        <?php endforeach; ?>
+                        <?php if (empty($roles)): ?>
+                            <p class="roles-empty">No hay roles configurados.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal editor de vistas por rol -->
+<div id="roleViewsModal" class="modal hidden role-views-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container role-views-modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title" id="roleViewsModalTitle">Vistas del rol</h2>
+            <button type="button" class="modal-close" id="closeRoleViewsModal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-content role-views-modal-body">
+        <div class="role-views-editor">
+            <div class="role-preview-frame-wrap">
+                <p class="role-preview-label">Vista que verá el usuario (tal cual en la página)</p>
+                <iframe id="rolePreviewFrame" class="role-preview-frame" src="/admin/role-preview?views=" title="Vista previa"></iframe>
+            </div>
+            <div class="role-views-checkboxes-panel">
+                <p class="role-views-panel-title">Secciones visibles</p>
+                <p class="role-views-panel-desc">Marca las vistas que podrá ver este rol. La vista demo se actualiza al instante.</p>
+                <div class="role-views-checkboxes" id="roleViewsCheckboxes">
+                    <?php foreach ($role_views_config ?? [] as $v): ?>
+                        <label class="role-view-checkbox-label">
+                            <input type="checkbox" class="role-view-checkbox" name="view_keys[]" value="<?= htmlspecialchars($v['key']) ?>">
+                            <span><?= htmlspecialchars($v['label']) ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+                <div class="role-views-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelRoleViewsBtn">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="saveRoleViewsBtn">Guardar vistas</button>
+                </div>
+            </div>
+        </div>
         </div>
     </div>
 </div>
