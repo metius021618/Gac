@@ -29,6 +29,121 @@
         }
 
         initRoleViewsEditor();
+        initAddRoleModal();
+    }
+
+    /**
+     * Modal agregar rol
+     */
+    function initAddRoleModal() {
+        const modal = document.getElementById('addRoleModal');
+        const btnAdd = document.getElementById('btnAddRole');
+        const form = document.getElementById('addRoleForm');
+        const closeBtn = document.getElementById('closeAddRoleModal');
+        const cancelBtn = document.getElementById('cancelAddRoleBtn');
+
+        function openModal() {
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                if (form) {
+                    form.reset();
+                    const err = document.getElementById('addRoleDisplayNameError');
+                    if (err) { err.textContent = ''; err.style.display = 'none'; }
+                }
+                const input = document.getElementById('addRoleDisplayName');
+                if (input) input.focus();
+            }
+        }
+
+        function closeModal() {
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function setFormLoading(loading) {
+            const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+            if (!submitBtn) return;
+            const btnText = submitBtn.querySelector('.btn-text');
+            const btnLoader = submitBtn.querySelector('.btn-loader');
+            if (loading) {
+                submitBtn.disabled = true;
+                if (btnText) btnText.style.display = 'none';
+                if (btnLoader) btnLoader.style.display = 'inline-block';
+            } else {
+                submitBtn.disabled = false;
+                if (btnText) btnText.style.display = 'inline';
+                if (btnLoader) btnLoader.style.display = 'none';
+            }
+        }
+
+        if (btnAdd) btnAdd.addEventListener('click', openModal);
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+        if (modal) {
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) closeModal();
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const displayName = (document.getElementById('addRoleDisplayName')?.value || '').trim();
+                const errEl = document.getElementById('addRoleDisplayNameError');
+                if (!displayName) {
+                    if (errEl) {
+                        errEl.textContent = 'El nombre del rol es obligatorio';
+                        errEl.style.display = 'block';
+                    }
+                    return;
+                }
+                if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+
+                setFormLoading(true);
+                const fd = new FormData(form);
+
+                fetch('/admin/settings/role-create', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: fd
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.success) {
+                            if (typeof window.GAC !== 'undefined' && window.GAC.success) {
+                                window.GAC.success(data.message || 'Rol creado correctamente', 'Rol creado');
+                            } else {
+                                alert(data.message || 'Rol creado correctamente');
+                            }
+                            closeModal();
+                            window.location.reload();
+                        } else {
+                            if (errEl) {
+                                errEl.textContent = data.message || 'Error al crear el rol';
+                                errEl.style.display = 'block';
+                            } else if (typeof window.GAC !== 'undefined' && window.GAC.error) {
+                                window.GAC.error(data.message || 'Error al crear el rol', 'Error');
+                            } else {
+                                alert(data.message || 'Error al crear el rol');
+                            }
+                        }
+                    })
+                    .catch(function () {
+                        if (typeof window.GAC !== 'undefined' && window.GAC.error) {
+                            window.GAC.error('Error de conexión.', 'Error');
+                        } else {
+                            alert('Error de conexión.');
+                        }
+                    })
+                    .finally(function () {
+                        setFormLoading(false);
+                    });
+            });
+        }
     }
 
     /**

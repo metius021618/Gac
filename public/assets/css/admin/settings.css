@@ -28,6 +28,22 @@
     border-bottom: 1px solid var(--border-color);
 }
 
+.settings-section-header--with-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.settings-section-header--with-action .settings-section-description {
+    margin-bottom: 0;
+}
+
+.settings-section-header--with-action .btn {
+    flex-shrink: 0;
+}
+
 .settings-section-title {
     display: flex;
     align-items: center;

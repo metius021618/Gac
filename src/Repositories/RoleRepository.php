@@ -11,6 +11,41 @@ use PDO;
 class RoleRepository
 {
     /**
+     * Crear un nuevo rol
+     * @param string $name Slug único (ej: comprador)
+     * @param string $displayName Nombre visible (ej: Comprador)
+     * @param string $description Descripción opcional
+     * @return int|null ID del rol creado o null en error
+     */
+    public function create(string $name, string $displayName, string $description = ''): ?int
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("INSERT INTO roles (name, display_name, description) VALUES (?, ?, ?)");
+            $stmt->execute([$name, $displayName, $description]);
+            return (int) $db->lastInsertId();
+        } catch (\PDOException $e) {
+            error_log("RoleRepository::create: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Verificar si existe un rol con el nombre dado
+     */
+    public function existsByName(string $name): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("SELECT 1 FROM roles WHERE name = ? LIMIT 1");
+            $stmt->execute([$name]);
+            return (bool) $stmt->fetch();
+        } catch (\PDOException $e) {
+            return false;
+        }
+    }
+
+    /**
      * Listar todos los roles (para combos y vistas)
      * @return array [['id','name','display_name','description'], ...]
      */

@@ -177,6 +177,49 @@ class SettingsController
     }
 
     /**
+     * POST: Crear un nuevo rol
+     */
+    public function createRole(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+        if (!$this->validateCsrfToken($request)) {
+            json_response(['success' => false, 'message' => 'Token de seguridad inválido'], 403);
+            return;
+        }
+        $displayName = trim($request->input('display_name', ''));
+        $description = trim($request->input('description', ''));
+        if (empty($displayName)) {
+            json_response(['success' => false, 'message' => 'El nombre del rol es obligatorio'], 400);
+            return;
+        }
+        $name = $request->input('name', '');
+        if (empty($name)) {
+            $name = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '_', $displayName));
+            $name = trim($name, '_');
+            if (empty($name)) {
+                $name = 'rol_' . time();
+            }
+        }
+        $name = strtolower(preg_replace('/[^a-z0-9_]/', '', $name));
+        if (empty($name)) {
+            $name = 'rol_' . time();
+        }
+        if ($this->roleRepository->existsByName($name)) {
+            json_response(['success' => false, 'message' => 'Ya existe un rol con ese nombre. Usa otro.'], 400);
+            return;
+        }
+        $id = $this->roleRepository->create($name, $displayName, $description);
+        if ($id) {
+            json_response(['success' => true, 'message' => 'Rol creado correctamente', 'role_id' => $id]);
+        } else {
+            json_response(['success' => false, 'message' => 'Error al crear el rol'], 500);
+        }
+    }
+
+    /**
      * Vista previa del panel según vistas permitidas (para iframe en personalización de roles)
      * GET ?views=dashboard,listar_correos,...
      */

@@ -183,17 +183,26 @@ $content = ob_start();
 
             <!-- Personalización de roles -->
             <div class="settings-section">
-                <div class="settings-section-header">
-                    <h2 class="settings-section-title">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
+                <div class="settings-section-header settings-section-header--with-action">
+                    <div>
+                        <h2 class="settings-section-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            Personalización de roles
+                        </h2>
+                        <p class="settings-section-description">
+                            Asigna qué vistas puede ver cada rol. Haz clic en el lápiz para editar las secciones visibles y ver la vista demo en tiempo real.
+                        </p>
+                    </div>
+                    <button type="button" id="btnAddRole" class="btn btn-primary" title="Agregar nuevo rol">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
-                        Personalización de roles
-                    </h2>
-                    <p class="settings-section-description">
-                        Asigna qué vistas puede ver cada rol. Haz clic en el lápiz para editar las secciones visibles y ver la vista demo en tiempo real.
-                    </p>
+                        Agregar rol
+                    </button>
                 </div>
                 <div class="roles-panel">
                     <div class="roles-list">
@@ -214,6 +223,46 @@ $content = ob_start();
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal agregar rol -->
+<div id="addRoleModal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title">Agregar rol</h2>
+            <button type="button" class="modal-close" id="closeAddRoleModal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-content">
+            <form id="addRoleForm" novalidate>
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                <div class="form-group">
+                    <label for="addRoleDisplayName" class="form-label">Nombre del rol <span class="required">*</span></label>
+                    <input type="text" id="addRoleDisplayName" name="display_name" class="form-input" required placeholder="Ej: Vendedor" autocomplete="off">
+                    <small class="form-help">Nombre visible en la interfaz</small>
+                    <span class="form-error" id="addRoleDisplayNameError"></span>
+                </div>
+                <div class="form-group">
+                    <label for="addRoleDescription" class="form-label">Descripción (opcional)</label>
+                    <textarea id="addRoleDescription" name="description" class="form-input" rows="2" placeholder="Ej: Acceso a ventas y reportes"></textarea>
+                </div>
+                <div class="form-actions" style="margin-top: 1rem;">
+                    <button type="button" class="btn btn-secondary" id="cancelAddRoleBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-text">Crear rol</span>
+                        <span class="btn-loader" style="display: none;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
