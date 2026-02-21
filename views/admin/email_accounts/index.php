@@ -62,6 +62,7 @@ $content = ob_start();
             </div>
             
             <div class="table-controls-right">
+                <?php if (function_exists('user_can_action') && user_can_action('listar_correos', 'eliminar')): ?>
                 <button id="multiSelectBtn" class="btn btn-secondary">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="9 11 12 14 22 4"></polyline>
@@ -77,6 +78,7 @@ $content = ob_start();
                     </svg>
                     Eliminar (<span id="selectedCount">0</span>)
                 </button>
+                <?php endif; ?>
                 
                 <div class="per-page-selector">
                     <label for="perPageSelect" class="per-page-label">Mostrar:</label>

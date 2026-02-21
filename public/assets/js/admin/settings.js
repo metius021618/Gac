@@ -32,7 +32,7 @@
     }
 
     /**
-     * Personalización de roles: modal con vista demo + checkboxes
+     * Personalización de roles: modal con vista demo + checkboxes + submenús de acciones
      */
     function initRoleViewsEditor() {
         const modal = document.getElementById('roleViewsModal');
@@ -50,11 +50,36 @@
             return Array.from(inputs).map(function (el) { return el.value; });
         }
 
+        function getCheckedViewActions() {
+            if (!checkboxesContainer) return {};
+            const result = {};
+            checkboxesContainer.querySelectorAll('.role-view-action-checkbox:checked').forEach(function (cb) {
+                const viewKey = cb.dataset.viewKey;
+                const action = cb.dataset.action;
+                if (!viewKey || !action) return;
+                if (!result[viewKey]) result[viewKey] = [];
+                result[viewKey].push(action);
+            });
+            return result;
+        }
+
         function updatePreviewUrl() {
             if (!frame) return;
             const keys = getCheckedViewKeys();
             const q = keys.length ? 'views=' + encodeURIComponent(keys.join(',')) : 'views=';
             frame.src = '/admin/role-preview?' + q;
+        }
+
+        function syncExpandState() {
+            if (!checkboxesContainer) return;
+            checkboxesContainer.querySelectorAll('.role-view-item').forEach(function (item) {
+                const cb = item.querySelector('.role-view-checkbox');
+                if (cb && cb.checked) {
+                    item.classList.add('expanded-by-check');
+                } else {
+                    item.classList.remove('expanded-by-check');
+                }
+            });
         }
 
         function openModal(roleId, roleName) {
@@ -70,15 +95,27 @@
                 .then(function (data) {
                     if (!checkboxesContainer) return;
                     const allowed = (data.view_keys || []);
+                    const viewActions = (data.view_actions || {});
                     checkboxesContainer.querySelectorAll('.role-view-checkbox').forEach(function (cb) {
                         cb.checked = allowed.indexOf(cb.value) !== -1;
                     });
+                    checkboxesContainer.querySelectorAll('.role-view-action-checkbox').forEach(function (cb) {
+                        const viewKey = cb.dataset.viewKey;
+                        const action = cb.dataset.action;
+                        const actions = viewActions[viewKey] || [];
+                        cb.checked = actions.indexOf(action) !== -1;
+                    });
+                    syncExpandState();
                     updatePreviewUrl();
                 })
                 .catch(function () {
                     checkboxesContainer.querySelectorAll('.role-view-checkbox').forEach(function (cb) {
                         cb.checked = false;
                     });
+                    checkboxesContainer.querySelectorAll('.role-view-action-checkbox').forEach(function (cb) {
+                        cb.checked = false;
+                    });
+                    syncExpandState();
                     updatePreviewUrl();
                 });
         }
@@ -92,9 +129,15 @@
         function saveRoleViews() {
             if (!currentRoleId) return;
             const keys = getCheckedViewKeys();
+            const viewActions = getCheckedViewActions();
             const body = new FormData();
             body.append('role_id', currentRoleId);
             keys.forEach(function (k) { body.append('view_keys[]', k); });
+            Object.keys(viewActions).forEach(function (viewKey) {
+                viewActions[viewKey].forEach(function (action) {
+                    body.append('view_actions[' + viewKey + '][]', action);
+                });
+            });
 
             saveBtn.disabled = true;
             fetch('/admin/settings/role-views', {
@@ -142,8 +185,20 @@
         });
 
         if (checkboxesContainer) {
-            checkboxesContainer.addEventListener('change', function () {
+            checkboxesContainer.addEventListener('change', function (e) {
+                if (e.target && e.target.classList.contains('role-view-checkbox')) {
+                    syncExpandState();
+                }
                 updatePreviewUrl();
+            });
+            checkboxesContainer.querySelectorAll('.role-view-parent').forEach(function (parent) {
+                parent.addEventListener('click', function (e) {
+                    if (e.target.classList.contains('role-view-expand-icon')) {
+                        e.preventDefault();
+                        var item = parent.closest('.role-view-item');
+                        if (item) item.classList.toggle('expanded');
+                    }
+                });
             });
         }
 

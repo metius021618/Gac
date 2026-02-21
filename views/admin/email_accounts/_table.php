@@ -3,6 +3,11 @@
  * GAC - Vista Parcial de Tabla de Cuentas de Email
  * Para actualización AJAX
  */
+$filter = $filter ?? '';
+$email_view_key = !empty($filter) ? 'listar_' . $filter : 'listar_correos';
+$can_toggle = function_exists('user_can_action') && user_can_action($email_view_key, 'deshabilitar');
+$can_edit = function_exists('user_can_action') && user_can_action($email_view_key, 'editar');
+$can_delete = function_exists('user_can_action') && user_can_action($email_view_key, 'eliminar');
 ?>
 
 <div class="table-container">
@@ -47,6 +52,7 @@
                         </td>
                         <td><span class="sync-time"><?= $actividad ?></span></td>
                         <td class="actions-cell">
+                            <?php if ($can_toggle): ?>
                             <button class="btn-icon btn-toggle" 
                                     data-id="<?= (int)$account['id'] ?>"
                                     data-enabled="<?= (int)($account['enabled'] ?? 1) ?>"
@@ -59,22 +65,27 @@
                                     <?php endif; ?>
                                 </svg>
                             </button>
+                            <?php endif; ?>
+                            <?php if ($can_edit): ?>
                             <a href="/admin/user-access?email=<?= rawurlencode($account['email'] ?? '') ?>&platform_id=<?= (int)($account['platform_id'] ?? 0) ?>" 
                                class="btn-icon btn-edit" 
                                title="Editar acceso">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                            </a>
-                            <button class="btn-icon btn-delete" 
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z">                                </path>
+                            </svg>
+                        </a>
+                            <?php endif; ?>
+                            <?php if ($can_delete): ?>
+                            <button class="btn-icon btn-delete"
                                     data-id="<?= (int)$account['id'] ?>"
                                     title="Eliminar">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">                                </path>
+                            </svg>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

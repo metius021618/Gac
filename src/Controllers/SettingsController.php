@@ -37,7 +37,7 @@ class SettingsController
         $masterConsultUsername = $this->settingsRepository->getValue('master_consult_username', '');
         $gmailMatrixAccount = $this->emailAccountRepository->getGmailMatrixAccount();
         $roles = $this->roleRepository->findAll();
-        $role_views_config = RoleViewsConfig::all();
+        $role_views_config = RoleViewsConfig::allWithActions();
 
         $this->renderView('admin/settings/index', [
             'title' => 'Configuración del Sistema',
@@ -127,7 +127,7 @@ class SettingsController
     }
 
     /**
-     * GET: Obtener vistas asignadas a un rol (JSON)
+     * GET: Obtener vistas y acciones asignadas a un rol (JSON)
      */
     public function roleViews(Request $request): void
     {
@@ -137,11 +137,16 @@ class SettingsController
             return;
         }
         $viewKeys = $this->roleRepository->getViewKeys($roleId);
-        json_response(['success' => true, 'view_keys' => $viewKeys]);
+        $viewActions = $this->roleRepository->getViewActions($roleId);
+        json_response([
+            'success' => true,
+            'view_keys' => $viewKeys,
+            'view_actions' => $viewActions,
+        ]);
     }
 
     /**
-     * POST: Guardar vistas de un rol
+     * POST: Guardar vistas y acciones de un rol
      */
     public function saveRoleViews(Request $request): void
     {
@@ -151,16 +156,21 @@ class SettingsController
         }
         $roleId = (int) $request->input('role_id');
         $viewKeys = $request->input('view_keys');
+        $viewActions = $request->input('view_actions');
         if (!is_array($viewKeys)) {
             $viewKeys = $viewKeys ? (array) $viewKeys : [];
+        }
+        if (!is_array($viewActions)) {
+            $viewActions = [];
         }
         if (!$roleId) {
             json_response(['success' => false, 'message' => 'role_id requerido'], 400);
             return;
         }
         $ok = $this->roleRepository->setViewKeys($roleId, $viewKeys);
-        if ($ok) {
-            json_response(['success' => true, 'message' => 'Vistas del rol actualizadas']);
+        $okActions = $this->roleRepository->setViewActions($roleId, $viewActions);
+        if ($ok && $okActions) {
+            json_response(['success' => true, 'message' => 'Vistas y acciones del rol actualizadas']);
         } else {
             json_response(['success' => false, 'message' => 'Error al guardar'], 500);
         }

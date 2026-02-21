@@ -9,9 +9,11 @@ $content = ob_start();
 <div class="admin-container">
     <div class="admin-header admin-header--with-action">
         <h1 class="admin-title">Administradores</h1>
+        <?php if (function_exists('user_can_action') && user_can_action('administradores', 'agregar')): ?>
         <button type="button" class="btn btn-primary" id="btnNewUser" title="Agregar usuario">
             + Usuario
         </button>
+        <?php endif; ?>
     </div>
 
     <div class="admin-content">
@@ -59,6 +61,7 @@ $content = ob_start();
                                     <?= $admin['created_at'] ? date('d/m/Y H:i', strtotime($admin['created_at'])) : '-' ?>
                                 </td>
                                 <td class="actions-cell">
+                                    <?php if (function_exists('user_can_action') && user_can_action('administradores', 'editar')): ?>
                                     <button class="btn-icon btn-edit" 
                                             data-id="<?= $admin['id'] ?>"
                                             onclick="window.location.href='/admin/administrators/edit?id=<?= $admin['id'] ?>'"
@@ -77,6 +80,7 @@ $content = ob_start();
                                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                         </svg>
                                     </button>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

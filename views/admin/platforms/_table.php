@@ -3,6 +3,8 @@
  * GAC - Vista Parcial de Tabla de Plataformas
  * Para actualización AJAX
  */
+$can_edit_platform = function_exists('user_can_action') && user_can_action('plataformas_activas', 'editar');
+$can_delete_platform = function_exists('user_can_action') && user_can_action('plataformas_activas', 'eliminar');
 ?>
 
 <div class="table-container">
@@ -42,10 +44,14 @@
                             </span>
                         </td>
                         <td>
+                            <?php if ($can_edit_platform): ?>
                             <label class="toggle-switch" title="<?= $platform['enabled'] ? 'Desactivar' : 'Activar' ?>">
                                 <input type="checkbox" class="toggle-input" data-id="<?= $platform['id'] ?>" <?= $platform['enabled'] ? 'checked' : '' ?>>
                                 <span class="toggle-slider"></span>
                             </label>
+                            <?php else: ?>
+                            <span class="status-badge status-<?= $platform['enabled'] ? 'active' : 'inactive' ?>"><?= $platform['enabled'] ? 'Activa' : 'Inactiva' ?></span>
+                            <?php endif; ?>
                         </td>
                         <td>
                             <?= $platform['created_at'] ? date('d/m/Y H:i', strtotime($platform['created_at'])) : '-' ?>
@@ -54,12 +60,14 @@
                             <?= $platform['updated_at'] ? date('d/m/Y H:i', strtotime($platform['updated_at'])) : '-' ?>
                         </td>
                         <td class="actions-cell">
+                            <?php if ($can_delete_platform): ?>
                             <button type="button" class="btn-icon btn-delete btn-delete-platform" data-id="<?= (int)$platform['id'] ?>" data-name="<?= htmlspecialchars($platform['display_name']) ?>" title="Eliminar plataforma">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="3 6 5 6 21 6"></polyline>
                                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                 </svg>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

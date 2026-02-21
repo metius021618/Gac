@@ -53,9 +53,11 @@ $content = ob_start();
                     <span class="form-error" id="emailsError"></span>
                     <small class="form-help">Ingresa un correo por línea. Dominios permitidos: Pocoyoni, Gmail, Outlook, Hotmail, Live.</small>
                     <div class="form-group" style="margin-top: 0.5rem;">
+                        <?php if (function_exists('user_can_action') && user_can_action('registro_masivo', 'agregar')): ?>
                         <button type="button" id="btnAddStock" class="btn btn-secondary">
                             Agregar como stock
                         </button>
+                        <?php endif; ?>
                         <small class="form-help" style="display: block; margin-top: 0.25rem;">Registra los correos en el listado (sin asignar plataforma). Se mostrarán en Gmail, Hotmail o Pocoyoni según el dominio.</small>
                     </div>
                 </div>
@@ -110,6 +112,7 @@ $content = ob_start();
 
                 <!-- Botones de acción -->
                 <div class="form-actions">
+                    <?php if (function_exists('user_can_action') && user_can_action('registro_masivo', 'agregar')): ?>
                     <button type="submit" class="btn btn-primary btn-bulk-assign">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -123,6 +126,7 @@ $content = ob_start();
                             </svg>
                         </span>
                     </button>
+                    <?php endif; ?>
                 </div>
             </form>
         </div>

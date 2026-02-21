@@ -239,13 +239,28 @@ $content = ob_start();
             </div>
             <div class="role-views-checkboxes-panel">
                 <p class="role-views-panel-title">Secciones visibles</p>
-                <p class="role-views-panel-desc">Marca las vistas que podrá ver este rol. La vista demo se actualiza al instante.</p>
+                <p class="role-views-panel-desc">Marca las vistas y acciones que podrá usar este rol. Al marcar una vista, se despliega el submenú de acciones.</p>
                 <div class="role-views-checkboxes" id="roleViewsCheckboxes">
-                    <?php foreach ($role_views_config ?? [] as $v): ?>
-                        <label class="role-view-checkbox-label">
-                            <input type="checkbox" class="role-view-checkbox" name="view_keys[]" value="<?= htmlspecialchars($v['key']) ?>">
-                            <span><?= htmlspecialchars($v['label']) ?></span>
-                        </label>
+                    <?php foreach ($role_views_config ?? [] as $v): $actions = $v['actions'] ?? []; ?>
+                        <div class="role-view-item" data-view-key="<?= htmlspecialchars($v['key']) ?>">
+                            <label class="role-view-parent">
+                                <input type="checkbox" class="role-view-checkbox" name="view_keys[]" value="<?= htmlspecialchars($v['key']) ?>">
+                                <span class="role-view-label"><?= htmlspecialchars($v['label']) ?></span>
+                                <?php if (!empty($actions)): ?>
+                                    <span class="role-view-expand-icon">▼</span>
+                                <?php endif; ?>
+                            </label>
+                            <?php if (!empty($actions)): ?>
+                            <div class="role-view-actions-submenu">
+                                <?php foreach ($actions as $actionKey => $actionLabel): ?>
+                                    <label class="role-view-action-label">
+                                        <input type="checkbox" class="role-view-action-checkbox" data-view-key="<?= htmlspecialchars($v['key']) ?>" data-action="<?= htmlspecialchars($actionKey) ?>">
+                                        <span><?= htmlspecialchars($actionLabel) ?></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <?php endif; ?>
+                        </div>
                     <?php endforeach; ?>
                 </div>
                 <div class="role-views-actions">

@@ -71,4 +71,67 @@ class RoleRepository
             return false;
         }
     }
+
+    /**
+     * Obtener acciones permitidas por vista para un rol (tabla role_view_actions)
+     * @return array ['view_key' => ['action1','action2'], ...]
+     */
+    public function getViewActions(int $roleId): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("SELECT view_key, action FROM role_view_actions WHERE role_id = ? ORDER BY view_key, action");
+            $stmt->execute([$roleId]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $result = [];
+            foreach ($rows ?: [] as $r) {
+                $key = $r['view_key'];
+                if (!isset($result[$key])) {
+                    $result[$key] = [];
+                }
+                $result[$key][] = $r['action'];
+            }
+            return $result;
+        } catch (\PDOException $e) {
+            error_log("RoleRepository::getViewActions: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Guardar acciones por vista para un rol (reemplaza las actuales)
+     * @param array $viewActions ['view_key' => ['action1','action2'], ...]
+     */
+    public function setViewActions(int $roleId, array $viewActions): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $db->beginTransaction();
+            $db->prepare("DELETE FROM role_view_actions WHERE role_id = ?")->execute([$roleId]);
+            $insert = $db->prepare("INSERT INTO role_view_actions (role_id, view_key, action) VALUES (?, ?, ?)");
+            foreach ($viewActions as $viewKey => $actions) {
+                if (!is_array($actions)) {
+                    continue;
+                }
+                $validKeys = \Gac\Helpers\RoleViewsConfig::keys();
+                if (!in_array($viewKey, $validKeys, true)) {
+                    continue;
+                }
+                $availableActions = array_keys(\Gac\Helpers\RoleViewsConfig::getActionsForView($viewKey));
+                foreach ($actions as $action) {
+                    if (in_array($action, $availableActions, true)) {
+                        $insert->execute([$roleId, $viewKey, $action]);
+                    }
+                }
+            }
+            $db->commit();
+            return true;
+        } catch (\PDOException $e) {
+            if (isset($db)) {
+                $db->rollBack();
+            }
+            error_log("RoleRepository::setViewActions: " . $e->getMessage());
+            return false;
+        }
+    }
 }

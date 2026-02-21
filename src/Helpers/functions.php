@@ -168,3 +168,35 @@ if (!function_exists('user_can_view')) {
         return in_array($viewKey, $views, true);
     }
 }
+
+if (!function_exists('user_can_action')) {
+    /**
+     * Comprobar si el usuario actual puede realizar una acción en una vista.
+     * Si no hay role_views configurados, retorna true (acceso completo).
+     * Si tiene la vista pero no role_view_actions para esa vista, solo "ver" está permitido.
+     * @param string $viewKey
+     * @param string $action Ej: 'ver', 'eliminar', 'agregar', 'editar', 'deshabilitar'
+     */
+    function user_can_action(string $viewKey, string $action): bool
+    {
+        $roleViews = user_role_views();
+        if ($roleViews === null) {
+            return true; // Sin restricción
+        }
+        if (!in_array($viewKey, $roleViews, true)) {
+            return false; // No tiene la vista
+        }
+        try {
+            $repo = new \Gac\Repositories\RoleRepository();
+            $actions = $repo->getViewActions((int) ($_SESSION['role_id'] ?? 0));
+            $allowed = $actions[$viewKey] ?? null;
+            if ($allowed === null) {
+                return $action === 'ver'; // Sin acciones configuradas = solo ver
+            }
+            return in_array($action, $allowed, true);
+        } catch (\Throwable $e) {
+            error_log('user_can_action: ' . $e->getMessage());
+            return $action === 'ver';
+        }
+    }
+}

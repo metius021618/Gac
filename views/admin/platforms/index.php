@@ -26,6 +26,7 @@ $content = ob_start();
                 <?php endif; ?>
             </div>
             <div class="table-controls-right table-controls-platforms">
+                <?php if (function_exists('user_can_action') && user_can_action('plataformas_activas', 'agregar')): ?>
                 <button type="button" id="btnAddPlatform" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -33,6 +34,7 @@ $content = ob_start();
                     </svg>
                     Agregar Plataforma
                 </button>
+                <?php endif; ?>
                 <div class="per-page-selector">
                     <label for="perPage">Mostrar:</label>
                     <select id="perPage" class="form-select">

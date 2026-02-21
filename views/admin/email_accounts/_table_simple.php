@@ -3,6 +3,9 @@
  * GAC - Tabla simplificada de correos (solo lectura, sin acciones)
  * Para vistas filtradas por dominio (Gmail, Outlook, Pocoyoni)
  */
+$filter = $filter ?? '';
+$email_view_key = !empty($filter) ? 'listar_' . $filter : 'listar_correos';
+$can_delete_filtered = function_exists('user_can_action') && user_can_action($email_view_key, 'eliminar');
 ?>
 
 <div class="table-container">
@@ -41,6 +44,7 @@
                         </td>
                         <td><span class="sync-time"><?= !empty($account['updated_at']) ? date('d/m/Y H:i', strtotime($account['updated_at'])) : (!empty($account['created_at']) ? date('d/m/Y H:i', strtotime($account['created_at'])) : '—') ?></span></td>
                         <td class="actions-cell text-center">
+                            <?php if ($can_delete_filtered): ?>
                             <button type="button" 
                                     class="btn-icon btn-delete-filtered" 
                                     data-id="<?= (int)$account['id'] ?>"
@@ -52,6 +56,7 @@
                                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                 </svg>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

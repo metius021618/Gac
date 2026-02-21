@@ -3,6 +3,8 @@
  * GAC - Vista Parcial de Tabla de Asuntos de Email
  * Para actualización AJAX
  */
+$can_edit_subject = function_exists('user_can_action') && user_can_action('registro_asuntos', 'editar');
+$can_delete_subject = function_exists('user_can_action') && user_can_action('registro_asuntos', 'eliminar');
 ?>
 
 <div class="table-container">
@@ -31,6 +33,7 @@
                         </td>
                         <td class="subject-cell"><?= htmlspecialchars($subject['subject_line']) ?></td>
                         <td class="actions-cell">
+                            <?php if ($can_edit_subject): ?>
                             <button type="button"
                                     class="btn-icon btn-edit" 
                                     data-id="<?= $subject['id'] ?>"
@@ -42,6 +45,8 @@
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
                             </button>
+                            <?php endif; ?>
+                            <?php if ($can_delete_subject): ?>
                             <button class="btn-icon btn-delete" 
                                     data-id="<?= $subject['id'] ?>"
                                     data-subject="<?= htmlspecialchars($subject['subject_line']) ?>"
@@ -51,6 +56,7 @@
                                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                 </svg>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

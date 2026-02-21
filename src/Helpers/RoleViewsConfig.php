@@ -62,6 +62,48 @@ class RoleViewsConfig
         ],
     ];
 
+    /** Acciones disponibles por vista: view_key => [action => label] */
+    private static array $viewActions = [
+        'dashboard' => ['ver' => 'Ver'],
+        'listar_correos' => ['ver' => 'Ver', 'agregar' => 'Agregar', 'editar' => 'Editar', 'eliminar' => 'Eliminar', 'deshabilitar' => 'Deshabilitar/Habilitar'],
+        'registro_acceso' => ['ver' => 'Ver', 'editar' => 'Editar'],
+        'registro_masivo' => ['ver' => 'Ver', 'agregar' => 'Agregar'],
+        'registro_asuntos' => ['ver' => 'Ver', 'agregar' => 'Agregar', 'editar' => 'Editar', 'eliminar' => 'Eliminar'],
+        'listar_gmail' => ['ver' => 'Ver', 'eliminar' => 'Eliminar'],
+        'listar_outlook' => ['ver' => 'Ver', 'eliminar' => 'Eliminar'],
+        'listar_pocoyoni' => ['ver' => 'Ver', 'eliminar' => 'Eliminar'],
+        'plataformas_activas' => ['ver' => 'Ver', 'agregar' => 'Agregar', 'editar' => 'Editar', 'eliminar' => 'Eliminar'],
+        'administradores' => ['ver' => 'Ver', 'agregar' => 'Agregar', 'editar' => 'Editar', 'eliminar' => 'Eliminar'],
+    ];
+
+    /**
+     * Obtener acciones disponibles para una vista
+     * @return array [action => label]
+     */
+    public static function getActionsForView(string $viewKey): array
+    {
+        return self::$viewActions[$viewKey] ?? ['ver' => 'Ver'];
+    }
+
+    /**
+     * Obtener todas las vistas con sus acciones para la UI
+     * @return array [['key'=>string, 'label'=>string, 'actions'=>[action=>label]], ...]
+     */
+    public static function allWithActions(): array
+    {
+        $out = [];
+        foreach (self::$views as $key => $v) {
+            $out[] = [
+                'key' => $key,
+                'label' => $v['label'],
+                'nav_label' => $v['nav_label'],
+                'url' => $v['url'],
+                'actions' => self::getActionsForView($key),
+            ];
+        }
+        return $out;
+    }
+
     /**
      * Lista de todas las vistas en orden (para checkboxes y preview)
      * @return array [['key' => string, 'label' => string, 'nav_label' => string, 'url' => string], ...]

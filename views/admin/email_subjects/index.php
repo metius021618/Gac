@@ -45,6 +45,7 @@ $content = ob_start();
             </div>
             
             <div class="table-controls-right">
+                <?php if (function_exists('user_can_action') && user_can_action('registro_asuntos', 'agregar')): ?>
                 <button type="button" id="btnNewSubject" class="btn btn-primary btn-new-subject">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -52,6 +53,7 @@ $content = ob_start();
                     </svg>
                     Nuevo asunto
                 </button>
+                <?php endif; ?>
                 <div class="per-page-selector">
                     <label for="perPageSelect" class="per-page-label">Mostrar:</label>
                     <select id="perPageSelect" class="form-select">
