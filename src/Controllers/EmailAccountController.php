@@ -401,7 +401,7 @@ class EmailAccountController
 
         if ($deleted && !empty($emailsAffected) && function_exists('log_user_activity')) {
             foreach (array_keys($emailsAffected) as $email) {
-                log_user_activity('eliminar', sprintf('Se eliminó el correo "%s"', $email));
+                log_user_activity('eliminar', sprintf('Se eliminó el correo <strong>%s</strong>', htmlspecialchars($email, ENT_QUOTES, 'UTF-8')));
             }
         }
         if ($deleted && !empty($emailsAffected)) {
@@ -454,7 +454,7 @@ class EmailAccountController
 
         if ($deleted && $email !== null) {
             if (function_exists('log_user_activity')) {
-                log_user_activity('eliminar', sprintf('Se eliminó el correo "%s"', $email));
+                log_user_activity('eliminar', sprintf('Se eliminó el correo <strong>%s</strong>', htmlspecialchars($email, ENT_QUOTES, 'UTF-8')));
             }
             $emailNorm = strtolower(trim($email));
             if ($this->userAccessRepository->countByEmail($emailNorm) === 0) {
@@ -510,7 +510,7 @@ class EmailAccountController
         $deleted = $this->emailAccountRepository->delete($id);
 
         if ($deleted && function_exists('log_user_activity')) {
-            log_user_activity('eliminar', sprintf('Se eliminó el correo "%s"', $account['email'] ?? $email));
+            log_user_activity('eliminar', sprintf('Se eliminó el correo <strong>%s</strong>', htmlspecialchars($account['email'] ?? $email, ENT_QUOTES, 'UTF-8')));
         }
         if ($deleted) {
             json_response(['success' => true, 'message' => 'Correo eliminado correctamente'], 200);
@@ -745,7 +745,7 @@ class EmailAccountController
         if (function_exists('log_user_activity')) {
             $platformName = $platform['display_name'] ?? $platform['name'] ?? 'Plataforma';
             foreach ($validEmails as $e) {
-                log_user_activity('agregar_correo', sprintf('Se agregó el correo "%s" con plataforma "%s"', $e, $platformName));
+                log_user_activity('agregar_correo', sprintf('Se agregó el correo <strong>%s</strong> con plataforma <strong>%s</strong>', htmlspecialchars($e, ENT_QUOTES, 'UTF-8'), htmlspecialchars($platformName, ENT_QUOTES, 'UTF-8')));
             }
         }
 
@@ -869,7 +869,8 @@ class EmailAccountController
             if ($deleted) {
                 $deletedCount++;
                 if (function_exists('log_user_activity')) {
-                    log_user_activity('eliminar', sprintf('Se eliminó el correo "%s" (plataforma "%s")', $email, $platform['display_name'] ?? $platform['name'] ?? ''));
+                    $platName = $platform['display_name'] ?? $platform['name'] ?? '';
+                    log_user_activity('eliminar', sprintf('Se eliminó el correo <strong>%s</strong> (plataforma <strong>%s</strong>)', htmlspecialchars($email, ENT_QUOTES, 'UTF-8'), htmlspecialchars($platName, ENT_QUOTES, 'UTF-8')));
                 }
 
                 // Si ya no tiene más asignaciones en user_access, eliminar de email_accounts

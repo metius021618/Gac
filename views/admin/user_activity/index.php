@@ -82,7 +82,7 @@ $baseUrl = '/admin/user-activity';
                             <tr>
                                 <td><?= htmlspecialchars($row['username'] ?? '') ?></td>
                                 <td><span class="activity-tag activity-tag--<?= htmlspecialchars($row['action'] ?? '') ?>"><?= htmlspecialchars($actionLabel) ?></span></td>
-                                <td class="activity-description"><?= nl2br(htmlspecialchars($row['description'] ?? '')) ?></td>
+                                <td class="activity-description"><?= nl2br($row['description'] ?? '') ?></td>
                                 <td><?= $datePart ?></td>
                                 <td><?= $timePart ?></td>
                             </tr>

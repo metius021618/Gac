@@ -149,10 +149,11 @@ class UserAccessController
 
         if ($success && function_exists('log_user_activity')) {
             $platformName = $platform['display_name'] ?? $platform['name'] ?? 'Plataforma';
+            $e = function ($s) { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); };
             if ($existing) {
-                log_user_activity('edicion', sprintf('Se editó el acceso al correo "%s" (usuario y/o plataforma "%s")', $email, $platformName));
+                log_user_activity('edicion', sprintf('Se editó el acceso al correo <strong>%s</strong> (usuario y/o plataforma <strong>%s</strong>)', $e($email), $e($platformName)));
             } else {
-                log_user_activity('asignado', sprintf('Asignó usuario "%s" y plataforma "%s" al correo "%s"', $password ?: '(vacío)', $platformName, $email));
+                log_user_activity('asignado', sprintf('Asignó usuario <strong>%s</strong> y plataforma <strong>%s</strong> al correo <strong>%s</strong>', $e($password ?: '(vacío)'), $e($platformName), $e($email)));
             }
         }
         if ($success) {
@@ -262,7 +263,7 @@ class UserAccessController
         $success = $this->userAccessRepository->delete($id);
 
         if ($success && $email !== null && function_exists('log_user_activity')) {
-            log_user_activity('eliminar', sprintf('Se eliminó el correo "%s"', $email));
+            log_user_activity('eliminar', sprintf('Se eliminó el correo <strong>%s</strong>', htmlspecialchars($email, ENT_QUOTES, 'UTF-8')));
         }
         if ($success) {
             json_response([
