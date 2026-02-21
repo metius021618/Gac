@@ -26,19 +26,34 @@ class UserAccessController
     }
 
     /**
-     * Mostrar formulario de registro de accesos (puede prellenar con email y platform_id por URL)
+     * Mostrar formulario de registro de accesos (puede prellenar con email y platform_id por URL).
+     * Si viene email + platform_id, se busca el acceso existente y se precarga el usuario asignado para edición.
      */
     public function index(Request $request): void
     {
         $platforms = $this->platformRepository->findAllEnabled();
         $prefill_email = trim($request->get('email', ''));
         $prefill_platform_id = (int) $request->get('platform_id', 0);
-        
+        $prefill_password = '';
+
+        if ($prefill_email !== '' && $prefill_platform_id > 0) {
+            $emailNorm = strtolower($prefill_email);
+            $existing = $this->userAccessRepository->findByEmailAndPlatform($emailNorm, $prefill_platform_id);
+            if ($existing && isset($existing['password'])) {
+                $prefill_password = $existing['password'];
+                // No prellenar si es placeholder OAuth (el usuario debe poner el acceso real)
+                if (in_array($prefill_password, ['Gmail (OAuth)', 'Outlook (OAuth)'], true)) {
+                    $prefill_password = '';
+                }
+            }
+        }
+
         $this->renderView('admin/user_access/index', [
             'title' => 'Registro de Accesos',
             'platforms' => $platforms,
             'prefill_email' => $prefill_email,
-            'prefill_platform_id' => $prefill_platform_id
+            'prefill_platform_id' => $prefill_platform_id,
+            'prefill_password' => $prefill_password
         ]);
     }
 

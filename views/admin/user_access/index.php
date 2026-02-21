@@ -104,6 +104,7 @@ $content = ob_start();
                         name="password" 
                         class="form-input" 
                         placeholder="Usuario de acceso (opcional: si no se asigna, el correo se guarda como Stock)"
+                        value="<?= htmlspecialchars($prefill_password ?? '') ?>"
                         autocomplete="off"
                     >
                     <span class="form-error" id="passwordError"></span>
