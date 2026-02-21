@@ -25,6 +25,12 @@
     const previewUsernamePlaceholder = document.getElementById('previewUsernamePlaceholder');
     const previewDashboardEmpty = document.getElementById('previewDashboardEmpty');
     const previewDashboardContent = document.getElementById('previewDashboardContent');
+    const btnNewUserPreviewFull = document.getElementById('btnNewUserPreviewFull');
+    const newUserPreviewModal = document.getElementById('newUserPreviewModal');
+    const closeNewUserPreviewModal = document.getElementById('closeNewUserPreviewModal');
+    const newUserPreviewFrame = document.getElementById('newUserPreviewFrame');
+
+    var currentRoleViewKeys = [];
 
     function openNewUserModal() {
         if (newUserModal) {
@@ -39,56 +45,71 @@
             newUserModal.classList.add('hidden');
             document.body.style.overflow = '';
             if (newUserForm) newUserForm.reset();
-            previewDashboardContent.classList.add('hidden');
+            if (previewDashboardContent) previewDashboardContent.classList.add('hidden');
             if (previewDashboardEmpty) previewDashboardEmpty.classList.remove('hidden');
         }
-    }
-
-    function getRoleKey() {
-        if (!newUserRole || !newUserRole.value) return '';
-        const opt = newUserRole.options[newUserRole.selectedIndex];
-        return (opt && opt.dataset.name) ? String(opt.dataset.name).toLowerCase() : '';
     }
 
     function updatePreviewView() {
         const username = (newUserUsername && newUserUsername.value.trim()) ? newUserUsername.value.trim() : '—';
         if (previewUsernamePlaceholder) previewUsernamePlaceholder.textContent = username;
 
-        const roleKey = getRoleKey();
+        const roleId = newUserRole && newUserRole.value ? parseInt(newUserRole.value, 10) : 0;
         if (!previewDashboardContent || !previewDashboardEmpty) return;
 
-        if (!roleKey) {
+        if (!roleId) {
+            currentRoleViewKeys = [];
             previewDashboardContent.classList.add('hidden');
-            previewDashboardEmpty.classList.remove('hidden');
-            previewDashboardEmpty.textContent = 'Seleccione un rol para ver la vista previa.';
+            if (previewDashboardEmpty) {
+                previewDashboardEmpty.classList.remove('hidden');
+                previewDashboardEmpty.textContent = 'Seleccione un rol para ver las vistas asignadas.';
+            }
             return;
         }
 
-        previewDashboardEmpty.classList.add('hidden');
-        previewDashboardContent.classList.remove('hidden');
-        previewDashboardContent.innerHTML = '';
-
-        // Ícono genérico para ítems
-        const iconSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>';
-
-        if (roleKey === 'admin' || roleKey === 'administrador' || roleKey === 'super_admin') {
-            ['Dashboard', 'Correos', 'Usuarios', 'Administradores', 'Configuración'].forEach(function (label) {
-                const item = document.createElement('span');
-                item.className = 'preview-dashboard-item';
-                item.innerHTML = iconSvg + ' ' + label;
-                previewDashboardContent.appendChild(item);
+        fetch('/admin/settings/role-views?role_id=' + encodeURIComponent(roleId), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                currentRoleViewKeys = data.view_keys || [];
+                const config = (typeof window.GAC_ROLE_VIEWS_CONFIG !== 'undefined') ? window.GAC_ROLE_VIEWS_CONFIG : {};
+                previewDashboardEmpty.classList.add('hidden');
+                previewDashboardContent.classList.remove('hidden');
+                previewDashboardContent.innerHTML = '';
+                const iconSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>';
+                currentRoleViewKeys.forEach(function (key) {
+                    const v = config[key];
+                    const label = (v && v.label) ? v.label : key;
+                    const item = document.createElement('span');
+                    item.className = 'preview-dashboard-item';
+                    item.innerHTML = iconSvg + ' ' + label;
+                    previewDashboardContent.appendChild(item);
+                });
+                if (currentRoleViewKeys.length === 0) {
+                    previewDashboardContent.innerHTML = '<span class="preview-dashboard-item">Sin vistas asignadas (configúralas en Configuración → Personalización de roles)</span>';
+                }
+            })
+            .catch(function () {
+                currentRoleViewKeys = [];
+                previewDashboardEmpty.classList.remove('hidden');
+                previewDashboardEmpty.textContent = 'Error al cargar vistas. Verifica la conexión.';
+                previewDashboardContent.classList.add('hidden');
             });
-        } else if (roleKey === 'comprador') {
-            const item = document.createElement('span');
-            item.className = 'preview-dashboard-item';
-            item.innerHTML = iconSvg + ' Consulta tu código';
-            previewDashboardContent.appendChild(item);
-        } else {
-            const item = document.createElement('span');
-            item.className = 'preview-dashboard-item';
-            item.innerHTML = iconSvg + ' Vista según rol';
-            previewDashboardContent.appendChild(item);
-        }
+    }
+
+    function openNewUserPreviewFull() {
+        if (!newUserPreviewModal || !newUserPreviewFrame) return;
+        const q = currentRoleViewKeys.length ? 'views=' + encodeURIComponent(currentRoleViewKeys.join(',')) : 'views=';
+        newUserPreviewFrame.src = '/admin/role-preview?' + q;
+        newUserPreviewModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeNewUserPreviewFull() {
+        if (newUserPreviewModal) newUserPreviewModal.classList.add('hidden');
+        if (newUserPreviewFrame) newUserPreviewFrame.src = 'about:blank';
+        document.body.style.overflow = (newUserModal && !newUserModal.classList.contains('hidden')) ? 'hidden' : '';
     }
 
     if (btnNewUser) btnNewUser.addEventListener('click', openNewUserModal);
@@ -102,6 +123,13 @@
     if (newUserUsername) newUserUsername.addEventListener('input', updatePreviewView);
     if (newUserUsername) newUserUsername.addEventListener('change', updatePreviewView);
     if (newUserRole) newUserRole.addEventListener('change', updatePreviewView);
+    if (btnNewUserPreviewFull) btnNewUserPreviewFull.addEventListener('click', openNewUserPreviewFull);
+    if (closeNewUserPreviewModal) closeNewUserPreviewModal.addEventListener('click', closeNewUserPreviewFull);
+    if (newUserPreviewModal) {
+        newUserPreviewModal.addEventListener('click', function (e) {
+            if (e.target === newUserPreviewModal) closeNewUserPreviewFull();
+        });
+    }
 
     if (newUserForm) {
         newUserForm.addEventListener('submit', async function (e) {

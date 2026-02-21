@@ -10,6 +10,7 @@ namespace Gac\Controllers;
 use Gac\Core\Request;
 use Gac\Repositories\UserRepository;
 use Gac\Repositories\RoleRepository;
+use Gac\Helpers\RoleViewsConfig;
 
 class AdminController
 {
@@ -29,11 +30,13 @@ class AdminController
     {
         $administrators = $this->userRepository->findAllUsersWithRoles();
         $roles = $this->roleRepository->findAll();
+        $role_views_config = RoleViewsConfig::all();
         
         $this->renderView('admin/administrators/index', [
             'title' => 'Administradores',
             'administrators' => $administrators,
-            'roles' => $roles
+            'roles' => $roles,
+            'role_views_config' => $role_views_config,
         ]);
     }
 

@@ -126,9 +126,12 @@ $content = ob_start();
                     <div class="preview-view-box" id="previewViewBox">
                         <p class="preview-view-title" id="previewViewTitle">Vista de: <span id="previewUsernamePlaceholder">—</span></p>
                         <div class="preview-dashboard" id="previewDashboard">
-                            <p class="preview-dashboard-empty" id="previewDashboardEmpty">Seleccione un rol para ver la vista previa.</p>
+                            <p class="preview-dashboard-empty" id="previewDashboardEmpty">Seleccione un rol para ver las vistas asignadas.</p>
                             <div class="preview-dashboard-content hidden" id="previewDashboardContent"></div>
                         </div>
+                        <button type="button" class="btn btn-secondary btn-preview-full" id="btnNewUserPreviewFull" style="margin-top: 0.75rem;">
+                            Ver vista previa completa
+                        </button>
                     </div>
                 </div>
                 <div class="form-actions">
@@ -136,6 +139,27 @@ $content = ob_start();
                     <button type="submit" class="btn btn-primary">Crear usuario</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal vista previa completa (nuevo usuario) -->
+<div id="newUserPreviewModal" class="modal hidden role-views-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container role-views-modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title">Vista previa del rol</h2>
+            <button type="button" class="modal-close" id="closeNewUserPreviewModal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-content role-views-modal-body new-user-preview-modal-content">
+            <div class="role-preview-frame-wrap" style="min-height: 500px; flex: 1;">
+                <iframe id="newUserPreviewFrame" class="role-preview-frame" src="about:blank" title="Vista previa"></iframe>
+            </div>
         </div>
     </div>
 </div>
@@ -173,6 +197,9 @@ $content = ob_start();
     </div>
 </div>
 
+<script>
+window.GAC_ROLE_VIEWS_CONFIG = <?= json_encode(array_column($role_views_config ?? [], null, 'key')) ?>;
+</script>
 <?php
 $content = ob_get_clean();
 
@@ -181,7 +208,7 @@ $show_nav = true;
 $show_footer = true;
 $footer_text = '';
 $footer_whatsapp = false;
-$additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/email_accounts.css'];
+$additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/email_accounts.css', '/assets/css/admin/settings.css'];
 $additional_js = ['/assets/js/admin/administrators.js'];
 
 require base_path('views/layouts/main.php');
