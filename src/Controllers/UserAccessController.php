@@ -155,7 +155,7 @@ class UserAccessController
             $platformName = $platform['display_name'] ?? $platform['name'] ?? 'Plataforma';
             $e = function ($s) { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); };
             if ($hadAnyAccessBefore) {
-                log_user_activity('edicion', sprintf('Se editó el acceso al correo <strong>%s</strong> (usuario y/o plataforma <strong>%s</strong>)', $e($email), $e($platformName)));
+                log_user_activity('edicion', sprintf('Se editó el acceso al correo <strong>%s</strong>: usuario <strong>%s</strong> y plataforma <strong>%s</strong>', $e($email), $e($password ?: '(vacío)'), $e($platformName)));
             } else {
                 log_user_activity('asignado', sprintf('Asignó usuario <strong>%s</strong> y plataforma <strong>%s</strong> al correo <strong>%s</strong>', $e($password ?: '(vacío)'), $e($platformName), $e($email)));
             }
