@@ -399,6 +399,11 @@ class EmailAccountController
         $emailsAffected = $this->userAccessRepository->getEmailsByIds($ids);
         $deleted = $this->userAccessRepository->bulkDelete($ids);
 
+        if ($deleted && !empty($emailsAffected) && function_exists('log_user_activity')) {
+            foreach (array_keys($emailsAffected) as $email) {
+                log_user_activity('eliminar', sprintf('Se eliminó el correo "%s"', $email));
+            }
+        }
         if ($deleted && !empty($emailsAffected)) {
             foreach (array_keys($emailsAffected) as $email) {
                 $emailNorm = strtolower(trim($email));
@@ -448,6 +453,9 @@ class EmailAccountController
         $deleted = $this->userAccessRepository->delete($id);
 
         if ($deleted && $email !== null) {
+            if (function_exists('log_user_activity')) {
+                log_user_activity('eliminar', sprintf('Se eliminó el correo "%s"', $email));
+            }
             $emailNorm = strtolower(trim($email));
             if ($this->userAccessRepository->countByEmail($emailNorm) === 0) {
                 $this->emailAccountRepository->deleteByEmail($emailNorm);
@@ -501,6 +509,9 @@ class EmailAccountController
         $this->userAccessRepository->deleteByEmail($email);
         $deleted = $this->emailAccountRepository->delete($id);
 
+        if ($deleted && function_exists('log_user_activity')) {
+            log_user_activity('eliminar', sprintf('Se eliminó el correo "%s"', $account['email'] ?? $email));
+        }
         if ($deleted) {
             json_response(['success' => true, 'message' => 'Correo eliminado correctamente'], 200);
         } else {
@@ -579,6 +590,9 @@ class EmailAccountController
         $emails = array_filter(array_map('trim', explode("\n", $emailsInput)));
         $emails = array_unique($emails);
         $result = $this->emailAccountRepository->addStockEmails($emails);
+        if (function_exists('log_user_activity') && !empty($result['added'])) {
+            log_user_activity('agregar_correo', sprintf('Se agregaron %d correo(s) como stock', (int) $result['added']));
+        }
         $msg = 'Agregados: ' . $result['added'] . '. Ya existían: ' . $result['skipped'];
         if (!empty($result['errors'])) {
             $msg .= '. Errores: ' . implode('; ', array_slice($result['errors'], 0, 5));
@@ -728,6 +742,13 @@ class EmailAccountController
         $userAccessRepository = new \Gac\Repositories\UserAccessRepository();
         $result = $userAccessRepository->bulkCreate($validEmails, $accessCode, $platformId);
 
+        if (function_exists('log_user_activity')) {
+            $platformName = $platform['display_name'] ?? $platform['name'] ?? 'Plataforma';
+            foreach ($validEmails as $e) {
+                log_user_activity('agregar_correo', sprintf('Se agregó el correo "%s" con plataforma "%s"', $e, $platformName));
+            }
+        }
+
         $message = sprintf(
             'Se procesaron %d correo(s) correctamente. %d nuevo(s), %d actualizado(s).',
             $result['success'] + $result['duplicates'],
@@ -847,6 +868,9 @@ class EmailAccountController
 
             if ($deleted) {
                 $deletedCount++;
+                if (function_exists('log_user_activity')) {
+                    log_user_activity('eliminar', sprintf('Se eliminó el correo "%s" (plataforma "%s")', $email, $platform['display_name'] ?? $platform['name'] ?? ''));
+                }
 
                 // Si ya no tiene más asignaciones en user_access, eliminar de email_accounts
                 $remaining = $userAccessRepository->countByEmail($email);

@@ -169,6 +169,34 @@ if (!function_exists('user_can_view')) {
     }
 }
 
+if (!function_exists('log_user_activity')) {
+    /**
+     * Registrar actividad de usuario para la vista "Actividad de usuario" (solo superadmin).
+     * Solo registra si el usuario actual NO es superadmin (role_id 1).
+     * @param string $action agregar_correo | edicion | eliminar | asignado
+     * @param string $description Descripción legible de la acción
+     */
+    function log_user_activity(string $action, string $description): void
+    {
+        if (session_status() === PHP_SESSION_NONE || empty($_SESSION['user_id'])) {
+            return;
+        }
+        $userId = (int) $_SESSION['user_id'];
+        $username = (string) ($_SESSION['username'] ?? '');
+        \Gac\Repositories\UserActivityLogRepository::log($userId, $username, $action, $description);
+    }
+}
+
+if (!function_exists('is_superadmin')) {
+    /**
+     * Comprobar si el usuario actual es superadmin (role_id 1 = admin)
+     */
+    function is_superadmin(): bool
+    {
+        return isset($_SESSION['role_id']) && (int) $_SESSION['role_id'] === 1;
+    }
+}
+
 if (!function_exists('user_can_action')) {
     /**
      * Comprobar si el usuario actual puede realizar una acción en una vista.

@@ -48,6 +48,9 @@
                         <?php if ($uv === null || user_can_view('administradores', $uv)): ?>
                         <a href="/admin/users" class="nav-link">Usuarios</a>
                         <?php endif; ?>
+                        <?php if (function_exists('is_superadmin') && is_superadmin()): ?>
+                        <a href="/admin/user-activity" class="nav-link">Actividad de usuario</a>
+                        <?php endif; ?>
                     <?php else: ?>
                         <a href="/" class="nav-link">Inicio</a>
                         <a href="/login" class="nav-link">Login</a>

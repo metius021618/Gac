@@ -97,6 +97,7 @@ class Application
         $router->post('/admin/administrators/store', 'AdminController@store', ['auth']);
         
         // Rutas de Registro de Accesos
+        $router->get('/admin/user-activity', 'UserActivityController@index', ['auth']);
         $router->get('/admin/user-access', 'UserAccessController@index', ['auth']);
         $router->get('/admin/user-access/list', 'UserAccessController@list', ['auth']);
         $router->post('/admin/user-access', 'UserAccessController@store', ['auth']);

@@ -1,0 +1,110 @@
+/**
+ * GAC - Estilos vista Actividad de usuario (superadmin)
+ */
+
+.user-activity-controls {
+    margin-bottom: var(--spacing-lg);
+}
+
+.user-activity-controls .per-page-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.user-activity-controls .per-page-label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+}
+
+.user-activity-controls .form-select.user-activity-per-page {
+    min-width: 80px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+}
+
+.user-activity-controls .form-select.user-activity-per-page:hover,
+.user-activity-controls .form-select.user-activity-per-page:focus {
+    border-color: var(--color-primary);
+    outline: none;
+}
+
+/* Encabezado ordenable por fecha */
+.sortable-header {
+    color: var(--text-primary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 2px 4px;
+    border-radius: var(--border-radius-sm);
+    transition: background var(--transition-base);
+}
+
+.sortable-header:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-primary-light);
+}
+
+.sort-icon {
+    font-size: 0.7em;
+    opacity: 0.9;
+}
+
+/* Tags de acción */
+.activity-tag {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.activity-tag--agregar_correo {
+    background: rgba(40, 167, 69, 0.25);
+    color: #5dd879;
+}
+
+.activity-tag--edicion {
+    background: rgba(0, 102, 255, 0.25);
+    color: var(--color-primary-light);
+}
+
+.activity-tag--eliminar {
+    background: rgba(220, 53, 69, 0.25);
+    color: #f87171;
+}
+
+.activity-tag--asignado {
+    background: rgba(255, 193, 7, 0.2);
+    color: #facc15;
+}
+
+.activity-description {
+    word-break: break-word;
+    max-width: 400px;
+}
+
+/* Paginación con enlaces */
+.pagination-controls a.pagination-btn,
+.pagination-controls a.pagination-page {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.pagination-controls a.pagination-btn:hover,
+.pagination-controls a.pagination-page:hover {
+    color: var(--color-primary-light);
+}
+
+.pagination-controls a.pagination-page.active {
+    color: var(--color-primary);
+    font-weight: 700;
+}

@@ -144,8 +144,17 @@ class UserAccessController
         if ($oauthRow && (int)($oauthRow['id'] ?? 0) > 0) {
             $this->userAccessRepository->delete((int) $oauthRow['id']);
         }
+        $existing = $this->userAccessRepository->findByEmailAndPlatform($email, $platformId);
         $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId);
 
+        if ($success && function_exists('log_user_activity')) {
+            $platformName = $platform['display_name'] ?? $platform['name'] ?? 'Plataforma';
+            if ($existing) {
+                log_user_activity('edicion', sprintf('Se editó el acceso al correo "%s" (usuario y/o plataforma "%s")', $email, $platformName));
+            } else {
+                log_user_activity('asignado', sprintf('Asignó usuario "%s" y plataforma "%s" al correo "%s"', $password ?: '(vacío)', $platformName, $email));
+            }
+        }
         if ($success) {
             json_response(['success' => true, 'message' => 'Acceso registrado correctamente']);
         } else {
@@ -249,8 +258,12 @@ class UserAccessController
             return;
         }
 
+        $email = $this->userAccessRepository->getEmailById($id);
         $success = $this->userAccessRepository->delete($id);
 
+        if ($success && $email !== null && function_exists('log_user_activity')) {
+            log_user_activity('eliminar', sprintf('Se eliminó el correo "%s"', $email));
+        }
         if ($success) {
             json_response([
                 'success' => true,
