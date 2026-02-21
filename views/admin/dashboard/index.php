@@ -2,8 +2,12 @@
 /**
  * GAC - Vista del Dashboard Principal
  * Diseño adaptado del sistema original
+ * Filtra cards según role_views del usuario actual
  */
-
+$userViews = user_role_views();
+$can = function ($key) use ($userViews) {
+    return $userViews === null || user_can_view($key, $userViews);
+};
 $content = ob_start();
 ?>
 
@@ -22,6 +26,7 @@ $content = ob_start();
     <!-- Cards de Acciones (Rojos) -->
     <div class="dashboard-actions">
         <div class="action-cards-grid">
+            <?php if ($can('listar_correos')): ?>
             <!-- Listar Correos -->
             <a href="/admin/email-accounts" class="action-card">
                 <div class="action-card-icon">
@@ -32,7 +37,8 @@ $content = ob_start();
                 </div>
                 <div class="action-card-text">Listar correos</div>
             </a>
-
+            <?php endif; ?>
+            <?php if ($can('registro_acceso')): ?>
             <!-- Registro de Accesos -->
             <a href="/admin/user-access" class="action-card">
                 <div class="action-card-icon">
@@ -43,7 +49,8 @@ $content = ob_start();
                 </div>
                 <div class="action-card-text">Registro de accesos</div>
             </a>
-
+            <?php endif; ?>
+            <?php if ($can('registro_masivo')): ?>
             <!-- Registro Masivo -->
             <a href="/admin/email-accounts/bulk-register" class="action-card">
                 <div class="action-card-icon">
@@ -56,7 +63,8 @@ $content = ob_start();
                 </div>
                 <div class="action-card-text">Registro masivo</div>
             </a>
-
+            <?php endif; ?>
+            <?php if ($can('registro_asuntos')): ?>
             <!-- Registro de Asuntos -->
             <a href="/admin/email-subjects" class="action-card">
                 <div class="action-card-icon">
@@ -70,14 +78,16 @@ $content = ob_start();
                 </div>
                 <div class="action-card-text">Registro de Asuntos</div>
             </a>
+            <?php endif; ?>
         </div>
     </div>
 
     <!-- Cards de Estadísticas (Grises) -->
     <div class="dashboard-stats">
         <div class="stats-cards-grid">
-            <!-- Correos Registrados: 3 bloques del mismo ancho que una stat-card, con separación -->
+            <?php if ($can('listar_gmail') || $can('listar_outlook') || $can('listar_pocoyoni')): ?>
             <div class="stats-emails-wrapper">
+                <?php if ($can('listar_gmail')): ?>
                 <a href="/admin/email-accounts?filter=gmail" class="stat-card stat-card-grey stat-card-link stat-card-email" title="Ver correos Gmail">
                     <div class="stat-card-icon" style="background: rgba(234,67,53,0.1);">
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="#EA4335">
@@ -92,6 +102,8 @@ $content = ob_start();
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
                 </a>
+                <?php endif; ?>
+                <?php if ($can('listar_outlook')): ?>
                 <a href="/admin/email-accounts?filter=outlook" class="stat-card stat-card-grey stat-card-link stat-card-email" title="Ver correos Outlook">
                     <div class="stat-card-icon" style="background: rgba(0,120,212,0.1);">
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="#0078D4">
@@ -106,6 +118,8 @@ $content = ob_start();
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
                 </a>
+                <?php endif; ?>
+                <?php if ($can('listar_pocoyoni')): ?>
                 <a href="/admin/email-accounts?filter=pocoyoni" class="stat-card stat-card-grey stat-card-link stat-card-email" title="Ver correos Pocoyoni">
                     <div class="stat-card-icon" style="background: rgba(255,193,7,0.15);">
                         <div style="width: 28px; height: 28px; background: #FFC107; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #333; font-size: 13px;">P</div>
@@ -118,8 +132,11 @@ $content = ob_start();
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
                 </a>
+                <?php endif; ?>
             </div>
+            <?php endif; ?>
 
+            <?php if ($can('plataformas_activas')): ?>
             <!-- Plataformas Activas -->
             <a href="/admin/platforms" class="stat-card stat-card-grey stat-card-link" title="Ver plataformas activas">
                 <div class="stat-card-icon stat-icon-yellow">
@@ -139,7 +156,9 @@ $content = ob_start();
                     </svg>
                 </div>
             </a>
+            <?php endif; ?>
 
+            <?php if ($can('administradores')): ?>
             <!-- Administradores -->
             <a href="/admin/administrators" class="stat-card stat-card-grey stat-card-link" title="Ver administradores">
                 <div class="stat-card-icon stat-icon-green">
@@ -158,6 +177,7 @@ $content = ob_start();
                     </svg>
                 </div>
             </a>
+            <?php endif; ?>
         </div>
     </div>
 </div>

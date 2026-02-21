@@ -123,3 +123,48 @@ if (!function_exists('json_response')) {
         exit;
     }
 }
+
+if (!function_exists('user_role_views')) {
+    /**
+     * Obtener las vistas (view_keys) permitidas para el rol del usuario actual.
+     * Si el rol no tiene role_views configurados, retorna null (acceso completo).
+     * @return string[]|null Array de view_keys o null si acceso completo
+     */
+    function user_role_views(): ?array
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            return null;
+        }
+        $roleId = $_SESSION['role_id'] ?? 0;
+        if (!$roleId || empty($_SESSION['logged_in'])) {
+            return null;
+        }
+        try {
+            $repo = new \Gac\Repositories\RoleRepository();
+            $keys = $repo->getViewKeys((int) $roleId);
+            if (empty($keys)) {
+                return null; // Sin role_views = acceso completo (backward compat)
+            }
+            return $keys;
+        } catch (\Throwable $e) {
+            error_log('user_role_views: ' . $e->getMessage());
+            return null;
+        }
+    }
+}
+
+if (!function_exists('user_can_view')) {
+    /**
+     * Comprobar si el usuario actual puede ver una vista (view_key).
+     * @param string $viewKey
+     * @param array|null $roleViews Resultado de user_role_views() (opcional, se obtiene si no se pasa)
+     */
+    function user_can_view(string $viewKey, ?array $roleViews = null): bool
+    {
+        $views = $roleViews ?? user_role_views();
+        if ($views === null) {
+            return true; // Sin restricción = puede ver todo
+        }
+        return in_array($viewKey, $views, true);
+    }
+}

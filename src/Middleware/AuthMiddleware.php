@@ -11,6 +11,7 @@ namespace Gac\Middleware;
 use Gac\Core\Request;
 use Gac\Repositories\SettingsRepository;
 use Gac\Repositories\SessionRepository;
+use Gac\Helpers\RoleViewsConfig;
 
 class AuthMiddleware
 {
@@ -54,6 +55,25 @@ class AuthMiddleware
                 exit;
             } else {
                 redirect('/login');
+            }
+        }
+
+        // Verificar role_views: si la ruta requiere vistas específicas y el usuario no las tiene, redirigir a dashboard
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $requiredViews = RoleViewsConfig::getViewKeysForPath($uri);
+        if ($requiredViews !== null && !$request->isAjax()) {
+            $roleViews = function_exists('user_role_views') ? user_role_views() : null;
+            if ($roleViews !== null) {
+                $hasAccess = false;
+                foreach ($requiredViews as $key) {
+                    if (in_array($key, $roleViews, true)) {
+                        $hasAccess = true;
+                        break;
+                    }
+                }
+                if (!$hasAccess) {
+                    redirect('/admin/dashboard');
+                }
             }
         }
 

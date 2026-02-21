@@ -99,4 +99,33 @@ class RoleViewsConfig
     {
         return array_keys(self::$views);
     }
+
+    /**
+     * Obtener view_keys requeridos para una ruta/path de admin.
+     * Usuario debe tener al menos uno de los keys retornados.
+     * @param string $path Ej: /admin/dashboard, /admin/email-accounts?filter=gmail
+     * @return string[]|null Array de view_keys requeridos, o null si la ruta no está restringida
+     */
+    public static function getViewKeysForPath(string $path): ?array
+    {
+        $path = strtok($path, '?');
+        $path = rtrim($path, '/');
+        $map = [
+            '/admin/dashboard' => ['dashboard'],
+            '/admin/email-accounts' => ['listar_correos', 'listar_gmail', 'listar_outlook', 'listar_pocoyoni'],
+            '/admin/user-access' => ['registro_acceso'],
+            '/admin/email-accounts/bulk-register' => ['registro_masivo'],
+            '/admin/email-subjects' => ['registro_asuntos'],
+            '/admin/platforms' => ['plataformas_activas'],
+            '/admin/administrators' => ['administradores'],
+            '/admin/users' => ['administradores'],
+        ];
+        if (isset($map[$path])) {
+            return $map[$path];
+        }
+        if (strpos($path, '/admin/email-accounts') === 0) {
+            return ['listar_correos', 'listar_gmail', 'listar_outlook', 'listar_pocoyoni'];
+        }
+        return null;
+    }
 }
