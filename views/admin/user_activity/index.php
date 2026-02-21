@@ -98,7 +98,7 @@ $baseUrl = '/admin/user-activity';
                 Mostrando <strong><?= $total_records === 0 ? 0 : (($current_page - 1) * $per_page) + 1 ?></strong> - <strong><?= min($current_page * $per_page, $total_records) ?></strong> de <strong><?= number_format($total_records) ?></strong> registros
             </div>
             <div class="pagination-controls">
-                <a href="<?= $baseUrl ?>?page=<?= max(1, $current_page - 1) ?>&per_page=<?= $per_page ?>&order=<?= $order ?>" class="pagination-btn" <?= $current_page <= 1 ? 'style="pointer-events:none;opacity:0.5"' : '' ?>>
+                <a href="<?= $baseUrl ?>?page=<?= max(1, $current_page - 1) ?>&per_page=<?= $per_page ?>&order=<?= $order ?>" class="pagination-btn <?= $current_page <= 1 ? 'disabled' : '' ?>" <?= $current_page <= 1 ? 'aria-disabled="true"' : '' ?>>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
                     Anterior
                 </a>
@@ -118,7 +118,7 @@ $baseUrl = '/admin/user-activity';
                         <a href="<?= $baseUrl ?>?page=<?= $total_pages ?>&per_page=<?= $per_page ?>&order=<?= $order ?>" class="pagination-page"><?= $total_pages ?></a>
                     <?php endif; ?>
                 </div>
-                <a href="<?= $baseUrl ?>?page=<?= min($total_pages, $current_page + 1) ?>&per_page=<?= $per_page ?>&order=<?= $order ?>" class="pagination-btn" <?= $current_page >= $total_pages ? 'style="pointer-events:none;opacity:0.5"' : '' ?>>
+                <a href="<?= $baseUrl ?>?page=<?= min($total_pages, $current_page + 1) ?>&per_page=<?= $per_page ?>&order=<?= $order ?>" class="pagination-btn <?= $current_page >= $total_pages ? 'disabled' : '' ?>" <?= $current_page >= $total_pages ? 'aria-disabled="true"' : '' ?>>
                     Siguiente
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </a>
