@@ -142,13 +142,13 @@ class UserAccessController
             }
         }
 
+        // Contar ANTES de borrar: si el correo ya tenía algún acceso (incl. OAuth), es edición; si no, asignado nuevo
+        $hadAnyAccessBefore = $this->userAccessRepository->countByEmail($email) > 0;
         // Si había una fila OAuth (Gmail/Outlook conectado antes), la borramos y guardamos con la contraseña/plataforma que el usuario indicó
         $oauthRow = $this->userAccessRepository->findOAuthPlaceholderByEmail($email);
         if ($oauthRow && (int)($oauthRow['id'] ?? 0) > 0) {
             $this->userAccessRepository->delete((int) $oauthRow['id']);
         }
-        // Si el correo ya tenía algún acceso en user_access, es una edición (botón Editar); si no, es asignado nuevo
-        $hadAnyAccessBefore = $this->userAccessRepository->countByEmail($email) > 0;
         $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId);
 
         if ($success && function_exists('log_user_activity')) {
