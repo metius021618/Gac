@@ -31,7 +31,7 @@ $in = function ($key) use ($allowed_keys) { return in_array($key, $allowed_keys,
                     <?php if ($in('listar_correos') || $in('listar_gmail') || $in('listar_outlook') || $in('listar_pocoyoni')): ?>
                         <a href="#" class="nav-link" onclick="return false;">Correos</a>
                     <?php endif; ?>
-                    <?php if ($in('administradores') || $in('registro_acceso') || $in('registro_masivo') || $in('registro_asuntos') || $in('plataformas_activas')): ?>
+                    <?php if ($in('administradores')): ?>
                         <a href="#" class="nav-link" onclick="return false;">Usuarios</a>
                     <?php endif; ?>
                 </nav>

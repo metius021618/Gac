@@ -45,7 +45,7 @@
                         <?php if ($uv === null || user_can_view('listar_correos', $uv) || user_can_view('listar_gmail', $uv) || user_can_view('listar_outlook', $uv) || user_can_view('listar_pocoyoni', $uv)): ?>
                         <a href="/admin/email-accounts" class="nav-link">Correos</a>
                         <?php endif; ?>
-                        <?php if ($uv === null || user_can_view('administradores', $uv) || user_can_view('registro_acceso', $uv) || user_can_view('registro_masivo', $uv) || user_can_view('registro_asuntos', $uv) || user_can_view('plataformas_activas', $uv)): ?>
+                        <?php if ($uv === null || user_can_view('administradores', $uv)): ?>
                         <a href="/admin/users" class="nav-link">Usuarios</a>
                         <?php endif; ?>
                     <?php else: ?>
