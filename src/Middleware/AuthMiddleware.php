@@ -58,8 +58,10 @@ class AuthMiddleware
             }
         }
 
-        // Verificar role_views: si la ruta requiere vistas específicas y el usuario no las tiene, redirigir a dashboard
+        // Verificar role_views: si la ruta requiere vistas específicas y el usuario no las tiene, redirigir a una vista permitida
         $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $path = strtok($uri, '?');
+        $path = $path !== false ? rtrim($path, '/') : '';
         $requiredViews = RoleViewsConfig::getViewKeysForPath($uri);
         if ($requiredViews !== null && !$request->isAjax()) {
             $roleViews = function_exists('user_role_views') ? user_role_views() : null;
@@ -72,7 +74,23 @@ class AuthMiddleware
                     }
                 }
                 if (!$hasAccess) {
-                    redirect('/admin/dashboard');
+                    // Evitar bucle: nunca redirigir a la misma URL que requiere acceso que no tiene
+                    // Si el usuario no tiene vistas asignadas, redirigir a login (ERR_TOO_MANY_REDIRECTS)
+                    if (empty($roleViews)) {
+                        $this->destroySession();
+                        redirect('/login?error=no_views');
+                    }
+                    // Redirigir a la primera vista que el usuario sí tiene permitida
+                    $firstView = RoleViewsConfig::get($roleViews[0]);
+                    $targetUrl = $firstView['url'] ?? '/admin/dashboard';
+                    // Evitar bucle: no redirigir a la misma ruta actual
+                    $targetPath = parse_url($targetUrl, PHP_URL_PATH);
+                    $targetPathNorm = $targetPath ? rtrim($targetPath, '/') : '';
+                    if ($targetPathNorm && $targetPathNorm === $path) {
+                        $this->destroySession();
+                        redirect('/login?error=no_access');
+                    }
+                    redirect($targetUrl);
                 }
             }
         }

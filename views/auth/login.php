@@ -21,6 +21,12 @@ $content = ob_start();
                 <p class="login-subtitle">Ingresa tus credenciales para acceder</p>
             </div>
 
+            <?php if (!empty($error_message)): ?>
+            <div class="alert alert-danger login-error" role="alert" style="margin-bottom: 1rem; padding: 0.75rem 1rem; background: rgba(220,53,69,0.15); border: 1px solid rgba(220,53,69,0.3); border-radius: 8px; color: #dc3545;">
+                <?= htmlspecialchars($error_message) ?>
+            </div>
+            <?php endif; ?>
+
             <!-- Form -->
             <form id="loginForm" class="login-form" novalidate>
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">

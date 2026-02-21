@@ -51,8 +51,16 @@ class AuthController
             return;
         }
 
+        $error = $request->get('error', '');
+        $errorMessage = '';
+        if ($error === 'no_views') {
+            $errorMessage = 'Tu rol no tiene vistas asignadas. Contacta al administrador.';
+        } elseif ($error === 'no_access') {
+            $errorMessage = 'No tienes acceso a esa sección.';
+        }
         $this->renderView('auth/login', [
-            'title' => 'Iniciar Sesión'
+            'title' => 'Iniciar Sesión',
+            'error_message' => $errorMessage
         ]);
     }
 
