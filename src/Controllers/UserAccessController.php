@@ -98,6 +98,9 @@ class UserAccessController
                     json_response(['success' => false, 'message' => 'Error al guardar el correo'], 500);
                     return;
                 }
+                if (function_exists('log_user_activity')) {
+                    log_user_activity('agregar_correo', sprintf('Se agregó el correo <strong>%s</strong> (stock)', htmlspecialchars($email, ENT_QUOTES, 'UTF-8')));
+                }
             }
             $missing = [];
             if (!$hasUser) $missing[] = 'acceso (contraseña)';
@@ -144,13 +147,14 @@ class UserAccessController
         if ($oauthRow && (int)($oauthRow['id'] ?? 0) > 0) {
             $this->userAccessRepository->delete((int) $oauthRow['id']);
         }
-        $existing = $this->userAccessRepository->findByEmailAndPlatform($email, $platformId);
+        // Si el correo ya tenía algún acceso en user_access, es una edición (botón Editar); si no, es asignado nuevo
+        $hadAnyAccessBefore = $this->userAccessRepository->countByEmail($email) > 0;
         $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId);
 
         if ($success && function_exists('log_user_activity')) {
             $platformName = $platform['display_name'] ?? $platform['name'] ?? 'Plataforma';
             $e = function ($s) { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); };
-            if ($existing) {
+            if ($hadAnyAccessBefore) {
                 log_user_activity('edicion', sprintf('Se editó el acceso al correo <strong>%s</strong> (usuario y/o plataforma <strong>%s</strong>)', $e($email), $e($platformName)));
             } else {
                 log_user_activity('asignado', sprintf('Asignó usuario <strong>%s</strong> y plataforma <strong>%s</strong> al correo <strong>%s</strong>', $e($password ?: '(vacío)'), $e($platformName), $e($email)));
