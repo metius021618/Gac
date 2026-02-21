@@ -153,7 +153,8 @@ class RoleViewsConfig
         $path = strtok($path, '?');
         $path = rtrim($path, '/');
         $map = [
-            '/admin/dashboard' => ['dashboard'],
+            // Dashboard: permitir acceso con dashboard o con cualquiera de las vistas de correos (para ver las cards Gmail/Outlook/Pocoyoni)
+            '/admin/dashboard' => ['dashboard', 'listar_correos', 'listar_gmail', 'listar_outlook', 'listar_pocoyoni'],
             '/admin/email-accounts' => ['listar_correos', 'listar_gmail', 'listar_outlook', 'listar_pocoyoni'],
             '/admin/user-access' => ['registro_acceso'],
             '/admin/email-accounts/bulk-register' => ['registro_masivo'],
