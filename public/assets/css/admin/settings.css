@@ -1,17 +1,17 @@
 /**
- * GAC - Estilos para Vista de Configuración
+ * GAC - Estilos para Vista de ConfiguraciÃ³n
  */
 
 /* ============================================
-   CONTENEDOR DE CONFIGURACIÓN
+   CONTENEDOR DE CONFIGURACIÃ“N
    ============================================ */
-.settings-container {
+   .settings-container {
     max-width: 900px;
     margin: 0 auto;
 }
 
 /* ============================================
-   SECCIÓN DE CONFIGURACIÓN
+   SECCIÃ“N DE CONFIGURACIÃ“N
    ============================================ */
 .settings-section {
     background: var(--bg-card);
@@ -51,7 +51,7 @@
 }
 
 /* ============================================
-   FORMULARIO DE CONFIGURACIÓN
+   FORMULARIO DE CONFIGURACIÃ“N
    ============================================ */
 .settings-form {
     margin-top: var(--spacing-lg);
@@ -256,7 +256,7 @@
 }
 
 /* ============================================
-   PERSONALIZACIÓN DE ROLES
+   PERSONALIZACIÃ“N DE ROLES
    ============================================ */
 .roles-panel {
     margin-top: var(--spacing-md);
@@ -309,7 +309,7 @@
 /* Modal editor de vistas por rol */
 .role-views-modal .modal-container {
     max-width: 95vw;
-    width: 1200px;
+    width: 1300px;
     max-height: 92vh;
     display: flex;
     flex-direction: column;
