@@ -25,17 +25,15 @@ $in = function ($key) use ($allowed_keys) { return in_array($key, $allowed_keys,
                     <img src="/assets/images/logocamb.png" alt="<?= gac_name() ?>" class="logo">
                 </div>
                 <nav class="main-nav">
-                    <?php if ($in('dashboard')): ?>
+                    <?php if ($in('dashboard') || !empty($allowed_keys)): ?>
                         <a href="#" class="nav-link" onclick="return false;">Dashboard</a>
                     <?php endif; ?>
                     <?php if ($in('listar_correos') || $in('listar_gmail') || $in('listar_outlook') || $in('listar_pocoyoni')): ?>
                         <a href="#" class="nav-link" onclick="return false;">Correos</a>
                     <?php endif; ?>
-                    <?php if ($in('registro_acceso')): ?><a href="#" class="nav-link" onclick="return false;">Registro de acceso</a><?php endif; ?>
-                    <?php if ($in('registro_masivo')): ?><a href="#" class="nav-link" onclick="return false;">Registro masivo</a><?php endif; ?>
-                    <?php if ($in('registro_asuntos')): ?><a href="#" class="nav-link" onclick="return false;">Registro de asuntos</a><?php endif; ?>
-                    <?php if ($in('plataformas_activas')): ?><a href="#" class="nav-link" onclick="return false;">Plataformas</a><?php endif; ?>
-                    <?php if ($in('administradores')): ?><a href="#" class="nav-link" onclick="return false;">Administradores</a><?php endif; ?>
+                    <?php if ($in('administradores') || $in('registro_acceso') || $in('registro_masivo') || $in('registro_asuntos') || $in('plataformas_activas')): ?>
+                        <a href="#" class="nav-link" onclick="return false;">Usuarios</a>
+                    <?php endif; ?>
                 </nav>
                 <div class="user-menu-container">
                     <span class="user-welcome">Vista previa</span>

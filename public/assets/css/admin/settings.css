@@ -323,10 +323,10 @@
 
 .role-views-editor {
     display: grid;
-    grid-template-columns: 1fr 320px;
+    grid-template-columns: minmax(800px, 1fr) 300px;
     gap: 0;
-    min-height: 520px;
-    height: 75vh;
+    min-height: 600px;
+    height: 80vh;
 }
 
 .role-preview-frame-wrap {
