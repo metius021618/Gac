@@ -28,10 +28,21 @@ from cron.repositories import EmailAccountRepository, SettingsRepository
 from cron.gmail_service import GmailService
 import logging
 
+# Escribir siempre en logs/renew_gmail_watch.log (cron y ejecución manual)
+log_dir = os.path.join(parent_dir, 'logs')
+log_file = os.path.join(log_dir, 'renew_gmail_watch.log')
+if not os.path.isdir(log_dir):
+    os.makedirs(log_dir, exist_ok=True)
+handlers = [logging.StreamHandler()]
+try:
+    handlers.append(logging.FileHandler(log_file, encoding='utf-8'))
+except Exception:
+    pass
+
 logging.basicConfig(
     level=getattr(logging, LOG_CONFIG.get('level', 'info').upper(), logging.INFO),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
+    handlers=handlers
 )
 logger = logging.getLogger(__name__)
 
