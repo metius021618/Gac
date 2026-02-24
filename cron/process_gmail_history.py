@@ -64,7 +64,13 @@ def main():
         logger.error("No se pudo construir cliente Gmail.")
         return 1
 
+    # Gmail API puede tardar unos segundos en propagar el mensaje a history; si viene vacío, reintentar una vez
+    HISTORY_RETRY_SECONDS = 8
     msg_ids, _ = gmail.fetch_history_message_ids(gaccount, last_history_id)
+    if not msg_ids:
+        logger.info("history.list vacío (posible retraso de propagación); reintento en %d s.", HISTORY_RETRY_SECONDS)
+        time.sleep(HISTORY_RETRY_SECONDS)
+        msg_ids, _ = gmail.fetch_history_message_ids(gaccount, last_history_id)
     if not msg_ids:
         logger.info("history.list no devolvió mensajes nuevos; actualizando historyId.")
         SettingsRepository.set('gmail_last_history_id', new_history_id)

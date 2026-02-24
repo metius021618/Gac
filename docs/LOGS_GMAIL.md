@@ -117,6 +117,14 @@ Los mensajes se leen pero no se guardan. En el log deberías ver por cada mensaj
 
 Si no aparece “saltado” y tampoco “OTP guardado”, ese mensaje ya estaba en BD (no se duplica).
 
+### El código tarda hasta ~1 minuto en aparecer (antes era casi al instante)
+
+La Gmail API tiene un **retraso de propagación** conocido: el push llega enseguida, pero `history.list` a veces aún no devuelve el mensaje nuevo. Si el worker consulta en ese momento, recibe 0 mensajes, actualiza el historyId y el correo no se procesa por ese evento.
+
+- **Qué hace el sistema:** Si la primera llamada a `history.list` devuelve vacío, el worker **espera 8 segundos y reintenta una vez** con el mismo `last_history_id`. Así se cubre el retraso típico de propagación y el código suele aparecer en segundos.
+- **Qué revisar:** En `logs/gmail_push_worker.log` verás `history.list vacío (posible retraso de propagación); reintento en 8 s.` cuando se aplica el reintento. Si tras el reintento sigue vacío, se actualiza el historyId y se termina.
+- **Si la demora sigue siendo ~1 minuto:** Puede que en el servidor el webhook no lance el worker en segundo plano (p. ej. `exec()` deshabilitado o `&` no efectivo) y que un **cron externo** ejecute el lector Gmail cada minuto. Revisa que en `gmail_webhook.log` aparezca la línea al llegar el correo y que el PHP pueda ejecutar el worker en background.
+
 ### Las notificaciones (push) dejaron de llegar a una hora concreta
 
 Si en **gmail_webhook.log** el último aviso es, por ejemplo, a las 7:12 y después no vuelve a aparecer nada, la causa habitual es que **el Gmail Watch caducó**.
