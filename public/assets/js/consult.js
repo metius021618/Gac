@@ -23,6 +23,8 @@
 
     // API Endpoint: consult solo consulta la BD (instantáneo). Los lectores deben correr cada 30 s con cron/sync_loop.py
     const API_ENDPOINT = '/api/v1/codes/consult';
+    const FETCH_TIMEOUT_MS = 25000;  // 25 s: evita esperar eternamente si el servidor tarda (503/timeout)
+    const RETRY_ON_503_DELAY_MS = 4000;  // Reintentar una vez tras 4 s si el servidor devuelve 503/502/504
 
     /**
      * Inicialización
@@ -64,9 +66,13 @@
         // Mostrar estado de carga
         setLoadingState(true);
 
-        try {
-            // Llamar a la API
-            const response = await fetch(API_ENDPOINT, {
+        var lastError = null;
+        var retried = false;
+
+        function doRequest() {
+            var ctrl = new AbortController();
+            var timeoutId = setTimeout(function() { ctrl.abort(); }, FETCH_TIMEOUT_MS);
+            return fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -75,20 +81,36 @@
                     'Pragma': 'no-cache'
                 },
                 body: JSON.stringify(formData),
-                cache: 'no-store'
-            });
+                cache: 'no-store',
+                signal: ctrl.signal
+            }).finally(function() { clearTimeout(timeoutId); });
+        }
+
+        try {
+            var response = await doRequest();
+
+            // 503/502/504: servidor sobrecargado o timeout; reintentar una vez
+            if (!retried && (response.status === 503 || response.status === 502 || response.status === 504)) {
+                retried = true;
+                if (btnText) btnText.textContent = 'Reintentando...';
+                await new Promise(function(r) { setTimeout(r, RETRY_ON_503_DELAY_MS); });
+                response = await doRequest();
+            }
 
             // Verificar si la respuesta es JSON
-            const contentType = response.headers.get('content-type');
-            let data;
+            var contentType = response.headers.get('content-type');
+            var data;
             
             if (contentType && contentType.includes('application/json')) {
                 data = await response.json();
             } else {
-                // Si no es JSON, intentar leer como texto
-                const text = await response.text();
+                var text = await response.text();
                 console.error('Respuesta no JSON:', text);
-                showError('Error: El servidor no devolvió una respuesta válida');
+                if (response.status === 503 || response.status === 502 || response.status === 504) {
+                    showError('El servidor está temporalmente ocupado (error ' + response.status + '). Por favor intenta de nuevo en unos segundos.');
+                } else {
+                    showError('Error: El servidor no devolvió una respuesta válida');
+                }
                 setLoadingState(false);
                 return;
             }
@@ -96,6 +118,13 @@
             // Debug: Log de la respuesta
             console.log('Respuesta del servidor:', data);
             console.log('Status:', response.status);
+
+            // Servidor sobrecargado o indisponible (incluso si el body es JSON)
+            if (response.status === 503 || response.status === 502 || response.status === 504) {
+                showError('El servidor está temporalmente ocupado (error ' + response.status + '). Por favor intenta de nuevo en unos segundos.');
+                setLoadingState(false);
+                return;
+            }
             
             // Si es un 404, mostrar información de debug
             if (response.status === 404 && data.debug) {
@@ -128,7 +157,11 @@
             }
         } catch (error) {
             console.error('Error:', error);
-            showError('Error de conexión. Por favor intenta nuevamente.', null);
+            if (error && error.name === 'AbortError') {
+                showError('La consulta tardó demasiado. Por favor intenta de nuevo.');
+            } else {
+                showError('Error de conexión. Por favor intenta nuevamente.', null);
+            }
         } finally {
             setLoadingState(false);
         }
