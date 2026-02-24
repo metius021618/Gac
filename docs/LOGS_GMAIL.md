@@ -116,3 +116,29 @@ Los mensajes se leen pero no se guardan. En el log deberías ver por cada mensaj
 - **`saltado: plataforma X no existe o esta deshabilitada`** → Activa la plataforma en Admin → Plataformas.
 
 Si no aparece “saltado” y tampoco “OTP guardado”, ese mensaje ya estaba en BD (no se duplica).
+
+### Las notificaciones (push) dejaron de llegar a una hora concreta
+
+Si en **gmail_webhook.log** el último aviso es, por ejemplo, a las 7:12 y después no vuelve a aparecer nada, la causa habitual es que **el Gmail Watch caducó**.
+
+- **Qué es el Watch:** Al usar Gmail “por eventos”, el sistema le pide a Google que avise (vía Pub/Sub) cuando lleguen correos. Ese “aviso” se registra con **users.watch** y tiene una **fecha de caducidad** (Google suele dar ~7 días).
+- **Qué pasa al caducar:** Cuando llega esa fecha/hora, Google **deja de enviar pushes**. No es un fallo tuyo ni del servidor: simplemente el Watch ya no es válido.
+- **Por qué coincide con una hora:** La caducidad es un instante exacto (p. ej. 7:12 UTC). A partir de ahí ya no se envía ningún push hasta que vuelvas a registrar un Watch.
+
+**Qué hacer:**
+
+1. **Recuperar los avisos ya:** En el servidor, ejecuta el script de renovación del Watch:
+   ```bash
+   cd /ruta/a/SISTEMA_GAC
+   python3 cron/renew_gmail_watch.py
+   ```
+   Eso vuelve a registrar el Watch; en unos minutos Google debería enviar de nuevo los pushes a tu webhook.
+
+2. **Evitar que vuelva a pasar:** Configura un **cron diario** que renueve el Watch antes de que caduque (por ejemplo a las 3:00):
+   ```bash
+   0 3 * * * cd /ruta/a/SISTEMA_GAC && python3 cron/renew_gmail_watch.py >> logs/renew_gmail_watch.log 2>&1
+   ```
+   Así el Watch se renueva cada día y no llegará a la fecha de caducidad.
+
+3. **Comprobar si era caducidad:** Puedes revisar `logs/gmail_watch_health.log` (si tienes configurado `check_gmail_watch_health.py` cada 6 h). Si el Watch estaba expirado, ahí habrá una línea tipo:  
+   `ALERT: Gmail Watch EXPIRADO desde X h (expiración: 2026-02-23 07:12:00 UTC). Ejecutar renew_gmail_watch.py.`
