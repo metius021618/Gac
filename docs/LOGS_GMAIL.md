@@ -142,3 +142,25 @@ Si en **gmail_webhook.log** el último aviso es, por ejemplo, a las 7:12 y despu
 
 3. **Comprobar si era caducidad:** Puedes revisar `logs/gmail_watch_health.log` (si tienes configurado `check_gmail_watch_health.py` cada 6 h). Si el Watch estaba expirado, ahí habrá una línea tipo:  
    `ALERT: Gmail Watch EXPIRADO desde X h (expiración: 2026-02-23 07:12:00 UTC). Ejecutar renew_gmail_watch.py.`
+
+### El correo llega a Gmail pero no aparece "push historyId" en gmail_webhook.log
+
+Si envías un correo a la cuenta matriz y en el log no sale ninguna línea nueva, **Google no está llegando a tu webhook** (o no está enviando el push). Posibles causas:
+
+1. **URL del webhook incorrecta en Pub/Sub**  
+   En Google Cloud Console → Pub/Sub → Subscriptions → tu suscripción push, el "Endpoint URL" debe ser exactamente la URL pública de tu script, por ejemplo:  
+   `https://app.pocoyoni.com/gmail/push`  
+   (con `https`, sin barra final o según cómo esté configurado tu servidor). Si está mal (dominio viejo, http en vez de https, typo), los pushes no llegarán.
+
+2. **El servidor no recibe la petición**  
+   Firewall, seguridad del hosting o reglas que bloqueen peticiones POST desde IPs de Google. Prueba desde fuera que el endpoint responda:  
+   `curl -X POST https://app.pocoyoni.com/gmail/push -d '{}'`  
+   Deberías recibir `ok` y en `gmail_webhook.log` una línea tipo `POST received (no historyId in body)`. Si no aparece esa línea al hacer la prueba, el problema es la ruta o el servidor; si sí aparece con curl pero no cuando llega el correo, el problema es Pub/Sub o la suscripción.
+
+3. **Suscripción pausada o con errores**  
+   En la misma suscripción en Cloud Console revisa si está pausada o si hay métricas de mensajes no entregados / dead letter.
+
+4. **Desde el cambio reciente:** El webhook escribe **siempre** una línea por cada POST recibido:  
+   - `POST received historyId=...` → push correcto, worker lanzado.  
+   - `POST received (no historyId in body)` → llegó un POST pero el cuerpo no traía historyId (formato distinto o prueba manual).  
+   Si tras enviar un correo **no** aparece ninguna línea nueva, la petición de Google no está llegando a tu PHP (revisar 1 y 2).
