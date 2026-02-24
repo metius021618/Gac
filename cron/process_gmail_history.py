@@ -81,6 +81,7 @@ def main():
         meta = gmail.get_message_metadata(service, msg_id, account_email)
         if not meta:
             continue
+        logger.info("  [msg %s] asunto=%r → destinatario=%s", msg_id, (meta.get('subject') or '')[:60], meta.get('to_primary') or '')
         # Un solo “email” para filtrar por asunto
         filtered = filter_service.filter_by_subject([meta])
         if not filtered:
