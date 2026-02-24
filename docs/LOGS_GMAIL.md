@@ -95,3 +95,24 @@ Ahí verás solo las líneas del lector Gmail (las de “Procesando cuenta Gmail
 1. **“¿Me está llegando el aviso de Gmail?”** → `logs/gmail_webhook.log`
 2. **“¿Qué mensajes lee y cómo los desmenuza (asunto, destinatario)?”** → `logs/gmail_push_worker.log` (o `logs/cron.log` si usas polling)
 3. **“¿En qué parte falla o hay conflicto?”** → Mismo archivo: si ves el `[msg ...]` pero no el “OTP guardado”, el mensaje no pasó filtro de asunto o de plataforma; si no ves ningún `[msg ...]`, no hubo mensajes nuevos o falló antes (historyId, cuenta, etc.).
+
+---
+
+## Errores frecuentes y qué hacer
+
+### Read timed out / Remote end closed connection (oauth2.googleapis.com)
+
+El servidor no pudo conectar o tardó más de 120 s en responder al refresco del token OAuth. Suele ser red lenta, firewall o cortes puntuales.
+
+- **Qué hace el sistema:** Se hace hasta **3 intentos** con 10 segundos entre ellos. Si tras eso sigue fallando, el worker termina con error; el siguiente push lo intentará de nuevo.
+- **Qué revisar:** Que el servidor pueda hacer HTTPS a `oauth2.googleapis.com` (puerto 443). Si el hosting restringe salida, pedir que permitan ese dominio.
+
+### Procesados N mensajes, guardados 0
+
+Los mensajes se leen pero no se guardan. En el log deberías ver por cada mensaje una de estas líneas:
+
+- **`saltado: asunto no coincide con Asuntos de correo (Admin)`** → El asunto no está en la tabla “Asuntos de correo”. Añádelo en Admin → Asuntos de correo.
+- **`saltado: sin plataforma para este asunto`** → El asunto no tiene plataforma asociada.
+- **`saltado: plataforma X no existe o esta deshabilitada`** → Activa la plataforma en Admin → Plataformas.
+
+Si no aparece “saltado” y tampoco “OTP guardado”, ese mensaje ya estaba en BD (no se duplica).

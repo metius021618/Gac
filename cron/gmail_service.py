@@ -8,6 +8,7 @@ original se extrae de los headers (To, X-Original-To) para guardar recipient_ema
 import base64
 import logging
 import re
+import time
 from datetime import datetime
 from email.header import decode_header as email_decode_header
 from email.utils import parsedate_tz, mktime_tz
@@ -15,6 +16,33 @@ from email.utils import parsedate_tz, mktime_tz
 from cron.config import GMAIL_CONFIG
 
 logger = logging.getLogger(__name__)
+
+# Reintentos para refresh OAuth (timeouts/conexión cerrada con oauth2.googleapis.com)
+def _refresh_creds_with_retry(creds, max_attempts=3, delay_sec=10):
+    """Ejecuta creds.refresh(Request()) con reintentos ante timeout o conexión cerrada."""
+    last_err = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            creds.refresh(Request())
+            return
+        except Exception as e:
+            last_err = e
+            msg = str(e).lower()
+            name = type(e).__name__
+            is_transient = (
+                'timeout' in msg or 'timed out' in msg or
+                'connection' in name or 'remotedisconnected' in msg or 'connection aborted' in msg
+            )
+            if attempt < max_attempts and is_transient:
+                logger.warning(
+                    "OAuth refresh intento %d/%d falló (red/timeout): %s. Reintento en %ds.",
+                    attempt, max_attempts, e, delay_sec
+                )
+                time.sleep(delay_sec)
+            else:
+                raise last_err
+    if last_err:
+        raise last_err
 
 # Imports opcionales de Google (solo si están instalados)
 try:
@@ -261,7 +289,7 @@ class GmailService:
             client_secret=self.client_secret,
             scopes=['https://www.googleapis.com/auth/gmail.modify']
         )
-        creds.refresh(Request())
+        _refresh_creds_with_retry(creds)
 
         # Corregir parámetro alt (jso/jsonn -> json): origen del error en algunos entornos al construir la URI.
         if _HAS_HTTPLIB2:
@@ -351,7 +379,7 @@ class GmailService:
             client_secret=self.client_secret,
             scopes=['https://www.googleapis.com/auth/gmail.modify']
         )
-        creds.refresh(Request())
+        _refresh_creds_with_retry(creds)
         if _HAS_HTTPLIB2:
             base_http = httplib2.Http()
             fixed_http = _fix_alt_param_http(base_http)
@@ -386,7 +414,7 @@ class GmailService:
             client_secret=self.client_secret,
             scopes=['https://www.googleapis.com/auth/gmail.modify']
         )
-        creds.refresh(Request())
+        _refresh_creds_with_retry(creds)
         if _HAS_HTTPLIB2:
             base_http = httplib2.Http()
             fixed_http = _fix_alt_param_http(base_http)
