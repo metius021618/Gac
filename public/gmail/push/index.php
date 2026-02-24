@@ -47,21 +47,37 @@ $python3 = 'python3';
 $workerScript = $basePath . DIRECTORY_SEPARATOR . 'cron' . DIRECTORY_SEPARATOR . 'process_gmail_history.py';
 
 if ($historyId !== null && $historyId !== '' && is_file($workerScript)) {
-    // Log para poder ver en servidor que el webhook recibió el push (tail -f logs/gmail_webhook.log)
     $logFile = $basePath . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'gmail_webhook.log';
-    if (is_dir(dirname($logFile))) {
+    $logsDir = dirname($logFile);
+    $workerLog = $logsDir . DIRECTORY_SEPARATOR . 'gmail_push_worker.log';
+    $workerLogEscaped = escapeshellarg($workerLog);
+    if (is_dir($logsDir)) {
         @file_put_contents($logFile, date('Y-m-d H:i:s') . " push historyId=" . $historyId . "\n", FILE_APPEND | LOCK_EX);
     }
     $historyIdEscaped = escapeshellarg($historyId);
-    $cmd = sprintf(
-        'cd %s && %s cron%sprocess_gmail_history.py --history-id %s >> logs%sgmail_push_worker.log 2>&1 &',
-        escapeshellarg($basePath),
-        $python3,
-        DIRECTORY_SEPARATOR,
-        $historyIdEscaped,
-        DIRECTORY_SEPARATOR
-    );
-    exec($cmd);
+    // Lanzar worker en segundo plano. En Linux usar nohup para que no muera al cerrar la petición PHP.
+    if (DIRECTORY_SEPARATOR === '\\') {
+        $cmd = sprintf(
+            'cd /d %s && start /B %s cron%sprocess_gmail_history.py --history-id %s >> %s 2>&1',
+            escapeshellarg($basePath),
+            $python3,
+            DIRECTORY_SEPARATOR,
+            $historyIdEscaped,
+            $workerLogEscaped
+        );
+    } else {
+        $cmd = sprintf(
+            '(cd %s && nohup %s cron/process_gmail_history.py --history-id %s >> %s 2>&1 &)',
+            escapeshellarg($basePath),
+            $python3,
+            $historyIdEscaped,
+            $workerLogEscaped
+        );
+    }
+    @exec($cmd);
+    if (is_dir($logsDir)) {
+        @file_put_contents($logFile, date('Y-m-d H:i:s') . " worker lanzado (historyId=" . $historyId . ")\n", FILE_APPEND | LOCK_EX);
+    }
 }
 
 echo 'ok';

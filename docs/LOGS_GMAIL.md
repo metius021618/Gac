@@ -123,7 +123,9 @@ La Gmail API tiene un **retraso de propagación** conocido: el push llega ensegu
 
 - **Qué hace el sistema:** Si la primera llamada a `history.list` devuelve vacío, el worker **espera 8 segundos y reintenta una vez** con el mismo `last_history_id`. Así se cubre el retraso típico de propagación y el código suele aparecer en segundos.
 - **Qué revisar:** En `logs/gmail_push_worker.log` verás `history.list vacío (posible retraso de propagación); reintento en 8 s.` cuando se aplica el reintento. Si tras el reintento sigue vacío, se actualiza el historyId y se termina.
-- **Si la demora sigue siendo ~1 minuto:** Puede que en el servidor el webhook no lance el worker en segundo plano (p. ej. `exec()` deshabilitado o `&` no efectivo) y que un **cron externo** ejecute el lector Gmail cada minuto. Revisa que en `gmail_webhook.log` aparezca la línea al llegar el correo y que el PHP pueda ejecutar el worker en background.
+- **Si la demora sigue siendo ~1–2 minutos:** Puede ser **nuestro** flujo o del **servidor**:
+  - **Cómo saber si es nuestro:** En `logs/gmail_webhook.log` ahora hay dos líneas por cada push: `push historyId=...` y justo después `worker lanzado (historyId=...)`. Si entre esas dos líneas pasan **varios segundos o 1–2 minutos**, el PHP está **esperando** al worker (en ese servidor `exec` no corre en segundo plano). Eso es **problema del servidor** (PHP/hosting que no libera la petición). El webhook usa `nohup` en Linux para intentar que el worker siga aunque se cierre la petición; si aun así el worker no aparece en `gmail_push_worker.log` o el correo tarda 2 min, el hosting puede estar matando procesos al terminar la petición.
+  - **Cómo saber si es del servidor (timeout/503):** Si al consultar el código la página tarda mucho o devuelve 503, el servidor puede estar saturado (pocos workers PHP, o el webhook bloqueando uno durante 2 min). Revisa que `worker lanzado` salga en el **mismo segundo** que `push historyId=...`; si es así, el worker se lanzó en background y la demora puede ser solo la Gmail API o el tiempo del worker.
 
 ### Las notificaciones (push) dejaron de llegar a una hora concreta
 
