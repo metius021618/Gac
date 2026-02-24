@@ -79,10 +79,11 @@ No hay “cuenta matriz” en otra tabla: la matriz es simplemente **la única c
 
 En `cron/gmail_service.py`, en `_parse_message()`:
 
-1. Se leen los headers del mensaje: `To`, `X-Original-To`.
-2. Si existe **X-Original-To** (típico en reenvíos), se usa como destinatario principal.
+1. Se leen los headers del mensaje: `To`, `X-Original-To`, `Original-Recipient`.
+2. Si existe **X-Original-To** o **Original-Recipient** (típico en reenvíos automáticos), se usa como destinatario principal.
 3. Si no, se usa el primer email del header **To**.
 4. Si no hubiera ninguno, se usa el email de la cuenta que estamos leyendo.
+5. **Reenvío manual:** Si el destinatario resultante es la propia cuenta matriz (porque el usuario reenvió el correo manualmente a la matriz), no hay header con el original. En ese caso se busca en el cuerpo del mensaje el bloque "---------- Forwarded message ---------" y la línea **To: original@email.com**, y se usa ese email como `to_primary`. Así, al consultar por `original@email.com` (p. ej. sara3cowley@gmail.com) se encuentra el código.
 
 Ese valor se guarda en el dict como `to_primary` y luego en BD como `recipient_email` del código. Así, aunque todos los correos lleguen al buzón de la matriz, cada código queda asociado al usuario correcto.
 

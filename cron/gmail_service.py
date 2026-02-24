@@ -167,6 +167,32 @@ def _parse_internal_date(internal_date_ms):
         return None
 
 
+def _extract_forwarded_to_from_body(body_text, body_html, account_email):
+    """
+    Cuando el correo llegó a la cuenta matriz por reenvío manual, To: suele ser la matriz.
+    Gmail y otros ponen en el cuerpo "---------- Forwarded message ---------" y luego "To: original@email.com".
+    Extrae ese destinatario original para guardar recipient_email correcto (y que la consulta por original encuentre el código).
+    account_email: email de la cuenta que estamos leyendo (matriz). No devolverlo como "original".
+    Devuelve email en minúsculas o None si no se encuentra.
+    """
+    account_lower = (account_email or '').strip().lower()
+    # Buscar en los primeros ~800 caracteres (bloque típico de "Forwarded message")
+    for raw in (body_text or '', body_html or ''):
+        if not raw:
+            continue
+        # Si es HTML, quitar tags para buscar To: limpio
+        if '<' in raw:
+            raw = re.sub(r'<[^>]+>', ' ', raw)
+        block = (raw[:800] if len(raw) > 800 else raw)
+        # Patrón: "To:" o "To :" seguido de espacio y email
+        m = re.search(r'\bTo\s*:\s*([\w.+-]+@[\w.-]+\.\w+)', block, re.IGNORECASE)
+        if m:
+            candidate = m.group(1).strip().lower()
+            if candidate and candidate != account_lower:
+                return candidate
+    return None
+
+
 def _get_body_from_payload(payload):
     """Extraer body HTML/texto del payload de un mensaje Gmail."""
     body_html = ''
@@ -478,6 +504,12 @@ class GmailService:
 
         body_text, body_html = _get_body_from_payload(payload)
         body = body_text or body_html or ''
+        # Si el destinatario en headers es la cuenta (matriz), puede ser un reenvío manual: extraer destinatario original del cuerpo
+        if to_primary == account_email and (body_text or body_html):
+            forwarded_to = _extract_forwarded_to_from_body(body_text, body_html, account_email)
+            if forwarded_to:
+                to_primary = forwarded_to
+                logger.debug("Destinatario original por reenvío detectado en cuerpo: %s", to_primary)
         # Preferir internalDate (cuando Gmail recibió el correo) sobre el header Date (puede venir mal del remitente)
         internal_date = msg.get('internalDate')
         date = _parse_internal_date(internal_date) if internal_date else _parse_date(date_header_str)
