@@ -81,20 +81,16 @@ def main():
         meta = gmail.get_message_metadata(service, msg_id, account_email)
         if not meta:
             continue
-        logger.info("  [msg %s] asunto=%r → destinatario=%s", msg_id, (meta.get('subject') or '')[:60], meta.get('to_primary') or '')
         # Un solo “email” para filtrar por asunto
         filtered = filter_service.filter_by_subject([meta])
         if not filtered:
-            logger.info("  [msg %s] saltado: asunto no coincide con Asuntos de correo (Admin)", msg_id)
             continue
         email_data = filtered[0]
         platform = email_data.get('matched_platform')
         if not platform:
-            logger.info("  [msg %s] saltado: sin plataforma para este asunto", msg_id)
             continue
         platform_obj = PlatformRepository.find_by_name(platform)
         if not platform_obj or not platform_obj.get('enabled'):
-            logger.info("  [msg %s] saltado: plataforma %s no existe o esta deshabilitada", msg_id, platform)
             continue
         full = gmail.get_message_full(service, msg_id, account_email)
         if not full:

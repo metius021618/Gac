@@ -8,7 +8,6 @@ original se extrae de los headers (To, X-Original-To) para guardar recipient_ema
 import base64
 import logging
 import re
-import time
 from datetime import datetime
 from email.header import decode_header as email_decode_header
 from email.utils import parsedate_tz, mktime_tz
@@ -16,33 +15,6 @@ from email.utils import parsedate_tz, mktime_tz
 from cron.config import GMAIL_CONFIG
 
 logger = logging.getLogger(__name__)
-
-# Reintentos para refresh OAuth (timeouts/conexión cerrada con oauth2.googleapis.com)
-def _refresh_creds_with_retry(creds, max_attempts=3, delay_sec=10):
-    """Ejecuta creds.refresh(Request()) con reintentos ante timeout o conexión cerrada."""
-    last_err = None
-    for attempt in range(1, max_attempts + 1):
-        try:
-            creds.refresh(Request())
-            return
-        except Exception as e:
-            last_err = e
-            msg = str(e).lower()
-            name = type(e).__name__
-            is_transient = (
-                'timeout' in msg or 'timed out' in msg or
-                'connection' in name or 'remotedisconnected' in msg or 'connection aborted' in msg
-            )
-            if attempt < max_attempts and is_transient:
-                logger.warning(
-                    "OAuth refresh intento %d/%d falló (red/timeout): %s. Reintento en %ds.",
-                    attempt, max_attempts, e, delay_sec
-                )
-                time.sleep(delay_sec)
-            else:
-                raise last_err
-    if last_err:
-        raise last_err
 
 # Imports opcionales de Google (solo si están instalados)
 try:
@@ -195,32 +167,6 @@ def _parse_internal_date(internal_date_ms):
         return None
 
 
-def _extract_forwarded_to_from_body(body_text, body_html, account_email):
-    """
-    Cuando el correo llegó a la cuenta matriz por reenvío manual, To: suele ser la matriz.
-    Gmail y otros ponen en el cuerpo "---------- Forwarded message ---------" y luego "To: original@email.com".
-    Extrae ese destinatario original para guardar recipient_email correcto (y que la consulta por original encuentre el código).
-    account_email: email de la cuenta que estamos leyendo (matriz). No devolverlo como "original".
-    Devuelve email en minúsculas o None si no se encuentra.
-    """
-    account_lower = (account_email or '').strip().lower()
-    # Buscar en los primeros ~800 caracteres (bloque típico de "Forwarded message")
-    for raw in (body_text or '', body_html or ''):
-        if not raw:
-            continue
-        # Si es HTML, quitar tags para buscar To: limpio
-        if '<' in raw:
-            raw = re.sub(r'<[^>]+>', ' ', raw)
-        block = (raw[:800] if len(raw) > 800 else raw)
-        # Patrón: "To:" o "To :" seguido de espacio y email
-        m = re.search(r'\bTo\s*:\s*([\w.+-]+@[\w.-]+\.\w+)', block, re.IGNORECASE)
-        if m:
-            candidate = m.group(1).strip().lower()
-            if candidate and candidate != account_lower:
-                return candidate
-    return None
-
-
 def _get_body_from_payload(payload):
     """Extraer body HTML/texto del payload de un mensaje Gmail."""
     body_html = ''
@@ -289,7 +235,7 @@ class GmailService:
             client_secret=self.client_secret,
             scopes=['https://www.googleapis.com/auth/gmail.modify']
         )
-        _refresh_creds_with_retry(creds)
+        creds.refresh(Request())
 
         # Corregir parámetro alt (jso/jsonn -> json): origen del error en algunos entornos al construir la URI.
         if _HAS_HTTPLIB2:
@@ -379,7 +325,7 @@ class GmailService:
             client_secret=self.client_secret,
             scopes=['https://www.googleapis.com/auth/gmail.modify']
         )
-        _refresh_creds_with_retry(creds)
+        creds.refresh(Request())
         if _HAS_HTTPLIB2:
             base_http = httplib2.Http()
             fixed_http = _fix_alt_param_http(base_http)
@@ -414,7 +360,7 @@ class GmailService:
             client_secret=self.client_secret,
             scopes=['https://www.googleapis.com/auth/gmail.modify']
         )
-        _refresh_creds_with_retry(creds)
+        creds.refresh(Request())
         if _HAS_HTTPLIB2:
             base_http = httplib2.Http()
             fixed_http = _fix_alt_param_http(base_http)
@@ -532,12 +478,6 @@ class GmailService:
 
         body_text, body_html = _get_body_from_payload(payload)
         body = body_text or body_html or ''
-        # Si el destinatario en headers es la cuenta (matriz), puede ser un reenvío manual: extraer destinatario original del cuerpo
-        if to_primary == account_email and (body_text or body_html):
-            forwarded_to = _extract_forwarded_to_from_body(body_text, body_html, account_email)
-            if forwarded_to:
-                to_primary = forwarded_to
-                logger.debug("Destinatario original por reenvío detectado en cuerpo: %s", to_primary)
         # Preferir internalDate (cuando Gmail recibió el correo) sobre el header Date (puede venir mal del remitente)
         internal_date = msg.get('internalDate')
         date = _parse_internal_date(internal_date) if internal_date else _parse_date(date_header_str)

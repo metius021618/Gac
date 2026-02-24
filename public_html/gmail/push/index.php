@@ -45,22 +45,15 @@ if ($rawInput !== false && $rawInput !== '') {
 
 // Raíz del proyecto: desde public_html/gmail/push/ son 3 niveles arriba (push->gmail->public_html->raíz)
 $basePath = dirname(__DIR__, 3);
-$logFile = $basePath . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'gmail_webhook.log';
 $python3 = 'python3';
 $workerScript = $basePath . DIRECTORY_SEPARATOR . 'cron' . DIRECTORY_SEPARATOR . 'process_gmail_history.py';
 
-// Siempre registrar que llegó un POST (para saber si Google está llamando al endpoint)
-if (is_dir(dirname($logFile))) {
-    $logLine = date('Y-m-d H:i:s') . ' POST received';
-    if ($historyId !== null && $historyId !== '') {
-        $logLine .= " historyId=" . $historyId;
-    } else {
-        $logLine .= ' (no historyId in body)';
-    }
-    @file_put_contents($logFile, $logLine . "\n", FILE_APPEND | LOCK_EX);
-}
-
 if ($historyId !== null && $historyId !== '' && is_file($workerScript)) {
+    // Log para ver en servidor que el webhook recibió el push (tail -f logs/gmail_webhook.log)
+    $logFile = $basePath . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'gmail_webhook.log';
+    if (is_dir(dirname($logFile))) {
+        @file_put_contents($logFile, date('Y-m-d H:i:s') . " push historyId=" . $historyId . "\n", FILE_APPEND | LOCK_EX);
+    }
     $historyIdEscaped = escapeshellarg($historyId);
     $cmd = sprintf(
         'cd %s && %s cron%sprocess_gmail_history.py --history-id %s >> logs%sgmail_push_worker.log 2>&1 &',
