@@ -2,6 +2,11 @@
 GAC - Servicio de Filtrado de Emails para Python
 Filtra correos SOLO por los asuntos definidos en la página de asuntos (tabla email_subjects).
 Usado por Gmail, Outlook e IMAP (Pocoyoni) de forma consistente.
+
+REGLAS ESTRICTAS: el asunto del correo debe ser EXACTAMENTE igual al registrado en email_subjects.
+- No se usa contains, substring ni similitud.
+- Ejemplo: si en BD está "TU CODIG" (sin O) y el correo dice "TU CODIGO CORREO ES" → NO se lee.
+- Solo se normaliza: espacios colapsados, unicode NFC, mayúsculas/minúsculas ignoradas.
 """
 
 import re
@@ -68,7 +73,8 @@ class EmailFilterService:
 
     @staticmethod
     def _normalize_subject(s):
-        """Normalizar asunto: espacios colapsados, unicode NFC, para comparar igual aunque Gmail/BD difieran en espacios o acentos."""
+        """Normalizar asunto: espacios colapsados, unicode NFC. Solo para comparar iguales variantes.
+        NO se elimina Re:/Fwd: ni se hace substring. Solo colapsar espacios y NFC."""
         if not s or not isinstance(s, str):
             return ''
         s = (s or '').strip()
@@ -80,7 +86,7 @@ class EmailFilterService:
         return s
 
     def _matches_subject_exact(self, subject, pattern):
-        """Igualdad exacta (ignorando mayúsculas/minúsculas) tras normalizar, para no leer ni guardar otro correo."""
+        """Igualdad EXACTA tras normalizar. Si difiere una letra (ej. CODIG vs CODIGO), no coincide."""
         if not subject or not pattern:
             return False
         a = self._normalize_subject(subject).lower()

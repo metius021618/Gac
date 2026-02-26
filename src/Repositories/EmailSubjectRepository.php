@@ -120,6 +120,42 @@ class EmailSubjectRepository
     }
 
     /**
+     * Obtener todos los asuntos activos por plataforma (solo plataformas habilitadas).
+     * Devuelve ['netflix' => ['asunto1', 'asunto2'], 'disney' => [...], ...]
+     * Usado por EmailFilterService para coincidencia EXACTA de asuntos.
+     */
+    public static function getAllSubjectsByPlatform(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("
+                SELECT p.name AS platform_name, es.subject_line
+                FROM email_subjects es
+                INNER JOIN platforms p ON es.platform_id = p.id
+                WHERE es.active = 1 AND p.enabled = 1
+                ORDER BY p.name, es.subject_line
+            ");
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $result = [];
+            foreach ($rows as $row) {
+                $name = strtolower(trim($row['platform_name'] ?? ''));
+                $line = trim($row['subject_line'] ?? '');
+                if ($name === '' || $line === '') {
+                    continue;
+                }
+                if (!isset($result[$name])) {
+                    $result[$name] = [];
+                }
+                $result[$name][] = $line;
+            }
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error getAllSubjectsByPlatform: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Obtener asunto por ID
      * 
      * @param int $id

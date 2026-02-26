@@ -1,25 +1,21 @@
 <?php
 /**
  * GAC - Servicio de Filtrado de Emails
- * 
- * Filtra emails por asunto usando patrones configurados en settings
- * 
+ *
+ * Filtra emails por asunto usando la tabla email_subjects.
+ * Solo coincidencia EXACTA: el asunto del correo debe ser idéntico al registrado.
+ *
  * @package Gac\Services\Email
  */
 
 namespace Gac\Services\Email;
 
-use Gac\Repositories\SettingsRepository;
+use Gac\Repositories\EmailSubjectRepository;
 
 class EmailFilterService
 {
     /**
-     * Repositorio de settings
-     */
-    private SettingsRepository $settingsRepository;
-
-    /**
-     * Cache de patrones de asuntos por plataforma
+     * Cache de asuntos por plataforma (desde email_subjects)
      */
     private array $subjectPatternsCache = [];
 
@@ -28,25 +24,15 @@ class EmailFilterService
      */
     public function __construct()
     {
-        $this->settingsRepository = new SettingsRepository();
         $this->loadSubjectPatterns();
     }
 
     /**
-     * Cargar patrones de asuntos desde settings
+     * Cargar asuntos desde tabla email_subjects (solo plataformas habilitadas)
      */
     private function loadSubjectPatterns(): void
     {
-        $allSubjects = $this->settingsRepository->getAllEmailSubjects();
-        
-        foreach ($allSubjects as $platform => $subjects) {
-            // Verificar que la plataforma esté habilitada
-            if (!$this->settingsRepository->isPlatformEnabled($platform)) {
-                continue;
-            }
-            
-            $this->subjectPatternsCache[$platform] = $subjects;
-        }
+        $this->subjectPatternsCache = EmailSubjectRepository::getAllSubjectsByPlatform();
     }
 
     /**
@@ -163,71 +149,33 @@ class EmailFilterService
     }
 
     /**
-     * Verificar si un asunto coincide con un patrón específico
-     * 
-     * @param string $subject
-     * @param string $pattern
+     * Verificar si un asunto coincide EXACTAMENTE con un patrón.
+     * Solo igualdad exacta (tras normalizar espacios y mayúsculas).
+     * No se usa contains ni similitud: "TU CODIG" != "TU CODIGO CORREO ES".
+     *
+     * @param string $subject Asunto del correo recibido
+     * @param string $pattern Asunto registrado en email_subjects
      * @return bool
      */
     private function matchesSubject(string $subject, string $pattern): bool
     {
-        // Normalizar ambos strings
-        $subject = mb_strtolower(trim($subject), 'UTF-8');
-        $pattern = mb_strtolower(trim($pattern), 'UTF-8');
-        
-        // Comparación exacta
-        if ($subject === $pattern) {
-            return true;
-        }
-        
-        // Comparación con contains (el patrón está contenido en el asunto)
-        if (strpos($subject, $pattern) !== false) {
-            return true;
-        }
-        
-        // Comparación con contains inverso (el asunto está contenido en el patrón)
-        if (strpos($pattern, $subject) !== false) {
-            return true;
-        }
-        
-        // Comparación con similitud (para casos con variaciones menores)
-        $similarity = $this->calculateSimilarity($subject, $pattern);
-        
-        // Si la similitud es mayor al 80%, considerarlo coincidencia
-        if ($similarity >= 0.8) {
-            return true;
-        }
-        
-        return false;
+        $subject = $this->normalizeSubject($subject);
+        $pattern = $this->normalizeSubject($pattern);
+        return $subject === $pattern;
     }
 
     /**
-     * Calcular similitud entre dos strings (Jaro-Winkler simplificado)
-     * 
-     * @param string $str1
-     * @param string $str2
-     * @return float Similitud entre 0 y 1
+     * Normalizar asunto: trim, colapsar espacios múltiples, NFC unicode.
      */
-    private function calculateSimilarity(string $str1, string $str2): float
+    private function normalizeSubject(string $s): string
     {
-        // Si son iguales, similitud 1.0
-        if ($str1 === $str2) {
-            return 1.0;
+        $s = trim($s);
+        $s = preg_replace('/\s+/u', ' ', $s) ?? $s;
+        if (class_exists('Normalizer')) {
+            $n = \Normalizer::normalize($s, \Normalizer::FORM_C);
+            $s = $n !== false ? $n : $s;
         }
-        
-        // Si uno está vacío, similitud 0.0
-        if (empty($str1) || empty($str2)) {
-            return 0.0;
-        }
-        
-        // Calcular distancia de Levenshtein
-        $maxLen = max(strlen($str1), strlen($str2));
-        $distance = levenshtein($str1, $str2);
-        
-        // Convertir distancia a similitud
-        $similarity = 1 - ($distance / $maxLen);
-        
-        return max(0.0, min(1.0, $similarity));
+        return mb_strtolower($s, 'UTF-8');
     }
 
     /**
@@ -281,11 +229,10 @@ class EmailFilterService
     }
 
     /**
-     * Recargar patrones desde settings (útil cuando se actualizan settings)
+     * Recargar patrones desde email_subjects (útil cuando se actualizan asuntos)
      */
     public function reloadPatterns(): void
     {
-        SettingsRepository::clearCache();
         $this->subjectPatternsCache = [];
         $this->loadSubjectPatterns();
     }
