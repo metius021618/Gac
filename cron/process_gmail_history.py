@@ -25,6 +25,7 @@ from cron.repositories import (
     PlatformRepository,
     CodeRepository,
     SettingsRepository,
+    origin_from_recipient_email,
 )
 from cron.email_filter import EmailFilterService
 from cron.gmail_service import GmailService
@@ -102,6 +103,7 @@ def main():
         if not full:
             continue
         recipient_email = (full.get('to_primary') or account_email).strip().lower()
+        # origin según destinatario: patito@hotmail.com -> outlook (para que la consulta lo encuentre)
         save_data = {
             'email_account_id': gaccount['id'],
             'platform_id': platform_obj['id'],
@@ -110,7 +112,7 @@ def main():
             'subject': full.get('subject', ''),
             'email_body': full.get('body_html') or full.get('body_text') or full.get('body', ''),
             'received_at': full.get('date', ''),
-            'origin': 'gmail',
+            'origin': origin_from_recipient_email(recipient_email),
             'recipient_email': recipient_email,
             'email_date': full.get('date'),
             'gmail_message_id': msg_id,

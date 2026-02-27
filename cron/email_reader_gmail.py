@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 GAC - Lector de correos SOLO Gmail (Gmail API)
-Script independiente: solo lee cuentas type=gmail y guarda en codes con origin='gmail'.
-No mezcla con IMAP. Para consultas con @gmail.com se ejecuta este script.
+Script independiente: lee cuentas type=gmail (matriz) y guarda en codes.
+Origin según destinatario: @gmail.com -> gmail, @hotmail/@outlook/@live -> outlook (reenvíos).
+No mezcla con IMAP. Para consultas @gmail.com o @hotmail.com se usa el mismo flujo.
 Cuando Google devuelve 429 (rate limit), se guarda Retry-After y no se llama a la API
 hasta esa hora; el bucle del cron sigue corriendo (solo se salta esta llamada).
 """
@@ -22,7 +23,7 @@ os.chdir(script_dir)
 
 from cron.config import CRON_CONFIG, LOG_CONFIG
 from cron.database import Database
-from cron.repositories import EmailAccountRepository, PlatformRepository, CodeRepository
+from cron.repositories import EmailAccountRepository, PlatformRepository, CodeRepository, origin_from_recipient_email
 from cron.email_filter import EmailFilterService
 from cron.gmail_service import GmailService
 
@@ -220,7 +221,7 @@ def main():
                         'subject': subject,
                         'email_body': email_body,
                         'received_at': received_at,
-                        'origin': 'gmail',
+                        'origin': origin_from_recipient_email(recipient_email),
                         'recipient_email': recipient_email,
                     }
                     code_id = CodeRepository.save(save_data)

@@ -6,6 +6,35 @@ import logging
 from cron.database import Database, USE_PYMYSQL
 
 # Compatibilidad con PyMySQL y mysql-connector
+# Dominios Outlook/Hotmail para determinar origin al guardar desde Gmail matriz (reenvíos)
+OUTLOOK_DOMAINS = frozenset([
+    'outlook.com', 'hotmail.com', 'hotmail.es', 'live.com', 'live.es', 'msn.com', 'outlook.es'
+])
+
+
+def origin_from_recipient_email(recipient_email):
+    """
+    Determinar origin para el código según el dominio del destinatario.
+    Cuando el correo llega a la cuenta Gmail matriz (directo o reenviado desde Hotmail),
+    guardamos origin según el destinatario para que la consulta lo encuentre.
+    - patito@hotmail.com -> 'outlook'
+    - patito@gmail.com -> 'gmail'
+    - resto -> 'gmail' (recibido por Gmail)
+    """
+    if not recipient_email or not isinstance(recipient_email, str):
+        return 'gmail'
+    email = recipient_email.strip().lower()
+    if '@' not in email:
+        return 'gmail'
+    domain = email.split('@')[-1]
+    if domain in OUTLOOK_DOMAINS:
+        return 'outlook'
+    if domain == 'gmail.com':
+        return 'gmail'
+    return 'gmail'
+
+
+# Compatibilidad con PyMySQL y mysql-connector
 if USE_PYMYSQL:
     import pymysql.cursors
     DictCursor = pymysql.cursors.DictCursor
