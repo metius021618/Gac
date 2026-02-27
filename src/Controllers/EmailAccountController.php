@@ -158,7 +158,8 @@ class EmailAccountController
         $result = $this->userAccessRepository->searchAndPaginate($search, 1, 0, [], $excludeEmail, $platformId, $activityDate ?: null);
         $rows = $result['data'] ?? [];
 
-        $filename = 'correos_registrados_' . date('Y-m-d_His') . '.xls';
+        // Usamos XML Spreadsheet 2003 real → extensión .xml para que Excel no muestre advertencias.
+        $filename = 'correos_registrados_' . date('Y-m-d_His') . '.xml';
         header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Cache-Control: max-age=0');
@@ -197,7 +198,8 @@ class EmailAccountController
 
         $xml .= '</Table></Worksheet></Workbook>';
 
-        echo "\xEF\xBB\xBF" . $xml; // UTF-8 BOM + XML
+        // Importante: NO enviar BOM para que Excel abra el XML sin marcarlo como dañado.
+        echo $xml;
         exit;
     }
 
