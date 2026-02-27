@@ -52,14 +52,6 @@ $content = ob_start();
                     ></textarea>
                     <span class="form-error" id="emailsError"></span>
                     <small class="form-help">Ingresa un correo por línea. Dominios permitidos: Pocoyoni, Gmail, Outlook, Hotmail, Live.</small>
-                    <div class="form-group" style="margin-top: 0.5rem;">
-                        <?php if (function_exists('user_can_action') && user_can_action('registro_masivo', 'agregar')): ?>
-                        <button type="button" id="btnAddStock" class="btn btn-secondary">
-                            Agregar como stock
-                        </button>
-                        <?php endif; ?>
-                        <small class="form-help" style="display: block; margin-top: 0.25rem;">Registra los correos en el listado (sin asignar plataforma). Se mostrarán en Gmail, Hotmail o Pocoyoni según el dominio.</small>
-                    </div>
                 </div>
 
                 <!-- Campo Código de Acceso -->
