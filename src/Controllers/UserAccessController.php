@@ -114,7 +114,7 @@ class UserAccessController
                     return;
                 }
                 if (function_exists('log_user_activity')) {
-                    log_user_activity('agregar_correo', sprintf('Se agregó el correo <strong>%s</strong> (stock)', htmlspecialchars($email, ENT_QUOTES, 'UTF-8')));
+                    log_user_activity('agregar_correo', sprintf('Registró el correo %s; (stock); —', $email));
                 }
             }
             $missing = [];
@@ -168,11 +168,11 @@ class UserAccessController
 
         if ($success && function_exists('log_user_activity')) {
             $platformName = $platform['display_name'] ?? $platform['name'] ?? 'Plataforma';
-            $e = function ($s) { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); };
+            $usuario = trim($password ?? '') ?: '(vacío)';
             if ($hadAnyAccessBefore) {
-                log_user_activity('edicion', sprintf('Se editó el acceso al correo <strong>%s</strong>: usuario <strong>%s</strong> y plataforma <strong>%s</strong>', $e($email), $e($password ?: '(vacío)'), $e($platformName)));
+                log_user_activity('edicion', sprintf('Editó el correo %s; %s; %s', $email, $usuario, $platformName));
             } else {
-                log_user_activity('asignado', sprintf('Asignó usuario <strong>%s</strong> y plataforma <strong>%s</strong> al correo <strong>%s</strong>', $e($password ?: '(vacío)'), $e($platformName), $e($email)));
+                log_user_activity('agregar_correo', sprintf('Registró el correo %s; %s; %s', $email, $usuario, $platformName));
             }
         }
         if ($success) {
@@ -278,11 +278,14 @@ class UserAccessController
             return;
         }
 
-        $email = $this->userAccessRepository->getEmailById($id);
+        $access = $this->userAccessRepository->getAccessById($id);
         $success = $this->userAccessRepository->delete($id);
 
-        if ($success && $email !== null && function_exists('log_user_activity')) {
-            log_user_activity('eliminar', sprintf('Se eliminó el correo <strong>%s</strong>', htmlspecialchars($email, ENT_QUOTES, 'UTF-8')));
+        if ($success && $access !== null && function_exists('log_user_activity')) {
+            $email = trim($access['email'] ?? '');
+            $usuario = trim($access['password'] ?? '') ?: '(vacío)';
+            $plataforma = trim($access['platform_display_name'] ?? $access['platform_id'] ?? '') ?: '—';
+            log_user_activity('eliminar', sprintf('Eliminó el correo %s; %s; %s', $email, $usuario, $plataforma));
         }
         if ($success) {
             json_response([

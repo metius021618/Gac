@@ -548,6 +548,7 @@ class EmailAccountRepository
         $added = 0;
         $skipped = 0;
         $errors = [];
+        $addedEmails = [];
         $allowedTypes = ['imap', 'gmail', 'outlook'];
         foreach ($emails as $raw) {
             $email = trim(strtolower((string) $raw));
@@ -573,11 +574,12 @@ class EmailAccountRepository
                 ");
                 $stmt->execute(['email' => $email, 'type' => $type]);
                 $added++;
+                $addedEmails[] = $email;
             } catch (PDOException $e) {
                 $errors[] = $email . ': ' . $e->getMessage();
             }
         }
-        return ['added' => $added, 'skipped' => $skipped, 'errors' => $errors];
+        return ['added' => $added, 'skipped' => $skipped, 'errors' => $errors, 'added_emails' => $addedEmails];
     }
 
     /**

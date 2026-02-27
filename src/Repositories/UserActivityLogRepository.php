@@ -14,7 +14,6 @@ class UserActivityLogRepository
     public const ACTION_AGREGAR_CORREO = 'agregar_correo';
     public const ACTION_EDICION = 'edicion';
     public const ACTION_ELIMINAR = 'eliminar';
-    public const ACTION_ASIGNADO = 'asignado';
 
     /**
      * Registrar una acción (solo si el usuario actual no es superadmin)
@@ -117,7 +116,6 @@ class UserActivityLogRepository
             self::ACTION_AGREGAR_CORREO => 'Agregar correo',
             self::ACTION_EDICION => 'Edición',
             self::ACTION_ELIMINAR => 'Eliminar',
-            self::ACTION_ASIGNADO => 'Asignado',
         ];
         return $labels[$action] ?? $action;
     }

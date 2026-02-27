@@ -32,6 +32,8 @@ class Application
         // Rutas públicas
         $router->get('/', 'CodeController@consult');
         $router->post('/codes/consult', 'CodeController@consult');
+        $router->get('/hogar', 'HogarController@index');
+        $router->post('/hogar', 'HogarController@index');
         $router->get('/politica-privacidad', 'LegalController@politicaPrivacidad');
         $router->get('/condiciones-servicio', 'LegalController@condicionesServicio');
 
@@ -44,6 +46,7 @@ class Application
         
         // Rutas de gestión de cuentas de email (requieren autenticación)
         $router->get('/admin/email-accounts', 'EmailAccountController@index', ['auth']);
+        $router->get('/admin/email-accounts/export-excel', 'EmailAccountController@exportExcel', ['auth']);
         $router->get('/admin/email-accounts/create', 'EmailAccountController@create', ['auth']);
         $router->post('/admin/email-accounts', 'EmailAccountController@store', ['auth']);
         $router->get('/admin/email-accounts/edit', 'EmailAccountController@edit', ['auth']);

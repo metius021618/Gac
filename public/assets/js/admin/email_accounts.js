@@ -29,6 +29,7 @@
         if (getEmailAccountsTable()) {
             initTable();
             initSearch();
+            initExportExcel();
         }
     }
 
@@ -264,6 +265,95 @@
     }
 
     /**
+     * Actualizar barra de filtros (plataforma + fecha) cuando hay búsqueda
+     */
+    function updateEmailFiltersBar(filtersData) {
+        const bar = document.getElementById('emailFiltersBar');
+        const platformSelect = document.getElementById('filterPlatform');
+        const dateInput = document.getElementById('filterActivityDate');
+        if (!bar || !platformSelect || !dateInput) return;
+
+        if (filtersData && filtersData.has_search) {
+            bar.style.display = 'flex';
+
+            // Plataforma: opciones desde el servidor
+            const currentVal = platformSelect.value;
+            platformSelect.innerHTML = '<option value="">Plataforma</option>';
+            (filtersData.platforms || []).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.display_name || p.name || 'Plataforma';
+                if (String(p.id) === String(filtersData.platform_id)) opt.selected = true;
+                platformSelect.appendChild(opt);
+            });
+            if (filtersData.platform_id && platformSelect.querySelector('option[value="' + filtersData.platform_id + '"]')) {
+                platformSelect.value = filtersData.platform_id;
+            }
+
+            // Fecha
+            dateInput.value = filtersData.activity_date || '';
+
+            // Eventos para re-buscar al cambiar filtros
+            platformSelect.onchange = () => { triggerSearchWithFilters(); if (window.__gacRefreshExportHref) window.__gacRefreshExportHref(); };
+            dateInput.onchange = () => { triggerSearchWithFilters(); if (window.__gacRefreshExportHref) window.__gacRefreshExportHref(); };
+        } else {
+            bar.style.display = 'none';
+            platformSelect.innerHTML = '<option value="">Plataforma</option>';
+            dateInput.value = '';
+        }
+    }
+
+    function triggerSearchWithFilters() {
+        if (!searchInput || !perPageSelect) return;
+        const params = {
+            search: searchInput.value.trim(),
+            page: 1,
+            per_page: perPageSelect.value || 15
+        };
+        const platformSelect = document.getElementById('filterPlatform');
+        const dateInput = document.getElementById('filterActivityDate');
+        if (platformSelect && platformSelect.value) params.platform_id = platformSelect.value;
+        if (dateInput && dateInput.value) params.activity_date = dateInput.value;
+
+        if (window.SearchAJAX && window.SearchAJAX.performSearch) {
+            window.SearchAJAX.performSearch(window.location.pathname, params, function(html) {
+                let filtersData = null;
+                const commentMatch = html.match(/<!-- GAC-EMAIL-FILTERS:(.+?) -->/s);
+                if (commentMatch) {
+                    try { filtersData = JSON.parse(commentMatch[1].trim()); } catch (e) {}
+                }
+                const htmlForTable = html.replace(/\s*<!-- GAC-EMAIL-FILTERS:.+? -->\s*$/s, '');
+                window.SearchAJAX.updateTableContent(htmlForTable);
+                initTable();
+                reapplyMultiSelectState();
+                updateEmailFiltersBar(filtersData);
+            });
+        }
+    }
+
+    /**
+     * Actualizar enlace Excel con búsqueda actual
+     */
+    function initExportExcel() {
+        const exportBtn = document.getElementById('exportExcelBtn');
+        if (!exportBtn || !searchInput) return;
+        function updateExportHref() {
+            const q = searchInput.value.trim();
+            const platformSelect = document.getElementById('filterPlatform');
+            const dateInput = document.getElementById('filterActivityDate');
+            const params = [];
+            if (q) params.push('search=' + encodeURIComponent(q));
+            if (platformSelect && platformSelect.value) params.push('platform_id=' + encodeURIComponent(platformSelect.value));
+            if (dateInput && dateInput.value) params.push('activity_date=' + encodeURIComponent(dateInput.value));
+            exportBtn.href = '/admin/email-accounts/export-excel' + (params.length ? '?' + params.join('&') : '');
+        }
+        updateExportHref();
+        searchInput.addEventListener('input', updateExportHref);
+        searchInput.addEventListener('change', updateExportHref);
+        window.__gacRefreshExportHref = updateExportHref;
+    }
+
+    /**
      * Inicializar búsqueda AJAX
      */
     function initSearch() {
@@ -277,10 +367,28 @@
                 clearSearchBtn: clearSearchBtn,
                 endpoint: window.location.pathname,
                 minSearchLength: 1,
+                getExtraParams: function() {
+                    const platformSelect = document.getElementById('filterPlatform');
+                    const dateInput = document.getElementById('filterActivityDate');
+                    const extra = {};
+                    if (platformSelect && platformSelect.value) extra.platform_id = platformSelect.value;
+                    if (dateInput && dateInput.value) extra.activity_date = dateInput.value;
+                    return extra;
+                },
                 renderCallback: function(html) {
-                    window.SearchAJAX.updateTableContent(html);
-                    initTable(); // Re-inicializar eventos de la tabla después de la actualización
-                    reapplyMultiSelectState(); // Mantener casillas visibles y selección si el modo estaba activo
+                    // Extraer datos de filtros (GAC-EMAIL-FILTERS)
+                    let filtersData = null;
+                    const commentMatch = html.match(/<!-- GAC-EMAIL-FILTERS:(.+?) -->/s);
+                    if (commentMatch) {
+                        try {
+                            filtersData = JSON.parse(commentMatch[1].trim());
+                        } catch (e) { /* ignore */ }
+                    }
+                    const htmlForTable = html.replace(/\s*<!-- GAC-EMAIL-FILTERS:.+? -->\s*$/s, '');
+                    window.SearchAJAX.updateTableContent(htmlForTable);
+                    initTable();
+                    reapplyMultiSelectState();
+                    updateEmailFiltersBar(filtersData);
                 },
                 onSearchComplete: function() {
                     // Mostrar/ocultar botón de limpiar

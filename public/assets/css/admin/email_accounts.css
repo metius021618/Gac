@@ -136,6 +136,52 @@
     border-color: var(--color-primary-dark);
 }
 
+.btn-excel {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: #0d9488;
+    color: #ffffff;
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.btn-excel:hover {
+    background: #0f766e;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.email-filters-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.email-filter-select,
+.email-filter-date {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+}
+
+.email-filter-select {
+    min-width: 140px;
+}
+
+.email-filter-date {
+    min-width: 150px;
+}
+
 /* Unificar estilos de búsqueda */
 .search-box,
 .search-input-wrapper {

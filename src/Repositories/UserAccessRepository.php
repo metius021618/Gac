@@ -199,7 +199,7 @@ class UserAccessRepository
      * Listar/buscar en user_access. Si hay texto, filtra por email o usuario (password).
      * @param string|null $excludeEmail Si se indica, se excluye este email (ej. cuenta Gmail matriz).
      */
-    public function searchAndPaginate(string $search = '', int $page = 1, int $perPage = 15, array $filterDomains = [], ?string $excludeEmail = null): array
+    public function searchAndPaginate(string $search = '', int $page = 1, int $perPage = 15, array $filterDomains = [], ?string $excludeEmail = null, ?int $platformId = null, ?string $activityDate = null): array
     {
         $logFile = defined('BASE_PATH') ? BASE_PATH . '/logs/search_debug.log' : (__DIR__ . '/../../logs/search_debug.log');
         $log = function ($msg) use ($logFile) {
@@ -238,6 +238,18 @@ class UserAccessRepository
                 }
                 $conditions[] = '(' . implode(' OR ', $domainConds) . ')';
                 $log('domain filter: ' . implode(', ', $filterDomains));
+            }
+
+            // Filtro por plataforma
+            if ($platformId !== null && $platformId > 0) {
+                $conditions[] = "ua.platform_id = :platform_id";
+                $params[':platform_id'] = $platformId;
+            }
+
+            // Filtro por fecha de actividad (solo fecha, sin hora)
+            if ($activityDate !== null && $activityDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $activityDate)) {
+                $conditions[] = "DATE(COALESCE(ua.updated_at, ua.created_at)) = :activity_date";
+                $params[':activity_date'] = $activityDate;
             }
 
             $whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
@@ -310,6 +322,61 @@ class UserAccessRepository
                 'per_page' => $perPage,
                 'total_pages' => 0
             ];
+        }
+    }
+
+    /**
+     * Obtener plataformas únicas para resultados de búsqueda (para filtro de plataforma).
+     * @param string $search Término de búsqueda
+     * @param array $filterDomains Dominios a filtrar
+     * @param string|null $excludeEmail Email a excluir
+     * @return array [['id'=>int,'display_name'=>str], ...]
+     */
+    public function getPlatformsForSearch(string $search = '', array $filterDomains = [], ?string $excludeEmail = null): array
+    {
+        try {
+            $db = Database::getConnection();
+            $q = trim($search);
+            $conditions = [];
+            $params = [];
+
+            if ($q !== '') {
+                $term = '%' . $q . '%';
+                $conditions[] = "(ua.email LIKE :q_email OR ua.password LIKE :q_password)";
+                $params[':q_email'] = $term;
+                $params[':q_password'] = $term;
+            }
+            if ($excludeEmail !== null && $excludeEmail !== '') {
+                $conditions[] = "LOWER(ua.email) != LOWER(:exclude_email)";
+                $params[':exclude_email'] = $excludeEmail;
+            }
+            if (!empty($filterDomains)) {
+                $domainConds = [];
+                foreach ($filterDomains as $i => $domain) {
+                    $key = ':fdomain' . $i;
+                    $domainConds[] = "ua.email LIKE {$key}";
+                    $params[$key] = '%@' . strtolower(trim($domain));
+                }
+                $conditions[] = '(' . implode(' OR ', $domainConds) . ')';
+            }
+
+            $whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
+            $sql = "
+                SELECT DISTINCT p.id, p.display_name
+                FROM user_access ua
+                JOIN platforms p ON ua.platform_id = p.id
+                {$whereClause}
+                ORDER BY p.display_name ASC
+            ";
+            $stmt = $db->prepare($sql);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value, PDO::PARAM_STR);
+            }
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (PDOException $e) {
+            error_log("Error getPlatformsForSearch: " . $e->getMessage());
+            return [];
         }
     }
 
@@ -420,15 +487,55 @@ class UserAccessRepository
      */
     public function getEmailById(int $id): ?string
     {
+        $row = $this->getAccessById($id);
+        return $row ? trim($row['email']) : null;
+    }
+
+    /**
+     * Obtener acceso completo por ID (email, usuario=password, plataforma) para logs de actividad.
+     */
+    public function getAccessById(int $id): ?array
+    {
         try {
             $db = Database::getConnection();
-            $stmt = $db->prepare("SELECT email FROM user_access WHERE id = :id");
+            $stmt = $db->prepare("
+                SELECT ua.email, ua.password, ua.platform_id, p.display_name AS platform_display_name
+                FROM user_access ua
+                LEFT JOIN platforms p ON ua.platform_id = p.id
+                WHERE ua.id = :id
+            ");
             $stmt->execute([':id' => $id]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $row ? trim($row['email']) : null;
+            return $row ?: null;
         } catch (PDOException $e) {
-            error_log("Error getEmailById: " . $e->getMessage());
+            error_log("Error getAccessById: " . $e->getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Obtener accesos completos por IDs (para logs antes de bulk delete).
+     * @return array [['id'=>int,'email'=>str,'password'=>str,'platform_display_name'=>str], ...]
+     */
+    public function getAccessListByIds(array $ids): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+        try {
+            $db = Database::getConnection();
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $stmt = $db->prepare("
+                SELECT ua.id, ua.email, ua.password, p.display_name AS platform_display_name
+                FROM user_access ua
+                LEFT JOIN platforms p ON ua.platform_id = p.id
+                WHERE ua.id IN ({$placeholders})
+            ");
+            $stmt->execute(array_values($ids));
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (PDOException $e) {
+            error_log("Error getAccessListByIds: " . $e->getMessage());
+            return [];
         }
     }
 
@@ -491,6 +598,52 @@ class UserAccessRepository
         } catch (PDOException $e) {
             error_log("Error al eliminar acceso por email: " . $e->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Obtener acceso por email y plataforma (para logs antes de eliminar).
+     * @return array|null ['email'=>str,'password'=>str,'platform_display_name'=>str]
+     */
+    public function getAccessByEmailAndPlatform(string $email, int $platformId): ?array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                SELECT ua.email, ua.password, p.display_name AS platform_display_name
+                FROM user_access ua
+                LEFT JOIN platforms p ON ua.platform_id = p.id
+                WHERE LOWER(ua.email) = LOWER(:email) AND ua.platform_id = :platform_id
+                LIMIT 1
+            ");
+            $stmt->execute([':email' => trim($email), ':platform_id' => $platformId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ?: null;
+        } catch (PDOException $e) {
+            error_log("Error getAccessByEmailAndPlatform: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Obtener accesos por email (para logs antes de eliminar cuenta completa).
+     * @return array [['email'=>str,'password'=>str,'platform_display_name'=>str], ...]
+     */
+    public function getAccessListByEmail(string $email): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                SELECT ua.email, ua.password, p.display_name AS platform_display_name
+                FROM user_access ua
+                LEFT JOIN platforms p ON ua.platform_id = p.id
+                WHERE LOWER(ua.email) = LOWER(:email)
+            ");
+            $stmt->execute([':email' => trim($email)]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (PDOException $e) {
+            error_log("Error getAccessListByEmail: " . $e->getMessage());
+            return [];
         }
     }
 

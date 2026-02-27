@@ -157,6 +157,55 @@ class CodeService
     }
 
     /**
+     * Consultar código temporal de Netflix (vista Hogar).
+     * Solo busca correos con asunto "Tu código de acceso temporal de Netflix".
+     * No requiere usuario ni plataforma, solo correo.
+     *
+     * @param string $userEmail Email del usuario que consulta
+     * @return array Resultado de la consulta
+     */
+    public function consultCodeNetflix(string $userEmail): array
+    {
+        if (!filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
+            return [
+                'success' => false,
+                'message' => 'El email ingresado no es válido'
+            ];
+        }
+
+        $userEmailLower = strtolower(trim($userEmail));
+        $originFilter = null;
+        if (substr($userEmailLower, -11) === '@gmail.com') {
+            $originFilter = 'gmail';
+        } elseif (substr($userEmailLower, -12) === '@outlook.com' || substr($userEmailLower, -11) === '@hotmail.com' || substr($userEmailLower, -9) === '@live.com') {
+            $originFilter = 'outlook';
+        }
+
+        $subject = 'Tu código de acceso temporal de Netflix';
+        $lastEmail = $this->codeRepository->findLastEmailBySubject($userEmailLower, $subject, $originFilter);
+
+        if (!$lastEmail || strtolower(trim($lastEmail['recipient_email'] ?? '')) !== $userEmailLower) {
+            return [
+                'success' => false,
+                'message' => 'No se encontraron correos con el código temporal de Netflix. Espera 5–15 segundos desde el envío del código antes de consultar.'
+            ];
+        }
+
+        $minutesAgo = $lastEmail['minutes_ago'] ?? 0;
+        return [
+            'success' => true,
+            'message' => 'Correo encontrado',
+            'platform' => 'Netflix',
+            'received_at' => $lastEmail['received_at'],
+            'minutes_ago' => $minutesAgo,
+            'time_ago_text' => $lastEmail['time_ago_text'] ?? 'hace tiempo',
+            'email_from' => $lastEmail['email_from'] ?? '',
+            'email_subject' => $lastEmail['subject'] ?? $subject,
+            'email_body' => $lastEmail['email_body'] ?? ''
+        ];
+    }
+
+    /**
      * Guardar código extraído
      * 
      * @param array $codeData Datos del código extraído

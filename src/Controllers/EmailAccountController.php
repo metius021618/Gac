@@ -32,6 +32,8 @@ class EmailAccountController
         $page = max(1, (int)$request->get('page', 1));
         $perPage = $request->get('per_page', '15');
         $filter = $request->get('filter', '');
+        $platformId = $request->get('platform_id') ? (int)$request->get('platform_id') : null;
+        $activityDate = trim($request->get('activity_date', ''));
         
         // Log búsqueda Correos Registrados (tabla user_access)
         $logFile = base_path('logs/search_debug.log');
@@ -66,7 +68,7 @@ class EmailAccountController
         } else {
             $matrixAccount = $this->emailAccountRepository->getGmailMatrixAccount();
             $excludeEmail = $matrixAccount && !empty($matrixAccount['email']) ? $matrixAccount['email'] : null;
-            $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, [], $excludeEmail);
+            $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, [], $excludeEmail, $platformId, $activityDate ?: null);
         }
         
         @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [EmailAccountController] total=' . $result['total'] . ' rows=' . count($result['data']) . "\n", FILE_APPEND | LOCK_EX);
@@ -74,6 +76,12 @@ class EmailAccountController
         // Si es petición AJAX, devolver solo la tabla y paginación
         if ($request->isAjax()) {
             ob_start();
+            $platformsForFilter = [];
+            if (empty($filter) && $search !== '') {
+                $matrixAccount = $this->emailAccountRepository->getGmailMatrixAccount();
+                $excludeEmail = $matrixAccount && !empty($matrixAccount['email']) ? $matrixAccount['email'] : null;
+                $platformsForFilter = $this->userAccessRepository->getPlatformsForSearch($search, [], $excludeEmail);
+            }
             extract([
                 'email_accounts' => $result['data'],
                 'total_records' => $result['total'],
@@ -83,7 +91,11 @@ class EmailAccountController
                 'search_query' => $search,
                 'valid_per_page' => [15, 30, 60, 100, 0],
                 'filter' => $filter,
-                'filter_label' => $filterLabel
+                'filter_label' => $filterLabel,
+                'platforms_for_filter' => $platformsForFilter,
+                'has_search' => $search !== '',
+                'platform_id_filter' => $platformId,
+                'activity_date_filter' => $activityDate
             ]);
             if (!empty($filter)) {
                 require base_path('views/admin/email_accounts/_table_simple.php');
@@ -91,7 +103,14 @@ class EmailAccountController
                 require base_path('views/admin/email_accounts/_table.php');
             }
             $tableHtml = ob_get_clean();
+            $filtersData = json_encode([
+                'platforms' => $platformsForFilter,
+                'has_search' => $search !== '',
+                'platform_id' => $platformId,
+                'activity_date' => $activityDate
+            ]);
             echo '<div class="admin-content">' . $tableHtml . '</div>';
+            echo '<!-- GAC-EMAIL-FILTERS:' . htmlspecialchars($filtersData, ENT_QUOTES, 'UTF-8') . ' -->';
             return;
         }
 
@@ -122,6 +141,56 @@ class EmailAccountController
             'search_query' => $search,
             'valid_per_page' => [15, 30, 60, 100, 0]
         ]);
+    }
+
+    /**
+     * Exportar Correos Registrados a Excel (XLS).
+     * Columnas: Correo, Usuario, Plataforma, Actividad (sin ID).
+     * Solo aplica a la vista principal (user_access), no a vistas filtradas por dominio.
+     */
+    public function exportExcel(Request $request): void
+    {
+        $search = trim($request->get('search', ''));
+        $platformId = $request->get('platform_id') ? (int)$request->get('platform_id') : null;
+        $activityDate = trim($request->get('activity_date', ''));
+        $matrixAccount = $this->emailAccountRepository->getGmailMatrixAccount();
+        $excludeEmail = $matrixAccount && !empty($matrixAccount['email']) ? $matrixAccount['email'] : null;
+        $result = $this->userAccessRepository->searchAndPaginate($search, 1, 0, [], $excludeEmail, $platformId, $activityDate ?: null);
+        $rows = $result['data'] ?? [];
+
+        $filename = 'correos_registrados_' . date('Y-m-d_His') . '.xls';
+        header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        header('Pragma: public');
+
+        $headerBg = '#2563eb';
+        $headerColor = '#ffffff';
+
+        echo "\xEF\xBB\xBF"; // UTF-8 BOM
+        echo '<?xml version="1.0" encoding="UTF-8"?>';
+        echo '<?mso-application progid="Excel.Sheet"?>';
+        echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">';
+        echo '<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></head>';
+        echo '<body><table border="1" cellpadding="2" cellspacing="0" style="border-collapse:collapse;">';
+        echo '<tr style="background:' . $headerBg . ';color:' . $headerColor . ';font-weight:bold;">';
+        echo '<th style="border:1px solid #000;">Correo</th>';
+        echo '<th style="border:1px solid #000;">Usuario</th>';
+        echo '<th style="border:1px solid #000;">Plataforma</th>';
+        echo '<th style="border:1px solid #000;">Actividad</th>';
+        echo '</tr>';
+
+        foreach ($rows as $r) {
+            $actividad = !empty($r['updated_at']) ? date('d/m/Y H:i', strtotime($r['updated_at'])) : (!empty($r['created_at']) ? date('d/m/Y H:i', strtotime($r['created_at'])) : '—');
+            echo '<tr>';
+            echo '<td style="border:1px solid #000;">' . htmlspecialchars($r['email'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td style="border:1px solid #000;">' . htmlspecialchars($r['password'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td style="border:1px solid #000;">' . htmlspecialchars($r['platform_display_name'] ?? $r['platform_name'] ?? '—', ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td style="border:1px solid #000;">' . htmlspecialchars($actividad, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '</tr>';
+        }
+        echo '</table></body></html>';
+        exit;
     }
 
     /**
@@ -396,16 +465,20 @@ class EmailAccountController
             return;
         }
 
-        $emailsAffected = $this->userAccessRepository->getEmailsByIds($ids);
+        $accessList = $this->userAccessRepository->getAccessListByIds($ids);
         $deleted = $this->userAccessRepository->bulkDelete($ids);
 
-        if ($deleted && !empty($emailsAffected) && function_exists('log_user_activity')) {
-            foreach (array_keys($emailsAffected) as $email) {
-                log_user_activity('eliminar', sprintf('Se eliminó el correo <strong>%s</strong>', htmlspecialchars($email, ENT_QUOTES, 'UTF-8')));
+        if ($deleted && !empty($accessList) && function_exists('log_user_activity')) {
+            foreach ($accessList as $acc) {
+                $email = trim($acc['email'] ?? '');
+                $usuario = trim($acc['password'] ?? '') ?: '(vacío)';
+                $plataforma = trim($acc['platform_display_name'] ?? '') ?: '—';
+                log_user_activity('eliminar', sprintf('Eliminó el correo %s; %s; %s', $email, $usuario, $plataforma));
             }
         }
-        if ($deleted && !empty($emailsAffected)) {
-            foreach (array_keys($emailsAffected) as $email) {
+        if ($deleted && !empty($accessList)) {
+            foreach ($accessList as $acc) {
+                $email = trim($acc['email'] ?? '');
                 $emailNorm = strtolower(trim($email));
                 if ($this->userAccessRepository->countByEmail($emailNorm) === 0) {
                     $this->emailAccountRepository->deleteByEmail($emailNorm);
@@ -449,14 +522,17 @@ class EmailAccountController
             return;
         }
 
-        $email = $this->userAccessRepository->getEmailById($id);
+        $access = $this->userAccessRepository->getAccessById($id);
         $deleted = $this->userAccessRepository->delete($id);
 
-        if ($deleted && $email !== null) {
+        if ($deleted && $access !== null) {
             if (function_exists('log_user_activity')) {
-                log_user_activity('eliminar', sprintf('Se eliminó el correo <strong>%s</strong>', htmlspecialchars($email, ENT_QUOTES, 'UTF-8')));
+                $email = trim($access['email'] ?? '');
+                $usuario = trim($access['password'] ?? '') ?: '(vacío)';
+                $plataforma = trim($access['platform_display_name'] ?? '') ?: '—';
+                log_user_activity('eliminar', sprintf('Eliminó el correo %s; %s; %s', $email, $usuario, $plataforma));
             }
-            $emailNorm = strtolower(trim($email));
+            $emailNorm = strtolower(trim($access['email'] ?? ''));
             if ($this->userAccessRepository->countByEmail($emailNorm) === 0) {
                 $this->emailAccountRepository->deleteByEmail($emailNorm);
             }
@@ -506,11 +582,17 @@ class EmailAccountController
         }
 
         $email = strtolower(trim($account['email'] ?? ''));
+        $accessList = $this->userAccessRepository->getAccessListByEmail($account['email'] ?? '');
         $this->userAccessRepository->deleteByEmail($email);
         $deleted = $this->emailAccountRepository->delete($id);
 
-        if ($deleted && function_exists('log_user_activity')) {
-            log_user_activity('eliminar', sprintf('Se eliminó el correo <strong>%s</strong>', htmlspecialchars($account['email'] ?? $email, ENT_QUOTES, 'UTF-8')));
+        if ($deleted && function_exists('log_user_activity') && !empty($accessList)) {
+            foreach ($accessList as $acc) {
+                $em = trim($acc['email'] ?? '');
+                $usuario = trim($acc['password'] ?? '') ?: '(vacío)';
+                $plataforma = trim($acc['platform_display_name'] ?? '') ?: '—';
+                log_user_activity('eliminar', sprintf('Eliminó el correo %s; %s; %s', $em, $usuario, $plataforma));
+            }
         }
         if ($deleted) {
             json_response(['success' => true, 'message' => 'Correo eliminado correctamente'], 200);
@@ -590,8 +672,10 @@ class EmailAccountController
         $emails = array_filter(array_map('trim', explode("\n", $emailsInput)));
         $emails = array_unique($emails);
         $result = $this->emailAccountRepository->addStockEmails($emails);
-        if (function_exists('log_user_activity') && !empty($result['added'])) {
-            log_user_activity('agregar_correo', sprintf('Se agregaron %d correo(s) como stock', (int) $result['added']));
+        if (function_exists('log_user_activity') && !empty($result['added_emails'] ?? [])) {
+            foreach ($result['added_emails'] as $em) {
+                log_user_activity('agregar_correo', sprintf('Registró el correo %s; (stock); —', trim($em)));
+            }
         }
         $msg = 'Agregados: ' . $result['added'] . '. Ya existían: ' . $result['skipped'];
         if (!empty($result['errors'])) {
@@ -743,9 +827,9 @@ class EmailAccountController
         $result = $userAccessRepository->bulkCreate($validEmails, $accessCode, $platformId);
 
         if (function_exists('log_user_activity')) {
-            $platformName = $platform['display_name'] ?? $platform['name'] ?? 'Plataforma';
+            $platformName = trim($platform['display_name'] ?? $platform['name'] ?? 'Plataforma');
             foreach ($validEmails as $e) {
-                log_user_activity('agregar_correo', sprintf('Se agregó el correo <strong>%s</strong> con plataforma <strong>%s</strong>', htmlspecialchars($e, ENT_QUOTES, 'UTF-8'), htmlspecialchars($platformName, ENT_QUOTES, 'UTF-8')));
+                log_user_activity('agregar_correo', sprintf('Registró el correo %s; %s; %s', trim($e), $accessCode, $platformName));
             }
         }
 
@@ -863,14 +947,16 @@ class EmailAccountController
         $userAccessRepository = new \Gac\Repositories\UserAccessRepository();
 
         foreach ($emailsArray as $email) {
-            // Eliminar solo la asignación de esta plataforma en user_access
+            $access = $userAccessRepository->getAccessByEmailAndPlatform($email, $platformId);
             $deleted = $userAccessRepository->deleteByEmailAndPlatform($email, $platformId);
 
             if ($deleted) {
                 $deletedCount++;
                 if (function_exists('log_user_activity')) {
-                    $platName = $platform['display_name'] ?? $platform['name'] ?? '';
-                    log_user_activity('eliminar', sprintf('Se eliminó el correo <strong>%s</strong> (plataforma <strong>%s</strong>)', htmlspecialchars($email, ENT_QUOTES, 'UTF-8'), htmlspecialchars($platName, ENT_QUOTES, 'UTF-8')));
+                    $em = $access ? trim($access['email'] ?? $email) : $email;
+                    $usuario = $access ? (trim($access['password'] ?? '') ?: '(vacío)') : '(vacío)';
+                    $plataforma = $access ? (trim($access['platform_display_name'] ?? '') ?: '—') : ($platform['display_name'] ?? $platform['name'] ?? '—');
+                    log_user_activity('eliminar', sprintf('Eliminó el correo %s; %s; %s', $em, $usuario, $plataforma));
                 }
 
                 // Si ya no tiene más asignaciones en user_access, eliminar de email_accounts

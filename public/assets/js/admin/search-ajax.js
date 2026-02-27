@@ -100,7 +100,8 @@
                 endpoint,
                 renderCallback,
                 onSearchComplete,
-                minSearchLength = 3
+                minSearchLength = 3,
+                getExtraParams = null
             } = config;
 
             let searchTimeout = null;
@@ -137,6 +138,9 @@
                                 page: 1,
                                 per_page: perPageSelect?.value || 15
                             };
+                            if (typeof getExtraParams === 'function') {
+                                Object.assign(params, getExtraParams());
+                            }
 
                             window.SearchAJAX.performSearch(endpoint, params, renderCallback)
                                 .then(() => {
@@ -163,6 +167,9 @@
                         page: 1,
                         per_page: perPageSelect?.value || 15
                     };
+                    if (typeof getExtraParams === 'function') {
+                        Object.assign(params, getExtraParams());
+                    }
                     
                     isLoading = true;
                     window.SearchAJAX.performSearch(endpoint, params, renderCallback)
@@ -183,6 +190,9 @@
                         page: 1,
                         per_page: this.value
                     };
+                    if (typeof getExtraParams === 'function') {
+                        Object.assign(params, getExtraParams());
+                    }
                     
                     isLoading = true;
                     window.SearchAJAX.performSearch(endpoint, params, renderCallback)
@@ -210,6 +220,9 @@
                         page: page,
                         per_page: perPageSelect?.value || 15
                     };
+                    if (typeof getExtraParams === 'function') {
+                        Object.assign(params, getExtraParams());
+                    }
                     
                     isLoading = true;
                     window.SearchAJAX.performSearch(endpoint, params, renderCallback)

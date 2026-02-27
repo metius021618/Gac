@@ -62,6 +62,26 @@ $content = ob_start();
             </div>
             
             <div class="table-controls-right">
+                <div id="emailFiltersBar" class="email-filters-bar" style="display: none;">
+                    <select id="filterPlatform" class="form-select email-filter-select" title="Filtrar por plataforma">
+                        <option value="">Plataforma</option>
+                    </select>
+                    <input type="date" id="filterActivityDate" class="form-input email-filter-date" title="Filtrar por fecha de actividad" placeholder="Fecha">
+                </div>
+                <a href="/admin/email-accounts/export-excel" 
+                   id="exportExcelBtn"
+                   class="btn btn-excel" 
+                   title="Exportar a Excel">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <path d="M8 13h2"></path>
+                        <path d="M8 17h2"></path>
+                        <path d="M14 13h2"></path>
+                        <path d="M14 17h2"></path>
+                    </svg>
+                    Excel
+                </a>
                 <?php if (function_exists('user_can_action') && user_can_action('listar_correos', 'eliminar')): ?>
                 <button id="multiSelectBtn" class="btn btn-secondary">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -246,6 +246,68 @@ class CodeRepository
     }
 
     /**
+     * Buscar el último correo por asunto exacto y destinatario (para vista Hogar Netflix).
+     *
+     * @param string $recipientEmail Email del destinatario
+     * @param string $subject Asunto exacto a buscar (ej. "Tu código de acceso temporal de Netflix")
+     * @param string|null $origin Solo códigos de este origen: 'gmail', 'outlook', 'imap' o null (cualquiera)
+     * @return array|null Datos del último correo con time_ago_text
+     */
+    public function findLastEmailBySubject(string $recipientEmail, string $subject, ?string $origin = null): ?array
+    {
+        try {
+            $db = Database::getConnection();
+            $originClause = '';
+            $params = [
+                'recipient_email' => strtolower($recipientEmail),
+                'subject' => $subject
+            ];
+            if ($origin === 'gmail' || $origin === 'outlook' || $origin === 'imap') {
+                $originClause = ' AND c.origin = :origin';
+                $params['origin'] = $origin;
+            }
+            $stmt = $db->prepare("
+                SELECT 
+                    c.id,
+                    c.code,
+                    c.email_from,
+                    c.subject,
+                    c.email_body,
+                    c.received_at,
+                    c.status,
+                    c.origin,
+                    c.recipient_email,
+                    TIMESTAMPDIFF(MINUTE, c.received_at, NOW()) as minutes_ago
+                FROM codes c
+                WHERE LOWER(c.recipient_email) = :recipient_email
+                  AND c.subject = :subject
+                  {$originClause}
+                ORDER BY c.received_at DESC, c.id DESC
+                LIMIT 1
+            ");
+            $stmt->execute($params);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$result) {
+                return null;
+            }
+            $minutesAgo = (int) ($result['minutes_ago'] ?? 0);
+            if ($minutesAgo < 60) {
+                $result['time_ago_text'] = "hace {$minutesAgo} minuto(s)";
+            } elseif ($minutesAgo < 1440) {
+                $hoursAgo = floor($minutesAgo / 60);
+                $result['time_ago_text'] = "hace {$hoursAgo} hora(s)";
+            } else {
+                $daysAgo = floor($minutesAgo / 1440);
+                $result['time_ago_text'] = "hace {$daysAgo} día(s)";
+            }
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error findLastEmailBySubject: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Último correo de una plataforma (cualquier destinatario). Para acceso maestro admin.
      *
      * @param int $platformId ID de la plataforma
