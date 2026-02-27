@@ -158,48 +158,36 @@ class EmailAccountController
         $result = $this->userAccessRepository->searchAndPaginate($search, 1, 0, [], $excludeEmail, $platformId, $activityDate ?: null);
         $rows = $result['data'] ?? [];
 
-        // Usamos XML Spreadsheet 2003 real → extensión .xml para que Excel no muestre advertencias.
-        $filename = 'correos_registrados_' . date('Y-m-d_His') . '.xml';
+        // Generar una hoja de cálculo \"clásica\" para Excel usando una tabla HTML simple.
+        // Extensión .xls para que se abra como libro normal.
+        $filename = 'correos_registrados_' . date('Y-m-d_His') . '.xls';
         header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Cache-Control: max-age=0');
         header('Pragma: public');
 
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-        $xml .= '<?mso-application progid="Excel.Sheet"?>' . "\n";
-        $xml .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ';
-        $xml .= 'xmlns:o="urn:schemas-microsoft-com:office:office" ';
-        $xml .= 'xmlns:x="urn:schemas-microsoft-com:office:excel" ';
-        $xml .= 'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' . "\n";
-        $xml .= '<Styles><Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#2563eb" ss:Pattern="Solid"/>';
-        $xml .= '<Font ss:Color="#FFFFFF"/></Style></Styles>' . "\n";
-        $xml .= '<Worksheet ss:Name="Correos">' . "\n";
-        $xml .= '<Table>' . "\n";
-
-        // Fila de encabezados
-        $xml .= '<Row>';
-        foreach (['Correo', 'Usuario', 'Plataforma', 'Actividad'] as $h) {
-            $xml .= '<Cell ss:StyleID="Header"><Data ss:Type="String">' . htmlspecialchars($h, ENT_QUOTES | ENT_XML1, 'UTF-8') . '</Data></Cell>';
-        }
-        $xml .= '</Row>' . "\n";
+        echo '<table border="1" cellpadding="2" cellspacing="0" style="border-collapse:collapse;">';
+        echo '<tr style="background:#2563eb;color:#ffffff;font-weight:bold;">';
+        echo '<td>Correo</td>';
+        echo '<td>Usuario</td>';
+        echo '<td>Plataforma</td>';
+        echo '<td>Actividad</td>';
+        echo '</tr>';
 
         foreach ($rows as $r) {
             $actividad = !empty($r['updated_at']) ? date('d/m/Y H:i', strtotime($r['updated_at'])) : (!empty($r['created_at']) ? date('d/m/Y H:i', strtotime($r['created_at'])) : '—');
             $email = $r['email'] ?? '';
             $usuario = $r['password'] ?? '';
             $plataforma = $r['platform_display_name'] ?? $r['platform_name'] ?? '—';
-            $xml .= '<Row>';
-            $xml .= '<Cell><Data ss:Type="String">' . htmlspecialchars($email, ENT_QUOTES | ENT_XML1, 'UTF-8') . '</Data></Cell>';
-            $xml .= '<Cell><Data ss:Type="String">' . htmlspecialchars($usuario, ENT_QUOTES | ENT_XML1, 'UTF-8') . '</Data></Cell>';
-            $xml .= '<Cell><Data ss:Type="String">' . htmlspecialchars($plataforma, ENT_QUOTES | ENT_XML1, 'UTF-8') . '</Data></Cell>';
-            $xml .= '<Cell><Data ss:Type="String">' . htmlspecialchars($actividad, ENT_QUOTES | ENT_XML1, 'UTF-8') . '</Data></Cell>';
-            $xml .= '</Row>' . "\n";
+            echo '<tr>';
+            echo '<td>' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars($usuario, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars($plataforma, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars($actividad, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '</tr>';
         }
 
-        $xml .= '</Table></Worksheet></Workbook>';
-
-        // Importante: NO enviar BOM para que Excel abra el XML sin marcarlo como dañado.
-        echo $xml;
+        echo '</table>';
         exit;
     }
 
