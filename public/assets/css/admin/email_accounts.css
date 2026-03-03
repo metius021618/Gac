@@ -474,7 +474,7 @@ select.per-page-select {
 
 .admin-table th {
     padding: var(--spacing-md);
-    text-align: left;
+    text-align: center;
     font-weight: 600;
     color: var(--text-primary);
     font-size: var(--font-size-sm);
@@ -522,9 +522,11 @@ select.per-page-select {
     white-space: nowrap;
 }
 
-/* Columna Correo centrada en vista filtrada (Gmail/Outlook/Pocoyoni) */
-.admin-table th.text-center,
-.admin-table td.email-cell.text-center {
+/* Celdas centradas: Usuario, Plataforma, Administrador, Actividad, Acciones, ID, Correo */
+.admin-table td.text-center,
+.admin-table .user-cell,
+.admin-table .platform-cell,
+.admin-table .administrador-cell {
     text-align: center;
 }
 

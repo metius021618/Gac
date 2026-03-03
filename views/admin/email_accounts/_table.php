@@ -16,13 +16,13 @@ $can_delete = function_exists('user_can_action') && user_can_action($email_view_
                 <th class="checkbox-column" style="display: none; width: 40px;">
                     <input type="checkbox" id="selectAll" title="Seleccionar todos">
                 </th>
-                <th style="width: 60px;">ID</th>
-                <th style="width: 25%;">Correo</th>
-                <th style="width: 15%;">Usuario (acceso)</th>
-                <th style="width: 20%;">Plataforma</th>
-                <th style="width: 18%;">Actividad</th>
-                <th style="width: 12%;">Administrador</th>
-                <th style="width: 150px;">Acciones</th>
+                <th class="text-center" style="width: 60px;">ID</th>
+                <th class="text-center" style="width: 25%;">Correo</th>
+                <th class="text-center" style="width: 15%;">Usuario (acceso)</th>
+                <th class="text-center" style="width: 20%;">Plataforma</th>
+                <th class="text-center" style="width: 18%;">Actividad</th>
+                <th class="text-center" style="width: 12%;">Administrador</th>
+                <th class="text-center" style="width: 150px;">Acciones</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -44,15 +44,15 @@ $can_delete = function_exists('user_can_action') && user_can_action($email_view_
                         <td class="checkbox-column" style="display: none;">
                             <input type="checkbox" class="row-checkbox" value="<?= (int)$account['id'] ?>">
                         </td>
-                        <td><?= (int)$account['id'] ?></td>
-                        <td class="email-cell"><?= htmlspecialchars($account['email'] ?? '') ?></td>
-                        <td class="user-cell"><?= htmlspecialchars($usuario) ?></td>
-                        <td class="platform-cell">
+                        <td class="text-center"><?= (int)$account['id'] ?></td>
+                        <td class="email-cell text-center"><?= htmlspecialchars($account['email'] ?? '') ?></td>
+                        <td class="user-cell text-center"><?= htmlspecialchars($usuario) ?></td>
+                        <td class="platform-cell text-center">
                             <span class="platform-badge"><?= htmlspecialchars($plataforma) ?></span>
                         </td>
-                        <td><span class="sync-time"><?= $actividad ?></span></td>
-                        <td><?= htmlspecialchars($account['updated_by_username'] ?? '—') ?></td>
-                        <td class="actions-cell">
+                        <td class="text-center"><span class="sync-time"><?= $actividad ?></span></td>
+                        <td class="administrador-cell text-center"><?= htmlspecialchars($account['updated_by_username'] ?? '—') ?></td>
+                        <td class="actions-cell text-center">
                             <?php if ($can_edit): ?>
                             <a href="/admin/user-access?email=<?= rawurlencode($account['email'] ?? '') ?>&platform_id=<?= (int)($account['platform_id'] ?? 0) ?>" 
                                class="btn-icon btn-edit" 
