@@ -1,7 +1,6 @@
 <?php
 /**
- * GAC - Vista de Listado de Cuentas de Email
- * Con búsqueda, paginación y diseño mejorado
+ * GAC - Lista de cuentas (gestión completa: correo, usuario, plataforma, actividad, administrador, acciones)
  */
 
 $content = ob_start();
@@ -9,28 +8,7 @@ $content = ob_start();
 
 <div class="admin-container">
     <div class="admin-header">
-        <h1 class="admin-title">Correos Registrados</h1>
-    </div>
-    <!-- Fila: opciones Todo/Gmail/Outlook/Pocoyoni + Excel a la derecha -->
-    <?php $current_filter = $filter ?? ''; ?>
-    <div class="correos-filter-row">
-        <div class="correos-filter-slider">
-            <button type="button" class="correos-filter-pill <?= $current_filter === '' ? 'active' : '' ?>" data-filter="">Todo</button>
-            <button type="button" class="correos-filter-pill <?= $current_filter === 'gmail' ? 'active' : '' ?>" data-filter="gmail">Gmail</button>
-            <button type="button" class="correos-filter-pill <?= $current_filter === 'outlook' ? 'active' : '' ?>" data-filter="outlook">Outlook</button>
-            <button type="button" class="correos-filter-pill <?= $current_filter === 'pocoyoni' ? 'active' : '' ?>" data-filter="pocoyoni">Pocoyoni</button>
-        </div>
-        <div class="correos-filter-excel">
-            <button type="button" class="btn btn-excel" id="excelExportTrigger" title="Exportar a Excel">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <path d="M8 13h2"></path><path d="M8 17h2"></path>
-                    <path d="M14 13h2"></path><path d="M14 17h2"></path>
-                </svg>
-                Excel
-            </button>
-        </div>
+        <h1 class="admin-title">Lista de cuentas</h1>
     </div>
 
     <?php if (!empty($_SESSION['gmail_success'])): ?>
@@ -59,7 +37,6 @@ $content = ob_start();
     <?php endif; ?>
 
     <div class="admin-content">
-        <!-- Barra de búsqueda y filtros -->
         <div class="table-controls">
             <div class="search-box">
                 <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -127,26 +104,8 @@ $content = ob_start();
             </div>
         </div>
 
-        <!-- Tabla de cuentas (se actualiza dinámicamente al cambiar Todo/Gmail/Outlook/Pocoyoni) -->
         <div id="emailAccountsTableWrapper">
             <?php require base_path('views/admin/email_accounts/_table.php'); ?>
-        </div>
-    </div>
-</div>
-
-<!-- Modal exportar Excel: elegir Todo / Gmail / Outlook / Pocoyoni -->
-<div id="excelExportModal" class="modal hidden" aria-hidden="true">
-    <div class="modal-overlay"></div>
-    <div class="modal-container">
-        <div class="modal-header">
-            <h2 class="modal-title">Exportar a Excel</h2>
-            <button type="button" class="modal-close" id="closeExcelExportModal" aria-label="Cerrar">&times;</button>
-        </div>
-        <div class="modal-content excel-export-cards">
-            <a href="/admin/email-accounts/export-excel" class="excel-export-card" data-filter="">Todos</a>
-            <a href="/admin/email-accounts/export-excel?filter=gmail" class="excel-export-card" data-filter="gmail">Gmail</a>
-            <a href="/admin/email-accounts/export-excel?filter=outlook" class="excel-export-card" data-filter="outlook">Outlook</a>
-            <a href="/admin/email-accounts/export-excel?filter=pocoyoni" class="excel-export-card" data-filter="pocoyoni">Pocoyoni</a>
         </div>
     </div>
 </div>
@@ -154,7 +113,7 @@ $content = ob_start();
 <?php
 $content = ob_get_clean();
 
-$title = $title ?? 'Correos Registrados';
+$title = $title ?? 'Lista de cuentas';
 $show_nav = true;
 $show_footer = true;
 $footer_text = '';

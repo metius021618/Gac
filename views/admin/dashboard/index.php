@@ -87,7 +87,7 @@ $content = ob_start();
         <div class="stats-cards-grid">
             <?php if ($can('listar_correos') || $can('listar_gmail') || $can('listar_outlook') || $can('listar_pocoyoni')): ?>
             <!-- Correos Registrados (una sola card: Todo / Gmail / Outlook / Pocoyoni en la vista) -->
-            <a href="/admin/email-accounts" class="stat-card stat-card-grey stat-card-link stat-card-email" title="Ver correos registrados">
+            <a href="/admin/correos-registrados" class="stat-card stat-card-grey stat-card-link stat-card-email" title="Ver correos registrados">
                 <div class="stat-card-icon stat-card-icon--correos">
                     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>

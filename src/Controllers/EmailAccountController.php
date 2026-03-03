@@ -31,50 +31,24 @@ class EmailAccountController
         $search = $request->get('search', '');
         $page = max(1, (int)$request->get('page', 1));
         $perPage = $request->get('per_page', '15');
-        $filter = $request->get('filter', '');
         $platformId = $request->get('platform_id') ? (int)$request->get('platform_id') : null;
         $activityDate = trim($request->get('activity_date', ''));
-        
-        // Log búsqueda Correos Registrados (tabla user_access)
-        $logFile = base_path('logs/search_debug.log');
-        $logLine = date('Y-m-d H:i:s') . ' [EmailAccountController] GET=' . json_encode($_GET) . ' search="' . $search . '" filter="' . $filter . '" isAjax=' . ($request->isAjax() ? '1' : '0') . "\n";
-        @file_put_contents($logFile, $logLine, FILE_APPEND | LOCK_EX);
         
         $allowedPerPage = ['15', '30', '60', '100', 'all'];
         if (!in_array($perPage, $allowedPerPage)) {
             $perPage = '15';
         }
-        
         $perPageInt = $perPage === 'all' ? 0 : (int)$perPage;
 
-        // Determinar dominios a filtrar
-        $filterDomains = [];
-        $filterLabel = '';
-        if ($filter === 'gmail') {
-            $filterDomains = ['gmail.com'];
-            $filterLabel = 'Gmail';
-        } elseif ($filter === 'outlook') {
-            $filterDomains = ['outlook.com', 'hotmail.com', 'live.com'];
-            $filterLabel = 'Outlook';
-        } elseif ($filter === 'pocoyoni') {
-            $filterDomains = ['pocoyoni.com'];
-            $filterLabel = 'Pocoyoni';
-        }
-
-        // Siempre desde user_access (misma tabla y columnas). Filtro por dominio cuando filter=gmail|outlook|pocoyoni.
+        // Lista de cuentas: siempre desde user_access, sin filtro por dominio
         $matrixAccount = $this->emailAccountRepository->getGmailMatrixAccount();
         $excludeEmail = $matrixAccount && !empty($matrixAccount['email']) ? $matrixAccount['email'] : null;
-        $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, $filterDomains, $excludeEmail, $platformId, $activityDate ?: null);
+        $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, [], $excludeEmail, $platformId, $activityDate ?: null);
         
-        @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [EmailAccountController] total=' . $result['total'] . ' rows=' . count($result['data']) . "\n", FILE_APPEND | LOCK_EX);
-        
-        // Si es petición AJAX, devolver solo la tabla y paginación
         if ($request->isAjax()) {
             ob_start();
             $platformsForFilter = [];
-            if (empty($filter) && $search !== '') {
-                $matrixAccount = $this->emailAccountRepository->getGmailMatrixAccount();
-                $excludeEmail = $matrixAccount && !empty($matrixAccount['email']) ? $matrixAccount['email'] : null;
+            if ($search !== '') {
                 $platformsForFilter = $this->userAccessRepository->getPlatformsForSearch($search, [], $excludeEmail);
             }
             extract([
@@ -85,8 +59,7 @@ class EmailAccountController
                 'total_pages' => $result['total_pages'],
                 'search_query' => $search,
                 'valid_per_page' => [15, 30, 60, 100, 0],
-                'filter' => $filter,
-                'filter_label' => $filterLabel,
+                'filter' => '',
                 'platforms_for_filter' => $platformsForFilter,
                 'has_search' => $search !== '',
                 'platform_id_filter' => $platformId,
@@ -106,15 +79,14 @@ class EmailAccountController
         }
 
         $this->renderView('admin/email_accounts/index', [
-            'title' => 'Correos Registrados',
+            'title' => 'Lista de cuentas',
             'email_accounts' => $result['data'],
             'total_records' => $result['total'],
             'current_page' => $result['page'],
             'per_page' => $result['per_page'],
             'total_pages' => $result['total_pages'],
             'search_query' => $search,
-            'valid_per_page' => [15, 30, 60, 100, 0],
-            'filter' => $filter
+            'valid_per_page' => [15, 30, 60, 100, 0]
         ]);
     }
 
@@ -171,6 +143,111 @@ class EmailAccountController
             echo '</tr>';
         }
 
+        echo '</table>';
+        exit;
+    }
+
+    /** Dominios para vista Correos registrados (Todo = todos) */
+    private const CORREOS_REGISTRADOS_DOMAINS_TODO = [
+        'gmail.com', 'outlook.com', 'hotmail.com', 'hotmail.es', 'live.com', 'live.es', 'pocoyoni.com'
+    ];
+
+    /**
+     * Vista Correos registrados: solo ID, Correo, Asignado, Acciones (eliminar).
+     * Filtro Todo/Gmail/Outlook/Pocoyoni por dominio. Datos desde email_accounts + asignado.
+     */
+    public function correosRegistrados(Request $request): void
+    {
+        $search = trim($request->get('search', ''));
+        $page = max(1, (int)$request->get('page', 1));
+        $perPage = $request->get('per_page', '15');
+        $perPageInt = 15;
+        if (in_array($perPage, ['15', '30', '60', '100'], true)) {
+            $perPageInt = (int) $perPage;
+        } elseif ($perPage === 'all' || $perPage === '0') {
+            $perPageInt = 0;
+        }
+        $filter = trim($request->get('filter', ''));
+
+        $filterDomains = [];
+        if ($filter === 'gmail') {
+            $filterDomains = ['gmail.com'];
+        } elseif ($filter === 'outlook') {
+            $filterDomains = ['outlook.com', 'hotmail.com', 'hotmail.es', 'live.com', 'live.es'];
+        } elseif ($filter === 'pocoyoni') {
+            $filterDomains = ['pocoyoni.com'];
+        } else {
+            $filterDomains = self::CORREOS_REGISTRADOS_DOMAINS_TODO;
+        }
+
+        $result = $this->emailAccountRepository->listByDomainsPaginate($filterDomains, $search, $page, $perPageInt);
+
+        if ($request->isAjax()) {
+            ob_start();
+            extract([
+                'email_accounts' => $result['data'],
+                'total_records' => $result['total'],
+                'current_page' => $result['page'],
+                'per_page' => $result['per_page'],
+                'total_pages' => $result['total_pages'],
+                'search_query' => $search,
+                'filter' => $filter
+            ]);
+            require base_path('views/admin/correos_registrados/_table.php');
+            $tableHtml = ob_get_clean();
+            echo '<div class="admin-content">' . $tableHtml . '</div>';
+            return;
+        }
+
+        $this->renderView('admin/correos_registrados/index', [
+            'title' => 'Correos Registrados',
+            'email_accounts' => $result['data'],
+            'total_records' => $result['total'],
+            'current_page' => $result['page'],
+            'per_page' => $result['per_page'],
+            'total_pages' => $result['total_pages'],
+            'search_query' => $search,
+            'filter' => $filter
+        ]);
+    }
+
+    /**
+     * Exportar Correos registrados a Excel: Correo, Asignado (Sí/No).
+     */
+    public function exportCorreosRegistradosExcel(Request $request): void
+    {
+        $filter = trim($request->get('filter', ''));
+        $filterDomains = [];
+        if ($filter === 'gmail') {
+            $filterDomains = ['gmail.com'];
+        } elseif ($filter === 'outlook') {
+            $filterDomains = ['outlook.com', 'hotmail.com', 'hotmail.es', 'live.com', 'live.es'];
+        } elseif ($filter === 'pocoyoni') {
+            $filterDomains = ['pocoyoni.com'];
+        } else {
+            $filterDomains = self::CORREOS_REGISTRADOS_DOMAINS_TODO;
+        }
+        $result = $this->emailAccountRepository->listByDomainsPaginate($filterDomains, '', 1, 0);
+        $rows = $result['data'] ?? [];
+
+        $filename = 'correos_registrados_' . date('Y-m-d_His') . '.xls';
+        header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        header('Pragma: public');
+
+        echo '<table border="1" cellpadding="2" cellspacing="0" style="border-collapse:collapse;">';
+        echo '<tr style="background:#2563eb;color:#ffffff;font-weight:bold;">';
+        echo '<td>Correo</td><td>Asignado</td>';
+        echo '</tr>';
+        foreach ($rows as $r) {
+            $email = $r['email'] ?? '';
+            $asignado = !empty($r['asignado']) ? 'Sí' : 'No';
+            echo '<tr>';
+            echo '<td>' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars($asignado, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '</tr>';
+        }
         echo '</table>';
         exit;
     }
