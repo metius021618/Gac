@@ -41,8 +41,13 @@
 }
 .activity-filter-label {
     font-size: var(--font-size-xs);
-    color: var(--text-muted);
-    margin-right: 6px;
+    color: #ffffff;
+    margin-right: 0;
+}
+.activity-filter-sep {
+    color: #ffffff;
+    font-size: var(--font-size-xs);
+    margin: 0 2px;
 }
 .activity-filter-value {
     font-weight: 500;

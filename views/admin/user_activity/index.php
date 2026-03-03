@@ -72,8 +72,7 @@ elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
     <div class="user-activity-top-bar">
         <div class="user-activity-filters">
             <div class="activity-filter-dropdown" data-filter="action">
-                <span class="activity-filter-label">Acción</span>
-                <span class="activity-filter-value"><?= $filter_action ? htmlspecialchars(\Gac\Repositories\UserActivityLogRepository::actionLabel($filter_action)) : 'Todas' ?></span>
+                <span class="activity-filter-label">Acción</span><span class="activity-filter-sep"> - </span><span class="activity-filter-value"><?= $filter_action ? htmlspecialchars(\Gac\Repositories\UserActivityLogRepository::actionLabel($filter_action)) : 'Todas' ?></span>
                 <ul class="activity-filter-menu">
                     <li><a href="<?= $queryParams(['action' => '', 'page' => 1]) ?>">Todas</a></li>
                     <li><a href="<?= $queryParams(['action' => 'agregar_correo', 'page' => 1]) ?>">Agregar correo</a></li>
@@ -82,8 +81,7 @@ elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
                 </ul>
             </div>
             <div class="activity-filter-dropdown" data-filter="admin">
-                <span class="activity-filter-label">Admin</span>
-                <span class="activity-filter-value"><?= $filter_admin ? htmlspecialchars($filter_admin) : 'Todos' ?></span>
+                <span class="activity-filter-label">Usuario</span><span class="activity-filter-sep"> - </span><span class="activity-filter-value"><?= $filter_admin ? htmlspecialchars($filter_admin) : 'Todos' ?></span>
                 <ul class="activity-filter-menu">
                     <li><a href="<?= $queryParams(['admin' => '', 'page' => 1]) ?>">Todos</a></li>
                     <?php foreach ($usernames as $u): ?>
@@ -92,8 +90,7 @@ elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
                 </ul>
             </div>
             <div class="activity-filter-dropdown" data-filter="time" id="timeFilterDropdown">
-                <span class="activity-filter-label">Tiempo</span>
-                <span class="activity-filter-value" id="timeFilterValue"><?= htmlspecialchars($timeRangeLabel) ?></span>
+                <span class="activity-filter-label">Tiempo</span><span class="activity-filter-sep"> - </span><span class="activity-filter-value" id="timeFilterValue"><?= htmlspecialchars($timeRangeLabel) ?></span>
                 <ul class="activity-filter-menu">
                     <li><a href="<?= $queryParams(['date_from' => '', 'date_to' => '', 'time_range' => '', 'page' => 1]) ?>">Todo</a></li>
                     <li><a href="<?= $queryParams(['date_from' => date('Y-m-d', strtotime('-7 days')), 'date_to' => date('Y-m-d'), 'time_range' => '7', 'page' => 1]) ?>">Últimos 7 días</a></li>
