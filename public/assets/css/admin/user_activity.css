@@ -199,6 +199,9 @@
     padding: var(--spacing-xl) var(--spacing-lg);
     display: flex;
     justify-content: center;
+    border-top: none !important;
+}
+.activity-date-range-modal .modal-footer {
     border-top: none;
 }
 .btn-activity-date-continue {
