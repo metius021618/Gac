@@ -8,29 +8,29 @@ $content = ob_start();
 ?>
 
 <div class="admin-container">
-    <div class="admin-header admin-header--with-excel">
+    <div class="admin-header">
         <h1 class="admin-title">Correos Registrados</h1>
-        <div class="admin-header-actions">
-            <div class="excel-export-wrap">
-                <button type="button" class="btn btn-excel" id="excelExportTrigger" title="Exportar a Excel">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <path d="M8 13h2"></path><path d="M8 17h2"></path>
-                        <path d="M14 13h2"></path><path d="M14 17h2"></path>
-                    </svg>
-                    Excel
-                </button>
-            </div>
-        </div>
     </div>
-    <!-- Deslizador Todo / Gmail / Outlook / Pocoyoni (solo en vista principal) -->
+    <!-- Fila: opciones Todo/Gmail/Outlook/Pocoyoni + Excel a la derecha -->
     <?php $current_filter = $filter ?? ''; ?>
-    <div class="correos-filter-slider">
-        <a href="/admin/email-accounts" class="correos-filter-pill <?= $current_filter === '' ? 'active' : '' ?>">Todo</a>
-        <a href="/admin/email-accounts?filter=gmail" class="correos-filter-pill <?= $current_filter === 'gmail' ? 'active' : '' ?>">Gmail</a>
-        <a href="/admin/email-accounts?filter=outlook" class="correos-filter-pill <?= $current_filter === 'outlook' ? 'active' : '' ?>">Outlook</a>
-        <a href="/admin/email-accounts?filter=pocoyoni" class="correos-filter-pill <?= $current_filter === 'pocoyoni' ? 'active' : '' ?>">Pocoyoni</a>
+    <div class="correos-filter-row">
+        <div class="correos-filter-slider">
+            <button type="button" class="correos-filter-pill <?= $current_filter === '' ? 'active' : '' ?>" data-filter="">Todo</button>
+            <button type="button" class="correos-filter-pill <?= $current_filter === 'gmail' ? 'active' : '' ?>" data-filter="gmail">Gmail</button>
+            <button type="button" class="correos-filter-pill <?= $current_filter === 'outlook' ? 'active' : '' ?>" data-filter="outlook">Outlook</button>
+            <button type="button" class="correos-filter-pill <?= $current_filter === 'pocoyoni' ? 'active' : '' ?>" data-filter="pocoyoni">Pocoyoni</button>
+        </div>
+        <div class="correos-filter-excel">
+            <button type="button" class="btn btn-excel" id="excelExportTrigger" title="Exportar a Excel">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <path d="M8 13h2"></path><path d="M8 17h2"></path>
+                    <path d="M14 13h2"></path><path d="M14 17h2"></path>
+                </svg>
+                Excel
+            </button>
+        </div>
     </div>
 
     <?php if (!empty($_SESSION['gmail_success'])): ?>
@@ -127,8 +127,10 @@ $content = ob_start();
             </div>
         </div>
 
-        <!-- Tabla de cuentas -->
-        <?php require base_path('views/admin/email_accounts/_table.php'); ?>
+        <!-- Tabla de cuentas (se actualiza dinámicamente al cambiar Todo/Gmail/Outlook/Pocoyoni) -->
+        <div id="emailAccountsTableWrapper">
+            <?php require base_path('views/admin/email_accounts/_table.php'); ?>
+        </div>
     </div>
 </div>
 

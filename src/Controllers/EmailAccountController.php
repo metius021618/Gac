@@ -61,15 +61,10 @@ class EmailAccountController
             $filterLabel = 'Pocoyoni';
         }
 
-        // Vista principal "Listar correos": solo emails con user_access (asignados). Vistas filtradas: todos los emails de email_accounts (stock + asignados).
-        // La cuenta Gmail matriz se oculta en todo: no se muestra en listado ni en filtros.
-        if (!empty($filterDomains)) {
-            $result = $this->emailAccountRepository->listByDomainsPaginate($filterDomains, $search, $page, $perPageInt);
-        } else {
-            $matrixAccount = $this->emailAccountRepository->getGmailMatrixAccount();
-            $excludeEmail = $matrixAccount && !empty($matrixAccount['email']) ? $matrixAccount['email'] : null;
-            $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, [], $excludeEmail, $platformId, $activityDate ?: null);
-        }
+        // Siempre desde user_access (misma tabla y columnas). Filtro por dominio cuando filter=gmail|outlook|pocoyoni.
+        $matrixAccount = $this->emailAccountRepository->getGmailMatrixAccount();
+        $excludeEmail = $matrixAccount && !empty($matrixAccount['email']) ? $matrixAccount['email'] : null;
+        $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, $filterDomains, $excludeEmail, $platformId, $activityDate ?: null);
         
         @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [EmailAccountController] total=' . $result['total'] . ' rows=' . count($result['data']) . "\n", FILE_APPEND | LOCK_EX);
         
@@ -97,11 +92,7 @@ class EmailAccountController
                 'platform_id_filter' => $platformId,
                 'activity_date_filter' => $activityDate
             ]);
-            if (!empty($filter)) {
-                require base_path('views/admin/email_accounts/_table_simple.php');
-            } else {
-                require base_path('views/admin/email_accounts/_table.php');
-            }
+            require base_path('views/admin/email_accounts/_table.php');
             $tableHtml = ob_get_clean();
             $filtersData = json_encode([
                 'platforms' => $platformsForFilter,
@@ -114,23 +105,6 @@ class EmailAccountController
             return;
         }
 
-        // Si hay filtro, usar vista simplificada
-        if (!empty($filter)) {
-            $this->renderView('admin/email_accounts/index_filtered', [
-                'title' => 'Correos ' . $filterLabel,
-                'email_accounts' => $result['data'],
-                'total_records' => $result['total'],
-                'current_page' => $result['page'],
-                'per_page' => $result['per_page'],
-                'total_pages' => $result['total_pages'],
-                'search_query' => $search,
-                'valid_per_page' => [15, 30, 60, 100, 0],
-                'filter' => $filter,
-                'filter_label' => $filterLabel
-            ]);
-            return;
-        }
-        
         $this->renderView('admin/email_accounts/index', [
             'title' => 'Correos Registrados',
             'email_accounts' => $result['data'],
@@ -140,7 +114,7 @@ class EmailAccountController
             'total_pages' => $result['total_pages'],
             'search_query' => $search,
             'valid_per_page' => [15, 30, 60, 100, 0],
-            'filter' => ''
+            'filter' => $filter
         ]);
     }
 

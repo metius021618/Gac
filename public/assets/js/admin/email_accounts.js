@@ -17,6 +17,8 @@
     // Estado: IDs seleccionados se conservan al buscar o cambiar de página
     let isLoading = false;
     let selectedIds = new Set();
+    // Filtro actual (Todo / Gmail / Outlook / Pocoyoni) para búsqueda y carga dinámica
+    let currentFilter = (document.querySelector('.correos-filter-pill.active') && document.querySelector('.correos-filter-pill.active').dataset.filter) || '';
 
     /**
      * Inicialización
@@ -30,6 +32,7 @@
             initTable();
             initSearch();
             initExportExcel();
+            initFilterPills();
         }
     }
 
@@ -378,12 +381,11 @@
     }
 
     /**
-     * Inicializar búsqueda AJAX
+     * Inicializar búsqueda AJAX (incluye filter en las peticiones)
      */
     function initSearch() {
         if (!searchInput || !perPageSelect) return;
 
-        // Inicializar búsqueda AJAX usando la utilidad común
         if (window.SearchAJAX) {
             window.SearchAJAX.init({
                 searchInput: searchInput,
@@ -391,6 +393,9 @@
                 clearSearchBtn: clearSearchBtn,
                 endpoint: window.location.pathname,
                 minSearchLength: 1,
+                getExtraParams: function() {
+                    return { filter: currentFilter };
+                },
                 renderCallback: function(html) {
                     window.SearchAJAX.updateTableContent(html);
                     initTable();
@@ -398,7 +403,6 @@
                     updateEmailFiltersBar();
                 },
                 onSearchComplete: function() {
-                    // Mostrar/ocultar botón de limpiar
                     if (clearSearchBtn && searchInput.value.trim()) {
                         clearSearchBtn.style.display = 'flex';
                     } else if (clearSearchBtn) {
@@ -409,6 +413,58 @@
         } else {
             console.error('SearchAJAX no está disponible');
         }
+    }
+
+    /**
+     * Pills Todo/Gmail/Outlook/Pocoyoni: actualizar tabla por AJAX sin recargar página
+     */
+    function initFilterPills() {
+        const wrapper = document.getElementById('emailAccountsTableWrapper');
+        const pills = document.querySelectorAll('.correos-filter-pill');
+        if (!wrapper || !pills.length) return;
+
+        pills.forEach(function(pill) {
+            pill.addEventListener('click', function() {
+                const filter = (this.dataset.filter !== undefined) ? this.dataset.filter : '';
+                if (currentFilter === filter) return;
+                currentFilter = filter;
+
+                pills.forEach(function(p) { p.classList.remove('active'); });
+                this.classList.add('active');
+
+                const params = new URLSearchParams();
+                params.set('filter', filter);
+                params.set('search', (searchInput && searchInput.value.trim()) || '');
+                params.set('page', '1');
+                params.set('per_page', (perPageSelect && perPageSelect.value) || '15');
+                const url = window.location.pathname + '?' + params.toString();
+
+                isLoading = true;
+                fetch(url, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
+                })
+                    .then(function(r) { return r.text(); })
+                    .then(function(html) {
+                        const temp = document.createElement('div');
+                        temp.innerHTML = html;
+                        const adminContent = temp.querySelector('.admin-content');
+                        if (adminContent) {
+                            wrapper.innerHTML = adminContent.innerHTML;
+                        }
+                        window.history.replaceState({}, '', url);
+                        initTable();
+                        reapplyMultiSelectState();
+                        updateEmailFiltersBar();
+                    })
+                    .catch(function(err) {
+                        console.error('Error al cargar filtro:', err);
+                    })
+                    .finally(function() {
+                        isLoading = false;
+                    });
+            });
+        });
     }
 
     /**
