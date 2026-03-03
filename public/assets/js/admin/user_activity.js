@@ -32,7 +32,7 @@
     document.querySelectorAll('.activity-filter-dropdown').forEach(function(drop) {
         if (drop.id === 'timeFilterDropdown') return;
         drop.addEventListener('mouseenter', function() {
-            cancelClose();
+            cancelClose(this);
             this.classList.add('open');
         });
         drop.addEventListener('mouseleave', function() {
@@ -41,7 +41,7 @@
         var menu = drop.querySelector('.activity-filter-menu');
         if (menu) {
             menu.addEventListener('mouseenter', function() {
-                cancelClose();
+                cancelClose(drop);
                 drop.classList.add('open');
             });
             menu.addEventListener('mouseleave', function() {
