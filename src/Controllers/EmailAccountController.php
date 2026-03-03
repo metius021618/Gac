@@ -242,7 +242,7 @@ class EmailAccountController
         echo '</tr>';
         foreach ($rows as $r) {
             $email = $r['email'] ?? '';
-            $asignado = !empty($r['asignado']) ? 'Sí' : 'No';
+            $asignado = !empty($r['asignado']) ? 'Si' : 'No';
             echo '<tr>';
             echo '<td>' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '</td>';
             echo '<td>' . htmlspecialchars($asignado, ENT_QUOTES, 'UTF-8') . '</td>';

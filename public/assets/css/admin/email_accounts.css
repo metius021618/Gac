@@ -152,6 +152,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: var(--spacing-sm, 8px);
     padding: var(--spacing-xl);
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -161,6 +162,15 @@
     font-weight: 600;
     font-size: var(--font-size-base);
     transition: all var(--transition-base);
+}
+.excel-export-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.excel-export-card-icon svg {
+    vertical-align: middle;
 }
 .excel-export-card:hover {
     background: rgba(0, 102, 255, 0.15);
