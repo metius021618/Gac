@@ -11,10 +11,10 @@ $can_delete = function_exists('user_can_action') && user_can_action($email_view_
     <table class="admin-table" id="correosRegistradosTable">
         <thead>
             <tr>
-                <th style="width: 60px;">ID</th>
+                <th class="text-center" style="width: 60px;">ID</th>
                 <th class="text-center">Correo</th>
-                <th style="width: 14%;">Asignado</th>
-                <th style="width: 100px;">Acciones</th>
+                <th class="text-center" style="width: 14%;">Asignado</th>
+                <th class="text-center" style="width: 100px;">Acciones</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -28,9 +28,9 @@ $can_delete = function_exists('user_can_action') && user_can_action($email_view_
                 <?php foreach ($email_accounts as $account): ?>
                     <?php $asignado = !empty($account['asignado']); ?>
                     <tr data-id="<?= (int)$account['id'] ?>">
-                        <td><?= (int)$account['id'] ?></td>
+                        <td class="text-center"><?= (int)$account['id'] ?></td>
                         <td class="email-cell text-center"><?= htmlspecialchars($account['email'] ?? '') ?></td>
-                        <td class="text-center">
+                        <td class="asignado-cell text-center">
                             <?php if ($asignado): ?>
                                 <span class="badge status-active">Sí</span>
                             <?php else: ?>

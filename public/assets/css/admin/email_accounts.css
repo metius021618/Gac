@@ -542,6 +542,13 @@ select.per-page-select {
     width: 150px;
 }
 
+/* Vista Correos registrados: centrar Asignado y Acciones (encabezado + contenido + icono) */
+#correosRegistradosTable th,
+#correosRegistradosTable td.asignado-cell,
+#correosRegistradosTable td.actions-cell {
+    text-align: center;
+}
+
 .actions-cell .btn-delete-filtered:hover {
     border-color: var(--color-danger, #dc3545);
     color: var(--color-danger, #dc3545);
