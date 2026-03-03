@@ -169,7 +169,8 @@ class OutlookController
         $platforms = $this->platformRepository->findAllEnabled();
         $firstPlatformId = !empty($platforms) ? (int) $platforms[0]['id'] : 0;
         if ($firstPlatformId > 0) {
-            $this->userAccessRepository->createOrUpdate($email, 'Outlook (OAuth)', $firstPlatformId);
+            $updatedBy = $_SESSION['username'] ?? null;
+            $this->userAccessRepository->createOrUpdate($email, 'Outlook (OAuth)', $firstPlatformId, $updatedBy);
         }
 
         unset($_SESSION['outlook_error']);

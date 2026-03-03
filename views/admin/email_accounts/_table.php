@@ -21,6 +21,7 @@ $can_delete = function_exists('user_can_action') && user_can_action($email_view_
                 <th style="width: 15%;">Usuario (acceso)</th>
                 <th style="width: 20%;">Plataforma</th>
                 <th style="width: 18%;">Actividad</th>
+                <th style="width: 12%;">Administrador</th>
                 <th style="width: 150px;">Acciones</th>
             </tr>
         </thead>

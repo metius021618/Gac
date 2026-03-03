@@ -159,7 +159,8 @@ class GmailController
             $platforms = $this->platformRepository->findAllEnabled();
             $firstPlatformId = !empty($platforms) ? (int) $platforms[0]['id'] : 0;
             if ($firstPlatformId > 0) {
-                $this->userAccessRepository->createOrUpdate($email, 'Gmail (OAuth)', $firstPlatformId);
+                $updatedBy = $_SESSION['username'] ?? null;
+                $this->userAccessRepository->createOrUpdate($email, 'Gmail (OAuth)', $firstPlatformId, $updatedBy);
             }
         }
 
