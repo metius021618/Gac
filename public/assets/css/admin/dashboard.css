@@ -339,9 +339,13 @@
 
 @media (max-width: 480px) {
     .action-cards-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-sm);
     }
-
+    .action-card {
+        min-height: 110px;
+        padding: var(--spacing-md);
+    }
     .dashboard-title {
         font-size: var(--font-size-xl);
     }
