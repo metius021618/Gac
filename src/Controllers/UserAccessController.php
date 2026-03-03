@@ -114,7 +114,7 @@ class UserAccessController
                     return;
                 }
                 if (function_exists('log_user_activity')) {
-                    log_user_activity('agregar_correo', sprintf('Registró el correo %s; (stock); —', $email));
+                    log_user_activity('agregar_correo', sprintf('Registró el correo %s | (stock) | —', $email));
                 }
             }
             $missing = [];
