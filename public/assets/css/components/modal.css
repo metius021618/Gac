@@ -233,6 +233,7 @@
     .modal-container {
         max-width: 100%;
         margin: var(--spacing-md);
+        width: calc(100% - var(--spacing-md) * 2);
     }
 
     .modal-header,
@@ -243,10 +244,24 @@
 
     .modal-footer {
         flex-direction: column-reverse;
+        gap: var(--spacing-sm);
     }
 
     .modal-button {
         width: 100%;
         justify-content: center;
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-container {
+        margin: var(--spacing-sm);
+        width: calc(100% - var(--spacing-sm) * 2);
+    }
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: var(--spacing-sm);
     }
 }

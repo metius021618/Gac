@@ -535,6 +535,15 @@ body.nav-sidebar-open .nav-sidebar {
     .nav-sidebar {
         display: block;
     }
+    .nav-sidebar {
+        max-width: 100%;
+        width: 100%;
+    }
+    .nav-sidebar-link {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
     .user-welcome {
         font-size: 0.8rem;
         max-width: 90px;
@@ -597,4 +606,29 @@ body.nav-sidebar-open .nav-sidebar {
 }
 .legal-content a:hover {
     text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .legal-page {
+        padding: var(--spacing-lg) var(--spacing-md);
+    }
+    .legal-content h1 {
+        font-size: var(--font-size-xl);
+    }
+    .legal-content h2 {
+        font-size: var(--font-size-base);
+    }
+}
+
+@media (max-width: 480px) {
+    .legal-page {
+        padding: var(--spacing-md) var(--spacing-sm);
+    }
+    .legal-content h1 {
+        font-size: var(--font-size-lg);
+    }
+    .legal-content p,
+    .legal-content li {
+        font-size: var(--font-size-sm);
+    }
 }

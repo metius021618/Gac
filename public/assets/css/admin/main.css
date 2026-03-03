@@ -51,6 +51,8 @@
    ============================================ */
 .table-container {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
 }
 
 .admin-table {
@@ -583,15 +585,28 @@ select.per-page-select option {
 @media (max-width: 768px) {
     .admin-container {
         padding: var(--spacing-md);
+        max-width: 100%;
     }
     
-    .admin-header {
+    .admin-header,
+    .admin-header--with-actions {
         flex-direction: column;
         align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+    
+    .admin-header-actions {
+        width: 100%;
+    }
+    
+    .admin-header-actions .btn {
+        min-height: 44px;
+        width: 100%;
+        justify-content: center;
     }
     
     .admin-title {
-        font-size: var(--font-size-2xl);
+        font-size: var(--font-size-xl);
     }
     
     .form-row,
@@ -603,6 +618,12 @@ select.per-page-select option {
         flex-direction: column;
     }
     
+    .form-actions .btn {
+        min-height: 44px;
+        width: 100%;
+        justify-content: center;
+    }
+    
     .admin-table {
         font-size: var(--font-size-sm);
     }
@@ -610,6 +631,37 @@ select.per-page-select option {
     .admin-table th,
     .admin-table td {
         padding: var(--spacing-sm);
+    }
+    
+    .table-container {
+        margin-left: calc(-1 * var(--spacing-md));
+        margin-right: calc(-1 * var(--spacing-md));
+        padding-left: var(--spacing-md);
+        padding-right: var(--spacing-md);
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-container {
+        padding: var(--spacing-sm);
+    }
+    
+    .admin-title {
+        font-size: var(--font-size-lg);
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: var(--spacing-xs);
+        font-size: var(--font-size-xs);
+    }
+    
+    .table-container {
+        margin-left: calc(-1 * var(--spacing-sm));
+        margin-right: calc(-1 * var(--spacing-sm));
+        padding-left: var(--spacing-sm);
+        padding-right: var(--spacing-sm);
     }
 }
 

@@ -216,5 +216,12 @@
     .bulk-register-form .btn {
         width: 100%;
         justify-content: center;
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 480px) {
+    .bulk-register-form {
+        padding: var(--spacing-md);
     }
 }
