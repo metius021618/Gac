@@ -100,19 +100,27 @@
 }
 
 /* Modal rango de tiempo: diseño como referencia (tema oscuro, botón Continuar amarillo) */
-.activity-date-range-modal .modal-header {
+.activity-date-range-modal .modal-header.activity-date-range-modal-header {
     border-bottom: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
 }
-.activity-date-modal-note {
-    padding: 0 var(--spacing-lg);
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-    margin: 0 0 var(--spacing-lg);
+.activity-date-range-modal .modal-header .modal-title {
+    text-align: center;
+    flex: 1;
+}
+.activity-date-range-modal .modal-close--large {
+    font-size: 1.75em;
+    width: 1.75em;
+    height: 1.75em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 .activity-date-range-fields {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-end;
+    align-items: center;
     gap: var(--spacing-lg);
     padding: 0 var(--spacing-lg);
 }
@@ -152,14 +160,12 @@
 .activity-date-sep {
     color: var(--text-secondary);
     font-size: var(--font-size-base);
-    padding-bottom: 1.6rem;
     align-self: center;
 }
 .activity-date-range-footer {
     padding: var(--spacing-xl) var(--spacing-lg);
-    border-top: 1px solid rgba(255,255,255,0.1);
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
 }
 .btn-activity-date-continue {
     padding: var(--spacing-md) var(--spacing-2xl);

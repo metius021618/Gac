@@ -203,11 +203,10 @@ elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
 <div id="activityDateRangeModal" class="modal hidden" aria-hidden="true">
     <div class="modal-overlay"></div>
     <div class="modal-container activity-date-range-modal">
-        <div class="modal-header">
+        <div class="modal-header activity-date-range-modal-header">
             <h2 class="modal-title">Selecciona un rango de tiempo</h2>
-            <button type="button" class="modal-close" id="closeActivityDateModal" aria-label="Cerrar">&times;</button>
+            <button type="button" class="modal-close modal-close--large" id="closeActivityDateModal" aria-label="Cerrar">&times;</button>
         </div>
-        <p class="activity-date-modal-note">Selecciona tu intervalo de tiempo en 6 meses.</p>
         <div class="modal-content activity-date-range-fields">
             <div class="activity-date-field-group">
                 <label class="activity-date-label">Hora de inicio</label>
