@@ -15,17 +15,60 @@
         });
     }
 
-    // Filtros Acción y Admin: abrir menú al hover
+    // Filtros: mantener menú abierto al bajar el ratón (evitar cierre al cruzar el hueco)
+    function scheduleClose(drop) {
+        if (drop._closeTimeout) clearTimeout(drop._closeTimeout);
+        drop._closeTimeout = setTimeout(function() {
+            drop.classList.remove('open');
+            drop._closeTimeout = null;
+        }, 120);
+    }
+    function cancelClose(drop) {
+        if (drop._closeTimeout) {
+            clearTimeout(drop._closeTimeout);
+            drop._closeTimeout = null;
+        }
+    }
     document.querySelectorAll('.activity-filter-dropdown').forEach(function(drop) {
         if (drop.id === 'timeFilterDropdown') return;
-        drop.addEventListener('mouseenter', function() { this.classList.add('open'); });
-        drop.addEventListener('mouseleave', function() { this.classList.remove('open'); });
+        drop.addEventListener('mouseenter', function() {
+            cancelClose();
+            this.classList.add('open');
+        });
+        drop.addEventListener('mouseleave', function() {
+            scheduleClose(this);
+        });
+        var menu = drop.querySelector('.activity-filter-menu');
+        if (menu) {
+            menu.addEventListener('mouseenter', function() {
+                cancelClose();
+                drop.classList.add('open');
+            });
+            menu.addEventListener('mouseleave', function() {
+                scheduleClose(drop);
+            });
+        }
     });
-    // Filtro Tiempo: abrir también con click para que "Personalizado" sea clicable (menú se mantiene abierto)
+    // Filtro Tiempo: mismo comportamiento hover + click para "Personalizado"
     var timeDrop = document.getElementById('timeFilterDropdown');
     if (timeDrop) {
-        timeDrop.addEventListener('mouseenter', function() { this.classList.add('open'); });
-        timeDrop.addEventListener('mouseleave', function() { this.classList.remove('open'); });
+        timeDrop.addEventListener('mouseenter', function() {
+            cancelClose(this);
+            this.classList.add('open');
+        });
+        timeDrop.addEventListener('mouseleave', function() {
+            scheduleClose(this);
+        });
+        var timeMenu = timeDrop.querySelector('.activity-filter-menu');
+        if (timeMenu) {
+            timeMenu.addEventListener('mouseenter', function() {
+                cancelClose(timeDrop);
+                timeDrop.classList.add('open');
+            });
+            timeMenu.addEventListener('mouseleave', function() {
+                scheduleClose(timeDrop);
+            });
+        }
         timeDrop.addEventListener('click', function(e) {
             if (e.target.closest('.activity-filter-menu')) return;
             this.classList.toggle('open');
