@@ -50,9 +50,10 @@ $content = ob_start();
                                     <span class="badge badge-info"><?= htmlspecialchars($admin['role_display_name'] ?? $admin['role_name']) ?></span>
                                 </td>
                                 <td>
-                                    <span class="status-badge status-<?= $admin['active'] ? 'active' : 'inactive' ?>">
-                                        <?= $admin['active'] ? 'Activo' : 'Inactivo' ?>
-                                    </span>
+                                    <label class="admin-toggle-switch" title="<?= $admin['active'] ? 'Habilitado (clic para deshabilitar)' : 'Deshabilitado (clic para habilitar)' ?>">
+                                        <input type="checkbox" class="admin-toggle-input" data-id="<?= (int)$admin['id'] ?>" <?= $admin['active'] ? 'checked' : '' ?>>
+                                        <span class="admin-toggle-slider"></span>
+                                    </label>
                                 </td>
                                 <td>
                                     <?= $admin['last_login'] ? date('d/m/Y H:i', strtotime($admin['last_login'])) : 'Nunca' ?>

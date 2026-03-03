@@ -59,33 +59,71 @@ class UserActivityLogRepository
     }
 
     /**
-     * Listar actividad con paginación y orden por fecha
+     * Listar actividad con paginación, orden y filtros
      * @param int $page
-     * @param int $perPage 15, 30, 45, 60, 100
+     * @param int $perPage 50, 75, 100, 0=All
      * @param string $order 'desc' | 'asc'
+     * @param string|null $action Filtro acción (agregar_correo, edicion, eliminar)
+     * @param string|null $username Filtro por nombre de admin
+     * @param string|null $dateFrom Fecha desde (Y-m-d)
+     * @param string|null $dateTo Fecha hasta (Y-m-d)
      * @return array { data, total, page, per_page, total_pages }
      */
-    public function getPaginated(int $page = 1, int $perPage = 15, string $order = 'desc'): array
+    public function getPaginated(int $page = 1, int $perPage = 50, string $order = 'desc', ?string $action = null, ?string $username = null, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $page = max(1, $page);
-        $perPage = in_array($perPage, [15, 30, 45, 60, 100], true) ? $perPage : 15;
+        $validPerPage = [50, 75, 100, 0];
+        $perPage = in_array($perPage, $validPerPage, true) ? $perPage : 50;
         $order = strtolower($order) === 'asc' ? 'ASC' : 'DESC';
 
         try {
             $db = Database::getConnection();
+            $conditions = [];
+            $params = [];
 
-            $countStmt = $db->query("SELECT COUNT(*) FROM user_activity_log");
+            if ($action !== null && $action !== '') {
+                $conditions[] = 'action = :action';
+                $params[':action'] = $action;
+            }
+            if ($username !== null && $username !== '') {
+                $conditions[] = 'username = :username';
+                $params[':username'] = $username;
+            }
+            if ($dateFrom !== null && $dateFrom !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)) {
+                $conditions[] = 'DATE(created_at) >= :date_from';
+                $params[':date_from'] = $dateFrom;
+            }
+            if ($dateTo !== null && $dateTo !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
+                $conditions[] = 'DATE(created_at) <= :date_to';
+                $params[':date_to'] = $dateTo;
+            }
+
+            $whereClause = count($conditions) > 0 ? 'WHERE ' . implode(' AND ', $conditions) : '';
+
+            $countSql = "SELECT COUNT(*) FROM user_activity_log {$whereClause}";
+            $countStmt = $db->prepare($countSql);
+            foreach ($params as $k => $v) {
+                $countStmt->bindValue($k, $v, PDO::PARAM_STR);
+            }
+            $countStmt->execute();
             $total = (int) $countStmt->fetchColumn();
 
             $totalPages = $perPage > 0 ? max(1, (int) ceil($total / $perPage)) : 1;
-            $offset = ($page - 1) * $perPage;
+            $offset = $perPage > 0 ? ($page - 1) * $perPage : 0;
+            $limitClause = $perPage > 0 ? 'LIMIT ' . (int) $perPage . ' OFFSET ' . (int) $offset : '';
 
             $sql = "
                 SELECT id, user_id, username, action, description, created_at
                 FROM user_activity_log
+                {$whereClause}
                 ORDER BY created_at {$order}
-                LIMIT " . (int) $perPage . " OFFSET " . (int) $offset;
-            $stmt = $db->query($sql);
+                {$limitClause}
+            ";
+            $stmt = $db->prepare($sql);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v, PDO::PARAM_STR);
+            }
+            $stmt->execute();
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
             return [
@@ -104,6 +142,21 @@ class UserActivityLogRepository
                 'per_page' => $perPage,
                 'total_pages' => 0,
             ];
+        }
+    }
+
+    /**
+     * Lista de usernames únicos para filtro Admin
+     */
+    public function getUniqueUsernames(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("SELECT DISTINCT username FROM user_activity_log ORDER BY username ASC");
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            return array_column($rows, 'username');
+        } catch (\PDOException $e) {
+            return [];
         }
     }
 

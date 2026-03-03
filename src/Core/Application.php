@@ -96,11 +96,13 @@ class Application
         $router->get('/admin/administrators', 'AdminController@index', ['auth']);
         $router->get('/admin/administrators/edit', 'AdminController@edit', ['auth']);
         $router->post('/admin/administrators/update', 'AdminController@update', ['auth']);
+        $router->post('/admin/administrators/toggle-active', 'AdminController@toggleActive', ['auth']);
         $router->post('/admin/administrators/update-password', 'AdminController@updatePassword', ['auth']);
         $router->post('/admin/administrators/store', 'AdminController@store', ['auth']);
         
         // Rutas de Registro de Accesos
         $router->get('/admin/user-activity', 'UserActivityController@index', ['auth']);
+        $router->get('/admin/user-activity/export-excel', 'UserActivityController@exportExcel', ['auth']);
         $router->get('/admin/user-access', 'UserAccessController@index', ['auth']);
         $router->get('/admin/user-access/list', 'UserAccessController@list', ['auth']);
         $router->post('/admin/user-access', 'UserAccessController@store', ['auth']);

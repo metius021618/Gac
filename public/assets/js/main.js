@@ -126,12 +126,42 @@
     // Agregar métodos de main.js al objeto GAC existente
     Object.assign(window.GAC, GAC);
 
+    /**
+     * Sidebar móvil: abrir/cerrar con animación suave
+     */
+    function initNavSidebar() {
+        const toggle = document.getElementById('navSidebarToggle');
+        const sidebar = document.getElementById('navSidebar');
+        const overlay = document.getElementById('navSidebarOverlay');
+        const closeBtn = document.getElementById('navSidebarClose');
+        if (!toggle || !sidebar) return;
+
+        function openSidebar() {
+            document.body.classList.add('nav-sidebar-open');
+            sidebar.setAttribute('aria-hidden', 'false');
+            if (overlay) overlay.setAttribute('aria-hidden', 'false');
+        }
+        function closeSidebar() {
+            document.body.classList.remove('nav-sidebar-open');
+            sidebar.setAttribute('aria-hidden', 'true');
+            if (overlay) overlay.setAttribute('aria-hidden', 'true');
+        }
+
+        toggle.addEventListener('click', openSidebar);
+        if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+        if (overlay) overlay.addEventListener('click', closeSidebar);
+        sidebar.querySelectorAll('.nav-sidebar-link').forEach(function(link) {
+            link.addEventListener('click', closeSidebar);
+        });
+    }
+
     // Inicialización cuando el DOM esté listo
     function init() {
         console.log('GAC System Loaded');
         if (window.GAC && window.GAC.initUserMenu) {
             window.GAC.initUserMenu();
         }
+        initNavSidebar();
     }
 
     if (document.readyState === 'loading') {

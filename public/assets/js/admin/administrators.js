@@ -254,4 +254,41 @@
             }
         });
     }
+
+    // Toggle activar/deshabilitar cuenta (slider rojo/verde)
+    document.querySelectorAll('.admin-toggle-input').forEach(function(input) {
+        input.addEventListener('change', async function() {
+            const id = parseInt(this.dataset.id, 10);
+            const active = this.checked ? 1 : 0;
+            if (!id) return;
+            this.disabled = true;
+            try {
+                const formData = new FormData();
+                formData.append('id', id);
+                formData.append('active', active);
+                const response = await fetch('/admin/administrators/toggle-active', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    if (typeof window.GAC !== 'undefined' && window.GAC.success) {
+                        await window.GAC.success(data.message || (active ? 'Cuenta habilitada' : 'Cuenta deshabilitada'), 'Estado');
+                    }
+                } else {
+                    this.checked = !this.checked;
+                    if (typeof window.GAC !== 'undefined' && window.GAC.error) {
+                        await window.GAC.error(data.message || 'Error al actualizar', 'Error');
+                    }
+                }
+            } catch (err) {
+                this.checked = !this.checked;
+                if (typeof window.GAC !== 'undefined' && window.GAC.error) {
+                    await window.GAC.error('Error de conexión', 'Error');
+                }
+            }
+            this.disabled = false;
+        });
+    });
 })();

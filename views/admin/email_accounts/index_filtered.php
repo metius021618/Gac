@@ -7,9 +7,29 @@
 $content = ob_start();
 ?>
 
+<?php $current_filter = $filter ?? ''; ?>
 <div class="admin-container">
-    <div class="admin-header">
-        <h1 class="admin-title">Correos <?= htmlspecialchars($filter_label ?? '') ?></h1>
+    <div class="admin-header admin-header--with-excel">
+        <h1 class="admin-title">Correos Registrados</h1>
+        <div class="admin-header-actions">
+            <div class="excel-export-wrap">
+                <button type="button" class="btn btn-excel" id="excelExportTrigger" title="Exportar a Excel" data-filter="<?= htmlspecialchars($current_filter) ?>">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <path d="M8 13h2"></path><path d="M8 17h2"></path>
+                        <path d="M14 13h2"></path><path d="M14 17h2"></path>
+                    </svg>
+                    Excel
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="correos-filter-slider">
+        <a href="/admin/email-accounts" class="correos-filter-pill <?= $current_filter === '' ? 'active' : '' ?>">Todo</a>
+        <a href="/admin/email-accounts?filter=gmail" class="correos-filter-pill <?= $current_filter === 'gmail' ? 'active' : '' ?>">Gmail</a>
+        <a href="/admin/email-accounts?filter=outlook" class="correos-filter-pill <?= $current_filter === 'outlook' ? 'active' : '' ?>">Outlook</a>
+        <a href="/admin/email-accounts?filter=pocoyoni" class="correos-filter-pill <?= $current_filter === 'pocoyoni' ? 'active' : '' ?>">Pocoyoni</a>
     </div>
 
     <?php if (!empty($_SESSION['gmail_success']) && ($filter ?? '') === 'gmail'): ?>
@@ -57,6 +77,22 @@ $content = ob_start();
         </div>
 
         <?php require base_path('views/admin/email_accounts/_table_simple.php'); ?>
+    </div>
+</div>
+
+<div id="excelExportModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title">Exportar a Excel</h2>
+            <button type="button" class="modal-close" id="closeExcelExportModal" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-content excel-export-cards">
+            <a href="/admin/email-accounts/export-excel" class="excel-export-card" data-filter="">Todos</a>
+            <a href="/admin/email-accounts/export-excel?filter=gmail" class="excel-export-card" data-filter="gmail">Gmail</a>
+            <a href="/admin/email-accounts/export-excel?filter=outlook" class="excel-export-card" data-filter="outlook">Outlook</a>
+            <a href="/admin/email-accounts/export-excel?filter=pocoyoni" class="excel-export-card" data-filter="pocoyoni">Pocoyoni</a>
+        </div>
     </div>
 </div>
 

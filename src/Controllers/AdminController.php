@@ -103,6 +103,30 @@ class AdminController
     }
 
     /**
+     * Activar/desactivar cuenta (toggle). Cuando está desactivada el usuario no puede iniciar sesión.
+     */
+    public function toggleActive(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+        $id = (int)$request->input('id', 0);
+        $active = (int)$request->input('active', 0);
+        if ($id <= 0) {
+            json_response(['success' => false, 'message' => 'ID inválido'], 400);
+            return;
+        }
+        $active = $active ? 1 : 0;
+        $updated = $this->userRepository->update($id, ['active' => $active]);
+        if ($updated) {
+            json_response(['success' => true, 'message' => $active ? 'Cuenta habilitada' : 'Cuenta deshabilitada', 'active' => $active]);
+        } else {
+            json_response(['success' => false, 'message' => 'Error al actualizar'], 500);
+        }
+    }
+
+    /**
      * Actualizar contraseña
      */
     public function updatePassword(Request $request): void

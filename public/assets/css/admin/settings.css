@@ -509,3 +509,48 @@
         justify-content: center;
     }
 }
+
+/* Toggle activar/deshabilitar (rojo = deshabilitado, verde = habilitado) */
+.admin-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+}
+.admin-toggle-input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.admin-toggle-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #dc3545;
+    border-radius: 24px;
+    transition: background-color 0.25s ease;
+}
+.admin-toggle-slider::before {
+    content: '';
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.25s ease;
+}
+.admin-toggle-input:checked + .admin-toggle-slider {
+    background-color: #28a745;
+}
+.admin-toggle-input:checked + .admin-toggle-slider::before {
+    transform: translateX(20px);
+}
+.admin-toggle-input:disabled + .admin-toggle-slider {
+    opacity: 0.7;
+    cursor: not-allowed;
+}

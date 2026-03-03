@@ -5,7 +5,6 @@
  */
 $filter = $filter ?? '';
 $email_view_key = !empty($filter) ? 'listar_' . $filter : 'listar_correos';
-$can_toggle = function_exists('user_can_action') && user_can_action($email_view_key, 'deshabilitar');
 $can_edit = function_exists('user_can_action') && user_can_action($email_view_key, 'editar');
 $can_delete = function_exists('user_can_action') && user_can_action($email_view_key, 'eliminar');
 ?>
@@ -28,7 +27,7 @@ $can_delete = function_exists('user_can_action') && user_can_action($email_view_
         <tbody id="tableBody">
             <?php if (empty($email_accounts)): ?>
                 <tr>
-                    <td colspan="7" class="text-center">
+                    <td colspan="8" class="text-center">
                         <p class="empty-message">No hay registros de acceso. Usa "Asignar/Actualizar Usuario" o "Registro masivo" para agregar.</p>
                     </td>
                 </tr>
@@ -51,21 +50,8 @@ $can_delete = function_exists('user_can_action') && user_can_action($email_view_
                             <span class="platform-badge"><?= htmlspecialchars($plataforma) ?></span>
                         </td>
                         <td><span class="sync-time"><?= $actividad ?></span></td>
+                        <td><?= htmlspecialchars($account['updated_by_username'] ?? '—') ?></td>
                         <td class="actions-cell">
-                            <?php if ($can_toggle): ?>
-                            <button class="btn-icon btn-toggle" 
-                                    data-id="<?= (int)$account['id'] ?>"
-                                    data-enabled="<?= (int)($account['enabled'] ?? 1) ?>"
-                                    title="<?= ($account['enabled'] ?? 1) ? 'Deshabilitar' : 'Habilitar' ?>">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <?php if (!empty($account['enabled'])): ?>
-                                        <path d="M18 6L6 18M6 6l12 12"/>
-                                    <?php else: ?>
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    <?php endif; ?>
-                                </svg>
-                            </button>
-                            <?php endif; ?>
                             <?php if ($can_edit): ?>
                             <a href="/admin/user-access?email=<?= rawurlencode($account['email'] ?? '') ?>&platform_id=<?= (int)($account['platform_id'] ?? 0) ?>" 
                                class="btn-icon btn-edit" 

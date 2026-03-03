@@ -350,25 +350,31 @@
     }
 
     /**
-     * Actualizar enlace Excel con búsqueda actual
+     * Excel: abrir modal con opciones Todos / Gmail / Outlook / Pocoyoni
      */
     function initExportExcel() {
-        const exportBtn = document.getElementById('exportExcelBtn');
-        if (!exportBtn || !searchInput) return;
-        function updateExportHref() {
-            const q = searchInput.value.trim();
-            const platformSelect = document.getElementById('filterPlatform');
-            const dateInput = document.getElementById('filterActivityDate');
-            const params = [];
-            if (q) params.push('search=' + encodeURIComponent(q));
-            if (platformSelect && platformSelect.value) params.push('platform_id=' + encodeURIComponent(platformSelect.value));
-            if (dateInput && dateInput.value) params.push('activity_date=' + encodeURIComponent(dateInput.value));
-            exportBtn.href = '/admin/email-accounts/export-excel' + (params.length ? '?' + params.join('&') : '');
+        const trigger = document.getElementById('excelExportTrigger');
+        const modal = document.getElementById('excelExportModal');
+        const closeBtn = document.getElementById('closeExcelExportModal');
+        const overlay = modal && modal.querySelector('.modal-overlay');
+        if (trigger && modal) {
+            trigger.addEventListener('click', function() {
+                modal.classList.remove('hidden');
+            });
+            function closeModal() {
+                modal.classList.add('hidden');
+            }
+            if (closeBtn) closeBtn.addEventListener('click', closeModal);
+            if (overlay) overlay.addEventListener('click', closeModal);
         }
-        updateExportHref();
-        searchInput.addEventListener('input', updateExportHref);
-        searchInput.addEventListener('change', updateExportHref);
-        window.__gacRefreshExportHref = updateExportHref;
+        if (searchInput) {
+            function updateExportHref() {
+                if (window.__gacRefreshExportHref) window.__gacRefreshExportHref();
+            }
+            searchInput.addEventListener('input', updateExportHref);
+            searchInput.addEventListener('change', updateExportHref);
+        }
+        window.__gacRefreshExportHref = function() {};
     }
 
     /**

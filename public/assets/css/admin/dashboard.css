@@ -173,6 +173,12 @@
     border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* Segunda fila: iconos 25% más pequeños */
+.dashboard-stats .stat-card-icon {
+    width: 48px;
+    height: 48px;
+}
+
 .stat-card-icon {
     flex-shrink: 0;
     width: 64px;
@@ -183,6 +189,10 @@
     justify-content: center;
     background: rgba(255, 255, 255, 0.1);
 }
+
+.stat-card-icon--correos { color: var(--color-primary-light); background: rgba(0, 102, 255, 0.15); }
+.stat-card-icon--activity { color: #ffc107; background: rgba(255, 193, 7, 0.15); }
+.stat-card-icon--analysis { color: #17a2b8; background: rgba(23, 162, 184, 0.15); }
 
 .stat-icon-blue {
     color: #17a2b8; /* Azul claro para base de datos */

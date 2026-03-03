@@ -36,7 +36,10 @@
                     <img src="/assets/images/logocamb.png" alt="<?= gac_name() ?>" class="logo">
                 </div>
                 <?php if (isset($show_nav) && $show_nav): ?>
-                <nav class="main-nav">
+                <button type="button" class="nav-sidebar-toggle" id="navSidebarToggle" aria-label="Abrir menú">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <nav class="main-nav" id="mainNav">
                     <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']): ?>
                         <?php $uv = user_role_views(); ?>
                         <?php if ($uv === null || user_can_view('dashboard', $uv) || user_can_view('listar_correos', $uv) || user_can_view('registro_acceso', $uv) || user_can_view('registro_masivo', $uv) || user_can_view('registro_asuntos', $uv) || user_can_view('plataformas_activas', $uv) || user_can_view('administradores', $uv)): ?>
@@ -47,9 +50,6 @@
                         <?php endif; ?>
                         <?php if ($uv === null || user_can_view('administradores', $uv)): ?>
                         <a href="/admin/users" class="nav-link">Usuarios</a>
-                        <?php endif; ?>
-                        <?php if (function_exists('is_superadmin') && is_superadmin()): ?>
-                        <a href="/admin/user-activity" class="nav-link">Actividad de usuario</a>
                         <?php endif; ?>
                     <?php else: ?>
                         <a href="/" class="nav-link">Inicio</a>
@@ -88,6 +88,34 @@
             </div>
         </div>
     </header>
+
+    <!-- Sidebar móvil (desliza desde la derecha) -->
+    <?php if (isset($show_nav) && $show_nav): ?>
+    <div class="nav-sidebar-overlay" id="navSidebarOverlay" aria-hidden="true"></div>
+    <aside class="nav-sidebar" id="navSidebar" aria-label="Menú de navegación">
+        <div class="nav-sidebar-header">
+            <span class="nav-sidebar-title">Menú</span>
+            <button type="button" class="nav-sidebar-close" id="navSidebarClose" aria-label="Cerrar">&times;</button>
+        </div>
+        <nav class="nav-sidebar-links">
+            <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']): ?>
+                <?php $uv = user_role_views(); ?>
+                <?php if ($uv === null || user_can_view('dashboard', $uv) || user_can_view('listar_correos', $uv) || user_can_view('registro_acceso', $uv) || user_can_view('registro_masivo', $uv) || user_can_view('registro_asuntos', $uv) || user_can_view('plataformas_activas', $uv) || user_can_view('administradores', $uv)): ?>
+                <a href="/admin/dashboard" class="nav-sidebar-link">Dashboard</a>
+                <?php endif; ?>
+                <?php if ($uv === null || user_can_view('listar_correos', $uv) || user_can_view('listar_gmail', $uv) || user_can_view('listar_outlook', $uv) || user_can_view('listar_pocoyoni', $uv)): ?>
+                <a href="/admin/email-accounts" class="nav-sidebar-link">Correos</a>
+                <?php endif; ?>
+                <?php if ($uv === null || user_can_view('administradores', $uv)): ?>
+                <a href="/admin/users" class="nav-sidebar-link">Usuarios</a>
+                <?php endif; ?>
+            <?php else: ?>
+                <a href="/" class="nav-sidebar-link">Inicio</a>
+                <a href="/login" class="nav-sidebar-link">Login</a>
+            <?php endif; ?>
+        </nav>
+    </aside>
+    <?php endif; ?>
 
     <!-- Main Content -->
     <main class="main-content">

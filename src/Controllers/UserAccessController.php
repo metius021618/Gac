@@ -164,15 +164,16 @@ class UserAccessController
         if ($oauthRow && (int)($oauthRow['id'] ?? 0) > 0) {
             $this->userAccessRepository->delete((int) $oauthRow['id']);
         }
-        $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId);
+        $updatedBy = $_SESSION['username'] ?? null;
+        $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId, $updatedBy);
 
         if ($success && function_exists('log_user_activity')) {
             $platformName = $platform['display_name'] ?? $platform['name'] ?? 'Plataforma';
             $usuario = trim($password ?? '') ?: '(vacío)';
             if ($hadAnyAccessBefore) {
-                log_user_activity('edicion', sprintf('Editó el correo %s; %s; %s', $email, $usuario, $platformName));
+                log_user_activity('edicion', sprintf('Editó el correo %s | %s | %s', $email, $usuario, $platformName));
             } else {
-                log_user_activity('agregar_correo', sprintf('Registró el correo %s; %s; %s', $email, $usuario, $platformName));
+                log_user_activity('agregar_correo', sprintf('Registró el correo %s | %s | %s', $email, $usuario, $platformName));
             }
         }
         if ($success) {
@@ -285,7 +286,7 @@ class UserAccessController
             $email = trim($access['email'] ?? '');
             $usuario = trim($access['password'] ?? '') ?: '(vacío)';
             $plataforma = trim($access['platform_display_name'] ?? $access['platform_id'] ?? '') ?: '—';
-            log_user_activity('eliminar', sprintf('Eliminó el correo %s; %s; %s', $email, $usuario, $plataforma));
+            log_user_activity('eliminar', sprintf('Eliminó el correo %s | %s | %s', $email, $usuario, $plataforma));
         }
         if ($success) {
             json_response([

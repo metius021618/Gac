@@ -85,4 +85,15 @@
     }
 
     initDeleteButtons();
+
+    // Modal Excel (Todos / Gmail / Outlook / Pocoyoni)
+    const excelTrigger = document.getElementById('excelExportTrigger');
+    const excelModal = document.getElementById('excelExportModal');
+    if (excelTrigger && excelModal) {
+        excelTrigger.addEventListener('click', function() { excelModal.classList.remove('hidden'); });
+        const closeBtn = document.getElementById('closeExcelExportModal');
+        const overlay = excelModal.querySelector('.modal-overlay');
+        if (closeBtn) closeBtn.addEventListener('click', function() { excelModal.classList.add('hidden'); });
+        if (overlay) overlay.addEventListener('click', function() { excelModal.classList.add('hidden'); });
+    }
 })();

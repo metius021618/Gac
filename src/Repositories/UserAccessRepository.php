@@ -23,8 +23,9 @@ class UserAccessRepository
 
     /**
      * Crear o actualizar acceso de usuario
+     * @param string|null $updatedBy Usuario admin que realiza la acción (para columna Administrador)
      */
-    public function createOrUpdate(string $email, string $password, int $platformId): bool
+    public function createOrUpdate(string $email, string $password, int $platformId, ?string $updatedBy = null): bool
     {
         self::$lastError = '';
         $stmt = null;
@@ -32,18 +33,21 @@ class UserAccessRepository
             $db = Database::getConnection();
             $emailNorm = strtolower(trim($email));
             $sql = "
-                INSERT INTO user_access (email, password, platform_id, enabled)
-                VALUES (:email, :password, :platform_id, 1)
+                INSERT INTO user_access (email, password, platform_id, enabled, updated_by_username)
+                VALUES (:email, :password, :platform_id, 1, :updated_by)
                 ON DUPLICATE KEY UPDATE
                     password = :password_update,
                     enabled = 1,
-                    updated_at = NOW()
+                    updated_at = NOW(),
+                    updated_by_username = :updated_by2
             ";
             $stmt = $db->prepare($sql);
             $stmt->bindValue(':email', $emailNorm, PDO::PARAM_STR);
             $stmt->bindValue(':password', $password, PDO::PARAM_STR);
             $stmt->bindValue(':platform_id', $platformId, PDO::PARAM_INT);
+            $stmt->bindValue(':updated_by', $updatedBy ?? '', PDO::PARAM_STR);
             $stmt->bindValue(':password_update', $password, PDO::PARAM_STR);
+            $stmt->bindValue(':updated_by2', $updatedBy ?? '', PDO::PARAM_STR);
             $ok = $stmt->execute();
             if (!$ok && $stmt->errorInfo()) {
                 $info = $stmt->errorInfo();
@@ -97,14 +101,15 @@ class UserAccessRepository
 
     /**
      * Actualizar una fila de user_access por ID (usado al "editar" el placeholder OAuth).
+     * @param string|null $updatedBy Usuario admin que realiza la acción
      */
-    public function updateById(int $id, string $email, string $password, int $platformId): bool
+    public function updateById(int $id, string $email, string $password, int $platformId, ?string $updatedBy = null): bool
     {
         try {
             $db = Database::getConnection();
             $sql = "
                 UPDATE user_access
-                SET email = :email, password = :password, platform_id = :platform_id, updated_at = NOW()
+                SET email = :email, password = :password, platform_id = :platform_id, updated_at = NOW(), updated_by_username = :updated_by
                 WHERE id = :id
             ";
             $stmt = $db->prepare($sql);
@@ -112,6 +117,7 @@ class UserAccessRepository
             $stmt->bindValue(':email', trim(strtolower($email)), PDO::PARAM_STR);
             $stmt->bindValue(':password', $password, PDO::PARAM_STR);
             $stmt->bindValue(':platform_id', $platformId, PDO::PARAM_INT);
+            $stmt->bindValue(':updated_by', $updatedBy ?? '', PDO::PARAM_STR);
             $ok = $stmt->execute();
             if ($ok) {
                 $this->touchEmailAccountUpdatedAt(trim(strtolower($email)));
@@ -277,7 +283,7 @@ class UserAccessRepository
             $offset = ($page - 1) * $perPage;
             $limitClause = $perPage > 0 ? "LIMIT {$perPage} OFFSET {$offset}" : '';
             
-            // Obtener datos
+            // Obtener datos (updated_by_username puede no existir en BD antiguas)
             $sql = "
                 SELECT 
                     ua.id,
@@ -287,6 +293,7 @@ class UserAccessRepository
                     ua.enabled,
                     ua.created_at,
                     ua.updated_at,
+                    ua.updated_by_username,
                     p.name as platform_name,
                     p.display_name as platform_display_name
                 FROM user_access ua
@@ -405,13 +412,10 @@ class UserAccessRepository
 
     /**
      * Crear múltiples accesos de usuario masivamente
-     * 
-     * @param array $emails Array de correos electrónicos
-     * @param string $password Contraseña/acceso común para todos
-     * @param int $platformId ID de la plataforma
+     * @param string|null $updatedBy Usuario admin que realiza la acción
      * @return array ['success' => int, 'duplicates' => int, 'errors' => array]
      */
-    public function bulkCreate(array $emails, string $password, int $platformId): array
+    public function bulkCreate(array $emails, string $password, int $platformId, ?string $updatedBy = null): array
     {
         $success = 0;
         $duplicates = 0;
@@ -422,15 +426,17 @@ class UserAccessRepository
             $db->beginTransaction();
             
             $sql = "
-                INSERT INTO user_access (email, password, platform_id, enabled)
-                VALUES (:email, :password, :platform_id, 1)
+                INSERT INTO user_access (email, password, platform_id, enabled, updated_by_username)
+                VALUES (:email, :password, :platform_id, 1, :updated_by)
                 ON DUPLICATE KEY UPDATE
                     password = :password_update,
                     enabled = 1,
-                    updated_at = NOW()
+                    updated_at = NOW(),
+                    updated_by_username = :updated_by2
             ";
             
             $stmt = $db->prepare($sql);
+            $by = $updatedBy ?? '';
             
             foreach ($emails as $email) {
                 $email = trim($email);
@@ -442,7 +448,9 @@ class UserAccessRepository
                     $stmt->bindValue(':email', $email, PDO::PARAM_STR);
                     $stmt->bindValue(':password', $password, PDO::PARAM_STR);
                     $stmt->bindValue(':platform_id', $platformId, PDO::PARAM_INT);
+                    $stmt->bindValue(':updated_by', $by, PDO::PARAM_STR);
                     $stmt->bindValue(':password_update', $password, PDO::PARAM_STR);
+                    $stmt->bindValue(':updated_by2', $by, PDO::PARAM_STR);
                     
                     if ($stmt->execute()) {
                         // Verificar si fue insert o update
@@ -735,16 +743,20 @@ class UserAccessRepository
 
     /**
      * Cambiar estado enabled de un acceso
+     * @param string|null $updatedBy Usuario admin que realiza la acción
      */
-    public function toggleEnabled(int $id, bool $enabled): bool
+    public function toggleEnabled(int $id, bool $enabled, ?string $updatedBy = null): bool
     {
         try {
             $db = Database::getConnection();
             $row = $db->prepare("SELECT email FROM user_access WHERE id = ?");
             $row->execute([$id]);
             $email = $row->fetchColumn();
-            $stmt = $db->prepare("UPDATE user_access SET enabled = :enabled, updated_at = NOW() WHERE id = :id");
-            $ok = $stmt->execute([':id' => $id, ':enabled' => $enabled ? 1 : 0]);
+            $stmt = $db->prepare("UPDATE user_access SET enabled = :enabled, updated_at = NOW(), updated_by_username = :updated_by WHERE id = :id");
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->bindValue(':enabled', $enabled ? 1 : 0, PDO::PARAM_INT);
+            $stmt->bindValue(':updated_by', $updatedBy ?? '', PDO::PARAM_STR);
+            $ok = $stmt->execute();
             if ($ok && $email) {
                 $this->touchEmailAccountUpdatedAt($email);
             }

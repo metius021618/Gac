@@ -30,6 +30,44 @@
 
         initRoleViewsEditor();
         initAddRoleModal();
+        initGmailMatrixConfirm();
+    }
+
+    /**
+     * Al hacer clic en "Cambiar cuenta Gmail matriz" mostrar modal de confirmación
+     */
+    function initGmailMatrixConfirm() {
+        const btn = document.getElementById('gmailMatrixChangeBtn');
+        const modal = document.getElementById('gmailMatrixConfirmModal');
+        const closeBtn = document.getElementById('closeGmailMatrixConfirmModal');
+        const cancelBtn = document.getElementById('gmailMatrixConfirmCancel');
+        const continueBtn = document.getElementById('gmailMatrixConfirmContinue');
+        const overlay = modal && modal.querySelector('.modal-overlay');
+
+        if (!btn || !modal) return;
+
+        btn.addEventListener('click', function(e) {
+            if (btn.getAttribute('data-confirm-change') === '1') {
+                e.preventDefault();
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        });
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        if (continueBtn) {
+            continueBtn.addEventListener('click', function() {
+                closeModal();
+                window.location.href = btn.href;
+            });
+        }
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (overlay) overlay.addEventListener('click', closeModal);
     }
 
     /**

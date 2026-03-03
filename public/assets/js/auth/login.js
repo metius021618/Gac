@@ -110,7 +110,7 @@
         const username = usernameInput.value.trim();
         
         if (!username) {
-            showFieldError(usernameError, 'El usuario es requerido');
+            clearError(usernameError);
             return false;
         }
 
@@ -130,7 +130,7 @@
         const password = passwordInput.value;
         
         if (!password) {
-            showFieldError(passwordError, 'La contraseña es requerida');
+            clearError(passwordError);
             return false;
         }
 

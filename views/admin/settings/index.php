@@ -33,6 +33,35 @@ $content = ob_start();
     <div class="admin-content">
         <div class="settings-container">
 
+            <!-- Administradores (acceso desde configuración) -->
+            <?php if (function_exists('is_superadmin') && is_superadmin()): ?>
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <h2 class="settings-section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        Administradores
+                    </h2>
+                    <p class="settings-section-description">
+                        Gestionar cuentas de administradores del sistema.
+                    </p>
+                </div>
+                <div class="form-card gmail-matrix-card">
+                    <a href="/admin/administrators" class="btn btn-primary">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        Ver administradores
+                    </a>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <!-- Cuenta Gmail matriz (solo una) -->
             <div class="settings-section">
                 <div class="settings-section-header">
@@ -54,7 +83,7 @@ $content = ob_start();
                     <?php else: ?>
                         <p class="gmail-matrix-empty">Aún no hay ninguna cuenta Gmail configurada.</p>
                     <?php endif; ?>
-                    <a href="/gmail/connect?from=settings" class="btn btn-primary" style="background-color: #ea4335;">
+                    <a href="/gmail/connect?from=settings" class="btn btn-primary gmail-matrix-change-btn" id="gmailMatrixChangeBtn" style="background-color: #ea4335;" data-confirm-change="<?= !empty($gmail_matrix_account) ? '1' : '0' ?>">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 6px;">
                             <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.636H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.313l8.073-5.82C21.69 2.28 24 3.434 24 5.457z"/>
                         </svg>
@@ -318,6 +347,24 @@ $content = ob_start();
                 </div>
             </div>
         </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal confirmar cambio de cuenta matriz -->
+<div id="gmailMatrixConfirmModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h2 class="modal-title">Cambiar cuenta matriz</h2>
+            <button type="button" class="modal-close" id="closeGmailMatrixConfirmModal" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-content">
+            <p>¿Estás seguro de querer cambiar tu cuenta matriz? Tendrás que redireccionar todos los correos a la nueva cuenta matriz.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="gmailMatrixConfirmCancel">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="gmailMatrixConfirmContinue">Continuar</button>
         </div>
     </div>
 </div>
