@@ -559,7 +559,13 @@ body.nav-sidebar-open .nav-sidebar {
         font-size: var(--font-size-sm);
     }
     .user-menu-item {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        gap: var(--spacing-xs);
+        line-height: 1.2;
+    }
+    .user-menu-item span {
+        white-space: nowrap;
     }
 }
 
