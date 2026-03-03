@@ -50,7 +50,7 @@ elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
 ?>
 
 <div class="admin-container">
-    <div class="admin-header admin-header--with-actions">
+    <div class="admin-header">
         <h1 class="admin-title">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -60,12 +60,6 @@ elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
             </svg>
             Actividad de administrador
         </h1>
-        <div class="admin-header-actions">
-            <a href="<?= htmlspecialchars($exportHref) ?>" class="btn btn-excel" title="Exportar a Excel (lo mostrado/filtrado)">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h2"></path><path d="M8 17h2"></path><path d="M14 13h2"></path><path d="M14 17h2"></path></svg>
-                Excel
-            </a>
-        </div>
     </div>
 
     <!-- Barra: Mostrar por página (fuera del div de controles) + Filtros -->
@@ -101,15 +95,21 @@ elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
             </div>
             <a href="<?= $baseUrl ?>" class="btn btn-secondary btn-reset-filters">Reiniciar</a>
         </div>
-        <div class="per-page-selector per-page-selector--outside">
-            <label for="perPageSelect" class="per-page-label">Mostrar:</label>
-            <select id="perPageSelect" class="form-select user-activity-per-page">
+        <div class="user-activity-right">
+            <a href="<?= htmlspecialchars($exportHref) ?>" class="btn btn-excel" title="Exportar a Excel (lo mostrado/filtrado)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h2"></path><path d="M8 17h2"></path><path d="M14 13h2"></path><path d="M14 17h2"></path></svg>
+                Excel
+            </a>
+            <div class="per-page-selector per-page-selector--outside">
+                <label for="perPageSelect" class="per-page-label">Mostrar:</label>
+                <select id="perPageSelect" class="form-select user-activity-per-page">
                 <?php foreach ($valid_per_page as $option): ?>
                     <option value="<?= $option ?>" <?= $per_page === $option ? 'selected' : '' ?>>
                         <?= $option === 0 ? 'All' : $option ?>
                     </option>
                 <?php endforeach; ?>
-            </select>
+                </select>
+            </div>
         </div>
     </div>
 
