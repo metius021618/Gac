@@ -173,10 +173,16 @@
     border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Segunda fila: iconos 25% más pequeños */
+/* Segunda fila: iconos más pequeños para dejar espacio al número y título */
 .dashboard-stats .stat-card-icon {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
+}
+.dashboard-stats .stat-card-icon svg {
+    max-width: 100%;
+    max-height: 100%;
+    width: 24px;
+    height: 24px;
 }
 
 .stat-card-icon {
@@ -214,6 +220,22 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);
+}
+
+/* Número al costado del título (Correos Registrados, Plataformas activas) */
+.stat-card-content--value {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+.stat-card-content--value .stat-card-value {
+    font-size: var(--font-size-2xl);
+    margin-right: var(--spacing-xs);
+}
+.stat-card-content--value .stat-card-label {
+    font-size: var(--font-size-sm);
+    line-height: 1.2;
 }
 
 .stat-card-value {

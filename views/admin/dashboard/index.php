@@ -94,9 +94,9 @@ $content = ob_start();
                         <polyline points="22,6 12,13 2,6"></polyline>
                     </svg>
                 </div>
-                <div class="stat-card-content">
-                    <div class="stat-card-value"><?= number_format(($stats['gmail_count'] ?? 0) + ($stats['outlook_count'] ?? 0) + ($stats['pocoyoni_count'] ?? 0)) ?></div>
-                    <div class="stat-card-label">Correos Registrados</div>
+                <div class="stat-card-content stat-card-content--value">
+                    <span class="stat-card-value"><?= number_format(($stats['gmail_count'] ?? 0) + ($stats['outlook_count'] ?? 0) + ($stats['pocoyoni_count'] ?? 0)) ?></span>
+                    <span class="stat-card-label">Correos Registrados</span>
                 </div>
                 <div class="stat-card-arrow">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -145,15 +145,15 @@ $content = ob_start();
             <!-- Plataformas Activas -->
             <a href="/admin/platforms" class="stat-card stat-card-grey stat-card-link" title="Ver plataformas activas">
                 <div class="stat-card-icon stat-icon-yellow">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                         <line x1="8" y1="21" x2="16" y2="21"></line>
                         <line x1="12" y1="17" x2="12" y2="21"></line>
                     </svg>
                 </div>
-                <div class="stat-card-content">
-                    <div class="stat-card-value"><?= number_format($stats['platforms_active']) ?></div>
-                    <div class="stat-card-label">Plataformas activas</div>
+                <div class="stat-card-content stat-card-content--value">
+                    <span class="stat-card-value"><?= number_format($stats['platforms_active']) ?></span>
+                    <span class="stat-card-label">Plataformas activas</span>
                 </div>
                 <div class="stat-card-arrow">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
