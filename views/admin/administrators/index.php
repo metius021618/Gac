@@ -21,14 +21,14 @@ $content = ob_start();
             <table class="admin-table" id="administratorsTable">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Usuario</th>
-                        <th>Email</th>
-                        <th>Rol</th>
-                        <th>Estado</th>
-                        <th>Último Acceso</th>
-                        <th>Fecha Creación</th>
-                        <th>Acciones</th>
+                        <th class="text-center">ID</th>
+                        <th class="text-center">Usuario</th>
+                        <th class="text-center">Email</th>
+                        <th class="text-center">Rol</th>
+                        <th class="text-center">Estado</th>
+                        <th class="text-center">Último Acceso</th>
+                        <th class="text-center">Fecha Creación</th>
+                        <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -41,27 +41,27 @@ $content = ob_start();
                     <?php else: ?>
                         <?php foreach ($administrators as $admin): ?>
                             <tr data-id="<?= $admin['id'] ?>">
-                                <td><?= htmlspecialchars($admin['id']) ?></td>
-                                <td>
+                                <td class="text-center"><?= htmlspecialchars($admin['id']) ?></td>
+                                <td class="text-center">
                                     <strong><?= htmlspecialchars($admin['username']) ?></strong>
                                 </td>
-                                <td><?= htmlspecialchars($admin['email']) ?></td>
-                                <td>
+                                <td class="text-center"><?= htmlspecialchars($admin['email']) ?></td>
+                                <td class="text-center">
                                     <span class="badge badge-info"><?= htmlspecialchars($admin['role_display_name'] ?? $admin['role_name']) ?></span>
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     <label class="admin-toggle-switch" title="<?= $admin['active'] ? 'Habilitado (clic para deshabilitar)' : 'Deshabilitado (clic para habilitar)' ?>">
                                         <input type="checkbox" class="admin-toggle-input" data-id="<?= (int)$admin['id'] ?>" <?= $admin['active'] ? 'checked' : '' ?>>
                                         <span class="admin-toggle-slider"></span>
                                     </label>
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     <?= $admin['last_login'] ? date('d/m/Y H:i', strtotime($admin['last_login'])) : 'Nunca' ?>
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     <?= $admin['created_at'] ? date('d/m/Y H:i', strtotime($admin['created_at'])) : '-' ?>
                                 </td>
-                                <td class="actions-cell">
+                                <td class="actions-cell text-center">
                                     <?php if (function_exists('user_can_action') && user_can_action('administradores', 'editar')): ?>
                                     <button class="btn-icon btn-edit" 
                                             data-id="<?= $admin['id'] ?>"
