@@ -18,9 +18,10 @@ $filter_action = $filter_action ?? '';
 $filter_admin = $filter_admin ?? '';
 $filter_date_from = $filter_date_from ?? '';
 $filter_date_to = $filter_date_to ?? '';
+$filter_time_range = $filter_time_range ?? '';
 $usernames = $usernames ?? [];
 
-$queryParams = function($overrides = []) use ($baseUrl, $current_page, $per_page, $order, $filter_action, $filter_admin, $filter_date_from, $filter_date_to) {
+$queryParams = function($overrides = []) use ($baseUrl, $current_page, $per_page, $order, $filter_action, $filter_admin, $filter_date_from, $filter_date_to, $filter_time_range) {
     $p = array_merge([
         'page' => $current_page,
         'per_page' => $per_page,
@@ -29,6 +30,7 @@ $queryParams = function($overrides = []) use ($baseUrl, $current_page, $per_page
         'admin' => $filter_admin,
         'date_from' => $filter_date_from,
         'date_to' => $filter_date_to,
+        'time_range' => $filter_time_range,
     ], $overrides);
     $p = array_filter($p, function($v) { return $v !== '' && $v !== null; });
     return $baseUrl . '?' . http_build_query($p);
@@ -39,6 +41,12 @@ $exportHref = '/admin/user-activity/export-excel?' . http_build_query(array_filt
     'date_from' => $filter_date_from,
     'date_to' => $filter_date_to,
 ], function($v) { return $v !== ''; }));
+
+$timeRangeLabel = 'Todo';
+if ($filter_time_range === '7') $timeRangeLabel = 'Últimos 7 días';
+elseif ($filter_time_range === '30') $timeRangeLabel = 'Últimos 30 días';
+elseif ($filter_time_range === '90') $timeRangeLabel = 'Últimos 90 días';
+elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
 ?>
 
 <div class="admin-container">
@@ -59,7 +67,6 @@ $exportHref = '/admin/user-activity/export-excel?' . http_build_query(array_filt
             </a>
         </div>
     </div>
-    <p class="admin-subtitle">Monitoreo de acciones (agregar, editar, eliminar correos). Solo visible para superadmin.</p>
 
     <!-- Barra: Mostrar por página (fuera del div de controles) + Filtros -->
     <div class="user-activity-top-bar">
@@ -86,17 +93,13 @@ $exportHref = '/admin/user-activity/export-excel?' . http_build_query(array_filt
             </div>
             <div class="activity-filter-dropdown" data-filter="time" id="timeFilterDropdown">
                 <span class="activity-filter-label">Tiempo</span>
-                <span class="activity-filter-value" id="timeFilterValue"><?php
-                    if ($filter_date_from && $filter_date_to) echo 'Personalizado';
-                    elseif ($filter_date_from) echo 'Desde ' . date('d/m/Y', strtotime($filter_date_from));
-                    else echo 'Todo';
-                ?></span>
+                <span class="activity-filter-value" id="timeFilterValue"><?= htmlspecialchars($timeRangeLabel) ?></span>
                 <ul class="activity-filter-menu">
-                    <li><a href="<?= $queryParams(['date_from' => '', 'date_to' => '', 'page' => 1]) ?>">Todo</a></li>
-                    <li><a href="<?= $queryParams(['date_from' => date('Y-m-d', strtotime('-7 days')), 'date_to' => date('Y-m-d'), 'page' => 1]) ?>">Últimos 7 días</a></li>
-                    <li><a href="<?= $queryParams(['date_from' => date('Y-m-d', strtotime('-30 days')), 'date_to' => date('Y-m-d'), 'page' => 1]) ?>">Últimos 30 días</a></li>
-                    <li><a href="<?= $queryParams(['date_from' => date('Y-m-d', strtotime('-90 days')), 'date_to' => date('Y-m-d'), 'page' => 1]) ?>">Últimos 90 días</a></li>
-                    <li><a href="#" id="timeFilterCustom">Personalizado</a></li>
+                    <li><a href="<?= $queryParams(['date_from' => '', 'date_to' => '', 'time_range' => '', 'page' => 1]) ?>">Todo</a></li>
+                    <li><a href="<?= $queryParams(['date_from' => date('Y-m-d', strtotime('-7 days')), 'date_to' => date('Y-m-d'), 'time_range' => '7', 'page' => 1]) ?>">Últimos 7 días</a></li>
+                    <li><a href="<?= $queryParams(['date_from' => date('Y-m-d', strtotime('-30 days')), 'date_to' => date('Y-m-d'), 'time_range' => '30', 'page' => 1]) ?>">Últimos 30 días</a></li>
+                    <li><a href="<?= $queryParams(['date_from' => date('Y-m-d', strtotime('-90 days')), 'date_to' => date('Y-m-d'), 'time_range' => '90', 'page' => 1]) ?>">Últimos 90 días</a></li>
+                    <li><a href="#" id="timeFilterCustom" class="activity-filter-custom-link">Personalizado</a></li>
                 </ul>
             </div>
             <a href="<?= $baseUrl ?>" class="btn btn-secondary btn-reset-filters">Reiniciar</a>
@@ -196,24 +199,32 @@ $exportHref = '/admin/user-activity/export-excel?' . http_build_query(array_filt
     </div>
 </div>
 
-<!-- Modal rango de tiempo (solo fecha, sin hora) -->
+<!-- Modal rango de tiempo (solo fecha) - diseño como imagen referencia -->
 <div id="activityDateRangeModal" class="modal hidden" aria-hidden="true">
     <div class="modal-overlay"></div>
-    <div class="modal-container">
+    <div class="modal-container activity-date-range-modal">
         <div class="modal-header">
             <h2 class="modal-title">Selecciona un rango de tiempo</h2>
             <button type="button" class="modal-close" id="closeActivityDateModal" aria-label="Cerrar">&times;</button>
         </div>
-        <p class="activity-date-modal-note">Selecciona tu intervalo de tiempo (máx. 6 meses).</p>
+        <p class="activity-date-modal-note">Selecciona tu intervalo de tiempo en 6 meses.</p>
         <div class="modal-content activity-date-range-fields">
-            <label>Hora de inicio</label>
-            <input type="date" id="activityDateFrom" class="form-input">
-            <span>a</span>
-            <label>Hora de finalización</label>
-            <input type="date" id="activityDateTo" class="form-input">
+            <div class="activity-date-field-group">
+                <label class="activity-date-label">Hora de inicio</label>
+                <div class="activity-date-input-wrap">
+                    <input type="date" id="activityDateFrom" class="form-input activity-date-input">
+                </div>
+            </div>
+            <span class="activity-date-sep">a</span>
+            <div class="activity-date-field-group">
+                <label class="activity-date-label">Hora de finalización</label>
+                <div class="activity-date-input-wrap">
+                    <input type="date" id="activityDateTo" class="form-input activity-date-input">
+                </div>
+            </div>
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-primary" id="activityDateRangeApply">Aplicar</button>
+        <div class="modal-footer activity-date-range-footer">
+            <button type="button" class="btn btn-activity-date-continue" id="activityDateRangeApply">Continuar</button>
         </div>
     </div>
 </div>

@@ -15,14 +15,24 @@
         });
     }
 
-    // Filtros: abrir menú al hover (no click)
+    // Filtros Acción y Admin: abrir menú al hover
     document.querySelectorAll('.activity-filter-dropdown').forEach(function(drop) {
-        drop.addEventListener('mouseenter', function() {
-            this.classList.add('open');
+        if (drop.id === 'timeFilterDropdown') return;
+        drop.addEventListener('mouseenter', function() { this.classList.add('open'); });
+        drop.addEventListener('mouseleave', function() { this.classList.remove('open'); });
+    });
+    // Filtro Tiempo: abrir también con click para que "Personalizado" sea clicable (menú se mantiene abierto)
+    var timeDrop = document.getElementById('timeFilterDropdown');
+    if (timeDrop) {
+        timeDrop.addEventListener('mouseenter', function() { this.classList.add('open'); });
+        timeDrop.addEventListener('mouseleave', function() { this.classList.remove('open'); });
+        timeDrop.addEventListener('click', function(e) {
+            if (e.target.closest('.activity-filter-menu')) return;
+            this.classList.toggle('open');
         });
-        drop.addEventListener('mouseleave', function() {
-            this.classList.remove('open');
-        });
+    }
+    document.addEventListener('click', function(e) {
+        if (timeDrop && !timeDrop.contains(e.target)) timeDrop.classList.remove('open');
     });
 
     // Personalizado: abrir modal de rango de fechas
@@ -37,6 +47,9 @@
     if (customLink) {
         customLink.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
+            var drop = document.getElementById('timeFilterDropdown');
+            if (drop) drop.classList.remove('open');
             if (modal) modal.classList.remove('hidden');
             var today = new Date().toISOString().slice(0, 10);
             var sixMonths = new Date();
@@ -59,6 +72,7 @@
             var params = new URLSearchParams(window.location.search);
             params.set('date_from', from);
             params.set('date_to', to);
+            params.set('time_range', 'custom');
             params.set('page', '1');
             window.location.href = '/admin/user-activity?' + params.toString();
         });

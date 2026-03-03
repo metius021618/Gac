@@ -37,6 +37,7 @@ class UserActivityController
         $filterAdmin = trim((string) $request->get('admin', ''));
         $filterDateFrom = trim((string) $request->get('date_from', ''));
         $filterDateTo = trim((string) $request->get('date_to', ''));
+        $filterTimeRange = trim((string) $request->get('time_range', ''));
 
         $repo = new UserActivityLogRepository();
         $result = $repo->getPaginated($page, $perPage, $order, $filterAction ?: null, $filterAdmin ?: null, $filterDateFrom ?: null, $filterDateTo ?: null);
@@ -55,6 +56,7 @@ class UserActivityController
             'filter_admin' => $filterAdmin,
             'filter_date_from' => $filterDateFrom,
             'filter_date_to' => $filterDateTo,
+            'filter_time_range' => $filterTimeRange,
             'usernames' => $usernames,
         ]);
     }
