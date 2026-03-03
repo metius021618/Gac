@@ -172,6 +172,16 @@
 .excel-export-card-icon svg {
     vertical-align: middle;
 }
+.excel-export-card-icon--gmail svg,
+.excel-export-card-icon--outlook svg {
+    display: block;
+}
+.excel-export-card-icon--pocoyoni svg text {
+    fill: #F5D000;
+}
+.excel-export-card:hover .excel-export-card-icon--pocoyoni svg text {
+    fill: #F5D000;
+}
 .excel-export-card:hover {
     background: rgba(0, 102, 255, 0.15);
     border-color: var(--color-primary);

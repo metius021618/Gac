@@ -83,20 +83,23 @@ $current_filter = $filter ?? '';
                 Todos
             </a>
             <a href="/admin/correos-registrados/export-excel?filter=gmail" class="excel-export-card" data-filter="gmail">
-                <span class="excel-export-card-icon" aria-hidden="true">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <span class="excel-export-card-icon excel-export-card-icon--gmail" aria-hidden="true">
+                    <!-- Icono Gmail (sobre rojo característico) -->
+                    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/><path fill="#fff" fill-opacity=".95" d="M12 11l8-5H4l8 5z"/></svg>
                 </span>
                 Gmail
             </a>
             <a href="/admin/correos-registrados/export-excel?filter=outlook" class="excel-export-card" data-filter="outlook">
-                <span class="excel-export-card-icon" aria-hidden="true">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <span class="excel-export-card-icon excel-export-card-icon--outlook" aria-hidden="true">
+                    <!-- Icono Outlook (azul Microsoft) -->
+                    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#0078D4" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/><path fill="#28A8EA" d="M12 11l8-5H4l8 5z"/></svg>
                 </span>
                 Outlook
             </a>
             <a href="/admin/correos-registrados/export-excel?filter=pocoyoni" class="excel-export-card" data-filter="pocoyoni">
-                <span class="excel-export-card-icon" aria-hidden="true">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <span class="excel-export-card-icon excel-export-card-icon--pocoyoni" aria-hidden="true">
+                    <!-- P amarilla Pocoyoni -->
+                    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><text x="12" y="18" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#F5D000">P</text></svg>
                 </span>
                 Pocoyoni
             </a>
