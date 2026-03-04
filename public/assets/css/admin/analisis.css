@@ -16,6 +16,9 @@
     --analisis-accent: #38BDF8;
     --analisis-success: #22C55E;
     --analisis-cyan: #22D3EE;
+    width: 80%;
+    max-width: 80%;
+    margin: 0 auto;
     min-height: 100vh;
     background: linear-gradient(180deg, var(--analisis-bg-start) 0%, var(--analisis-bg-mid) 45%, var(--analisis-bg-end) 100%);
     padding: 24px;
