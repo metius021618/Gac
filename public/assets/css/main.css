@@ -545,27 +545,15 @@ body.nav-sidebar-open .nav-sidebar {
         align-items: center;
     }
     .user-welcome {
-        font-size: 0.75rem;
-        max-width: none;
-        overflow: visible;
-        text-overflow: unset;
+        font-size: 0.8rem;
+        max-width: 90px;
+        overflow: hidden;
+        text-overflow: ellipsis;
         white-space: nowrap;
     }
     .user-menu-trigger {
         padding: var(--spacing-xs) var(--spacing-sm);
         font-size: var(--font-size-xs);
-    }
-    .user-menu-dropdown {
-        font-size: var(--font-size-sm);
-    }
-    .user-menu-item {
-        font-size: var(--font-size-xs);
-        padding: var(--spacing-xs) var(--spacing-sm);
-        gap: var(--spacing-xs);
-        line-height: 1.2;
-    }
-    .user-menu-item span {
-        white-space: nowrap;
     }
 }
 
