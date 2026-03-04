@@ -74,9 +74,10 @@
         var canvas = document.getElementById('analisisChartPlataformas');
         if (!canvas || typeof Chart === 'undefined') return;
 
+        var colorByPlatform = { 'Netflix': '#E50914', 'Disney+': '#1F80E0', 'HBO Max': '#8B5CF6', 'Spotify': '#1DB954' };
         var labels = ventasPorPlataforma.map(function (p) { return p.nombre; });
         var values = ventasPorPlataforma.map(function (p) { return p.total; });
-        var colors = ventasPorPlataforma.map(function (p) { return p.color || '#334155'; });
+        var colors = ventasPorPlataforma.map(function (p) { return colorByPlatform[p.nombre] || p.color || '#334155'; });
 
         if (labels.length === 0) {
             labels = ['Netflix', 'Disney+', 'HBO Max', 'Spotify'];

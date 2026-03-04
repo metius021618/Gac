@@ -28,7 +28,7 @@ $content = ob_start();
                     </div>
                     <div class="analisis-kpi-value"><?= number_format($total_cuentas['total']) ?></div>
                     <div class="analisis-kpi-meta">
-                        <span class="analisis-kpi-growth analisis-kpi-growth--up">+<?= number_format($total_cuentas['crecimiento'], 1) ?>%</span>
+                        <span class="analisis-kpi-growth analisis-kpi-growth--up"><svg class="analisis-growth-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>+<?= number_format($total_cuentas['crecimiento'], 1) ?>%</span>
                         <span class="analisis-kpi-sub">Mes actual</span>
                     </div>
                 </div>
@@ -37,13 +37,16 @@ $content = ob_start();
                 <div class="analisis-card analisis-kpi-card">
                     <div class="analisis-kpi-header">
                         <span class="analisis-kpi-label">Plataformas Activas</span>
+                        <span class="analisis-kpi-icon analisis-kpi-icon--spotify" title="Plataformas">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.48-1.12 0-2.16-.38-3.16-1.03-.19-.14-.23-.42-.09-.61.14-.19.42-.23.61-.09 1.02.72 2.27 1.03 3.48 1.03.24 0 .64-.03.96-.18.27-.14.36-.42.24-.66l-.01-.02zm1.44-3.3c-.3.42-.85.56-1.27.26-.99-.6-2.24-.74-3.44-.4-.31.08-.65-.09-.73-.4-.08-.31.09-.65.4-.73 1.48-.36 2.98-.2 4.22.47.42.26.56.85.82 1.6zm.12-3.36C15.24 8.4 8.94 8.16 5.16 9.75c-.49.23-1.06-.08-1.29-.57-.23-.49.08-1.06.57-1.29 4.26-1.96 11.16-1.69 15.09.5.46.21.62.82.41 1.28-.21.46-.82.62-1.28.41z"/></svg>
+                        </span>
                     </div>
                     <div class="analisis-kpi-value"><?= $plataformas_activas ?></div>
                     <div class="analisis-platform-icons">
-                        <span class="analisis-platform-icon" title="Netflix">N</span>
-                        <span class="analisis-platform-icon" title="Disney+">D</span>
-                        <span class="analisis-platform-icon" title="HBO Max">H</span>
-                        <span class="analisis-platform-icon" title="Spotify">S</span>
+                        <span class="analisis-platform-logo analisis-platform-logo--netflix" title="Netflix">N</span>
+                        <span class="analisis-platform-logo analisis-platform-logo--disney" title="Disney+">D</span>
+                        <span class="analisis-platform-logo analisis-platform-logo--hbo" title="HBO Max">H</span>
+                        <span class="analisis-platform-logo analisis-platform-logo--spotify" title="Spotify">S</span>
                     </div>
                 </div>
             </div>
@@ -51,6 +54,9 @@ $content = ob_start();
                 <div class="analisis-card analisis-kpi-card analisis-kpi-card--revendedor">
                     <div class="analisis-kpi-header">
                         <span class="analisis-kpi-label">Revendedor del Mes</span>
+                        <span class="analisis-kpi-icon analisis-kpi-icon--crown" title="Revendedor destacado">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14 8h6l-5 4 2 8-7-5-7 5 2-8-5-4h6l2-6z"/></svg>
+                        </span>
                     </div>
                     <div class="analisis-revendedor-block">
                         <img src="<?= !empty($revendedor_del_mes['foto_url']) ? htmlspecialchars($revendedor_del_mes['foto_url']) : 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="%23334155"><circle cx="24" cy="24" r="24"/><circle cx="24" cy="18" r="8"/><path d="M24 32c-6 0-10 4-10 8v2h20v-2c0-4-4-8-10-8z"/></svg>') ?>" alt="" class="analisis-revendedor-avatar" width="48" height="48">
@@ -68,10 +74,14 @@ $content = ob_start();
                 <div class="analisis-card analisis-kpi-card">
                     <div class="analisis-kpi-header">
                         <span class="analisis-kpi-label">Total Ingresos</span>
+                        <span class="analisis-kpi-icon analisis-kpi-icon--bank" title="Ingresos">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 9v6"/><path d="M2 10h20"/><path d="M7 14h.01"/><path d="M17 14h.01"/></svg>
+                        </span>
                     </div>
                     <div class="analisis-kpi-value analisis-kpi-value--accent">$<?= number_format($total_ingresos['total'], 0) ?></div>
                     <div class="analisis-kpi-meta">
-                        <span class="analisis-kpi-growth analisis-kpi-growth--up">+<?= number_format($total_ingresos['crecimiento'], 1) ?>%</span>
+                        <span class="analisis-kpi-growth analisis-kpi-growth--up"><svg class="analisis-growth-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>+<?= number_format($total_ingresos['crecimiento'], 1) ?>%</span>
+                        <span class="analisis-kpi-sub">Mes actual</span>
                     </div>
                 </div>
             </div>
@@ -81,7 +91,10 @@ $content = ob_start();
         <div class="analisis-row">
             <div class="analisis-col analisis-col-12">
                 <div class="analisis-card analisis-chart-card">
-                    <h3 class="analisis-card-title">Evolución Mensual de Ventas</h3>
+                    <h3 class="analisis-card-title">
+                        <span class="analisis-chart-title-icon analisis-chart-title-icon--line"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></span>
+                        Evolución Mensual de Ventas
+                    </h3>
                     <div class="analisis-chart-wrap analisis-chart-wrap--line" style="height: 300px;">
                         <canvas id="analisisChartEvolucion" width="1200" height="300"></canvas>
                         <span class="analisis-evolucion-badge" id="analisisEvolucionBadge"><?= number_format(!empty($evolucion['values']) ? $evolucion['values'][count($evolucion['values'])-1] : 2590) ?></span>
@@ -94,7 +107,16 @@ $content = ob_start();
         <div class="analisis-row analisis-row--three">
             <div class="analisis-col analisis-col-4">
                 <div class="analisis-card analisis-chart-card">
-                    <h3 class="analisis-card-title">Ventas por Plataforma</h3>
+                    <h3 class="analisis-card-title">
+                        <span class="analisis-chart-title-icon analisis-chart-title-icon--bar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg></span>
+                        Ventas por Plataforma
+                    </h3>
+                    <div class="analisis-bar-chart-logos">
+                        <span class="analisis-bar-logo analisis-bar-logo--netflix" title="Netflix">N</span>
+                        <span class="analisis-bar-logo analisis-bar-logo--disney" title="Disney+">D</span>
+                        <span class="analisis-bar-logo analisis-bar-logo--hbo" title="HBO Max">H</span>
+                        <span class="analisis-bar-logo analisis-bar-logo--spotify" title="Spotify">S</span>
+                    </div>
                     <div class="analisis-chart-wrap analisis-chart-wrap--bar" style="height: 280px;">
                         <canvas id="analisisChartPlataformas" width="400" height="280"></canvas>
                     </div>
@@ -102,7 +124,10 @@ $content = ob_start();
             </div>
             <div class="analisis-col analisis-col-4">
                 <div class="analisis-card analisis-chart-card">
-                    <h3 class="analisis-card-title">Ranking de Revendedores</h3>
+                    <h3 class="analisis-card-title">
+                        <span class="analisis-chart-title-icon analisis-chart-title-icon--users"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+                        Ranking de Revendedores
+                    </h3>
                     <div class="analisis-ranking-list" id="analisisRankingList">
                         <?php
                         $rankColors = [
@@ -129,14 +154,26 @@ $content = ob_start();
             </div>
             <div class="analisis-col analisis-col-4">
                 <div class="analisis-card analisis-chart-card">
-                    <h3 class="analisis-card-title">Plataforma vs Revendedor</h3>
+                    <h3 class="analisis-card-title">
+                        <span class="analisis-chart-title-icon analisis-chart-title-icon--heatmap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg></span>
+                        Plataforma vs Revendedor
+                    </h3>
                     <div class="analisis-heatmap-wrap">
                         <table class="analisis-heatmap-table">
                             <thead>
                                 <tr>
                                     <th></th>
-                                    <?php foreach ($heatmap['plataformas'] as $plat): ?>
-                                    <th><?= htmlspecialchars($plat) ?></th>
+                                    <?php foreach ($heatmap['plataformas'] as $plat): 
+                                        $logoClass = 'analisis-heatmap-th-logo';
+                                        if (stripos($plat, 'Netflix') !== false) $logoClass .= ' analisis-heatmap-th-logo--netflix';
+                                        elseif (stripos($plat, 'Disney') !== false) $logoClass .= ' analisis-heatmap-th-logo--disney';
+                                        elseif (stripos($plat, 'HBO') !== false) $logoClass .= ' analisis-heatmap-th-logo--hbo';
+                                        elseif (stripos($plat, 'Spotify') !== false) $logoClass .= ' analisis-heatmap-th-logo--spotify';
+                                    ?>
+                                    <th class="analisis-heatmap-th-with-logo">
+                                        <span class="<?= $logoClass ?>"><?= substr($plat, 0, 1) ?></span>
+                                        <span class="analisis-heatmap-th-name"><?= htmlspecialchars($plat) ?></span>
+                                    </th>
                                     <?php endforeach; ?>
                                 </tr>
                             </thead>
