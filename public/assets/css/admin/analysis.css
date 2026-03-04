@@ -2,12 +2,29 @@
  * GAC - Vista AnÃ¡lisis (grÃ¡fico de barras horizontales por plataforma)
  */
 
- .analysis-container .admin-title {
+ .analysis-container {
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.analysis-container .admin-header {
+    text-align: center;
+}
+
+.analysis-container .admin-title {
     margin-bottom: var(--spacing-lg);
 }
 
 .analysis-top-bar {
     margin-bottom: var(--spacing-xl);
+    display: flex;
+    justify-content: center;
+}
+
+.analysis-top-bar .user-activity-filters {
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .analysis-chart-wrap {
@@ -15,7 +32,8 @@
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
     padding: var(--spacing-xl);
-    width: 50%;
+    width: 100%;
+    max-width: 100%;
 }
 
 .analysis-empty {
@@ -73,12 +91,15 @@
 }
 
 .analysis-chart-row-label {
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-    color: var(--text-primary);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: #ffffff;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    min-height: 28px;
 }
 
 .analysis-chart-row-track {
