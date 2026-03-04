@@ -1,8 +1,8 @@
 /**
- * GAC - Vista Análisis (gráfico de barras horizontales por plataforma)
+ * GAC - Vista AnÃ¡lisis (grÃ¡fico de barras horizontales por plataforma)
  */
 
-.analysis-container .admin-title {
+ .analysis-container .admin-title {
     margin-bottom: var(--spacing-lg);
 }
 
@@ -11,10 +11,11 @@
 }
 
 .analysis-chart-wrap {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(26, 35, 50, 0.95);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
     padding: var(--spacing-xl);
+    width: 50%;
 }
 
 .analysis-empty {
@@ -23,7 +24,7 @@
     padding: var(--spacing-2xl);
 }
 
-/* Gráfico: eje Y = plataformas, eje X = conteo (50, 100, 150...) */
+/* GrÃ¡fico: eje Y = plataformas, eje X = conteo (50, 100, 150...) */
 .analysis-chart {
     display: flex;
     flex-direction: column;
