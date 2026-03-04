@@ -65,7 +65,7 @@ $content = ob_start();
             </a>
             <?php endif; ?>
             <?php if ($can('registro_asuntos')): ?>
-            <!-- Asuntos -->
+            <!-- Registro de Asuntos -->
             <a href="/admin/email-subjects" class="action-card">
                 <div class="action-card-icon">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -76,7 +76,7 @@ $content = ob_start();
                         <polyline points="10 9 9 9 8 9"></polyline>
                     </svg>
                 </div>
-                <div class="action-card-text">Asuntos</div>
+                <div class="action-card-text">Registro de Asuntos</div>
             </a>
             <?php endif; ?>
         </div>
@@ -123,8 +123,8 @@ $content = ob_start();
             <?php endif; ?>
 
             <?php if (function_exists('is_superadmin') && is_superadmin()): ?>
-            <!-- ANÁLISIS -->
-            <a href="/admin/analysis" class="stat-card stat-card-grey stat-card-link stat-card-analysis" title="Análisis">
+            <!-- ANÁLISIS (placeholder) -->
+            <a href="#" class="stat-card stat-card-grey stat-card-link stat-card-analysis" title="Análisis">
                 <div class="stat-card-icon stat-card-icon--analysis">
                     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="20" x2="18" y2="10"></line>

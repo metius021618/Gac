@@ -202,63 +202,6 @@ class UserAccessRepository
     }
 
     /**
-     * Conteo por plataforma para vista Análisis (opcional filtro por rango de fechas).
-     * @param string|null $dateFrom Y-m-d
-     * @param string|null $dateTo Y-m-d
-     * @return array [['platform_name'=>string,'display_name'=>string,'total'=>int], ...] ordenado por total DESC
-     */
-    public function getCountByPlatform(?string $dateFrom = null, ?string $dateTo = null): array
-    {
-        try {
-            $db = Database::getConnection();
-            $where = ["ua.enabled = 1"];
-            $params = [];
-            if ($dateFrom !== null && $dateFrom !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)) {
-                $where[] = "DATE(COALESCE(ua.updated_at, ua.created_at)) >= :date_from";
-                $params[':date_from'] = $dateFrom;
-            }
-            if ($dateTo !== null && $dateTo !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
-                $where[] = "DATE(COALESCE(ua.updated_at, ua.created_at)) <= :date_to";
-                $params[':date_to'] = $dateTo;
-            }
-            $whereClause = 'WHERE ' . implode(' AND ', $where);
-            $sql = "
-                SELECT p.name AS platform_name, p.display_name, p.config, COUNT(*) AS total
-                FROM user_access ua
-                JOIN platforms p ON ua.platform_id = p.id
-                {$whereClause}
-                GROUP BY ua.platform_id, p.name, p.display_name, p.config
-                ORDER BY total DESC
-            ";
-            $stmt = $db->prepare($sql);
-            foreach ($params as $k => $v) {
-                $stmt->bindValue($k, $v, PDO::PARAM_STR);
-            }
-            $stmt->execute();
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return array_map(function ($r) {
-                $config = $r['config'] ?? null;
-                $color = null;
-                if (is_string($config)) {
-                    $dec = json_decode($config, true);
-                    $color = $dec['color'] ?? null;
-                } elseif (is_array($config)) {
-                    $color = $config['color'] ?? null;
-                }
-                return [
-                    'platform_name' => $r['platform_name'] ?? '',
-                    'display_name' => $r['display_name'] ?? $r['platform_name'] ?? '',
-                    'total' => (int) ($r['total'] ?? 0),
-                    'color' => $color ? (is_string($color) ? $color : '#0066ff') : '#0066ff',
-                ];
-            }, $rows);
-        } catch (PDOException $e) {
-            error_log("Error getCountByPlatform: " . $e->getMessage());
-            return [];
-        }
-    }
-
-    /**
      * Listar/buscar en user_access. Si hay texto, filtra por email o usuario (password).
      * @param string|null $excludeEmail Si se indica, se excluye este email (ej. cuenta Gmail matriz).
      */

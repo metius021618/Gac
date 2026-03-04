@@ -304,40 +304,11 @@ body {
 }
 
 /* ============================================
-   MAIN CONTENT Y CONTENEDORES ADMIN
+   MAIN CONTENT
    ============================================ */
 .main-content {
     min-height: calc(100vh - 200px);
     padding: var(--spacing-xl) 0;
-    position: relative;
-    z-index: 1;
-}
-
-.admin-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: var(--spacing-xl);
-    background: var(--bg-card);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-lg);
-    position: relative;
-    z-index: 1;
-}
-
-.admin-content {
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-lg);
-    margin-top: var(--spacing-md);
-}
-
-.table-container {
-    background: var(--bg-secondary);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-sm);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    border: 1px solid var(--border-color);
 }
 
 /* ============================================
