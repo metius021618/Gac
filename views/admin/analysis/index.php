@@ -83,11 +83,10 @@ for ($v = 50; $v <= $scaleMax; $v += 50) {
     </div>
 
     <div class="analysis-chart-wrap">
-        <div id="analysisChartContent">
         <?php if (empty($platform_counts)): ?>
         <p class="analysis-empty">No hay datos para el rango seleccionado.</p>
         <?php else: ?>
-        <div class="analysis-chart" id="analysisChart" role="img" aria-label="Gráfico de barras por plataforma">
+        <div class="analysis-chart" role="img" aria-label="Gráfico de barras por plataforma">
             <div class="analysis-chart-scale-row">
                 <div class="analysis-chart-scale-label"></div>
                 <div class="analysis-chart-scale-ticks" style="--scale-count: <?= count($scaleTicks) ?>;">
@@ -100,19 +99,18 @@ for ($v = 50; $v <= $scaleMax; $v += 50) {
                 $name = $row['display_name'] ?? $row['platform_name'] ?? '—';
                 $total = (int) ($row['total'] ?? 0);
                 $pct = $scaleMax > 0 ? min(100, ($total / $scaleMax) * 100) : 0;
-                $barColor = $row['color'] ?? '#0066ff';
             ?>
             <div class="analysis-chart-row">
                 <div class="analysis-chart-row-label"><?= htmlspecialchars($name) ?></div>
                 <div class="analysis-chart-row-track">
-                    <div class="analysis-chart-bar" style="width: <?= $pct ?>%; background-color: <?= htmlspecialchars($barColor) ?>;" data-value="<?= $total ?>"></div>
+                    <div class="analysis-chart-bar" style="width: <?= $pct ?>%;" data-value="<?= $total ?>"></div>
                     <span class="analysis-chart-bar-value"><?= $total ?></span>
                 </div>
             </div>
             <?php endforeach; ?>
         </div>
+        <p class="analysis-x-legend">Eje X: conteo (<?= implode(', ', $scaleTicks) ?>)</p>
         <?php endif; ?>
-        </div>
     </div>
 </div>
 
