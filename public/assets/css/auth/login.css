@@ -226,34 +226,12 @@ body.login-page .main-header {
 /* ============================================
    RESPONSIVE
    ============================================ */
-@media (max-width: 768px) {
-    .login-container {
-        padding: var(--spacing-md);
-    }
-    .login-card {
-        padding: var(--spacing-xl);
-        max-width: 100%;
-    }
-    .login-title {
-        font-size: var(--font-size-2xl);
-    }
-    .login-form .btn {
-        min-height: 44px;
-        width: 100%;
-    }
-}
-
 @media (max-width: 480px) {
-    .login-container {
-        padding: var(--spacing-sm);
-    }
     .login-card {
         padding: var(--spacing-lg);
     }
+    
     .login-title {
-        font-size: var(--font-size-xl);
-    }
-    .login-form input {
-        font-size: 16px; /* evita zoom en iOS */
+        font-size: var(--font-size-2xl);
     }
 }

@@ -507,23 +507,6 @@
     .settings-form .form-actions .btn {
         width: 100%;
         justify-content: center;
-        min-height: 44px;
-    }
-    #administratorsTable th,
-    #administratorsTable td {
-        padding: var(--spacing-sm);
-        font-size: var(--font-size-sm);
-    }
-}
-
-@media (max-width: 480px) {
-    .settings-section {
-        padding: var(--spacing-md);
-    }
-    #administratorsTable th,
-    #administratorsTable td {
-        padding: var(--spacing-xs);
-        font-size: var(--font-size-xs);
     }
 }
 

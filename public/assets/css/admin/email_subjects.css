@@ -520,16 +520,4 @@
         flex-wrap: wrap;
         justify-content: center;
     }
-    .email-subjects-form .form-actions .btn,
-    .btn-new-subject {
-        min-height: 44px;
-    }
-}
-
-@media (max-width: 480px) {
-    .admin-table th,
-    .admin-table td {
-        padding: var(--spacing-xs);
-        font-size: var(--font-size-xs);
-    }
 }

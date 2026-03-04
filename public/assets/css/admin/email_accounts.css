@@ -766,19 +766,6 @@ select.per-page-select {
    RESPONSIVE
    ============================================ */
 @media (max-width: 768px) {
-    .correos-filter-row {
-        flex-direction: column;
-        align-items: stretch;
-        gap: var(--spacing-sm);
-    }
-    .correos-filter-slider {
-        justify-content: center;
-    }
-    .correos-filter-excel .btn-excel {
-        width: 100%;
-        justify-content: center;
-        min-height: 44px;
-    }
     .table-controls {
         flex-direction: column;
         align-items: stretch;
@@ -816,22 +803,9 @@ select.per-page-select {
         flex-wrap: wrap;
         justify-content: center;
     }
-    .admin-table .btn,
-    .btn-edit,
-    .btn-delete,
-    .btn-delete-correo-registrado {
-        min-height: 44px;
-        min-width: 44px;
-        padding: var(--spacing-sm);
-    }
 }
 
 @media (max-width: 480px) {
-    .correos-filter-pill {
-        flex: 1;
-        min-height: 44px;
-        justify-content: center;
-    }
     .admin-table th,
     .admin-table td {
         padding: var(--spacing-xs);
@@ -839,8 +813,8 @@ select.per-page-select {
     }
 
     .pagination-page {
-        min-width: 36px;
-        height: 36px;
+        min-width: 32px;
+        height: 32px;
         font-size: var(--font-size-xs);
     }
 }
