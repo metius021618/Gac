@@ -123,8 +123,8 @@ $content = ob_start();
             <?php endif; ?>
 
             <?php if (function_exists('is_superadmin') && is_superadmin()): ?>
-            <!-- ANÁLISIS (placeholder) -->
-            <a href="#" class="stat-card stat-card-grey stat-card-link stat-card-analysis" title="Análisis">
+            <!-- ANÁLISIS -->
+            <a href="/admin/analysis" class="stat-card stat-card-grey stat-card-link stat-card-analysis" title="Análisis">
                 <div class="stat-card-icon stat-card-icon--analysis">
                     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="20" x2="18" y2="10"></line>

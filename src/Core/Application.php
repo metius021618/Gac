@@ -104,6 +104,7 @@ class Application
         
         // Rutas de Registro de Accesos
         $router->get('/admin/user-activity', 'UserActivityController@index', ['auth']);
+        $router->get('/admin/analysis', 'AnalysisController@index', ['auth']);
         $router->get('/admin/user-activity/export-excel', 'UserActivityController@exportExcel', ['auth']);
         $router->get('/admin/user-access', 'UserAccessController@index', ['auth']);
         $router->get('/admin/user-access/list', 'UserAccessController@list', ['auth']);
