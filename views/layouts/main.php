@@ -89,7 +89,7 @@
         </div>
     </header>
 
-    <!-- Sidebar móvil (desliza desde la derecha) -->
+    <!-- Sidebar móvil (desliza desde la izquierda, ocupa toda la vista) -->
     <?php if (isset($show_nav) && $show_nav): ?>
     <div class="nav-sidebar-overlay" id="navSidebarOverlay" aria-hidden="true"></div>
     <aside class="nav-sidebar" id="navSidebar" aria-label="Menú de navegación">
