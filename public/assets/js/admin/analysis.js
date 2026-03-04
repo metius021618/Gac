@@ -1,9 +1,94 @@
 /**
  * GAC - Vista Análisis (superadmin)
- * Filtros por hover, modal rango de fechas (igual que Actividad de administrador).
+ * Filtros por hover; actualización dinámica del gráfico sin recargar página.
  */
 (function() {
     'use strict';
+
+    var container = document.getElementById('analysisChartContainer');
+    var timeFilterValue = document.getElementById('timeFilterValue');
+
+    function buildChartHtml(platformCounts) {
+        if (!platformCounts || platformCounts.length === 0) {
+            return '<p class="analysis-empty">No hay datos para el rango seleccionado.</p>';
+        }
+        var maxCount = 0;
+        platformCounts.forEach(function(r) { if (r.total > maxCount) maxCount = r.total; });
+        var scaleMax = 50;
+        if (maxCount > 0) scaleMax = Math.max(50, Math.ceil(maxCount / 50) * 50);
+        var scaleTicks = [];
+        for (var v = 50; v <= scaleMax; v += 50) scaleTicks.push(v);
+        var scaleCount = scaleTicks.length;
+
+        var scaleRow = '<div class="analysis-chart-scale-row">' +
+            '<div class="analysis-chart-scale-label"></div>' +
+            '<div class="analysis-chart-scale-ticks" style="--scale-count: ' + scaleCount + '">' +
+            scaleTicks.map(function(t) { return '<span class="analysis-chart-tick">' + t + '</span>'; }).join('') +
+            '</div></div>';
+
+        var rows = platformCounts.map(function(row) {
+            var name = (row.display_name || row.platform_name || '—').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            var total = parseInt(row.total, 10) || 0;
+            var pct = scaleMax > 0 ? Math.min(100, (total / scaleMax) * 100) : 0;
+            var color = row.color || '#0066ff';
+            return '<div class="analysis-chart-row">' +
+                '<div class="analysis-chart-row-label">' + name + '</div>' +
+                '<div class="analysis-chart-row-track">' +
+                '<div class="analysis-chart-bar" style="width: 0%; background-color: ' + color.replace(/"/g, '&quot;') + ';" data-value="' + total + '"></div>' +
+                '<span class="analysis-chart-bar-value">' + total + '</span></div></div>';
+        });
+
+        var chart = '<div class="analysis-chart" role="img" aria-label="Gráfico de barras por plataforma">' + scaleRow + rows.join('') + '</div>';
+        return chart;
+    }
+
+    function animateBars() {
+        var bars = container.querySelectorAll('.analysis-chart-bar');
+        bars.forEach(function(bar) {
+            var targetWidth = bar.getAttribute('data-value');
+            var row = bar.closest('.analysis-chart-row');
+            if (!row) return;
+            var track = row.querySelector('.analysis-chart-row-track');
+            if (!track) return;
+            var scaleMax = 50;
+            var maxVal = 0;
+            container.querySelectorAll('.analysis-chart-bar').forEach(function(b) {
+                var v = parseInt(b.getAttribute('data-value'), 10);
+                if (v > maxVal) maxVal = v;
+            });
+            if (maxVal > 0) scaleMax = Math.max(50, Math.ceil(maxVal / 50) * 50);
+            var pct = scaleMax > 0 ? Math.min(100, (parseInt(targetWidth, 10) / scaleMax) * 100) : 0;
+            bar.style.width = pct + '%';
+        });
+    }
+
+    function fetchAndUpdateChart(params, label) {
+        if (!container) return;
+        var qs = new URLSearchParams(params).toString();
+        var url = '/admin/analysis/data?' + qs;
+        container.style.opacity = '0.6';
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success || !data.platform_counts) {
+                    container.innerHTML = '<p class="analysis-empty">No hay datos para el rango seleccionado.</p>';
+                    container.style.opacity = '1';
+                    return;
+                }
+                container.innerHTML = buildChartHtml(data.platform_counts);
+                container.style.opacity = '1';
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(animateBars);
+                });
+                if (timeFilterValue && label !== undefined) timeFilterValue.textContent = label;
+                var newUrl = '/admin/analysis' + (qs ? '?' + qs : '');
+                if (window.history && window.history.replaceState) window.history.replaceState({}, '', newUrl);
+            })
+            .catch(function() {
+                container.innerHTML = '<p class="analysis-empty">Error al cargar los datos.</p>';
+                container.style.opacity = '1';
+            });
+    }
 
     function scheduleClose(drop) {
         if (drop._closeTimeout) clearTimeout(drop._closeTimeout);
@@ -46,6 +131,30 @@
     });
 
     var timeDrop = document.getElementById('timeFilterDropdown');
+    if (timeDrop) {
+        timeDrop.addEventListener('click', function(e) {
+            var link = e.target.closest('a[href*="admin/analysis"]');
+            if (!link || link.getAttribute('href') === '#') return;
+            e.preventDefault();
+            var href = link.getAttribute('href');
+            var params = {};
+            if (href.indexOf('?') !== -1) {
+                var query = href.split('?')[1] || '';
+                query.split('&').forEach(function(pair) {
+                    var i = pair.indexOf('=');
+                    if (i !== -1) {
+                        var k = decodeURIComponent(pair.slice(0, i));
+                        var v = decodeURIComponent(pair.slice(i + 1));
+                        if (v) params[k] = v;
+                    }
+                });
+            }
+            var label = link.textContent.trim();
+            fetchAndUpdateChart(params, label);
+            if (timeDrop) timeDrop.classList.remove('open');
+        });
+    }
+
     document.addEventListener('click', function(e) {
         if (timeDrop && !timeDrop.contains(e.target)) timeDrop.classList.remove('open');
     });
@@ -82,11 +191,10 @@
             var from = inputFrom.value;
             var to = inputTo.value;
             if (!from || !to) return;
-            var params = new URLSearchParams();
-            params.set('date_from', from);
-            params.set('date_to', to);
-            params.set('time_range', 'custom');
-            window.location.href = '/admin/analysis?' + params.toString();
+            var params = { date_from: from, date_to: to, time_range: 'custom' };
+            fetchAndUpdateChart(params, 'Personalizado');
+            closeModal();
+            if (timeDrop) timeDrop.classList.remove('open');
         });
     }
 })();

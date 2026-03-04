@@ -61,6 +61,39 @@ class AnalysisController
         ]);
     }
 
+    /**
+     * API: datos del gráfico por tiempo (JSON) para actualización dinámica.
+     */
+    public function data(Request $request): void
+    {
+        if (!function_exists('is_superadmin') || !is_superadmin()) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'No autorizado']);
+            return;
+        }
+        $filterDateFrom = trim((string) $request->get('date_from', ''));
+        $filterDateTo = trim((string) $request->get('date_to', ''));
+        $filterTimeRange = trim((string) $request->get('time_range', ''));
+        $dateFrom = null;
+        $dateTo = null;
+        if ($filterTimeRange === '7') {
+            $dateFrom = date('Y-m-d', strtotime('-7 days'));
+            $dateTo = date('Y-m-d');
+        } elseif ($filterTimeRange === '30') {
+            $dateFrom = date('Y-m-d', strtotime('-30 days'));
+            $dateTo = date('Y-m-d');
+        } elseif ($filterTimeRange === '90') {
+            $dateFrom = date('Y-m-d', strtotime('-90 days'));
+            $dateTo = date('Y-m-d');
+        } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $filterDateFrom) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $filterDateTo)) {
+            $dateFrom = $filterDateFrom;
+            $dateTo = $filterDateTo;
+        }
+        $platformCounts = $this->userAccessRepo->getCountByPlatform($dateFrom, $dateTo);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => true, 'platform_counts' => $platformCounts]);
+    }
+
     private function renderView(string $view, array $data = []): void
     {
         extract($data);

@@ -223,11 +223,11 @@ class UserAccessRepository
             }
             $whereClause = 'WHERE ' . implode(' AND ', $where);
             $sql = "
-                SELECT p.name AS platform_name, p.display_name, COUNT(*) AS total
+                SELECT p.name AS platform_name, p.display_name, p.config, COUNT(*) AS total
                 FROM user_access ua
                 JOIN platforms p ON ua.platform_id = p.id
                 {$whereClause}
-                GROUP BY ua.platform_id, p.name, p.display_name
+                GROUP BY ua.platform_id, p.name, p.display_name, p.config
                 ORDER BY total DESC
             ";
             $stmt = $db->prepare($sql);
@@ -237,10 +237,19 @@ class UserAccessRepository
             $stmt->execute();
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return array_map(function ($r) {
+                $config = $r['config'] ?? null;
+                $color = null;
+                if (is_string($config)) {
+                    $dec = json_decode($config, true);
+                    $color = $dec['color'] ?? null;
+                } elseif (is_array($config)) {
+                    $color = $config['color'] ?? null;
+                }
                 return [
                     'platform_name' => $r['platform_name'] ?? '',
                     'display_name' => $r['display_name'] ?? $r['platform_name'] ?? '',
                     'total' => (int) ($r['total'] ?? 0),
+                    'color' => $color ? (is_string($color) ? $color : '#0066ff') : '#0066ff',
                 ];
             }, $rows);
         } catch (PDOException $e) {
