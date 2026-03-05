@@ -10,6 +10,7 @@ namespace Gac\Controllers;
 
 use Gac\Core\Request;
 use Gac\Repositories\AnalisisRepository;
+use Gac\Repositories\PlatformRepository;
 
 class AnalisisController
 {
@@ -21,8 +22,10 @@ class AnalisisController
         }
 
         $repo = new AnalisisRepository();
+        $platformRepo = new PlatformRepository();
         $totalCuentas = $repo->getTotalCuentasKpi();
         $plataformasActivas = $repo->getPlataformasActivasCount();
+        $plataformasActivasList = $platformRepo->findAllEnabled();
         $revendedorDelMes = $repo->getRevendedorDelMes();
         $totalIngresos = $repo->getTotalIngresosKpi();
         $evolucion = $repo->getEvolucionMensual();
@@ -34,6 +37,7 @@ class AnalisisController
             'title' => 'Análisis',
             'total_cuentas' => $totalCuentas,
             'plataformas_activas' => $plataformasActivas,
+            'plataformas_activas_list' => $plataformasActivasList,
             'revendedor_del_mes' => $revendedorDelMes,
             'total_ingresos' => $totalIngresos,
             'evolucion' => $evolucion,

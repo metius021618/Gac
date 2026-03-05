@@ -58,12 +58,16 @@
      background: #243041;
  }
  
- /* KPI Cards */
- .analisis-kpi-card {
-     display: flex;
-     flex-direction: column;
-     gap: 12px;
- }
+/* KPI Cards (altura fija en la primera fila) */
+.analisis-row--kpis .analisis-kpi-card {
+    min-height: 160px;
+}
+
+.analisis-kpi-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
  
  .analisis-kpi-header {
      display: flex;
@@ -113,10 +117,15 @@
      box-sizing: border-box;
  }
  
- .analisis-platform-logo--netflix { background: #E50914; }
- .analisis-platform-logo--disney { background: #1F80E0; }
- .analisis-platform-logo--hbo { background: #8B5CF6; }
- .analisis-platform-logo--spotify { background: #1DB954; }
+.analisis-platform-logo--fallback {
+    background: var(--analisis-divider);
+    color: var(--analisis-text-secondary);
+}
+
+.analisis-platform-logo--netflix { background: #E50914; }
+.analisis-platform-logo--disney { background: #1F80E0; }
+.analisis-platform-logo--hbo { background: #8B5CF6; }
+.analisis-platform-logo--spotify { background: #1DB954; }
  
  .analisis-kpi-value {
      font-size: 1.75rem;
@@ -255,39 +264,53 @@
  .analisis-chart-title-icon--users { color: #F59E0B; }
  .analisis-chart-title-icon--heatmap { color: var(--analisis-accent); }
  
- /* Logos encima del bar chart Ventas por Plataforma */
- .analisis-bar-chart-logos {
-     display: flex;
-     justify-content: space-around;
-     gap: 8px;
-     margin-bottom: 12px;
-     padding: 0 8px;
- }
- 
- .analisis-bar-logo {
-     width: 32px;
-     height: 32px;
-     border-radius: 50%;
-     display: inline-flex;
-     align-items: center;
-     justify-content: center;
-     font-size: 0.75rem;
-     font-weight: 700;
-     color: #fff;
-     flex: 1;
-     max-width: 48px;
- }
- 
- .analisis-bar-logo--img {
-     object-fit: contain;
-     padding: 2px;
-     box-sizing: border-box;
- }
- 
- .analisis-bar-logo--netflix { background: #E50914; }
- .analisis-bar-logo--disney { background: #1F80E0; }
- .analisis-bar-logo--hbo { background: #8B5CF6; }
- .analisis-bar-logo--spotify { background: #1DB954; }
+/* Ventas por Plataforma: logos encima de cada barra (grid alineado) */
+.analisis-bar-chart-with-logos {
+    width: 100%;
+}
+
+.analisis-bar-chart-logos-row {
+    display: grid;
+    grid-template-columns: repeat(var(--analisis-bar-cols, 4), 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 0 4px;
+    justify-items: center;
+}
+
+.analisis-bar-chart-logo-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.analisis-bar-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fff;
+    object-fit: contain;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.analisis-bar-logo--img {
+    background: rgba(30, 41, 59, 0.8);
+}
+
+.analisis-bar-logo--fallback {
+    background: var(--analisis-divider);
+}
+
+.analisis-bar-logo--netflix { background: #E50914; }
+.analisis-bar-logo--disney { background: #1F80E0; }
+.analisis-bar-logo--hbo { background: #8B5CF6; }
+.analisis-bar-logo--spotify { background: #1DB954; }
  
  .analisis-chart-wrap {
      width: 100%;
@@ -381,19 +404,22 @@
      min-width: 0;
  }
  
- .analisis-ranking-bar-wrap {
-     flex: 1;
-     min-width: 0;
-     height: 25px;
-     border-radius: 5px;
-     background: var(--analisis-divider);
-     overflow: hidden;
- }
- 
- .analisis-ranking-bar {
-     height: 100%;
-     border-radius: 4px;
-     min-width: 4%;
+/* Solo barra de color, sin track/límite gris */
+.analisis-ranking-bar-wrap {
+    flex: 1;
+    min-width: 0;
+    height: 22px;
+    border-radius: 11px;
+    background: transparent;
+    overflow: visible;
+    display: flex;
+    align-items: center;
+}
+
+.analisis-ranking-bar {
+    height: 100%;
+    border-radius: 11px;
+    min-width: 4%;
      transition: width 0.3s ease;
  }
  
@@ -430,18 +456,24 @@
      background: rgba(0, 0, 0, 0.2);
  }
  
- .analisis-heatmap-th-with-logo {
-     display: flex;
-     flex-direction: column;
-     align-items: center;
-     gap: 6px;
- }
- 
- .analisis-heatmap-th-name {
-     font-size: 0.75rem;
-     font-weight: 600;
-     color: var(--analisis-text-secondary);
- }
+.analisis-heatmap-th-with-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.analisis-heatmap-th-name-only {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--analisis-text-secondary);
+}
+
+.analisis-heatmap-th-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--analisis-text-secondary);
+}
  
  .analisis-heatmap-th-logo {
      width: 28px;
