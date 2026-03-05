@@ -12,6 +12,26 @@ $evolucion = $evolucion ?? ['labels' => [], 'values' => []];
 $ventas_por_plataforma = $ventas_por_plataforma ?? [];
 $ranking_revendedores = $ranking_revendedores ?? [];
 $heatmap = $heatmap ?? ['revendedores' => [], 'plataformas' => [], 'matrix' => []];
+$filter_date_from = $filter_date_from ?? '';
+$filter_date_to = $filter_date_to ?? '';
+$filter_time_range = $filter_time_range ?? '';
+$filter_platform_id = $filter_platform_id ?? '';
+$filter_revendedor = $filter_revendedor ?? '';
+$time_range_label = $time_range_label ?? 'Todo';
+$platforms_for_filter = $platforms_for_filter ?? [];
+$revendedores_for_filter = $revendedores_for_filter ?? [];
+$baseUrlAnalisis = '/admin/analisis';
+$analisisQueryParams = function ($overrides = []) use ($baseUrlAnalisis, $filter_date_from, $filter_date_to, $filter_time_range, $filter_platform_id, $filter_revendedor) {
+    $p = array_merge([
+        'date_from' => $filter_date_from,
+        'date_to' => $filter_date_to,
+        'time_range' => $filter_time_range,
+        'platform_id' => $filter_platform_id,
+        'revendedor' => $filter_revendedor,
+    ], $overrides);
+    $p = array_filter($p, function ($v) { return $v !== '' && $v !== null; });
+    return $baseUrlAnalisis . ($p ? '?' . http_build_query($p) : '');
+};
 
 $imagenes_plataformas_base = '/assets/imagenes/';
 $imagenes_plataformas = [
@@ -49,6 +69,41 @@ $plat_img = function ($key) use ($imagenes_plataformas_base, $imagenes_plataform
 
 $content = ob_start();
 ?>
+<div class="analisis-filters-bar">
+    <div class="analisis-filters-inner">
+        <div class="analisis-filter-dropdown" data-filter="fecha" id="analisisTimeFilterDropdown">
+            <span class="analisis-filter-label">Fecha</span><span class="analisis-filter-sep"> - </span><span class="analisis-filter-value" id="analisisTimeFilterValue"><?= htmlspecialchars($time_range_label) ?></span>
+            <ul class="analisis-filter-menu">
+                <li><a href="<?= $analisisQueryParams(['date_from' => '', 'date_to' => '', 'time_range' => '']) ?>">Todo</a></li>
+                <li><a href="<?= $analisisQueryParams(['date_from' => date('Y-m-d', strtotime('-7 days')), 'date_to' => date('Y-m-d'), 'time_range' => '7']) ?>">Últimos 7 días</a></li>
+                <li><a href="<?= $analisisQueryParams(['date_from' => date('Y-m-d', strtotime('-30 days')), 'date_to' => date('Y-m-d'), 'time_range' => '30']) ?>">Últimos 30 días</a></li>
+                <li><a href="<?= $analisisQueryParams(['date_from' => date('Y-m-d', strtotime('-90 days')), 'date_to' => date('Y-m-d'), 'time_range' => '90']) ?>">Últimos 90 días</a></li>
+                <li><a href="#" id="analisisTimeFilterCustom" class="analisis-filter-custom-link">Personalizado</a></li>
+            </ul>
+        </div>
+        <div class="analisis-filter-dropdown" data-filter="plataforma">
+            <span class="analisis-filter-label">Plataforma</span><span class="analisis-filter-sep"> - </span><span class="analisis-filter-value"><?php
+$plat_label = 'Todas';
+if ($filter_platform_id) { foreach ($platforms_for_filter as $pp) { if ((int)$pp['id'] === (int)$filter_platform_id) { $plat_label = $pp['display_name']; break; } } }
+?><?= htmlspecialchars($plat_label) ?></span>
+            <ul class="analisis-filter-menu">
+                <li><a href="<?= $analisisQueryParams(['platform_id' => '']) ?>">Todas</a></li>
+                <?php foreach ($platforms_for_filter as $p): ?>
+                <li><a href="<?= $analisisQueryParams(['platform_id' => $p['id']]) ?>"><?= htmlspecialchars($p['display_name']) ?></a></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+        <div class="analisis-filter-dropdown" data-filter="revendedor">
+            <span class="analisis-filter-label">Revendedor</span><span class="analisis-filter-sep"> - </span><span class="analisis-filter-value"><?= $filter_revendedor ? htmlspecialchars($filter_revendedor) : 'Todos' ?></span>
+            <ul class="analisis-filter-menu">
+                <li><a href="<?= $analisisQueryParams(['revendedor' => '']) ?>">Todos</a></li>
+                <?php foreach ($revendedores_for_filter as $u): ?>
+                <li><a href="<?= $analisisQueryParams(['revendedor' => $u]) ?>"><?= htmlspecialchars($u) ?></a></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    </div>
+</div>
 <div class="analisis-page">
     <div class="analisis-grid">
         <!-- Fila 1: 4 KPI Cards -->
@@ -64,7 +119,7 @@ $content = ob_start();
                     <div class="analisis-kpi-value"><?= number_format($total_cuentas['total']) ?></div>
                     <div class="analisis-kpi-meta">
                         <?php if ($total_cuentas['crecimiento'] != 0): ?><span class="analisis-kpi-growth analisis-kpi-growth--up"><svg class="analisis-growth-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>+<?= number_format($total_cuentas['crecimiento'], 1) ?>%</span><?php endif; ?>
-                        <span class="analisis-kpi-sub">Cuentas asignadas</span>
+                        <span class="analisis-kpi-sub">Total histórico</span>
                     </div>
                 </div>
             </div>
@@ -215,7 +270,7 @@ $content = ob_start();
                         <table class="analisis-heatmap-table">
                             <thead>
                                 <tr>
-                                    <th id="BLANCO"></th>
+                                    <th class="blanco"></th>
                                     <?php foreach ($heatmap['plataformas'] as $plat): ?>
                                     <th class="analisis-heatmap-th-name-only"><?= htmlspecialchars($plat) ?></th>
                                     <?php endforeach; ?>
@@ -249,6 +304,35 @@ $content = ob_start();
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal rango de fechas (Análisis) -->
+<div id="analisisDateRangeModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-overlay"></div>
+    <div class="modal-container activity-date-range-modal">
+        <div class="modal-header activity-date-range-modal-header">
+            <h2 class="modal-title">Selecciona un rango de tiempo</h2>
+            <button type="button" class="modal-close modal-close--large" id="closeAnalisisDateModal" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-content activity-date-range-fields">
+            <div class="activity-date-field-group">
+                <label class="activity-date-label">Hora de inicio</label>
+                <div class="activity-date-input-wrap">
+                    <input type="date" id="analisisDateFrom" class="form-input activity-date-input">
+                </div>
+            </div>
+            <span class="activity-date-sep">a</span>
+            <div class="activity-date-field-group">
+                <label class="activity-date-label">Hora de finalización</label>
+                <div class="activity-date-input-wrap">
+                    <input type="date" id="analisisDateTo" class="form-input activity-date-input">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer activity-date-range-footer">
+            <button type="button" class="btn btn-activity-date-continue" id="analisisDateRangeApply">Continuar</button>
         </div>
     </div>
 </div>
