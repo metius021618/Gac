@@ -4,97 +4,7 @@
  */
  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
 
- /* Banner modo demostración */
-.analisis-demo-banner {
-    width: 80%;
-    max-width: 80%;
-    margin: 0 auto;
-    padding: 10px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    background: rgba(245, 208, 0, 0.15);
-    border: 1px solid rgba(245, 208, 0, 0.4);
-    border-radius: 10px;
-    font-family: 'Inter', 'Poppins', sans-serif;
-}
-.analisis-demo-banner-text {
-    color: #F8FAFC;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-.analisis-demo-banner-link {
-    color: #F5D000;
-    font-weight: 600;
-    text-decoration: none;
-    font-size: 0.875rem;
-}
-.analisis-demo-banner-link:hover {
-    text-decoration: underline;
-}
-
-/* Barra de filtros (arriba a la derecha, fuera del div de contenido) */
-.analisis-filters-bar {
-    width: 80%;
-    max-width: 80%;
-    margin: 0 auto;
-    padding: 12px 24px 8px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-.analisis-filters-inner {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-.analisis-filter-dropdown {
-    position: relative;
-    padding: 8px 14px;
-    background: rgba(30, 41, 59, 0.9);
-    border: 1px solid #2D3748;
-    border-radius: 8px;
-    cursor: default;
-    color: #F8FAFC;
-}
-.analisis-filter-dropdown:hover,
-.analisis-filter-dropdown.open {
-    background: #243041;
-    border-color: #38BDF8;
-}
-.analisis-filter-label { font-size: 0.8rem; color: #94A3B8; }
-.analisis-filter-sep { color: #94A3B8; margin: 0 4px; font-size: 0.8rem; }
-.analisis-filter-value { font-weight: 500; color: #F8FAFC; }
-.analisis-filter-menu {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 0;
-    margin-top: 4px;
-    min-width: 180px;
-    padding: 6px 0;
-    background: #1E293B;
-    border: 1px solid #2D3748;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-    list-style: none;
-    z-index: 100;
-}
-.analisis-filter-dropdown.open .analisis-filter-menu { display: block; }
-.analisis-filter-menu a {
-    display: block;
-    padding: 8px 14px;
-    color: #F8FAFC;
-    text-decoration: none;
-    font-size: 0.875rem;
-}
-.analisis-filter-menu a:hover { background: rgba(56, 189, 248, 0.2); color: #38BDF8; }
-.analisis-filter-custom-link { cursor: pointer; }
-
-.analisis-page {
+ .analisis-page {
      --analisis-bg-start: #0F172A;
      --analisis-bg-mid: #111827;
      --analisis-bg-end: #0B1220;
@@ -512,10 +422,6 @@
      font-weight: 600;
      background: rgba(0, 0, 0, 0.2);
  }
-.analisis-heatmap-table thead th.blanco {
-     background: transparent;
-     border: none;
- }
  
 .analisis-heatmap-th-with-logo {
     display: flex;
@@ -590,113 +496,6 @@
  .analisis-heatmap--veryhigh {
      background: #A855F7;
  }
-
-/* Modal rango fechas (Análisis) - mismo diseño que actividad */
-.modal.hidden { display: none !important; }
-#analisisDateRangeModal.modal {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    background: rgba(0,0,0,0.5);
-}
-#analisisDateRangeModal .modal-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(4px);
-}
-#analisisDateRangeModal .modal-container {
-    position: relative;
-    max-width: 480px;
-    background: #1E293B;
-    border: 1px solid #2D3748;
-    border-radius: 14px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    z-index: 2;
-}
-#analisisDateRangeModal .modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 24px;
-    border-bottom: none;
-}
-#analisisDateRangeModal .modal-title {
-    flex: 1;
-    text-align: center;
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #F8FAFC;
-    margin: 0;
-}
-#analisisDateRangeModal .modal-close--large {
-    font-size: 1.75rem;
-    width: 2rem;
-    height: 2rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    color: #94A3B8;
-    cursor: pointer;
-    line-height: 1;
-}
-#analisisDateRangeModal .activity-date-range-fields {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    padding: 20px 24px;
-}
-#analisisDateRangeModal .activity-date-field-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-#analisisDateRangeModal .activity-date-label {
-    font-size: 0.875rem;
-    color: #94A3B8;
-    font-weight: 500;
-}
-#analisisDateRangeModal .activity-date-input {
-    padding: 8px 12px;
-    border: 1px solid #2D3748;
-    border-radius: 8px;
-    background: rgba(15,23,42,0.8);
-    color: #F8FAFC;
-    font-size: 0.875rem;
-    min-width: 140px;
-}
-#analisisDateRangeModal .activity-date-sep {
-    color: #94A3B8;
-    font-size: 1rem;
-}
-#analisisDateRangeModal .activity-date-range-footer {
-    padding: 16px 24px 20px;
-    display: flex;
-    justify-content: center;
-    border-top: none;
-}
-#analisisDateRangeModal .btn-activity-date-continue {
-    padding: 10px 28px;
-    font-size: 1rem;
-    font-weight: 600;
-    background: #F5D000;
-    color: #1a1a1a;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-#analisisDateRangeModal .btn-activity-date-continue:hover {
-    background: #e6c200;
-}
  
  @media (max-width: 1200px) {
      .analisis-row--kpis .analisis-col-3 { grid-column: span 6; }
@@ -704,10 +503,7 @@
  }
  
  @media (max-width: 768px) {
-     .analisis-demo-banner { width: 100%; max-width: 100%; flex-wrap: wrap; padding: 8px 16px; }
-     .analisis-filters-bar { width: 100%; max-width: 100%; padding: 8px 16px; justify-content: center; }
-     .analisis-filters-inner { justify-content: center; }
-     .analisis-page { padding: 16px; width: 100%; max-width: 100%; }
+     .analisis-page { padding: 16px; }
      .analisis-row--kpis .analisis-col-3 { grid-column: span 12; }
      .analisis-kpi-value { font-size: 1.5rem; }
  }

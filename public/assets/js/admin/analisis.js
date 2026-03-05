@@ -61,7 +61,7 @@
                     },
                     y: {
                         min: 0,
-                        max: Math.max(100, (values.length ? Math.max.apply(null, values) : 0) + 50),
+                        max: 3000,
                         grid: { color: '#334155', drawBorder: false },
                         ticks: { color: '#94A3B8' }
                     }
@@ -146,91 +146,6 @@
     function init() {
         initEvolucionChart();
         initPlataformasChart();
-        initAnalisisFilters();
-    }
-
-    function initAnalisisFilters() {
-        var dropdowns = document.querySelectorAll('.analisis-filter-dropdown');
-        var closeTimeout;
-        function scheduleClose(drop) {
-            if (closeTimeout) clearTimeout(closeTimeout);
-            closeTimeout = setTimeout(function () {
-                drop.classList.remove('open');
-            }, 120);
-        }
-        function cancelClose() {
-            if (closeTimeout) { clearTimeout(closeTimeout); closeTimeout = null; }
-        }
-        dropdowns.forEach(function (drop) {
-            if (drop.id === 'analisisTimeFilterDropdown') return;
-            drop.addEventListener('mouseenter', function () {
-                cancelClose();
-                this.classList.add('open');
-            });
-            drop.addEventListener('mouseleave', function () {
-                scheduleClose(this);
-            });
-            var menu = drop.querySelector('.analisis-filter-menu');
-            if (menu) {
-                menu.addEventListener('mouseenter', function () { cancelClose(); drop.classList.add('open'); });
-                menu.addEventListener('mouseleave', function () { scheduleClose(drop); });
-            }
-        });
-        var timeDrop = document.getElementById('analisisTimeFilterDropdown');
-        if (timeDrop) {
-            timeDrop.addEventListener('mouseenter', function () { cancelClose(); this.classList.add('open'); });
-            timeDrop.addEventListener('mouseleave', function () { scheduleClose(this); });
-            var timeMenu = timeDrop.querySelector('.analisis-filter-menu');
-            if (timeMenu) {
-                timeMenu.addEventListener('mouseenter', function () { cancelClose(); timeDrop.classList.add('open'); });
-                timeMenu.addEventListener('mouseleave', function () { scheduleClose(timeDrop); });
-            }
-        }
-        document.addEventListener('click', function (e) {
-            if (timeDrop && !timeDrop.contains(e.target)) timeDrop.classList.remove('open');
-        });
-
-        var customLink = document.getElementById('analisisTimeFilterCustom');
-        var modal = document.getElementById('analisisDateRangeModal');
-        var closeBtn = document.getElementById('closeAnalisisDateModal');
-        var overlay = modal && modal.querySelector('.modal-overlay');
-        var applyBtn = document.getElementById('analisisDateRangeApply');
-        var inputFrom = document.getElementById('analisisDateFrom');
-        var inputTo = document.getElementById('analisisDateTo');
-
-        if (customLink) {
-            customLink.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (timeDrop) timeDrop.classList.remove('open');
-                if (modal) modal.classList.remove('hidden');
-                var today = new Date().toISOString().slice(0, 10);
-                var from = new Date();
-                from.setDate(from.getDate() - 30);
-                var defaultFrom = from.toISOString().slice(0, 10);
-                if (inputFrom) inputFrom.value = defaultFrom;
-                if (inputTo) inputTo.value = today;
-            });
-        }
-        function closeModal() {
-            if (modal) modal.classList.add('hidden');
-        }
-        if (closeBtn) closeBtn.addEventListener('click', closeModal);
-        if (overlay) overlay.addEventListener('click', closeModal);
-        if (applyBtn && inputFrom && inputTo) {
-            applyBtn.addEventListener('click', function () {
-                var from = inputFrom.value;
-                var to = inputTo.value;
-                if (!from || !to) return;
-                var params = new URLSearchParams(window.location.search);
-                params.set('date_from', from);
-                params.set('date_to', to);
-                params.set('time_range', 'custom');
-                params.set('platform_id', params.get('platform_id') || '');
-                params.set('revendedor', params.get('revendedor') || '');
-                window.location.href = '/admin/analisis?' + params.toString();
-            });
-        }
     }
 
     if (document.readyState === 'loading') {
