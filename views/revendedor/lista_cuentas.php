@@ -7,23 +7,29 @@
 $content = ob_start();
 ?>
 
-<div class="revendedor-container">
-    <div class="revendedor-header">
-        <h1 class="revendedor-title">Lista de cuentas</h1>
-        <p class="revendedor-subtitle">
+<div class="admin-container">
+    <div class="admin-header">
+        <h1 class="admin-title">Lista de cuentas</h1>
+        <p class="admin-subtitle">
             Solo se muestran las cuentas que se te han asignado (vendidas) como revendedor.
         </p>
     </div>
 
-    <div class="revendedor-search">
-        <input type="text"
-               id="revendedorSearch"
-               class="revendedor-search-input"
-               placeholder="Buscar por correo...">
-    </div>
+    <div class="admin-content">
+        <div class="table-controls">
+            <div class="search-input-wrapper">
+                <span class="search-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </span>
+                <input type="text"
+                       id="revendedorSearch"
+                       class="search-input"
+                       placeholder="Buscar por correo...">
+            </div>
+        </div>
 
-    <div class="revendedor-table-wrapper">
-        <table class="revendedor-table" id="revendedorAccountsTable">
+        <div class="table-container">
+        <table class="admin-table" id="revendedorAccountsTable">
             <thead>
                 <tr>
                     <th>Correo</th>
@@ -88,6 +94,7 @@ $content = ob_start();
                 <?php endif; ?>
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 
@@ -100,7 +107,7 @@ $hide_main_nav_links = true;
 $show_footer = true;
 $footer_text = '';
 $footer_whatsapp = false;
-$additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/revendedor.css'];
+$additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/email_accounts.css', '/assets/css/admin/revendedor.css'];
 $additional_js = ['/assets/js/revendedor.js'];
 
 require base_path('views/layouts/main.php');
