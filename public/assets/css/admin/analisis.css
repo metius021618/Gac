@@ -2,504 +2,505 @@
  * GAC - Análisis Dashboard (corporativo premium, dark mode, 12 columnas)
  * Fondo gradiente #0F172A → #111827 → #0B1220. Cards #1E293B, borde #2D3748.
  */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
-
-.analisis-page {
-    --analisis-bg-start: #0F172A;
-    --analisis-bg-mid: #111827;
-    --analisis-bg-end: #0B1220;
-    --analisis-card-bg: #1E293B;
-    --analisis-card-border: #2D3748;
-    --analisis-text: #F8FAFC;
-    --analisis-text-secondary: #94A3B8;
-    --analisis-divider: #334155;
-    --analisis-accent: #38BDF8;
-    --analisis-success: #22C55E;
-    --analisis-cyan: #22D3EE;
-    width: 80%;
-    max-width: 80%;
-    margin: 0 auto;
-    min-height: 100vh;
-    background: linear-gradient(180deg, var(--analisis-bg-start) 0%, var(--analisis-bg-mid) 45%, var(--analisis-bg-end) 100%);
-    padding: 24px;
-    font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-.analisis-grid {
-    max-width: 1920px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 20px;
-}
-
-.analisis-row {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 20px;
-}
-
-.analisis-row--kpis .analisis-col-3 { grid-column: span 3; }
-.analisis-row--three .analisis-col-4 { grid-column: span 4; }
-.analisis-col-12 { grid-column: span 12; }
-
-/* Cards base */
-.analisis-card {
-    background: var(--analisis-card-bg);
-    border: 1px solid var(--analisis-card-border);
-    border-radius: 14px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-    padding: 24px;
-    transition: background 0.3s ease;
-}
-
-.analisis-card:hover {
-    background: #243041;
-}
-
-/* KPI Cards */
-.analisis-kpi-card {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.analisis-kpi-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.analisis-kpi-label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--analisis-text-secondary);
-}
-
-.analisis-kpi-icon {
-    color: var(--analisis-accent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.analisis-kpi-icon svg {
-    width: 24px;
-    height: 24px;
-}
-
-.analisis-kpi-icon--spotify { color: #1DB954; }
-.analisis-kpi-icon--crown { color: #EAB308; }
-.analisis-kpi-icon--bank { color: var(--analisis-accent); }
-
-/* Logos plataformas (card Plataformas Activas): circulares, glass o imagen */
-.analisis-platform-logo {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    backdrop-filter: blur(8px);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: #fff;
-}
-
-.analisis-platform-logo--img {
-    object-fit: contain;
-    padding: 4px;
-    box-sizing: border-box;
-}
-
-.analisis-platform-logo--netflix { background: #E50914; }
-.analisis-platform-logo--disney { background: #1F80E0; }
-.analisis-platform-logo--hbo { background: #8B5CF6; }
-.analisis-platform-logo--spotify { background: #1DB954; }
-
-.analisis-kpi-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #FFFFFF;
-    line-height: 1.2;
-}
-
-.analisis-kpi-value--accent {
-    color: var(--analisis-accent);
-}
-
-.analisis-kpi-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.analisis-kpi-growth {
-    font-size: 0.875rem;
-    font-weight: 600;
-}
-
-.analisis-kpi-growth--up {
-    color: var(--analisis-success);
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.analisis-growth-arrow {
-    flex-shrink: 0;
-    color: var(--analisis-success);
-}
-
-.analisis-kpi-sub {
-    font-size: 0.8125rem;
-    color: var(--analisis-text-secondary);
-}
-
-/* Plataformas activas: iconos */
-.analisis-platform-icons {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.analisis-platform-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--analisis-text-secondary);
-}
-
-/* Revendedor del mes */
-.analisis-kpi-card--revendedor .analisis-revendedor-block {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.analisis-revendedor-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.analisis-revendedor-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.analisis-revendedor-nombre {
-    font-weight: 600;
-    color: var(--analisis-text);
-    font-size: 0.9375rem;
-}
-
-.analisis-revendedor-cuentas {
-    font-size: 0.8125rem;
-    color: var(--analisis-text-secondary);
-}
-
-.analisis-progress-bar {
-    height: 6px;
-    border-radius: 3px;
-    background: var(--analisis-divider);
-    overflow: hidden;
-}
-
-.analisis-progress-fill {
-    height: 100%;
-    border-radius: 3px;
-    background: linear-gradient(90deg, #F43F5E, #A855F7);
-    transition: width 0.3s ease;
-}
-
-/* Chart cards */
-.analisis-chart-card {
-    height: 100%;
-    min-height: 320px;
-}
-
-.analisis-card-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--analisis-text);
-    margin: 0 0 20px 0;
-}
-
-.analisis-chart-title-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.analisis-chart-title-icon--line { color: var(--analisis-cyan); }
-.analisis-chart-title-icon--bar { color: #E50914; }
-.analisis-chart-title-icon--users { color: #F59E0B; }
-.analisis-chart-title-icon--heatmap { color: var(--analisis-accent); }
-
-/* Logos encima del bar chart Ventas por Plataforma */
-.analisis-bar-chart-logos {
-    display: flex;
-    justify-content: space-around;
-    gap: 8px;
-    margin-bottom: 12px;
-    padding: 0 8px;
-}
-
-.analisis-bar-logo {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #fff;
-    flex: 1;
-    max-width: 48px;
-}
-
-.analisis-bar-logo--img {
-    object-fit: contain;
-    padding: 2px;
-    box-sizing: border-box;
-}
-
-.analisis-bar-logo--netflix { background: #E50914; }
-.analisis-bar-logo--disney { background: #1F80E0; }
-.analisis-bar-logo--hbo { background: #8B5CF6; }
-.analisis-bar-logo--spotify { background: #1DB954; }
-
-.analisis-chart-wrap {
-    width: 100%;
-    position: relative;
-}
-
-.analisis-chart-wrap--line {
-    min-height: 300px;
-    position: relative;
-}
-
-.analisis-evolucion-badge {
-    position: absolute;
-    right: 24px;
-    top: 16px;
-    background: var(--analisis-cyan);
-    color: #0F172A;
-    font-size: 0.9375rem;
-    font-weight: 700;
-    padding: 6px 12px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(34, 211, 238, 0.35);
-}
-
-.analisis-chart-wrap--bar {
-    min-height: 280px;
-}
-
-/* Ranking lista (igual a imagen referencia: rank | avatar | nombre | barra recta | número a la derecha) */
-.analisis-ranking-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.analisis-ranking-item {
-    display: grid;
-    grid-template-columns: 28px 32px minmax(80px, 1fr) minmax(120px, 2fr) auto;
-    align-items: center;
-    gap: 10px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
-}
-
-.analisis-ranking-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-/* Colores del número de posición: 1 dorado, 2 cobre, 3 plata, 4-6 gris */
-.analisis-ranking-rank {
-    font-weight: 700;
-    font-size: 0.9375rem;
-}
-
-.analisis-rank--gold {
-    color: #EAB308;
-}
-
-.analisis-rank--copper {
-    color: #D97706;
-}
-
-.analisis-rank--silver {
-    color: #94A3B8;
-}
-
-.analisis-rank--grey {
-    color: #64748B;
-}
-
-.analisis-ranking-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.analisis-ranking-nombre {
-    font-size: 0.875rem;
-    color: var(--analisis-text);
-    font-weight: 500;
-}
-
-/* Celda que contiene barra + número a la derecha */
-.analisis-ranking-bar-cell {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-}
-
-.analisis-ranking-bar-wrap {
-    flex: 1;
-    min-width: 0;
-    height: 22px;
-    border-radius: 11px;
-    background: var(--analisis-divider);
-    overflow: hidden;
-}
-
-.analisis-ranking-bar {
-    height: 100%;
-    border-radius: 11px;
-    min-width: 4%;
-    transition: width 0.3s ease;
-}
-
-.analisis-ranking-total {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--analisis-text);
-    flex-shrink: 0;
-    min-width: 2.5em;
-    text-align: right;
-}
-
-/* Heatmap */
-.analisis-heatmap-wrap {
-    overflow-x: auto;
-}
-
-.analisis-heatmap-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.8125rem;
-}
-
-.analisis-heatmap-table th,
-.analisis-heatmap-table td {
-    padding: 10px 12px;
-    text-align: center;
-    border: 1px solid var(--analisis-divider);
-}
-
-.analisis-heatmap-table thead th {
-    color: var(--analisis-text-secondary);
-    font-weight: 600;
-    background: rgba(0, 0, 0, 0.2);
-}
-
-.analisis-heatmap-th-with-logo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-}
-
-.analisis-heatmap-th-name {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--analisis-text-secondary);
-}
-
-.analisis-heatmap-th-logo {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #fff;
-}
-
-.analisis-heatmap-th-logo--img {
-    object-fit: contain;
-    display: block;
-    margin: 0 auto;
-}
-
-.analisis-heatmap-th-logo--netflix { background: #E50914; }
-.analisis-heatmap-th-logo--disney { background: #1F80E0; }
-.analisis-heatmap-th-logo--hbo { background: #8B5CF6; }
-.analisis-heatmap-th-logo--spotify { background: #1DB954; }
-
-.analisis-heatmap-rev {
-    text-align: left !important;
-    color: var(--analisis-text-secondary);
-    font-weight: 500;
-}
-
-.analisis-heatmap-cell {
-    color: #FFFFFF;
-    font-weight: 500;
-}
-
-.analisis-heatmap--low {
-    background: #1E293B;
-}
-
-.analisis-heatmap--mid {
-    background: #334155;
-}
-
-.analisis-heatmap--high {
-    background: #F43F5E;
-}
-
-.analisis-heatmap--veryhigh {
-    background: #A855F7;
-}
-
-@media (max-width: 1200px) {
-    .analisis-row--kpis .analisis-col-3 { grid-column: span 6; }
-    .analisis-row--three .analisis-col-4 { grid-column: span 12; }
-}
-
-@media (max-width: 768px) {
-    .analisis-page { padding: 16px; }
-    .analisis-row--kpis .analisis-col-3 { grid-column: span 12; }
-    .analisis-kpi-value { font-size: 1.5rem; }
-}
+ @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+
+ .analisis-page {
+     --analisis-bg-start: #0F172A;
+     --analisis-bg-mid: #111827;
+     --analisis-bg-end: #0B1220;
+     --analisis-card-bg: #1E293B;
+     --analisis-card-border: #2D3748;
+     --analisis-text: #F8FAFC;
+     --analisis-text-secondary: #94A3B8;
+     --analisis-divider: #334155;
+     --analisis-accent: #38BDF8;
+     --analisis-success: #22C55E;
+     --analisis-cyan: #22D3EE;
+     width: 80%;
+     max-width: 80%;
+     margin: 0 auto;
+     min-height: 100vh;
+     background: linear-gradient(180deg, var(--analisis-bg-start) 0%, var(--analisis-bg-mid) 45%, var(--analisis-bg-end) 100%);
+     padding: 24px;
+     font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+ }
+ 
+ .analisis-grid {
+     max-width: 1920px;
+     margin: 0 auto;
+     display: grid;
+     grid-template-columns: repeat(12, 1fr);
+     gap: 20px;
+ }
+ 
+ .analisis-row {
+     grid-column: 1 / -1;
+     display: grid;
+     grid-template-columns: repeat(12, 1fr);
+     gap: 20px;
+ }
+ 
+ .analisis-row--kpis .analisis-col-3 { grid-column: span 3; }
+ .analisis-row--three .analisis-col-4 { grid-column: span 4; }
+ .analisis-col-12 { grid-column: span 12; }
+ 
+ /* Cards base */
+ .analisis-card {
+     background: var(--analisis-card-bg);
+     border: 1px solid var(--analisis-card-border);
+     border-radius: 14px;
+     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+     padding: 24px;
+     transition: background 0.3s ease;
+ }
+ 
+ .analisis-card:hover {
+     background: #243041;
+ }
+ 
+ /* KPI Cards */
+ .analisis-kpi-card {
+     display: flex;
+     flex-direction: column;
+     gap: 12px;
+ }
+ 
+ .analisis-kpi-header {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+ }
+ 
+ .analisis-kpi-label {
+     font-size: 0.875rem;
+     font-weight: 500;
+     color: var(--analisis-text-secondary);
+ }
+ 
+ .analisis-kpi-icon {
+     color: var(--analisis-accent);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+ }
+ 
+ .analisis-kpi-icon svg {
+     width: 24px;
+     height: 24px;
+ }
+ 
+ .analisis-kpi-icon--spotify { color: #1DB954; }
+ .analisis-kpi-icon--crown { color: #EAB308; }
+ .analisis-kpi-icon--bank { color: var(--analisis-accent); }
+ 
+ /* Logos plataformas (card Plataformas Activas): circulares, glass o imagen */
+ .analisis-platform-logo {
+     width: 36px;
+     height: 36px;
+     border-radius: 50%;
+     backdrop-filter: blur(8px);
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     font-size: 0.875rem;
+     font-weight: 700;
+     color: #fff;
+ }
+ 
+ .analisis-platform-logo--img {
+     object-fit: contain;
+     padding: 4px;
+     box-sizing: border-box;
+ }
+ 
+ .analisis-platform-logo--netflix { background: #E50914; }
+ .analisis-platform-logo--disney { background: #1F80E0; }
+ .analisis-platform-logo--hbo { background: #8B5CF6; }
+ .analisis-platform-logo--spotify { background: #1DB954; }
+ 
+ .analisis-kpi-value {
+     font-size: 1.75rem;
+     font-weight: 700;
+     color: #FFFFFF;
+     line-height: 1.2;
+ }
+ 
+ .analisis-kpi-value--accent {
+     color: var(--analisis-accent);
+ }
+ 
+ .analisis-kpi-meta {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     flex-wrap: wrap;
+ }
+ 
+ .analisis-kpi-growth {
+     font-size: 0.875rem;
+     font-weight: 600;
+ }
+ 
+ .analisis-kpi-growth--up {
+     color: var(--analisis-success);
+     display: inline-flex;
+     align-items: center;
+     gap: 4px;
+ }
+ 
+ .analisis-growth-arrow {
+     flex-shrink: 0;
+     color: var(--analisis-success);
+ }
+ 
+ .analisis-kpi-sub {
+     font-size: 0.8125rem;
+     color: var(--analisis-text-secondary);
+ }
+ 
+ /* Plataformas activas: iconos */
+ .analisis-platform-icons {
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     flex-wrap: wrap;
+ }
+ 
+ .analisis-platform-icon {
+     width: 32px;
+     height: 32px;
+     border-radius: 8px;
+     background: rgba(255, 255, 255, 0.08);
+     backdrop-filter: blur(8px);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     font-size: 0.75rem;
+     font-weight: 600;
+     color: var(--analisis-text-secondary);
+ }
+ 
+ /* Revendedor del mes */
+ .analisis-kpi-card--revendedor .analisis-revendedor-block {
+     display: flex;
+     align-items: center;
+     gap: 12px;
+     margin-bottom: 12px;
+ }
+ 
+ .analisis-revendedor-avatar {
+     width: 48px;
+     height: 48px;
+     border-radius: 50%;
+     object-fit: cover;
+     flex-shrink: 0;
+ }
+ 
+ .analisis-revendedor-info {
+     display: flex;
+     flex-direction: column;
+     gap: 2px;
+ }
+ 
+ .analisis-revendedor-nombre {
+     font-weight: 600;
+     color: var(--analisis-text);
+     font-size: 0.9375rem;
+ }
+ 
+ .analisis-revendedor-cuentas {
+     font-size: 0.8125rem;
+     color: var(--analisis-text-secondary);
+ }
+ 
+ .analisis-progress-bar {
+     height: 6px;
+     border-radius: 3px;
+     background: var(--analisis-divider);
+     overflow: hidden;
+ }
+ 
+ .analisis-progress-fill {
+     height: 100%;
+     border-radius: 3px;
+     background: linear-gradient(90deg, #F43F5E, #A855F7);
+     transition: width 0.3s ease;
+ }
+ 
+ /* Chart cards */
+ .analisis-chart-card {
+     height: 100%;
+     min-height: 320px;
+ }
+ 
+ .analisis-card-title {
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     font-size: 1.5rem;
+     font-weight: 600;
+     color: var(--analisis-text);
+     margin: 0 0 20px 0;
+ }
+ 
+ .analisis-chart-title-icon {
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     flex-shrink: 0;
+ }
+ 
+ .analisis-chart-title-icon--line { color: var(--analisis-cyan); }
+ .analisis-chart-title-icon--bar { color: #E50914; }
+ .analisis-chart-title-icon--users { color: #F59E0B; }
+ .analisis-chart-title-icon--heatmap { color: var(--analisis-accent); }
+ 
+ /* Logos encima del bar chart Ventas por Plataforma */
+ .analisis-bar-chart-logos {
+     display: flex;
+     justify-content: space-around;
+     gap: 8px;
+     margin-bottom: 12px;
+     padding: 0 8px;
+ }
+ 
+ .analisis-bar-logo {
+     width: 32px;
+     height: 32px;
+     border-radius: 50%;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     font-size: 0.75rem;
+     font-weight: 700;
+     color: #fff;
+     flex: 1;
+     max-width: 48px;
+ }
+ 
+ .analisis-bar-logo--img {
+     object-fit: contain;
+     padding: 2px;
+     box-sizing: border-box;
+ }
+ 
+ .analisis-bar-logo--netflix { background: #E50914; }
+ .analisis-bar-logo--disney { background: #1F80E0; }
+ .analisis-bar-logo--hbo { background: #8B5CF6; }
+ .analisis-bar-logo--spotify { background: #1DB954; }
+ 
+ .analisis-chart-wrap {
+     width: 100%;
+     position: relative;
+ }
+ 
+ .analisis-chart-wrap--line {
+     min-height: 300px;
+     position: relative;
+ }
+ 
+ .analisis-evolucion-badge {
+     position: absolute;
+     right: 24px;
+     top: 16px;
+     background: var(--analisis-cyan);
+     color: #0F172A;
+     font-size: 0.9375rem;
+     font-weight: 700;
+     padding: 6px 12px;
+     border-radius: 8px;
+     box-shadow: 0 4px 12px rgba(34, 211, 238, 0.35);
+ }
+ 
+ .analisis-chart-wrap--bar {
+     min-height: 280px;
+ }
+ 
+ /* Ranking lista (igual a imagen referencia: rank | avatar | nombre | barra recta | número a la derecha) */
+ .analisis-ranking-list {
+     display: flex;
+     flex-direction: column;
+     gap: 12px;
+ }
+ 
+ .analisis-ranking-item {
+     display: grid;
+     grid-template-columns: 28px 32px minmax(80px, 1fr) minmax(120px, 2fr) auto;
+     align-items: center;
+     gap: 10px;
+     padding-bottom: 12px;
+     border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+ }
+ 
+ .analisis-ranking-item:last-child {
+     border-bottom: none;
+     padding-bottom: 0;
+ }
+ 
+ /* Colores del número de posición: 1 dorado, 2 cobre, 3 plata, 4-6 gris */
+ .analisis-ranking-rank {
+     font-weight: 700;
+     font-size: 0.9375rem;
+ }
+ 
+ .analisis-rank--gold {
+     color: #EAB308;
+ }
+ 
+ .analisis-rank--copper {
+     color: #D97706;
+ }
+ 
+ .analisis-rank--silver {
+     color: #94A3B8;
+ }
+ 
+ .analisis-rank--grey {
+     color: #64748B;
+ }
+ 
+ .analisis-ranking-avatar {
+     width: 32px;
+     height: 32px;
+     border-radius: 50%;
+     object-fit: cover;
+     flex-shrink: 0;
+ }
+ 
+ .analisis-ranking-nombre {
+     font-size: 0.875rem;
+     color: var(--analisis-text);
+     font-weight: 500;
+ }
+ 
+ /* Celda que contiene barra + número a la derecha */
+ .analisis-ranking-bar-cell {
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     min-width: 0;
+ }
+ 
+ .analisis-ranking-bar-wrap {
+     flex: 1;
+     min-width: 0;
+     height: 25px;
+     border-radius: 5px;
+     background: var(--analisis-divider);
+     overflow: hidden;
+ }
+ 
+ .analisis-ranking-bar {
+     height: 100%;
+     border-radius: 4px;
+     min-width: 4%;
+     transition: width 0.3s ease;
+ }
+ 
+ .analisis-ranking-total {
+     font-size: 0.875rem;
+     font-weight: 600;
+     color: var(--analisis-text);
+     flex-shrink: 0;
+     min-width: 2.5em;
+     text-align: right;
+ }
+ 
+ /* Heatmap */
+ .analisis-heatmap-wrap {
+     overflow-x: auto;
+ }
+ 
+ .analisis-heatmap-table {
+     width: 100%;
+     border-collapse: collapse;
+     font-size: 0.8125rem;
+ }
+ 
+ .analisis-heatmap-table th,
+ .analisis-heatmap-table td {
+     padding: 10px 12px;
+     text-align: center;
+     border: 1px solid var(--analisis-divider);
+ }
+ 
+ .analisis-heatmap-table thead th {
+     color: var(--analisis-text-secondary);
+     font-weight: 600;
+     background: rgba(0, 0, 0, 0.2);
+ }
+ 
+ .analisis-heatmap-th-with-logo {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 6px;
+ }
+ 
+ .analisis-heatmap-th-name {
+     font-size: 0.75rem;
+     font-weight: 600;
+     color: var(--analisis-text-secondary);
+ }
+ 
+ .analisis-heatmap-th-logo {
+     width: 28px;
+     height: 28px;
+     border-radius: 50%;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     font-size: 0.7rem;
+     font-weight: 700;
+     color: #fff;
+ }
+ 
+ .analisis-heatmap-th-logo--img {
+     object-fit: contain;
+     display: block;
+     margin: 0 auto;
+ }
+ 
+ .analisis-heatmap-th-logo--netflix { background: #E50914; }
+ .analisis-heatmap-th-logo--disney { background: #1F80E0; }
+ .analisis-heatmap-th-logo--hbo { background: #8B5CF6; }
+ .analisis-heatmap-th-logo--spotify { background: #1DB954; }
+ 
+ .analisis-heatmap-rev {
+     text-align: left !important;
+     color: var(--analisis-text-secondary);
+     font-weight: 500;
+ }
+ 
+ .analisis-heatmap-cell {
+     color: #FFFFFF;
+     font-weight: 500;
+ }
+ 
+ .analisis-heatmap--low {
+     background: #1E293B;
+ }
+ 
+ .analisis-heatmap--mid {
+     background: #334155;
+ }
+ 
+ .analisis-heatmap--high {
+     background: #F43F5E;
+ }
+ 
+ .analisis-heatmap--veryhigh {
+     background: #A855F7;
+ }
+ 
+ @media (max-width: 1200px) {
+     .analisis-row--kpis .analisis-col-3 { grid-column: span 6; }
+     .analisis-row--three .analisis-col-4 { grid-column: span 12; }
+ }
+ 
+ @media (max-width: 768px) {
+     .analisis-page { padding: 16px; }
+     .analisis-row--kpis .analisis-col-3 { grid-column: span 12; }
+     .analisis-kpi-value { font-size: 1.5rem; }
+ }
+ 
