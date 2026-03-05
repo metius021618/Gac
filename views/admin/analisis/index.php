@@ -145,22 +145,28 @@ $content = ob_start();
                     </h3>
                     <div class="analisis-ranking-list" id="analisisRankingList">
                         <?php
-                        $rankColors = [
-                            1 => 'linear-gradient(135deg, #F43F5E, #FB7185)',
-                            2 => 'linear-gradient(135deg, #A855F7, #C084FC)',
-                            3 => 'linear-gradient(135deg, #6366F1, #818CF8)',
+                        $rankNumColors = [1 => 'analisis-rank--gold', 2 => 'analisis-rank--copper', 3 => 'analisis-rank--silver'];
+                        $barColors = [
+                            1 => '#F43F5E',
+                            2 => '#A855F7',
+                            3 => '#6366F1',
                         ];
+                        $maxRank = !empty($ranking_revendedores) ? max(array_column($ranking_revendedores, 'total')) : 865;
                         foreach ($ranking_revendedores as $r):
-                            $barStyle = $rankColors[$r['rank']] ?? '#334155';
+                            $rank = (int) $r['rank'];
+                            $barStyle = $barColors[$rank] ?? '#334155';
+                            $rankClass = $rankNumColors[$rank] ?? 'analisis-rank--grey';
+                            $pct = $maxRank > 0 ? min(100, ($r['total'] / $maxRank) * 100) : 0;
                         ?>
                         <div class="analisis-ranking-item">
-                            <span class="analisis-ranking-rank"><?= (int) $r['rank'] ?></span>
+                            <span class="analisis-ranking-rank <?= $rankClass ?>"><?= $rank ?></span>
                             <img src="<?= !empty($r['foto_url']) ? htmlspecialchars($r['foto_url']) : 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="%23334155"><circle cx="16" cy="16" r="16"/><circle cx="16" cy="12" r="5"/><path d="M16 22c-4 0-7 3-7 5v2h14v-2c0-2-3-5-7-5z"/></svg>') ?>" alt="" class="analisis-ranking-avatar" width="32" height="32">
                             <span class="analisis-ranking-nombre"><?= htmlspecialchars($r['nombre']) ?></span>
-                            <span class="analisis-ranking-total"><?= number_format($r['total']) ?></span>
-                            <div class="analisis-ranking-bar-wrap">
-                                <?php $maxRank = !empty($ranking_revendedores) ? max(array_column($ranking_revendedores, 'total')) : 865; $pct = $maxRank > 0 ? min(100, ($r['total'] / $maxRank) * 100) : 0; ?>
-                                <div class="analisis-ranking-bar" style="width: <?= (float) $pct ?>%; background: <?= $barStyle ?>;"></div>
+                            <div class="analisis-ranking-bar-cell">
+                                <div class="analisis-ranking-bar-wrap">
+                                    <div class="analisis-ranking-bar" style="width: <?= (float) $pct ?>%; background: <?= $barStyle ?>;"></div>
+                                </div>
+                                <span class="analisis-ranking-total"><?= number_format($r['total']) ?></span>
                             </div>
                         </div>
                         <?php endforeach; ?>

@@ -316,24 +316,40 @@
     min-height: 280px;
 }
 
-/* Ranking lista */
+/* Ranking lista (igual a imagen referencia: rank | avatar | nombre | barra recta | número a la derecha) */
 .analisis-ranking-list {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
 }
 
 .analisis-ranking-item {
     display: grid;
-    grid-template-columns: 24px 32px 1fr auto;
+    grid-template-columns: 28px 32px minmax(80px, 1fr) minmax(120px, 2fr) auto;
     align-items: center;
     gap: 10px;
 }
 
+/* Colores del número de posición: 1 dorado, 2 cobre, 3 plata, 4-6 gris */
 .analisis-ranking-rank {
     font-weight: 700;
-    color: var(--analisis-text-secondary);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+}
+
+.analisis-rank--gold {
+    color: #EAB308;
+}
+
+.analisis-rank--copper {
+    color: #D97706;
+}
+
+.analisis-rank--silver {
+    color: #94A3B8;
+}
+
+.analisis-rank--grey {
+    color: #64748B;
 }
 
 .analisis-ranking-avatar {
@@ -341,6 +357,7 @@
     height: 32px;
     border-radius: 50%;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
 .analisis-ranking-nombre {
@@ -349,25 +366,37 @@
     font-weight: 500;
 }
 
-.analisis-ranking-total {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--analisis-text);
+/* Celda que contiene barra + número a la derecha */
+.analisis-ranking-bar-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
 }
 
 .analisis-ranking-bar-wrap {
-    grid-column: 1 / -1;
-    height: 16px;
-    border-radius: 0 8px 8px 0;
+    flex: 1;
+    min-width: 0;
+    height: 14px;
+    border-radius: 7px;
     background: var(--analisis-divider);
     overflow: hidden;
 }
 
 .analisis-ranking-bar {
     height: 100%;
-    border-radius: 0 8px 8px 0;
+    border-radius: 7px;
     min-width: 4%;
     transition: width 0.3s ease;
+}
+
+.analisis-ranking-total {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--analisis-text);
+    flex-shrink: 0;
+    min-width: 2.5em;
+    text-align: right;
 }
 
 /* Heatmap */
