@@ -12,6 +12,40 @@ $evolucion = $evolucion ?? ['labels' => [], 'values' => []];
 $ventas_por_plataforma = $ventas_por_plataforma ?? [];
 $ranking_administradores = $ranking_administradores ?? [];
 $heatmap = $heatmap ?? ['administradores' => [], 'plataformas' => [], 'matrix' => []];
+$filter_time_range = $filter_time_range ?? '30';
+$filter_date_from = $filter_date_from ?? '';
+$filter_date_to = $filter_date_to ?? '';
+$filter_admin = $filter_admin ?? '';
+$filter_plataforma_id = $filter_plataforma_id ?? '';
+$administradores_para_filtro = $administradores_para_filtro ?? [];
+$plataformas_para_filtro = $plataformas_para_filtro ?? [];
+
+$analisisBaseUrl = '/admin/analisis';
+$analisisQueryParams = function($overrides = []) use ($analisisBaseUrl, $filter_time_range, $filter_date_from, $filter_date_to, $filter_admin, $filter_plataforma_id) {
+    $p = array_merge([
+        'time_range' => $filter_time_range,
+        'date_from' => $filter_date_from,
+        'date_to' => $filter_date_to,
+        'admin' => $filter_admin,
+        'plataforma_id' => $filter_plataforma_id,
+    ], $overrides);
+    $p = array_filter($p, function($v) { return $v !== '' && $v !== null; });
+    return $analisisBaseUrl . '?' . http_build_query($p);
+};
+$fechaLabel = 'Últimos 30 días';
+if ($filter_time_range === '7') $fechaLabel = 'Últimos 7 días';
+elseif ($filter_time_range === '30') $fechaLabel = 'Últimos 30 días';
+elseif ($filter_time_range === '90') $fechaLabel = 'Últimos 90 días';
+elseif ($filter_date_from && $filter_date_to) $fechaLabel = 'Personalizado';
+$plataformaFilterLabel = 'Todas';
+if ($filter_plataforma_id) {
+    foreach ($plataformas_para_filtro as $pl) {
+        if ((int) $pl['id'] === (int) $filter_plataforma_id) {
+            $plataformaFilterLabel = $pl['display_name'];
+            break;
+        }
+    }
+}
 
 $imagenes_plataformas_base = '/assets/imagenes/';
 $imagenes_plataformas = [
@@ -50,6 +84,45 @@ $plat_img = function ($key) use ($imagenes_plataformas_base, $imagenes_plataform
 $content = ob_start();
 ?>
 <div class="analisis-page">
+    <!-- Filtros: parte superior derecha, fuera del div del gráfico -->
+    <div class="analisis-filters-bar">
+        <div class="analisis-filters-inner">
+            <div class="analisis-filter-dropdown" data-filter="fecha">
+                <span class="analisis-filter-label">Fecha</span>
+                <span class="analisis-filter-sep"> - </span>
+                <span class="analisis-filter-value" id="analisisFechaValue"><?= htmlspecialchars($fechaLabel) ?></span>
+                <ul class="analisis-filter-menu">
+                    <li><a href="<?= $analisisQueryParams(['time_range' => '7', 'date_from' => date('Y-m-d', strtotime('-7 days')), 'date_to' => date('Y-m-d')]) ?>">Últimos 7 días</a></li>
+                    <li><a href="<?= $analisisQueryParams(['time_range' => '30', 'date_from' => date('Y-m-d', strtotime('-30 days')), 'date_to' => date('Y-m-d')]) ?>">Últimos 30 días</a></li>
+                    <li><a href="<?= $analisisQueryParams(['time_range' => '90', 'date_from' => date('Y-m-d', strtotime('-90 days')), 'date_to' => date('Y-m-d')]) ?>">Últimos 90 días</a></li>
+                    <li><a href="#" id="analisisFechaPersonalizado" class="analisis-filter-custom">Personalizado</a></li>
+                </ul>
+            </div>
+            <div class="analisis-filter-dropdown" data-filter="admin">
+                <span class="analisis-filter-label">Administrador</span>
+                <span class="analisis-filter-sep"> - </span>
+                <span class="analisis-filter-value"><?= $filter_admin ? htmlspecialchars($filter_admin) : 'Todos' ?></span>
+                <ul class="analisis-filter-menu">
+                    <li><a href="<?= $analisisQueryParams(['admin' => '']) ?>">Todos</a></li>
+                    <?php foreach ($administradores_para_filtro as $a): ?>
+                    <li><a href="<?= $analisisQueryParams(['admin' => $a['nombre']]) ?>"><?= htmlspecialchars($a['nombre']) ?></a></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <div class="analisis-filter-dropdown" data-filter="plataforma">
+                <span class="analisis-filter-label">Plataforma</span>
+                <span class="analisis-filter-sep"> - </span>
+                <span class="analisis-filter-value"><?= htmlspecialchars($plataformaFilterLabel) ?></span>
+                <ul class="analisis-filter-menu">
+                    <li><a href="<?= $analisisQueryParams(['plataforma_id' => '']) ?>">Todas</a></li>
+                    <?php foreach ($plataformas_para_filtro as $pl): ?>
+                    <li><a href="<?= $analisisQueryParams(['plataforma_id' => $pl['id']]) ?>"><?= htmlspecialchars($pl['display_name']) ?></a></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </div>
+    </div>
+
     <div class="analisis-grid">
         <!-- Fila 1: 4 KPI Cards -->
         <div class="analisis-row analisis-row--kpis">
@@ -253,11 +326,45 @@ $content = ob_start();
     </div>
 </div>
 
+<!-- Modal rango de fecha personalizado (Análisis) -->
+<div id="analisisDateRangeModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-overlay"></div>
+    <div class="modal-container activity-date-range-modal analisis-date-range-modal">
+        <div class="modal-header activity-date-range-modal-header">
+            <h2 class="modal-title">Selecciona un rango de tiempo</h2>
+            <button type="button" class="modal-close modal-close--large" id="closeAnalisisDateModal" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-content activity-date-range-fields">
+            <div class="activity-date-field-group">
+                <label class="activity-date-label">Fecha de inicio</label>
+                <div class="activity-date-input-wrap">
+                    <input type="date" id="analisisDateFrom" class="form-input activity-date-input" value="<?= htmlspecialchars($filter_date_from) ?>">
+                </div>
+            </div>
+            <span class="activity-date-sep">a</span>
+            <div class="activity-date-field-group">
+                <label class="activity-date-label">Fecha de finalización</label>
+                <div class="activity-date-input-wrap">
+                    <input type="date" id="analisisDateTo" class="form-input activity-date-input" value="<?= htmlspecialchars($filter_date_to) ?>">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer activity-date-range-footer">
+            <button type="button" class="btn btn-activity-date-continue" id="analisisDateRangeApply">Continuar</button>
+        </div>
+    </div>
+</div>
+
 <script>
 window.ANALISIS_DATA = {
     evolucion: <?= json_encode($evolucion) ?>,
     ventasPorPlataforma: <?= json_encode($ventas_por_plataforma) ?>,
     ultimoValorEvolucion: <?= !empty($evolucion['values']) ? (int) $evolucion['values'][count($evolucion['values']) - 1] : 0 ?>
+};
+window.ANALISIS_FILTERS = {
+    baseUrl: '<?= $analisisBaseUrl ?>',
+    admin: <?= json_encode($filter_admin) ?>,
+    plataforma_id: <?= json_encode($filter_plataforma_id) ?>
 };
 </script>
 <?php

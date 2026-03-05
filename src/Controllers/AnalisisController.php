@@ -2,6 +2,7 @@
 /**
  * GAC - Controlador de Análisis (dashboard corporativo premium)
  * Solo superadmin. KPIs, evolución mensual, ventas por plataforma, ranking, heatmap.
+ * Filtros: Fecha (7/30/90 días o personalizado), Administrador, Plataforma.
  *
  * @package Gac\Controllers
  */
@@ -21,6 +22,32 @@ class AnalisisController
             return;
         }
 
+        $timeRange = $request->get('time_range') ?? '30';
+        $dateFrom = $request->get('date_from') ?? '';
+        $dateTo = $request->get('date_to') ?? '';
+        $filterAdmin = $request->get('admin') ?? '';
+        $filterPlataformaId = $request->get('plataforma_id') !== null && $request->get('plataforma_id') !== '' ? (int) $request->get('plataforma_id') : null;
+
+        $today = date('Y-m-d');
+        if ($timeRange === '7') {
+            $dateFrom = $dateFrom ?: date('Y-m-d', strtotime('-7 days'));
+            $dateTo = $dateTo ?: $today;
+        } elseif ($timeRange === '30') {
+            $dateFrom = $dateFrom ?: date('Y-m-d', strtotime('-30 days'));
+            $dateTo = $dateTo ?: $today;
+        } elseif ($timeRange === '90') {
+            $dateFrom = $dateFrom ?: date('Y-m-d', strtotime('-90 days'));
+            $dateTo = $dateTo ?: $today;
+        } else {
+            // personalizado: usar date_from y date_to del request
+            if (!$dateFrom) {
+                $dateFrom = date('Y-m-d', strtotime('-30 days'));
+            }
+            if (!$dateTo) {
+                $dateTo = $today;
+            }
+        }
+
         $repo = new AnalisisRepository();
         $platformRepo = new PlatformRepository();
         $totalCuentas = $repo->getTotalCuentasKpi();
@@ -28,10 +55,13 @@ class AnalisisController
         $plataformasActivasList = $platformRepo->findAllEnabled();
         $administradorDelMes = $repo->getAdministradorDelMes();
         $totalIngresos = $repo->getTotalIngresosKpi();
-        $evolucion = $repo->getEvolucionMensual();
-        $ventasPorPlataforma = $repo->getVentasPorPlataforma();
-        $rankingAdministradores = $repo->getRankingAdministradores();
-        $heatmap = $repo->getHeatmapPlataformaAdministrador();
+        $evolucion = $repo->getEvolucionMensual($dateFrom, $dateTo, $filterAdmin ?: null, $filterPlataformaId);
+        $ventasPorPlataforma = $repo->getVentasPorPlataforma($dateFrom, $dateTo, $filterAdmin ?: null);
+        $rankingAdministradores = $repo->getRankingAdministradores($dateFrom, $dateTo, $filterPlataformaId);
+        $heatmap = $repo->getHeatmapPlataformaAdministrador($dateFrom, $dateTo);
+
+        $administradoresParaFiltro = $repo->getAdministradoresParaFiltro();
+        $plataformasParaFiltro = $repo->getPlataformasParaFiltro();
 
         $this->renderView('admin/analisis/index', [
             'title' => 'Análisis',
@@ -44,6 +74,13 @@ class AnalisisController
             'ventas_por_plataforma' => $ventasPorPlataforma,
             'ranking_administradores' => $rankingAdministradores,
             'heatmap' => $heatmap,
+            'filter_time_range' => $timeRange,
+            'filter_date_from' => $dateFrom,
+            'filter_date_to' => $dateTo,
+            'filter_admin' => $filterAdmin,
+            'filter_plataforma_id' => $filterPlataformaId,
+            'administradores_para_filtro' => $administradoresParaFiltro,
+            'plataformas_para_filtro' => $plataformasParaFiltro,
         ]);
     }
 

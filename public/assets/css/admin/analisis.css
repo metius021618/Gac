@@ -493,11 +493,128 @@
      background: #F43F5E;
  }
  
- .analisis-heatmap--veryhigh {
-     background: #A855F7;
- }
- 
- @media (max-width: 1200px) {
+.analisis-heatmap--veryhigh {
+    background: #A855F7;
+}
+
+/* Barra de filtros: parte superior derecha, fuera del div del gráfico */
+.analisis-filters-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+.analisis-filters-inner {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.analisis-filter-dropdown {
+    position: relative;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 8px;
+    cursor: default;
+    color: var(--analisis-text);
+    font-size: 0.875rem;
+}
+.analisis-filter-dropdown:hover,
+.analisis-filter-dropdown.open {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--analisis-accent);
+}
+.analisis-filter-label { font-weight: 500; }
+.analisis-filter-sep { margin: 0 4px; opacity: 0.8; }
+.analisis-filter-value { font-weight: 600; color: var(--analisis-text); }
+.analisis-filter-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    padding: 6px 0;
+    min-width: 180px;
+    background: var(--analisis-card-bg);
+    border: 1px solid var(--analisis-card-border);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    list-style: none;
+    z-index: 100;
+}
+.analisis-filter-dropdown.open .analisis-filter-menu {
+    display: block;
+}
+.analisis-filter-menu a {
+    display: block;
+    padding: 8px 14px;
+    color: var(--analisis-text);
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+.analisis-filter-menu a:hover {
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--analisis-accent);
+}
+.analisis-filter-custom {
+    font-weight: 500;
+}
+
+/* Modal rango de fecha personalizado (reutiliza estructura de actividad) */
+#analisisDateRangeModal .modal-container.analisis-date-range-modal {
+    max-width: 420px;
+}
+#analisisDateRangeModal .activity-date-range-fields {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+#analisisDateRangeModal .activity-date-field-group {
+    flex: 1;
+    min-width: 140px;
+}
+#analisisDateRangeModal .activity-date-label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--analisis-text-secondary);
+    margin-bottom: 6px;
+}
+#analisisDateRangeModal .activity-date-input-wrap {
+    display: block;
+}
+#analisisDateRangeModal .activity-date-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: #0f172a;
+    border: 1px solid var(--analisis-card-border);
+    border-radius: 8px;
+    color: var(--analisis-text);
+    font-size: 0.875rem;
+}
+#analisisDateRangeModal .activity-date-sep {
+    color: var(--analisis-text-secondary);
+    padding-bottom: 24px;
+}
+#analisisDateRangeModal .activity-date-range-footer {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--analisis-divider);
+}
+#analisisDateRangeModal .btn-activity-date-continue {
+    padding: 8px 20px;
+    background: var(--analisis-accent);
+    color: #0f172a;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+#analisisDateRangeModal .btn-activity-date-continue:hover {
+    opacity: 0.9;
+}
+
+@media (max-width: 1200px) {
      .analisis-row--kpis .analisis-col-3 { grid-column: span 6; }
      .analisis-row--three .analisis-col-4 { grid-column: span 12; }
  }

@@ -124,21 +124,50 @@ class AnalisisRepository
     }
 
     /**
-     * Evolución mensual de ventas: días/meses en que se asignaron cuentas (user_access).
-     * Cada registro en user_access = una cuenta vendida; se agrupa por mes según created_at.
+     * Evolución mensual de ventas: solo meses en que se asignaron cuentas (user_access.created_at).
+     * Sin meses futuros. Opcionalmente filtra por rango de fechas, administrador y plataforma.
+     * @param string|null $dateFrom Y-m-d
+     * @param string|null $dateTo Y-m-d
+     * @param string|null $admin updated_by_username
+     * @param int|null $platformId
      * @return array{labels: string[], values: int[]}
      */
-    public function getEvolucionMensual(): array
+    public function getEvolucionMensual(?string $dateFrom = null, ?string $dateTo = null, ?string $admin = null, ?int $platformId = null): array
     {
         try {
             $db = Database::getConnection();
-            $stmt = $db->query("
+            $conditions = ["ua.created_at <= CURDATE()"];
+            $params = [];
+            if ($dateFrom !== null && $dateFrom !== '') {
+                $conditions[] = "ua.created_at >= :date_from";
+                $params[':date_from'] = $dateFrom . ' 00:00:00';
+            }
+            if ($dateTo !== null && $dateTo !== '') {
+                $conditions[] = "ua.created_at <= :date_to";
+                $params[':date_to'] = $dateTo . ' 23:59:59';
+            }
+            if ($admin !== null && $admin !== '') {
+                if ($admin === 'admin') {
+                    $conditions[] = "(ua.updated_by_username IS NULL OR TRIM(COALESCE(ua.updated_by_username, '')) = '')";
+                } else {
+                    $conditions[] = "COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin') = :admin";
+                    $params[':admin'] = $admin;
+                }
+            }
+            if ($platformId !== null && $platformId > 0) {
+                $conditions[] = "ua.platform_id = :platform_id";
+                $params[':platform_id'] = $platformId;
+            }
+            $where = implode(' AND ', $conditions);
+            $sql = "
                 SELECT DATE_FORMAT(ua.created_at, '%b ''%y') AS mes, COUNT(*) AS total
                 FROM user_access ua
-                WHERE ua.created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+                WHERE {$where}
                 GROUP BY YEAR(ua.created_at), MONTH(ua.created_at)
                 ORDER BY YEAR(ua.created_at), MONTH(ua.created_at)
-            ");
+            ";
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $labels = [];
             $values = [];
@@ -152,6 +181,50 @@ class AnalisisRepository
         }
     }
 
+    /**
+     * Lista de administradores para el filtro (los que tienen asignaciones en user_access).
+     * @return array<array{nombre: string}>
+     */
+    public function getAdministradoresParaFiltro(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("
+                SELECT DISTINCT COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin') AS nombre
+                FROM user_access ua
+                ORDER BY nombre ASC
+            ");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Lista de plataformas para el filtro (las que tienen asignaciones en user_access).
+     * @return array<array{id: int, display_name: string}>
+     */
+    public function getPlataformasParaFiltro(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("
+                SELECT DISTINCT p.id, p.display_name
+                FROM user_access ua
+                INNER JOIN platforms p ON p.id = ua.platform_id
+                ORDER BY p.display_name ASC
+            ");
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $out = [];
+            foreach ($rows as $r) {
+                $out[] = ['id' => (int) $r['id'], 'display_name' => $r['display_name']];
+            }
+            return $out;
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
     /** Colores por nombre de plataforma para gráficos (incluye variantes de nombre en BD) */
     private const PLATFORM_COLORS = [
         'Netflix' => '#E50914', 'Disney+' => '#1F80E0', 'Disney' => '#1F80E0',
@@ -161,20 +234,44 @@ class AnalisisRepository
     ];
 
     /**
-     * Ventas por plataforma: conteo de cuentas en lista de cuentas (user_access) por plataforma.
+     * Ventas por plataforma (opcionalmente filtrado por rango de fechas y administrador).
      * @return array<array{nombre: string, total: int, color: string}>
      */
-    public function getVentasPorPlataforma(): array
+    public function getVentasPorPlataforma(?string $dateFrom = null, ?string $dateTo = null, ?string $admin = null): array
     {
         try {
             $db = Database::getConnection();
-            $stmt = $db->query("
+            $conditions = ['1=1'];
+            $params = [];
+            if ($dateFrom !== null && $dateFrom !== '') {
+                $conditions[] = "ua.created_at >= :date_from";
+                $params[':date_from'] = $dateFrom . ' 00:00:00';
+            }
+            if ($dateTo !== null && $dateTo !== '') {
+                $conditions[] = "ua.created_at <= :date_to";
+                $params[':date_to'] = $dateTo . ' 23:59:59';
+            }
+            if ($admin !== null && $admin !== '') {
+                if ($admin === 'admin') {
+                    $conditions[] = "(ua.updated_by_username IS NULL OR TRIM(COALESCE(ua.updated_by_username, '')) = '')";
+                } else {
+                    $conditions[] = "COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin') = :admin";
+                    $params[':admin'] = $admin;
+                }
+            }
+            $where = implode(' AND ', $conditions);
+            $sql = "
                 SELECT p.display_name AS nombre, COUNT(ua.id) AS total
                 FROM user_access ua
                 INNER JOIN platforms p ON p.id = ua.platform_id
+                WHERE {$where}
                 GROUP BY ua.platform_id, p.display_name
                 ORDER BY total DESC
-            ");
+            ";
+            $stmt = $params ? $db->prepare($sql) : $db->query($sql);
+            if ($params) {
+                $stmt->execute($params);
+            }
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $out = [];
             foreach ($rows as $r) {
@@ -188,21 +285,40 @@ class AnalisisRepository
     }
 
     /**
-     * Ranking de administradores: veces que cada admin asignó/agregó cuentas (lista de cuentas).
-     * Cuenta desde user_access por updated_by_username.
+     * Ranking de administradores (opcionalmente filtrado por rango de fechas y plataforma).
      * @return array<array{nombre: string, foto_url: string|null, total: int, rank: int}>
      */
-    public function getRankingAdministradores(): array
+    public function getRankingAdministradores(?string $dateFrom = null, ?string $dateTo = null, ?int $platformId = null): array
     {
         try {
             $db = Database::getConnection();
-            $stmt = $db->query("
+            $conditions = ['1=1'];
+            $params = [];
+            if ($dateFrom !== null && $dateFrom !== '') {
+                $conditions[] = "ua.created_at >= :date_from";
+                $params[':date_from'] = $dateFrom . ' 00:00:00';
+            }
+            if ($dateTo !== null && $dateTo !== '') {
+                $conditions[] = "ua.created_at <= :date_to";
+                $params[':date_to'] = $dateTo . ' 23:59:59';
+            }
+            if ($platformId !== null && $platformId > 0) {
+                $conditions[] = "ua.platform_id = :platform_id";
+                $params[':platform_id'] = $platformId;
+            }
+            $where = implode(' AND ', $conditions);
+            $sql = "
                 SELECT COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin') AS nombre, COUNT(*) AS total
                 FROM user_access ua
+                WHERE {$where}
                 GROUP BY COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin')
                 ORDER BY total DESC
                 LIMIT 6
-            ");
+            ";
+            $stmt = $params ? $db->prepare($sql) : $db->query($sql);
+            if ($params) {
+                $stmt->execute($params);
+            }
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $out = [];
             $rank = 1;
@@ -221,19 +337,35 @@ class AnalisisRepository
     }
 
     /**
-     * Heatmap: administrador x plataforma. Conteo de cuentas asignadas por cada admin en cada plataforma (user_access).
+     * Heatmap: administrador x plataforma (opcionalmente filtrado por rango de fechas).
      * @return array{administradores: string[], plataformas: string[], matrix: int[][]}
      */
-    public function getHeatmapPlataformaAdministrador(): array
+    public function getHeatmapPlataformaAdministrador(?string $dateFrom = null, ?string $dateTo = null): array
     {
         try {
             $db = Database::getConnection();
-            $stmt = $db->query("
+            $conditions = ['1=1'];
+            $params = [];
+            if ($dateFrom !== null && $dateFrom !== '') {
+                $conditions[] = "ua.created_at >= :date_from";
+                $params[':date_from'] = $dateFrom . ' 00:00:00';
+            }
+            if ($dateTo !== null && $dateTo !== '') {
+                $conditions[] = "ua.created_at <= :date_to";
+                $params[':date_to'] = $dateTo . ' 23:59:59';
+            }
+            $where = implode(' AND ', $conditions);
+            $sql = "
                 SELECT COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin') AS administrador, p.display_name AS plataforma, COUNT(ua.id) AS total
                 FROM user_access ua
                 INNER JOIN platforms p ON p.id = ua.platform_id
+                WHERE {$where}
                 GROUP BY COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin'), ua.platform_id, p.display_name
-            ");
+            ";
+            $stmt = $params ? $db->prepare($sql) : $db->query($sql);
+            if ($params) {
+                $stmt->execute($params);
+            }
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $administradores = [];
             $plataformas = [];
