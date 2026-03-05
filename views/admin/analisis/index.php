@@ -12,6 +12,21 @@ $ventas_por_plataforma = $ventas_por_plataforma ?? [];
 $ranking_revendedores = $ranking_revendedores ?? [];
 $heatmap = $heatmap ?? ['revendedores' => [], 'plataformas' => [], 'matrix' => []];
 
+$imagenes_plataformas_base = '/assets/imagenes/';
+$imagenes_plataformas = [
+    'netflix'  => 'netflix.png',
+    'disney'   => 'disney.png',
+    'hbo'      => 'HBO.jfif',
+    'spotify'  => 'spotify.png',
+];
+$plat_img = function ($key) use ($imagenes_plataformas_base, $imagenes_plataformas) {
+    $file = $imagenes_plataformas[$key] ?? null;
+    if (!$file) return '';
+    $base = function_exists('base_path') ? rtrim(base_path('public/assets/imagenes/'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR : '';
+    if ($base && !@is_file($base . $file)) return '';
+    return $imagenes_plataformas_base . $file;
+};
+
 $content = ob_start();
 ?>
 <div class="analisis-page">
@@ -43,10 +58,10 @@ $content = ob_start();
                     </div>
                     <div class="analisis-kpi-value"><?= $plataformas_activas ?></div>
                     <div class="analisis-platform-icons">
-                        <span class="analisis-platform-logo analisis-platform-logo--netflix" title="Netflix">N</span>
-                        <span class="analisis-platform-logo analisis-platform-logo--disney" title="Disney+">D</span>
-                        <span class="analisis-platform-logo analisis-platform-logo--hbo" title="HBO Max">H</span>
-                        <span class="analisis-platform-logo analisis-platform-logo--spotify" title="Spotify">S</span>
+                        <?php $n = $plat_img('netflix'); if ($n): ?><img src="<?= $n ?>" alt="Netflix" class="analisis-platform-logo analisis-platform-logo--img" title="Netflix" width="36" height="36"><?php else: ?><span class="analisis-platform-logo analisis-platform-logo--netflix" title="Netflix">N</span><?php endif; ?>
+                        <?php $d = $plat_img('disney'); if ($d): ?><img src="<?= $d ?>" alt="Disney+" class="analisis-platform-logo analisis-platform-logo--img" title="Disney+" width="36" height="36"><?php else: ?><span class="analisis-platform-logo analisis-platform-logo--disney" title="Disney+">D</span><?php endif; ?>
+                        <?php $h = $plat_img('hbo'); if ($h): ?><img src="<?= $h ?>" alt="HBO Max" class="analisis-platform-logo analisis-platform-logo--img" title="HBO Max" width="36" height="36"><?php else: ?><span class="analisis-platform-logo analisis-platform-logo--hbo" title="HBO Max">H</span><?php endif; ?>
+                        <?php $s = $plat_img('spotify'); if ($s): ?><img src="<?= $s ?>" alt="Spotify" class="analisis-platform-logo analisis-platform-logo--img" title="Spotify" width="36" height="36"><?php else: ?><span class="analisis-platform-logo analisis-platform-logo--spotify" title="Spotify">S</span><?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -112,10 +127,10 @@ $content = ob_start();
                         Ventas por Plataforma
                     </h3>
                     <div class="analisis-bar-chart-logos">
-                        <span class="analisis-bar-logo analisis-bar-logo--netflix" title="Netflix">N</span>
-                        <span class="analisis-bar-logo analisis-bar-logo--disney" title="Disney+">D</span>
-                        <span class="analisis-bar-logo analisis-bar-logo--hbo" title="HBO Max">H</span>
-                        <span class="analisis-bar-logo analisis-bar-logo--spotify" title="Spotify">S</span>
+                        <?php $bn = $plat_img('netflix'); if ($bn): ?><img src="<?= $bn ?>" alt="Netflix" class="analisis-bar-logo analisis-bar-logo--img" title="Netflix" width="32" height="32"><?php else: ?><span class="analisis-bar-logo analisis-bar-logo--netflix" title="Netflix">N</span><?php endif; ?>
+                        <?php $bd = $plat_img('disney'); if ($bd): ?><img src="<?= $bd ?>" alt="Disney+" class="analisis-bar-logo analisis-bar-logo--img" title="Disney+" width="32" height="32"><?php else: ?><span class="analisis-bar-logo analisis-bar-logo--disney" title="Disney+">D</span><?php endif; ?>
+                        <?php $bh = $plat_img('hbo'); if ($bh): ?><img src="<?= $bh ?>" alt="HBO Max" class="analisis-bar-logo analisis-bar-logo--img" title="HBO Max" width="32" height="32"><?php else: ?><span class="analisis-bar-logo analisis-bar-logo--hbo" title="HBO Max">H</span><?php endif; ?>
+                        <?php $bs = $plat_img('spotify'); if ($bs): ?><img src="<?= $bs ?>" alt="Spotify" class="analisis-bar-logo analisis-bar-logo--img" title="Spotify" width="32" height="32"><?php else: ?><span class="analisis-bar-logo analisis-bar-logo--spotify" title="Spotify">S</span><?php endif; ?>
                     </div>
                     <div class="analisis-chart-wrap analisis-chart-wrap--bar" style="height: 280px;">
                         <canvas id="analisisChartPlataformas" width="400" height="280"></canvas>
@@ -164,14 +179,11 @@ $content = ob_start();
                                 <tr>
                                     <th></th>
                                     <?php foreach ($heatmap['plataformas'] as $plat): 
-                                        $logoClass = 'analisis-heatmap-th-logo';
-                                        if (stripos($plat, 'Netflix') !== false) $logoClass .= ' analisis-heatmap-th-logo--netflix';
-                                        elseif (stripos($plat, 'Disney') !== false) $logoClass .= ' analisis-heatmap-th-logo--disney';
-                                        elseif (stripos($plat, 'HBO') !== false) $logoClass .= ' analisis-heatmap-th-logo--hbo';
-                                        elseif (stripos($plat, 'Spotify') !== false) $logoClass .= ' analisis-heatmap-th-logo--spotify';
+                                        $logoKey = (stripos($plat, 'Netflix') !== false) ? 'netflix' : ((stripos($plat, 'Disney') !== false) ? 'disney' : ((stripos($plat, 'HBO') !== false) ? 'hbo' : ((stripos($plat, 'Spotify') !== false) ? 'spotify' : null)));
+                                        $logoUrl = $logoKey ? $plat_img($logoKey) : '';
                                     ?>
                                     <th class="analisis-heatmap-th-with-logo">
-                                        <span class="<?= $logoClass ?>"><?= substr($plat, 0, 1) ?></span>
+                                        <?php if ($logoUrl): ?><img src="<?= $logoUrl ?>" alt="<?= htmlspecialchars($plat) ?>" class="analisis-heatmap-th-logo analisis-heatmap-th-logo--img" width="28" height="28"><?php else: ?><span class="analisis-heatmap-th-logo"><?= substr($plat, 0, 1) ?></span><?php endif; ?>
                                         <span class="analisis-heatmap-th-name"><?= htmlspecialchars($plat) ?></span>
                                     </th>
                                     <?php endforeach; ?>

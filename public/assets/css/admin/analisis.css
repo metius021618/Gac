@@ -93,7 +93,7 @@
 .analisis-kpi-icon--crown { color: #EAB308; }
 .analisis-kpi-icon--bank { color: var(--analisis-accent); }
 
-/* Logos plataformas (card Plataformas Activas): circulares, glass, colores marca */
+/* Logos plataformas (card Plataformas Activas): circulares, glass o imagen */
 .analisis-platform-logo {
     width: 36px;
     height: 36px;
@@ -105,6 +105,12 @@
     font-size: 0.875rem;
     font-weight: 700;
     color: #fff;
+}
+
+.analisis-platform-logo--img {
+    object-fit: contain;
+    padding: 4px;
+    box-sizing: border-box;
 }
 
 .analisis-platform-logo--netflix { background: #E50914; }
@@ -272,6 +278,12 @@
     max-width: 48px;
 }
 
+.analisis-bar-logo--img {
+    object-fit: contain;
+    padding: 2px;
+    box-sizing: border-box;
+}
+
 .analisis-bar-logo--netflix { background: #E50914; }
 .analisis-bar-logo--disney { background: #1F80E0; }
 .analisis-bar-logo--hbo { background: #8B5CF6; }
@@ -405,6 +417,12 @@
     font-size: 0.7rem;
     font-weight: 700;
     color: #fff;
+}
+
+.analisis-heatmap-th-logo--img {
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
 }
 
 .analisis-heatmap-th-logo--netflix { background: #E50914; }
