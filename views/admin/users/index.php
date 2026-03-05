@@ -43,6 +43,7 @@ $content = ob_start();
                         <th>ID</th>
                         <th>Usuario</th>
                         <th>Cuentas</th>
+                        <th>Acceso</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -60,15 +61,21 @@ $content = ob_start();
                                 <td><strong><?= htmlspecialchars($user['username']) ?></strong></td>
                                 <td><?= (int) ($user['accounts_count'] ?? 0) ?></td>
                                 <td>
+                                    <form method="post" action="/admin/users/toggle-active">
+                                        <input type="hidden" name="id" value="<?= (int) $user['id'] ?>">
+                                        <input type="hidden" name="active" value="<?= $user['active'] ? 0 : 1 ?>">
+                                        <button type="submit"
+                                                class="access-toggle <?= $user['active'] ? 'access-toggle--on' : 'access-toggle--off' ?>"
+                                                title="Activar/Desactivar acceso al sistema">
+                                            <?= $user['active'] ? 'On' : 'Off' ?>
+                                        </button>
+                                    </form>
+                                </td>
+                                <td>
                                     <div class="table-actions">
-                                        <form method="post" action="/admin/users/toggle-active" style="display:inline-block;margin-right:4px;">
-                                            <input type="hidden" name="id" value="<?= (int) $user['id'] ?>">
-                                            <input type="hidden" name="active" value="<?= $user['active'] ? 0 : 1 ?>">
-                                            <button type="submit" class="btn btn-sm btn-secondary" title="Editar (activar/desactivar)">
-                                                Editar
-                                            </button>
-                                        </form>
-                                        <form method="post" action="/admin/users/delete" style="display:inline-block;" onsubmit="return confirm('¿Seguro que deseas eliminar este usuario revendedor?');">
+                                        <form method="post"
+                                              action="/admin/users/delete"
+                                              onsubmit="return confirm('¿Seguro que deseas eliminar este usuario revendedor?');">
                                             <input type="hidden" name="id" value="<?= (int) $user['id'] ?>">
                                             <button type="submit" class="btn btn-sm btn-danger" title="Eliminar usuario">
                                                 Eliminar

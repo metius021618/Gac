@@ -59,10 +59,11 @@ $content = ob_get_clean();
 
 $title = $title ?? 'Accesos';
 $show_nav = true;
+$hide_main_nav_links = true;
 $show_footer = true;
 $footer_text = '';
 $footer_whatsapp = false;
-$additional_css = ['/assets/css/admin/main.css'];
+$additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/revendedor.css'];
 $additional_js = ['/assets/js/revendedor.js'];
 
 require base_path('views/layouts/main.php');

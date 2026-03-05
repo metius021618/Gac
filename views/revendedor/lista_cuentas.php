@@ -15,6 +15,13 @@ $content = ob_start();
         </p>
     </div>
 
+    <div class="revendedor-search">
+        <input type="text"
+               id="revendedorSearch"
+               class="revendedor-search-input"
+               placeholder="Buscar por correo...">
+    </div>
+
     <div class="revendedor-table-wrapper">
         <table class="revendedor-table" id="revendedorAccountsTable">
             <thead>
@@ -30,7 +37,7 @@ $content = ob_start();
                         <td colspan="3" class="revendedor-empty">No tienes cuentas asignadas todavía.</td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($rows as $row): 
+                    <?php foreach ($rows as $row):
                         $access = $row['access'];
                         $subusers = $row['subusers'] ?? [];
                         $asignado = !empty($subusers);
@@ -51,7 +58,7 @@ $content = ob_start();
                         </td>
                     </tr>
                     <?php if ($asignado): ?>
-                    <tr class="revendedor-subusers-row" data-parent-id="<?= $accessId ?>" style="display:none;">
+                    <tr class="revendedor-subusers-row is-hidden" data-parent-id="<?= $accessId ?>">
                         <td colspan="3">
                             <div class="revendedor-subusers-box">
                                 <div class="revendedor-subusers-title">Usuarios asignados:</div>
@@ -89,10 +96,11 @@ $content = ob_get_clean();
 
 $title = $title ?? 'Lista de cuentas';
 $show_nav = true;
+$hide_main_nav_links = true;
 $show_footer = true;
 $footer_text = '';
 $footer_whatsapp = false;
-$additional_css = ['/assets/css/admin/main.css'];
+$additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/revendedor.css'];
 $additional_js = ['/assets/js/revendedor.js'];
 
 require base_path('views/layouts/main.php');

@@ -5,11 +5,35 @@ document.addEventListener('DOMContentLoaded', function () {
             var accessId = this.getAttribute('data-access-id');
             var row = document.querySelector('.revendedor-subusers-row[data-parent-id="' + accessId + '"]');
             if (!row) return;
-            var isHidden = row.style.display === 'none' || row.style.display === '';
-            row.style.display = isHidden ? 'table-row' : 'none';
+            var isHidden = row.classList.contains('is-hidden');
+            if (isHidden) {
+                row.classList.remove('is-hidden');
+            } else {
+                row.classList.add('is-hidden');
+            }
             this.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
         });
     });
+
+    // Búsqueda por correo en Lista de cuentas
+    var searchInput = document.getElementById('revendedorSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            var term = (this.value || '').toLowerCase();
+            var rows = document.querySelectorAll('#revendedorAccountsTable .revendedor-main-row');
+            rows.forEach(function (row) {
+                var emailCell = row.querySelector('td:first-child');
+                var emailText = emailCell ? emailCell.textContent.toLowerCase() : '';
+                var match = term === '' || emailText.indexOf(term) !== -1;
+                row.style.display = match ? '' : 'none';
+                var accessId = row.getAttribute('data-access-id');
+                var subRow = document.querySelector('.revendedor-subusers-row[data-parent-id="' + accessId + '"]');
+                if (subRow) {
+                    subRow.style.display = match ? '' : 'none';
+                }
+            });
+        });
+    }
 
     // Mapeo correo → plataformas para formulario de Accesos
     var emailSelect = document.getElementById('emailSelect');

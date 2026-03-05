@@ -124,7 +124,7 @@ class AuthController
         if (!$user['active']) {
             json_response([
                 'success' => false,
-                'message' => 'Tu cuenta está desactivada. Contacta al administrador.'
+                'message' => 'Tu cuenta está bloqueada. Contacta al administrador.'
             ], 403);
             return;
         }
