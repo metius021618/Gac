@@ -106,6 +106,109 @@ class UserRepository
     }
 
     /**
+     * Crear automáticamente un usuario de tipo "revendedor" a partir de un username,
+     * siempre que tenga al menos $minAccounts cuentas asignadas en user_access.
+     *
+     * La contraseña será el mismo username (encriptado) y el email se genera
+     * como username@revendedor.local para cumplir la restricción NOT NULL/UNIQUE.
+     *
+     * Devuelve el array del usuario creado o existente, o false si no aplica.
+     */
+    public function createResellerIfEligible(string $username, string $rawPassword, int $minAccounts = 10): array|false
+    {
+        $username = trim($username);
+        $rawPassword = (string) $rawPassword;
+
+        if ($username === '' || $rawPassword === '') {
+            return false;
+        }
+
+        // Debe coincidir usuario = contraseña según requisito del cliente
+        if ($username !== $rawPassword) {
+            return false;
+        }
+
+        try {
+            $db = $this->db;
+
+            // Verificar si ya existe usuario con ese username
+            $existing = $this->findByUsername($username);
+            if ($existing) {
+                return $existing;
+            }
+
+            // Contar cuántas cuentas tiene asignadas en user_access (password = username)
+            $stmt = $db->prepare("
+                SELECT COUNT(*) AS total
+                FROM user_access
+                WHERE password = :username
+            ");
+            $stmt->execute([':username' => $username]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $total = (int) ($row['total'] ?? 0);
+
+            if ($total < $minAccounts) {
+                // No cumple el mínimo de cuentas para ser revendedor
+                return false;
+            }
+
+            // Obtener/crear rol REVENDEDOR
+            $roleId = null;
+            $roleStmt = $db->prepare("SELECT id FROM roles WHERE name = :name LIMIT 1");
+            $roleStmt->execute([':name' => 'REVENDEDOR']);
+            $roleRow = $roleStmt->fetch(PDO::FETCH_ASSOC);
+            if ($roleRow && isset($roleRow['id'])) {
+                $roleId = (int) $roleRow['id'];
+            } else {
+                $insertRole = $db->prepare("INSERT INTO roles (name, display_name, description) VALUES (:name, :display_name, :description)");
+                $insertRole->execute([
+                    ':name' => 'REVENDEDOR',
+                    ':display_name' => 'Revendedor',
+                    ':description' => 'Usuarios revendedores que gestionan sus propias cuentas vendidas',
+                ]);
+                $roleId = (int) $db->lastInsertId();
+            }
+
+            if ($roleId <= 0) {
+                return false;
+            }
+
+            // Generar email único para este username
+            $baseEmail = strtolower($username) . '@revendedor.local';
+            $email = $baseEmail;
+            $suffix = 1;
+            while (true) {
+                $checkStmt = $db->prepare("SELECT 1 FROM users WHERE email = :email LIMIT 1");
+                $checkStmt->execute([':email' => $email]);
+                if (!$checkStmt->fetch()) {
+                    break;
+                }
+                $email = strtolower($username) . '+' . $suffix . '@revendedor.local';
+                $suffix++;
+            }
+
+            $passwordHash = password_hash($rawPassword, PASSWORD_DEFAULT);
+
+            $id = $this->save([
+                'username' => $username,
+                'email' => $email,
+                'password' => $passwordHash,
+                'role_id' => $roleId,
+                'active' => 1,
+            ]);
+
+            if (!$id) {
+                return false;
+            }
+
+            return $this->findById($id) ?: false;
+        } catch (PDOException $e) {
+            error_log('UserRepository::createResellerIfEligible error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Obtener todos los administradores (roles admin / SUPER_ADMIN)
      * @return array
      */

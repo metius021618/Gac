@@ -134,10 +134,25 @@ class AuthController
         $this->clearFailedAttempts($username);
         $this->updateLastLogin($user['id']);
 
+        // Determinar redirección según tipo de usuario
+        $redirect = '/admin/dashboard';
+        try {
+            // Cargar rol para saber si es REVENDEDOR
+            $db = \Gac\Helpers\Database::getConnection();
+            $stmt = $db->prepare("SELECT name FROM roles WHERE id = :id LIMIT 1");
+            $stmt->execute([':id' => $user['role_id']]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($row && isset($row['name']) && strtoupper($row['name']) === 'REVENDEDOR') {
+                $redirect = '/revendedor/dashboard';
+            }
+        } catch (\Throwable $e) {
+            // Si falla, usar dashboard por defecto
+        }
+
         json_response([
             'success' => true,
             'message' => 'Login exitoso',
-            'redirect' => '/admin/dashboard'
+            'redirect' => $redirect
         ]);
     }
 
@@ -173,7 +188,12 @@ class AuthController
         }
 
         if (!$user) {
-            return null;
+            // Si no existe, intentar creación automática de usuario REVENDEDOR
+            // siempre que cumpla la condición de tener >= 10 cuentas asignadas
+            $user = $this->userRepository->createResellerIfEligible($username, $password, 10);
+            if (!$user) {
+                return null;
+            }
         }
 
         // Verificar contraseña

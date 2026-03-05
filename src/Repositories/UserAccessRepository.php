@@ -172,18 +172,96 @@ class UserAccessRepository
     }
 
     /**
-     * Verificar acceso (validar email, password y plataforma)
+     * Verificar acceso (validar email, password/usuario y plataforma).
+     *
+     * Primero intenta con el registro principal de user_access.
+     * Si no coincide, verifica si existe un subusuario asociado para
+     * ese correo + plataforma + username.
      */
     public function verifyAccess(string $email, string $password, int $platformId): bool
     {
         $access = $this->findByEmailAndPlatform($email, $platformId);
         
-        if (!$access) {
+        if ($access && $access['password'] === $password) {
+            // Usuario principal (password) coincide
+            return true;
+        }
+
+        // Fallback: buscar en subusuarios
+        try {
+            $subRepo = new UserAccessSubuserRepository();
+            return $subRepo->existsForEmailPlatformAndUsername($email, $platformId, $password);
+        } catch (\Throwable $e) {
+            error_log('UserAccessRepository::verifyAccess fallback subusers error: ' . $e->getMessage());
             return false;
         }
-        
-        // Comparar password (usuario IMAP)
-        return $access['password'] === $password;
+    }
+
+    /**
+     * Obtener accesos cuyo "password" (usuario) coincide con el username del revendedor.
+     * Se usa para las vistas de revendedor (lista de cuentas y accesos).
+     *
+     * @return array<int, array<string,mixed>>
+     */
+    public function findByOwnerUsername(string $username): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                SELECT 
+                    ua.id,
+                    ua.email,
+                    ua.password,
+                    ua.platform_id,
+                    ua.enabled,
+                    ua.created_at,
+                    ua.updated_at,
+                    p.display_name AS platform_name
+                FROM user_access ua
+                INNER JOIN platforms p ON p.id = ua.platform_id
+                WHERE ua.password = :username
+                ORDER BY ua.email ASC, p.display_name ASC
+            ");
+            $stmt->execute([':username' => $username]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (PDOException $e) {
+            error_log('UserAccessRepository::findByOwnerUsername error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Obtener un acceso propiedad de un revendedor concreto para un correo + plataforma.
+     */
+    public function findOwnedByEmailAndPlatform(string $ownerUsername, string $email, int $platformId): ?array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                SELECT 
+                    ua.id,
+                    ua.email,
+                    ua.password,
+                    ua.platform_id,
+                    p.display_name AS platform_name
+                FROM user_access ua
+                INNER JOIN platforms p ON p.id = ua.platform_id
+                WHERE ua.password = :owner
+                  AND LOWER(ua.email) = LOWER(:email)
+                  AND ua.platform_id = :platform_id
+                LIMIT 1
+            ");
+            $stmt->execute([
+                ':owner' => $ownerUsername,
+                ':email' => $email,
+                ':platform_id' => $platformId,
+            ]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ?: null;
+        } catch (PDOException $e) {
+            error_log('UserAccessRepository::findOwnedByEmailAndPlatform error: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**

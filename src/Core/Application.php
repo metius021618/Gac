@@ -81,6 +81,13 @@ class Application
         $router->get('/admin/reader-loop/status', 'CodeController@readerLoopStatus', ['auth']);
         $router->post('/admin/reader-loop/start', 'CodeController@startReaderLoop', ['auth']);
         
+        // Rutas de revendedor (requieren autenticación; control de rol dentro del controlador)
+        $router->get('/revendedor/dashboard', 'RevendedorController@dashboard', ['auth']);
+        $router->get('/revendedor/lista-cuentas', 'RevendedorController@listaCuentas', ['auth']);
+        $router->get('/revendedor/accesos', 'RevendedorController@accesos', ['auth']);
+        $router->post('/revendedor/accesos', 'RevendedorController@accesosStore', ['auth']);
+        $router->post('/revendedor/subusuario/eliminar', 'RevendedorController@eliminarSubusuario', ['auth']);
+        
         // Rutas de plataformas
         $router->get('/admin/platforms', 'PlatformController@index', ['auth']);
         $router->post('/admin/platforms/toggle-status', 'PlatformController@toggleStatus', ['auth']);
