@@ -63,42 +63,33 @@ class AnalisisRepository
     }
 
     /**
-     * Revendedor del mes: nombre, foto_url, cuentas vendidas (mes actual)
+     * Administrador del mes: el que más cuentas asignó en el mes actual (user_access.created_at).
      * @return array{nombre: string, foto_url: string|null, cuentas: int}
      */
-    public function getRevendedorDelMes(): array
+    public function getAdministradorDelMes(): array
     {
-        if (!$this->tablesExist()) {
-            return [
-                'nombre' => 'Alejandro M.',
-                'foto_url' => null,
-                'cuentas' => 865,
-            ];
-        }
         try {
             $db = Database::getConnection();
-            $stmt = $db->prepare("
-                SELECT r.nombre, r.foto_url, COUNT(v.id) AS cuentas
-                FROM analisis_revendedores r
-                INNER JOIN analisis_ventas v ON v.revendedor_id = r.id
-                WHERE YEAR(v.fecha_venta) = YEAR(CURDATE()) AND MONTH(v.fecha_venta) = MONTH(CURDATE())
-                GROUP BY r.id, r.nombre, r.foto_url
+            $stmt = $db->query("
+                SELECT COALESCE(ua.updated_by_username, '—') AS nombre, COUNT(*) AS cuentas
+                FROM user_access ua
+                WHERE YEAR(ua.created_at) = YEAR(CURDATE()) AND MONTH(ua.created_at) = MONTH(CURDATE())
+                GROUP BY ua.updated_by_username
                 ORDER BY cuentas DESC
                 LIMIT 1
             ");
-            $stmt->execute();
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($row) {
+            if ($row && (int) $row['cuentas'] > 0) {
                 return [
                     'nombre' => $row['nombre'],
-                    'foto_url' => $row['foto_url'],
+                    'foto_url' => null,
                     'cuentas' => (int) $row['cuentas'],
                 ];
             }
         } catch (PDOException $e) {
-            // fallback
+            // ignore
         }
-        return ['nombre' => 'Alejandro M.', 'foto_url' => null, 'cuentas' => 865];
+        return ['nombre' => '—', 'foto_url' => null, 'cuentas' => 0];
     }
 
     /**
@@ -133,24 +124,20 @@ class AnalisisRepository
     }
 
     /**
-     * Evolución mensual de ventas (últimos 12 meses): etiquetas y valores para gráfico de línea
+     * Evolución mensual de ventas: días/meses en que se asignaron cuentas (user_access).
+     * Cada registro en user_access = una cuenta vendida; se agrupa por mes según created_at.
      * @return array{labels: string[], values: int[]}
      */
     public function getEvolucionMensual(): array
     {
-        if (!$this->tablesExist()) {
-            $labels = ["May '23", "Jun '23", "Jul '23", "Aug '23", "Sep '23", "Oct '23", "Nov '23", "Dec '23", "Jan '24", "Feb '24", "Mar '24", "Apr '24"];
-            $values = [1820, 1950, 2100, 1980, 2240, 2380, 2210, 2450, 2520, 2480, 2610, 2590];
-            return ['labels' => $labels, 'values' => $values];
-        }
         try {
             $db = Database::getConnection();
             $stmt = $db->query("
-                SELECT DATE_FORMAT(fecha_venta, '%b %y') AS mes, COUNT(*) AS total
-                FROM analisis_ventas
-                WHERE fecha_venta >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-                GROUP BY YEAR(fecha_venta), MONTH(fecha_venta)
-                ORDER BY YEAR(fecha_venta), MONTH(fecha_venta)
+                SELECT DATE_FORMAT(ua.created_at, '%b ''%y') AS mes, COUNT(*) AS total
+                FROM user_access ua
+                WHERE ua.created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+                GROUP BY YEAR(ua.created_at), MONTH(ua.created_at)
+                ORDER BY YEAR(ua.created_at), MONTH(ua.created_at)
             ");
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $labels = [];
@@ -159,92 +146,59 @@ class AnalisisRepository
                 $labels[] = $r['mes'];
                 $values[] = (int) $r['total'];
             }
-            if (empty($labels)) {
-                $labels = ["May '23", "Jun '23", "Jul '23", "Aug '23", "Sep '23", "Oct '23", "Nov '23", "Dec '23", "Jan '24", "Feb '24", "Mar '24", "Apr '24"];
-                $values = [1820, 1950, 2100, 1980, 2240, 2380, 2210, 2450, 2520, 2480, 2610, 2590];
-            }
             return ['labels' => $labels, 'values' => $values];
         } catch (PDOException $e) {
-            $labels = ["May '23", "Jun '23", "Jul '23", "Aug '23", "Sep '23", "Oct '23", "Nov '23", "Dec '23", "Jan '24", "Feb '24", "Mar '24", "Apr '24"];
-            $values = [1820, 1950, 2100, 1980, 2240, 2380, 2210, 2450, 2520, 2480, 2610, 2590];
-            return ['labels' => $labels, 'values' => $values];
+            return ['labels' => [], 'values' => []];
         }
     }
 
+    /** Colores por nombre de plataforma para gráficos */
+    private const PLATFORM_COLORS = [
+        'Netflix' => '#E50914', 'Disney+' => '#1F80E0', 'HBO Max' => '#8B5CF6', 'Spotify' => '#1DB954',
+        'Paramount+' => '#0064FF', 'Prime Video' => '#00A8E1', 'Crunchyroll' => '#F47521',
+        'Canva' => '#00C4CC', 'ChatGPT' => '#10A37F',
+    ];
+
     /**
-     * Ventas por plataforma (para bar chart): nombre y total
+     * Ventas por plataforma: conteo de cuentas en lista de cuentas (user_access) por plataforma.
      * @return array<array{nombre: string, total: int, color: string}>
      */
     public function getVentasPorPlataforma(): array
     {
-        if (!$this->tablesExist()) {
-            return [
-                ['nombre' => 'Netflix', 'total' => 1085, 'color' => '#E50914'],
-                ['nombre' => 'Disney+', 'total' => 760, 'color' => '#1F80E0'],
-                ['nombre' => 'HBO Max', 'total' => 430, 'color' => '#8B5CF6'],
-                ['nombre' => 'Spotify', 'total' => 315, 'color' => '#1DB954'],
-            ];
-        }
         try {
             $db = Database::getConnection();
             $stmt = $db->query("
-                SELECT p.display_name AS nombre, COUNT(v.id) AS total
-                FROM analisis_ventas v
-                INNER JOIN platforms p ON p.id = v.plataforma_id
-                WHERE v.fecha_venta >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-                GROUP BY v.plataforma_id, p.display_name
+                SELECT p.display_name AS nombre, COUNT(ua.id) AS total
+                FROM user_access ua
+                INNER JOIN platforms p ON p.id = ua.platform_id
+                GROUP BY ua.platform_id, p.display_name
                 ORDER BY total DESC
             ");
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $colors = ['Netflix' => '#E50914', 'Disney+' => '#1F80E0', 'HBO Max' => '#8B5CF6', 'Spotify' => '#1DB954'];
             $out = [];
             foreach ($rows as $r) {
                 $nombre = $r['nombre'] ?? 'Otro';
-                $out[] = ['nombre' => $nombre, 'total' => (int) $r['total'], 'color' => $colors[$nombre] ?? '#334155'];
-            }
-            if (empty($out)) {
-                return [
-                    ['nombre' => 'Netflix', 'total' => 1085, 'color' => '#E50914'],
-                    ['nombre' => 'Disney+', 'total' => 760, 'color' => '#1F80E0'],
-                    ['nombre' => 'HBO Max', 'total' => 430, 'color' => '#8B5CF6'],
-                    ['nombre' => 'Spotify', 'total' => 315, 'color' => '#1DB954'],
-                ];
+                $out[] = ['nombre' => $nombre, 'total' => (int) $r['total'], 'color' => self::PLATFORM_COLORS[$nombre] ?? '#334155'];
             }
             return $out;
         } catch (PDOException $e) {
-            return [
-                ['nombre' => 'Netflix', 'total' => 1085, 'color' => '#E50914'],
-                ['nombre' => 'Disney+', 'total' => 760, 'color' => '#1F80E0'],
-                ['nombre' => 'HBO Max', 'total' => 430, 'color' => '#8B5CF6'],
-                ['nombre' => 'Spotify', 'total' => 315, 'color' => '#1DB954'],
-            ];
+            return [];
         }
     }
 
     /**
-     * Ranking de revendedores (orden descendente por cantidad vendida)
+     * Ranking de administradores: veces que cada admin asignó/agregó cuentas (lista de cuentas).
+     * Cuenta desde user_access por updated_by_username.
      * @return array<array{nombre: string, foto_url: string|null, total: int, rank: int}>
      */
-    public function getRankingRevendedores(): array
+    public function getRankingAdministradores(): array
     {
-        if (!$this->tablesExist()) {
-            return [
-                ['nombre' => 'Alejandro M.', 'foto_url' => null, 'total' => 865, 'rank' => 1],
-                ['nombre' => 'Maria G.', 'foto_url' => null, 'total' => 752, 'rank' => 2],
-                ['nombre' => 'Javier R.', 'foto_url' => null, 'total' => 610, 'rank' => 3],
-                ['nombre' => 'Carlos S.', 'foto_url' => null, 'total' => 548, 'rank' => 4],
-                ['nombre' => 'Laura P.', 'foto_url' => null, 'total' => 503, 'rank' => 5],
-                ['nombre' => 'Pedro T.', 'foto_url' => null, 'total' => 439, 'rank' => 6],
-            ];
-        }
         try {
             $db = Database::getConnection();
             $stmt = $db->query("
-                SELECT r.nombre, r.foto_url, COUNT(v.id) AS total
-                FROM analisis_revendedores r
-                INNER JOIN analisis_ventas v ON v.revendedor_id = r.id
-                WHERE v.fecha_venta >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-                GROUP BY r.id, r.nombre, r.foto_url
+                SELECT COALESCE(ua.updated_by_username, '—') AS nombre, COUNT(*) AS total
+                FROM user_access ua
+                GROUP BY ua.updated_by_username
                 ORDER BY total DESC
                 LIMIT 6
             ");
@@ -254,102 +208,60 @@ class AnalisisRepository
             foreach ($rows as $r) {
                 $out[] = [
                     'nombre' => $r['nombre'],
-                    'foto_url' => $r['foto_url'],
+                    'foto_url' => null,
                     'total' => (int) $r['total'],
                     'rank' => $rank++,
                 ];
             }
-            if (empty($out)) {
-                return [
-                    ['nombre' => 'Alejandro M.', 'foto_url' => null, 'total' => 865, 'rank' => 1],
-                    ['nombre' => 'Maria G.', 'foto_url' => null, 'total' => 752, 'rank' => 2],
-                    ['nombre' => 'Javier R.', 'foto_url' => null, 'total' => 610, 'rank' => 3],
-                    ['nombre' => 'Carlos S.', 'foto_url' => null, 'total' => 548, 'rank' => 4],
-                    ['nombre' => 'Laura P.', 'foto_url' => null, 'total' => 503, 'rank' => 5],
-                    ['nombre' => 'Pedro T.', 'foto_url' => null, 'total' => 439, 'rank' => 6],
-                ];
-            }
             return $out;
         } catch (PDOException $e) {
-            return [
-                ['nombre' => 'Alejandro M.', 'foto_url' => null, 'total' => 865, 'rank' => 1],
-                ['nombre' => 'Maria G.', 'foto_url' => null, 'total' => 752, 'rank' => 2],
-                ['nombre' => 'Javier R.', 'foto_url' => null, 'total' => 610, 'rank' => 3],
-                ['nombre' => 'Carlos S.', 'foto_url' => null, 'total' => 548, 'rank' => 4],
-                ['nombre' => 'Laura P.', 'foto_url' => null, 'total' => 503, 'rank' => 5],
-                ['nombre' => 'Pedro T.', 'foto_url' => null, 'total' => 439, 'rank' => 6],
-            ];
+            return [];
         }
     }
 
     /**
-     * Heatmap: revendedor x plataforma (valores por celda)
-     * @return array{revendedores: string[], plataformas: string[], matrix: int[][]}
+     * Heatmap: administrador x plataforma. Conteo de cuentas asignadas por cada admin en cada plataforma (user_access).
+     * @return array{administradores: string[], plataformas: string[], matrix: int[][]}
      */
-    public function getHeatmapPlataformaRevendedor(): array
+    public function getHeatmapPlataformaAdministrador(): array
     {
-        if (!$this->tablesExist()) {
-            return [
-                'revendedores' => ['Alejandro M.', 'Maria G.', 'Javier R.', 'Carlos S.'],
-                'plataformas' => ['Netflix', 'Disney+', 'HBO Max', 'Spotify'],
-                'matrix' => [
-                    [340, 255, 178, 92],
-                    [235, 234, 150, 83],
-                    [212, 164, 125, 111],
-                    [165, 107, 93, 95],
-                ],
-            ];
-        }
         try {
             $db = Database::getConnection();
             $stmt = $db->query("
-                SELECT r.nombre AS revendedor, p.display_name AS plataforma, COUNT(v.id) AS total
-                FROM analisis_ventas v
-                INNER JOIN analisis_revendedores r ON r.id = v.revendedor_id
-                INNER JOIN platforms p ON p.id = v.plataforma_id
-                WHERE v.fecha_venta >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-                GROUP BY v.revendedor_id, v.plataforma_id, r.nombre, p.display_name
+                SELECT COALESCE(ua.updated_by_username, '—') AS administrador, p.display_name AS plataforma, COUNT(ua.id) AS total
+                FROM user_access ua
+                INNER JOIN platforms p ON p.id = ua.platform_id
+                GROUP BY ua.updated_by_username, ua.platform_id, p.display_name
             ");
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $revendedores = [];
+            $administradores = [];
             $plataformas = [];
-            $byRev = [];
+            $byAdmin = [];
             foreach ($rows as $r) {
-                $rev = $r['revendedor'];
+                $admin = $r['administrador'];
                 $plat = $r['plataforma'];
-                if (!in_array($rev, $revendedores, true)) {
-                    $revendedores[] = $rev;
+                if (!in_array($admin, $administradores, true)) {
+                    $administradores[] = $admin;
                 }
                 if (!in_array($plat, $plataformas, true)) {
                     $plataformas[] = $plat;
                 }
-                if (!isset($byRev[$rev])) {
-                    $byRev[$rev] = [];
+                if (!isset($byAdmin[$admin])) {
+                    $byAdmin[$admin] = [];
                 }
-                $byRev[$rev][$plat] = (int) $r['total'];
+                $byAdmin[$admin][$plat] = (int) $r['total'];
             }
             $matrix = [];
-            foreach ($revendedores as $rev) {
+            foreach ($administradores as $admin) {
                 $row = [];
                 foreach ($plataformas as $plat) {
-                    $row[] = $byRev[$rev][$plat] ?? 0;
+                    $row[] = $byAdmin[$admin][$plat] ?? 0;
                 }
                 $matrix[] = $row;
             }
-            if (empty($matrix)) {
-                return [
-                    'revendedores' => ['Alejandro M.', 'Maria G.', 'Javier R.', 'Carlos S.'],
-                    'plataformas' => ['Netflix', 'Disney+', 'HBO Max', 'Spotify'],
-                    'matrix' => [[340, 255, 178, 92], [235, 234, 150, 83], [212, 164, 125, 111], [165, 107, 93, 95]],
-                ];
-            }
-            return ['revendedores' => $revendedores, 'plataformas' => $plataformas, 'matrix' => $matrix];
+            return ['administradores' => $administradores, 'plataformas' => $plataformas, 'matrix' => $matrix];
         } catch (PDOException $e) {
-            return [
-                'revendedores' => ['Alejandro M.', 'Maria G.', 'Javier R.', 'Carlos S.'],
-                'plataformas' => ['Netflix', 'Disney+', 'HBO Max', 'Spotify'],
-                'matrix' => [[340, 255, 178, 92], [235, 234, 150, 83], [212, 164, 125, 111], [165, 107, 93, 95]],
-            ];
+            return ['administradores' => [], 'plataformas' => [], 'matrix' => []];
         }
     }
 }

@@ -26,23 +26,23 @@ class AnalisisController
         $totalCuentas = $repo->getTotalCuentasKpi();
         $plataformasActivas = $repo->getPlataformasActivasCount();
         $plataformasActivasList = $platformRepo->findAllEnabled();
-        $revendedorDelMes = $repo->getRevendedorDelMes();
+        $administradorDelMes = $repo->getAdministradorDelMes();
         $totalIngresos = $repo->getTotalIngresosKpi();
         $evolucion = $repo->getEvolucionMensual();
         $ventasPorPlataforma = $repo->getVentasPorPlataforma();
-        $rankingRevendedores = $repo->getRankingRevendedores();
-        $heatmap = $repo->getHeatmapPlataformaRevendedor();
+        $rankingAdministradores = $repo->getRankingAdministradores();
+        $heatmap = $repo->getHeatmapPlataformaAdministrador();
 
         $this->renderView('admin/analisis/index', [
             'title' => 'Análisis',
             'total_cuentas' => $totalCuentas,
             'plataformas_activas' => $plataformasActivas,
             'plataformas_activas_list' => $plataformasActivasList,
-            'revendedor_del_mes' => $revendedorDelMes,
+            'administrador_del_mes' => $administradorDelMes,
             'total_ingresos' => $totalIngresos,
             'evolucion' => $evolucion,
             'ventas_por_plataforma' => $ventasPorPlataforma,
-            'ranking_revendedores' => $rankingRevendedores,
+            'ranking_administradores' => $rankingAdministradores,
             'heatmap' => $heatmap,
         ]);
     }

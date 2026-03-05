@@ -3,15 +3,15 @@
  * GAC - Vista Análisis (dashboard corporativo premium, dark mode, 12 columnas)
  * KPIs, evolución mensual, ventas por plataforma, ranking revendedores, heatmap.
  */
-$total_cuentas = $total_cuentas ?? ['total' => 2590, 'crecimiento' => 15.6];
+$total_cuentas = $total_cuentas ?? ['total' => 0, 'crecimiento' => 0];
 $plataformas_activas = (int) ($plataformas_activas ?? 4);
 $plataformas_activas_list = $plataformas_activas_list ?? [];
-$revendedor_del_mes = $revendedor_del_mes ?? ['nombre' => 'Alejandro M.', 'foto_url' => null, 'cuentas' => 865];
-$total_ingresos = $total_ingresos ?? ['total' => 103420.0, 'crecimiento' => 12.4];
+$administrador_del_mes = $administrador_del_mes ?? ['nombre' => '—', 'foto_url' => null, 'cuentas' => 0];
+$total_ingresos = $total_ingresos ?? ['total' => 0.0, 'crecimiento' => 0];
 $evolucion = $evolucion ?? ['labels' => [], 'values' => []];
 $ventas_por_plataforma = $ventas_por_plataforma ?? [];
-$ranking_revendedores = $ranking_revendedores ?? [];
-$heatmap = $heatmap ?? ['revendedores' => [], 'plataformas' => [], 'matrix' => []];
+$ranking_administradores = $ranking_administradores ?? [];
+$heatmap = $heatmap ?? ['administradores' => [], 'plataformas' => [], 'matrix' => []];
 
 $imagenes_plataformas_base = '/assets/imagenes/';
 $imagenes_plataformas = [
@@ -102,20 +102,20 @@ $content = ob_start();
             <div class="analisis-col analisis-col-3">
                 <div class="analisis-card analisis-kpi-card analisis-kpi-card--revendedor">
                     <div class="analisis-kpi-header">
-                        <span class="analisis-kpi-label">Revendedor del Mes</span>
-                        <span class="analisis-kpi-icon analisis-kpi-icon--crown" title="Revendedor destacado">
+                        <span class="analisis-kpi-label">Administrador del Mes</span>
+                        <span class="analisis-kpi-icon analisis-kpi-icon--crown" title="Administrador destacado">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14 8h6l-5 4 2 8-7-5-7 5 2-8-5-4h6l2-6z"/></svg>
                         </span>
                     </div>
                     <div class="analisis-revendedor-block">
-                        <img src="<?= !empty($revendedor_del_mes['foto_url']) ? htmlspecialchars($revendedor_del_mes['foto_url']) : 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="%23334155"><circle cx="24" cy="24" r="24"/><circle cx="24" cy="18" r="8"/><path d="M24 32c-6 0-10 4-10 8v2h20v-2c0-4-4-8-10-8z"/></svg>') ?>" alt="" class="analisis-revendedor-avatar" width="48" height="48">
+                        <img src="<?= !empty($administrador_del_mes['foto_url']) ? htmlspecialchars($administrador_del_mes['foto_url']) : 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="%23334155"><circle cx="24" cy="24" r="24"/><circle cx="24" cy="18" r="8"/><path d="M24 32c-6 0-10 4-10 8v2h20v-2c0-4-4-8-10-8z"/></svg>') ?>" alt="" class="analisis-revendedor-avatar" width="48" height="48">
                         <div class="analisis-revendedor-info">
-                            <span class="analisis-revendedor-nombre"><?= htmlspecialchars($revendedor_del_mes['nombre']) ?></span>
-                            <span class="analisis-revendedor-cuentas"><?= number_format($revendedor_del_mes['cuentas']) ?> cuentas vendidas</span>
+                            <span class="analisis-revendedor-nombre"><?= htmlspecialchars($administrador_del_mes['nombre']) ?></span>
+                            <span class="analisis-revendedor-cuentas"><?= number_format($administrador_del_mes['cuentas']) ?> cuentas asignadas</span>
                         </div>
                     </div>
                     <div class="analisis-progress-bar">
-                        <div class="analisis-progress-fill" style="width: 85%;"></div>
+                        <div class="analisis-progress-fill" style="width: <?= $administrador_del_mes['cuentas'] > 0 ? '85' : '0' ?>%;"></div>
                     </div>
                 </div>
             </div>
@@ -148,7 +148,7 @@ $content = ob_start();
                     </h3>
                     <div class="analisis-chart-wrap analisis-chart-wrap--line" style="height: 300px;">
                         <canvas id="analisisChartEvolucion" width="1200" height="300"></canvas>
-                        <span class="analisis-evolucion-badge" id="analisisEvolucionBadge"><?= number_format(!empty($evolucion['values']) ? $evolucion['values'][count($evolucion['values'])-1] : 2590) ?></span>
+                        <span class="analisis-evolucion-badge" id="analisisEvolucionBadge"><?= number_format(!empty($evolucion['values']) ? $evolucion['values'][count($evolucion['values'])-1] : 0) ?></span>
                     </div>
                 </div>
             </div>
@@ -173,7 +173,7 @@ $content = ob_start();
                 <div class="analisis-card analisis-chart-card">
                     <h3 class="analisis-card-title">
                         <span class="analisis-chart-title-icon analisis-chart-title-icon--users"><svg width="33" height="33" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
-                        Ranking de Revendedores
+                        Ranking de Administradores
                     </h3>
                     <div class="analisis-ranking-list" id="analisisRankingList">
                         <?php
@@ -183,8 +183,8 @@ $content = ob_start();
                             2 => '#A855F7',
                             3 => '#6366F1',
                         ];
-                        $maxRank = !empty($ranking_revendedores) ? max(array_column($ranking_revendedores, 'total')) : 865;
-                        foreach ($ranking_revendedores as $r):
+                        $maxRank = !empty($ranking_administradores) ? max(array_column($ranking_administradores, 'total')) : 1;
+                        foreach ($ranking_administradores as $r):
                             $rank = (int) $r['rank'];
                             $barStyle = $barColors[$rank] ?? '#334155';
                             $rankClass = $rankNumColors[$rank] ?? 'analisis-rank--grey';
@@ -209,7 +209,7 @@ $content = ob_start();
                 <div class="analisis-card analisis-chart-card">
                     <h3 class="analisis-card-title">
                         <span class="analisis-chart-title-icon analisis-chart-title-icon--heatmap"><svg width="33" height="33" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg></span>
-                        Plataforma vs Revendedor
+                        Plataforma vs Administrador
                     </h3>
                     <div class="analisis-heatmap-wrap">
                         <table class="analisis-heatmap-table">
@@ -230,9 +230,9 @@ $content = ob_start();
                                     }
                                 }
                                 $maxVal = $maxVal ?: 1;
-                                foreach ($heatmap['revendedores'] as $i => $rev): ?>
+                                foreach ($heatmap['administradores'] as $i => $admin): ?>
                                 <tr>
-                                    <td class="analisis-heatmap-rev"><?= htmlspecialchars($rev) ?></td>
+                                    <td class="analisis-heatmap-rev"><?= htmlspecialchars($admin) ?></td>
                                     <?php foreach ($heatmap['matrix'][$i] ?? [] as $val): 
                                         $intensity = $maxVal > 0 ? $val / $maxVal : 0;
                                         if ($intensity <= 0.25) $cls = 'analisis-heatmap--low';
@@ -257,7 +257,7 @@ $content = ob_start();
 window.ANALISIS_DATA = {
     evolucion: <?= json_encode($evolucion) ?>,
     ventasPorPlataforma: <?= json_encode($ventas_por_plataforma) ?>,
-    ultimoValorEvolucion: <?= !empty($evolucion['values']) ? (int) $evolucion['values'][count($evolucion['values']) - 1] : 2590 ?>
+    ultimoValorEvolucion: <?= !empty($evolucion['values']) ? (int) $evolucion['values'][count($evolucion['values']) - 1] : 0 ?>
 };
 </script>
 <?php
