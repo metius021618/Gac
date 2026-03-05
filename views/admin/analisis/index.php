@@ -215,7 +215,7 @@ $content = ob_start();
                         <table class="analisis-heatmap-table">
                             <thead>
                                 <tr>
-                                    <th class="BLANCO""></th>
+                                    <th id="BLANCO"></th>
                                     <?php foreach ($heatmap['plataformas'] as $plat): ?>
                                     <th class="analisis-heatmap-th-name-only"><?= htmlspecialchars($plat) ?></th>
                                     <?php endforeach; ?>
