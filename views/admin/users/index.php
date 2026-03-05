@@ -50,7 +50,7 @@ $content = ob_start();
                 <tbody>
                     <?php if (empty($users)): ?>
                         <tr>
-                            <td colspan="4" class="text-center">
+                            <td colspan="5" class="text-center">
                                 <p class="empty-message">No hay usuarios revendedores registrados</p>
                             </td>
                         </tr>
@@ -64,11 +64,13 @@ $content = ob_start();
                                     <form method="post" action="/admin/users/toggle-active">
                                         <input type="hidden" name="id" value="<?= (int) $user['id'] ?>">
                                         <input type="hidden" name="active" value="<?= $user['active'] ? 0 : 1 ?>">
-                                        <button type="submit"
-                                                class="access-toggle <?= $user['active'] ? 'access-toggle--on' : 'access-toggle--off' ?>"
-                                                title="Activar/Desactivar acceso al sistema">
-                                            <?= $user['active'] ? 'On' : 'Off' ?>
-                                        </button>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox"
+                                                   class="toggle-input"
+                                                   <?= $user['active'] ? 'checked' : '' ?>
+                                                   onchange="this.form.submit()">
+                                            <span class="toggle-slider"></span>
+                                        </label>
                                     </form>
                                 </td>
                                 <td>
