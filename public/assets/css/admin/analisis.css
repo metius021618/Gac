@@ -328,6 +328,13 @@
     grid-template-columns: 28px 32px minmax(80px, 1fr) minmax(120px, 2fr) auto;
     align-items: center;
     gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.analisis-ranking-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
 }
 
 /* Colores del número de posición: 1 dorado, 2 cobre, 3 plata, 4-6 gris */
@@ -377,15 +384,15 @@
 .analisis-ranking-bar-wrap {
     flex: 1;
     min-width: 0;
-    height: 14px;
-    border-radius: 7px;
+    height: 22px;
+    border-radius: 11px;
     background: var(--analisis-divider);
     overflow: hidden;
 }
 
 .analisis-ranking-bar {
     height: 100%;
-    border-radius: 7px;
+    border-radius: 11px;
     min-width: 4%;
     transition: width 0.3s ease;
 }
