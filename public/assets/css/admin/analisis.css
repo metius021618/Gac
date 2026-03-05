@@ -264,53 +264,44 @@
  .analisis-chart-title-icon--users { color: #F59E0B; }
  .analisis-chart-title-icon--heatmap { color: var(--analisis-accent); }
  
-/* Ventas por Plataforma: logos encima de cada barra (grid alineado) */
+/* Ventas por Plataforma: logos encima de cada barra (posicionados por JS sobre la barra) */
 .analisis-bar-chart-with-logos {
     width: 100%;
 }
 
-.analisis-bar-chart-logos-row {
-    display: grid;
-    grid-template-columns: repeat(var(--analisis-bar-cols, 4), 1fr);
-    gap: 8px;
-    margin-bottom: 12px;
-    padding: 0 4px;
-    justify-items: center;
+.analisis-chart-wrap--bar {
+    position: relative;
 }
 
-.analisis-bar-chart-logo-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.analisis-bar-logos-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 2;
 }
 
-.analisis-bar-logo {
+.analisis-bar-logo-on-bar {
+    position: absolute;
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #fff;
     object-fit: contain;
     padding: 4px;
     box-sizing: border-box;
+    background: rgba(30, 41, 59, 0.9);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.analisis-bar-logo--img {
-    background: rgba(30, 41, 59, 0.8);
-}
-
-.analisis-bar-logo--fallback {
+.analisis-bar-logo-on-bar--letter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #fff;
     background: var(--analisis-divider);
 }
-
-.analisis-bar-logo--netflix { background: #E50914; }
-.analisis-bar-logo--disney { background: #1F80E0; }
-.analisis-bar-logo--hbo { background: #8B5CF6; }
-.analisis-bar-logo--spotify { background: #1DB954; }
  
  .analisis-chart-wrap {
      width: 100%;

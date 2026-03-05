@@ -9,6 +9,8 @@
     var evolucion = DATA.evolucion || { labels: [], values: [] };
     var ventasPorPlataforma = DATA.ventasPorPlataforma || [];
     var ultimoValor = DATA.ultimoValorEvolucion || 2590;
+    var barLogoUrls = DATA.barLogoUrls || [];
+    var barLabels = DATA.barLabels || [];
 
     function initEvolucionChart() {
         var canvas = document.getElementById('analisisChartEvolucion');
@@ -74,7 +76,6 @@
         var canvas = document.getElementById('analisisChartPlataformas');
         if (!canvas || typeof Chart === 'undefined') return;
 
-        /* Colores pastel por plataforma */
         var colorByPlatform = { 'Netflix': '#FCA5A5', 'Disney+': '#93C5FD', 'HBO Max': '#C4B5FD', 'Spotify': '#86EFAC' };
         var labels = ventasPorPlataforma.map(function (p) { return p.nombre; });
         var values = ventasPorPlataforma.map(function (p) { return p.total; });
@@ -86,7 +87,59 @@
             colors = ['#FCA5A5', '#93C5FD', '#C4B5FD', '#86EFAC'];
         }
 
-        new Chart(canvas, {
+        var logoSize = 36;
+        var overlay = document.getElementById('analisisBarLogosOverlay');
+        var logosPlaced = false;
+
+        function placeLogosOverBars(chart) {
+            if (!overlay || !chart.ctx) return;
+            var meta = chart.getDatasetMeta(0);
+            if (!meta || !meta.data.length) return;
+
+            var canvasEl = chart.canvas;
+            var w = canvasEl.offsetWidth;
+            var h = canvasEl.offsetHeight;
+            overlay.style.width = w + 'px';
+            overlay.style.height = h + 'px';
+
+            var area = chart.chartArea;
+            if (!area) return;
+
+            var scaleX = w / chart.width;
+            var scaleY = h / chart.height;
+
+            for (var j = 0; j < meta.data.length; j++) {
+                var bar = meta.data[j];
+                var logoUrl = barLogoUrls[j];
+                var label = barLabels[j] || '';
+                var letter = label ? label.charAt(0) : '';
+
+                var el = overlay.querySelector('[data-bar-index="' + j + '"]');
+                if (!el) {
+                    el = document.createElement(logoUrl ? 'img' : 'span');
+                    el.setAttribute('data-bar-index', j);
+                    el.className = 'analisis-bar-logo-on-bar';
+                    if (logoUrl) {
+                        el.src = logoUrl;
+                        el.alt = label;
+                    } else {
+                        el.className += ' analisis-bar-logo-on-bar--letter';
+                        el.textContent = letter;
+                    }
+                    overlay.appendChild(el);
+                }
+
+                var left = (bar.x - (logoSize / 2)) * scaleX;
+                var top = (area.top + 6) * scaleY;
+                el.style.width = logoSize + 'px';
+                el.style.height = logoSize + 'px';
+                el.style.left = Math.round(left) + 'px';
+                el.style.top = Math.round(top) + 'px';
+            }
+            logosPlaced = true;
+        }
+
+        var chart = new Chart(canvas, {
             type: 'bar',
             data: {
                 labels: labels,
@@ -139,8 +192,20 @@
                         });
                     });
                 }
+            }, {
+                id: 'barLogosOverlay',
+                afterDraw: function (chart) {
+                    placeLogosOverBars(chart);
+                }
             }]
         });
+
+        if (window.ResizeObserver && overlay) {
+            var ro = new ResizeObserver(function () {
+                if (chart && logosPlaced) placeLogosOverBars(chart);
+            });
+            ro.observe(canvas.parentElement);
+        }
     }
 
     function init() {

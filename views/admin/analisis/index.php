@@ -73,7 +73,6 @@ $content = ob_start();
                     <div class="analisis-kpi-header">
                         <span class="analisis-kpi-label">Plataformas Activas</span>
                         <span class="analisis-kpi-icon analisis-kpi-icon--spotify" title="Plataformas">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.48-1.12 0-2.16-.38-3.16-1.03-.19-.14-.23-.42-.09-.61.14-.19.42-.23.61-.09 1.02.72 2.27 1.03 3.48 1.03.24 0 .64-.03.96-.18.27-.14.36-.42.24-.66l-.01-.02zm1.44-3.3c-.3.42-.85.56-1.27.26-.99-.6-2.24-.74-3.44-.4-.31.08-.65-.09-.73-.4-.08-.31.09-.65.4-.73 1.48-.36 2.98-.2 4.22.47.42.26.56.85.82 1.6zm.12-3.36C15.24 8.4 8.94 8.16 5.16 9.75c-.49.23-1.06-.08-1.29-.57-.23-.49.08-1.06.57-1.29 4.26-1.96 11.16-1.69 15.09.5.46.21.62.82.41 1.28-.21.46-.82.62-1.28.41z"/></svg>
                         </span>
                     </div>
                     <div class="analisis-kpi-value"><?= $plataformas_activas ?></div>
@@ -160,22 +159,8 @@ $content = ob_start();
                         Ventas por Plataforma
                     </h3>
                     <div class="analisis-bar-chart-with-logos">
-                        <div class="analisis-bar-chart-logos-row" id="analisisBarChartLogosRow" style="--analisis-bar-cols: <?= max(1, count($ventas_por_plataforma) ?: 4) ?>">
-                            <?php foreach ($ventas_por_plataforma as $vp): 
-                                $pk = (stripos($vp['nombre'], 'Netflix') !== false) ? 'netflix' : ((stripos($vp['nombre'], 'Disney') !== false) ? 'disney' : ((stripos($vp['nombre'], 'HBO') !== false) ? 'hbo' : ((stripos($vp['nombre'], 'Spotify') !== false) ? 'spotify' : null)));
-                            ?>
-                            <div class="analisis-bar-chart-logo-cell">
-                                <?php if ($pk && $plat_img($pk)): ?><img src="<?= $plat_img($pk) ?>" alt="<?= htmlspecialchars($vp['nombre']) ?>" class="analisis-bar-logo analisis-bar-logo--img" width="36" height="36"><?php else: ?><span class="analisis-bar-logo analisis-bar-logo--fallback"><?= mb_substr($vp['nombre'], 0, 1) ?></span><?php endif; ?>
-                            </div>
-                            <?php endforeach; ?>
-                            <?php if (empty($ventas_por_plataforma)): 
-                                $defaults = [['nombre' => 'Netflix', 'key' => 'netflix'], ['nombre' => 'Disney+', 'key' => 'disney'], ['nombre' => 'HBO Max', 'key' => 'hbo'], ['nombre' => 'Spotify', 'key' => 'spotify']];
-                                foreach ($defaults as $d): $url = $plat_img($d['key']);
-                            ?>
-                            <div class="analisis-bar-chart-logo-cell"><?php if ($url): ?><img src="<?= $url ?>" alt="<?= htmlspecialchars($d['nombre']) ?>" class="analisis-bar-logo analisis-bar-logo--img" width="36" height="36"><?php else: ?><span class="analisis-bar-logo analisis-bar-logo--fallback"><?= substr($d['nombre'], 0, 1) ?></span><?php endif; ?></div>
-                            <?php endforeach; endif; ?>
-                        </div>
                         <div class="analisis-chart-wrap analisis-chart-wrap--bar" style="height: 280px;">
+                            <div id="analisisBarLogosOverlay" class="analisis-bar-logos-overlay" aria-hidden="true"></div>
                             <canvas id="analisisChartPlataformas" width="400" height="280"></canvas>
                         </div>
                     </div>
@@ -265,11 +250,23 @@ $content = ob_start();
     </div>
 </div>
 
+<?php
+$bar_logo_urls = [];
+$bar_labels = [];
+$vpp = !empty($ventas_por_plataforma) ? $ventas_por_plataforma : [['nombre' => 'Netflix'], ['nombre' => 'Disney+'], ['nombre' => 'HBO Max'], ['nombre' => 'Spotify']];
+foreach ($vpp as $vp) {
+    $bar_labels[] = $vp['nombre'];
+    $pk = (stripos($vp['nombre'], 'Netflix') !== false) ? 'netflix' : ((stripos($vp['nombre'], 'Disney') !== false) ? 'disney' : ((stripos($vp['nombre'], 'HBO') !== false) ? 'hbo' : ((stripos($vp['nombre'], 'Spotify') !== false) ? 'spotify' : null)));
+    $bar_logo_urls[] = ($pk && $plat_img($pk)) ? $plat_img($pk) : null;
+}
+?>
 <script>
 window.ANALISIS_DATA = {
     evolucion: <?= json_encode($evolucion) ?>,
     ventasPorPlataforma: <?= json_encode($ventas_por_plataforma) ?>,
-    ultimoValorEvolucion: <?= !empty($evolucion['values']) ? (int) $evolucion['values'][count($evolucion['values']) - 1] : 2590 ?>
+    ultimoValorEvolucion: <?= !empty($evolucion['values']) ? (int) $evolucion['values'][count($evolucion['values']) - 1] : 2590 ?>,
+    barLogoUrls: <?= json_encode($bar_logo_urls) ?>,
+    barLabels: <?= json_encode($bar_labels) ?>
 };
 </script>
 <?php
