@@ -95,7 +95,7 @@ $content = ob_start();
                     </svg>
                 </div>
                 <div class="stat-card-content stat-card-content--value">
-                    <span class="stat-card-value"><?= number_format(($stats['gmail_count'] ?? 0) + ($stats['outlook_count'] ?? 0) + ($stats['pocoyoni_count'] ?? 0)) ?></span>
+                    <span class="stat-card-value"><?= number_format($stats['email_accounts'] ?? 0) ?></span>
                     <span class="stat-card-label">Correos Registrados</span>
                 </div>
                 <div class="stat-card-arrow">
