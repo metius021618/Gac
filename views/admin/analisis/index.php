@@ -160,7 +160,6 @@ $content = ob_start();
                     </h3>
                     <div class="analisis-bar-chart-with-logos">
                         <div class="analisis-chart-wrap analisis-chart-wrap--bar" style="height: 280px;">
-                            <div id="analisisBarLogosOverlay" class="analisis-bar-logos-overlay" aria-hidden="true"></div>
                             <canvas id="analisisChartPlataformas" width="400" height="280"></canvas>
                         </div>
                     </div>
@@ -212,7 +211,6 @@ $content = ob_start();
                         <table class="analisis-heatmap-table">
                             <thead>
                                 <tr>
-                                    <th></th>
                                     <?php foreach ($heatmap['plataformas'] as $plat): ?>
                                     <th class="analisis-heatmap-th-name-only"><?= htmlspecialchars($plat) ?></th>
                                     <?php endforeach; ?>
@@ -250,23 +248,11 @@ $content = ob_start();
     </div>
 </div>
 
-<?php
-$bar_logo_urls = [];
-$bar_labels = [];
-$vpp = !empty($ventas_por_plataforma) ? $ventas_por_plataforma : [['nombre' => 'Netflix'], ['nombre' => 'Disney+'], ['nombre' => 'HBO Max'], ['nombre' => 'Spotify']];
-foreach ($vpp as $vp) {
-    $bar_labels[] = $vp['nombre'];
-    $pk = (stripos($vp['nombre'], 'Netflix') !== false) ? 'netflix' : ((stripos($vp['nombre'], 'Disney') !== false) ? 'disney' : ((stripos($vp['nombre'], 'HBO') !== false) ? 'hbo' : ((stripos($vp['nombre'], 'Spotify') !== false) ? 'spotify' : null)));
-    $bar_logo_urls[] = ($pk && $plat_img($pk)) ? $plat_img($pk) : null;
-}
-?>
 <script>
 window.ANALISIS_DATA = {
     evolucion: <?= json_encode($evolucion) ?>,
     ventasPorPlataforma: <?= json_encode($ventas_por_plataforma) ?>,
-    ultimoValorEvolucion: <?= !empty($evolucion['values']) ? (int) $evolucion['values'][count($evolucion['values']) - 1] : 2590 ?>,
-    barLogoUrls: <?= json_encode($bar_logo_urls) ?>,
-    barLabels: <?= json_encode($bar_labels) ?>
+    ultimoValorEvolucion: <?= !empty($evolucion['values']) ? (int) $evolucion['values'][count($evolucion['values']) - 1] : 2590 ?>
 };
 </script>
 <?php

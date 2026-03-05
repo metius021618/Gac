@@ -9,8 +9,6 @@
     var evolucion = DATA.evolucion || { labels: [], values: [] };
     var ventasPorPlataforma = DATA.ventasPorPlataforma || [];
     var ultimoValor = DATA.ultimoValorEvolucion || 2590;
-    var barLogoUrls = DATA.barLogoUrls || [];
-    var barLabels = DATA.barLabels || [];
 
     function initEvolucionChart() {
         var canvas = document.getElementById('analisisChartEvolucion');
@@ -76,7 +74,8 @@
         var canvas = document.getElementById('analisisChartPlataformas');
         if (!canvas || typeof Chart === 'undefined') return;
 
-        var colorByPlatform = { 'Netflix': '#FCA5A5', 'Disney+': '#93C5FD', 'HBO Max': '#C4B5FD', 'Spotify': '#86EFAC' };
+        /* 50% entre color normal y pastel */
+        var colorByPlatform = { 'Netflix': '#F0575C', 'Disney+': '#59A2EE', 'HBO Max': '#A788F9', 'Spotify': '#51D480' };
         var labels = ventasPorPlataforma.map(function (p) { return p.nombre; });
         var values = ventasPorPlataforma.map(function (p) { return p.total; });
         var colors = ventasPorPlataforma.map(function (p) { return colorByPlatform[p.nombre] || p.color || '#94A3B8'; });
@@ -84,62 +83,10 @@
         if (labels.length === 0) {
             labels = ['Netflix', 'Disney+', 'HBO Max', 'Spotify'];
             values = [1085, 760, 430, 315];
-            colors = ['#FCA5A5', '#93C5FD', '#C4B5FD', '#86EFAC'];
+            colors = ['#F0575C', '#59A2EE', '#A788F9', '#51D480'];
         }
 
-        var logoSize = 36;
-        var overlay = document.getElementById('analisisBarLogosOverlay');
-        var logosPlaced = false;
-
-        function placeLogosOverBars(chart) {
-            if (!overlay || !chart.ctx) return;
-            var meta = chart.getDatasetMeta(0);
-            if (!meta || !meta.data.length) return;
-
-            var canvasEl = chart.canvas;
-            var w = canvasEl.offsetWidth;
-            var h = canvasEl.offsetHeight;
-            overlay.style.width = w + 'px';
-            overlay.style.height = h + 'px';
-
-            var area = chart.chartArea;
-            if (!area) return;
-
-            var scaleX = w / chart.width;
-            var scaleY = h / chart.height;
-
-            for (var j = 0; j < meta.data.length; j++) {
-                var bar = meta.data[j];
-                var logoUrl = barLogoUrls[j];
-                var label = barLabels[j] || '';
-                var letter = label ? label.charAt(0) : '';
-
-                var el = overlay.querySelector('[data-bar-index="' + j + '"]');
-                if (!el) {
-                    el = document.createElement(logoUrl ? 'img' : 'span');
-                    el.setAttribute('data-bar-index', j);
-                    el.className = 'analisis-bar-logo-on-bar';
-                    if (logoUrl) {
-                        el.src = logoUrl;
-                        el.alt = label;
-                    } else {
-                        el.className += ' analisis-bar-logo-on-bar--letter';
-                        el.textContent = letter;
-                    }
-                    overlay.appendChild(el);
-                }
-
-                var left = (bar.x - (logoSize / 2)) * scaleX;
-                var top = (area.top + 6) * scaleY;
-                el.style.width = logoSize + 'px';
-                el.style.height = logoSize + 'px';
-                el.style.left = Math.round(left) + 'px';
-                el.style.top = Math.round(top) + 'px';
-            }
-            logosPlaced = true;
-        }
-
-        var chart = new Chart(canvas, {
+        new Chart(canvas, {
             type: 'bar',
             data: {
                 labels: labels,
@@ -192,20 +139,8 @@
                         });
                     });
                 }
-            }, {
-                id: 'barLogosOverlay',
-                afterDraw: function (chart) {
-                    placeLogosOverBars(chart);
-                }
             }]
         });
-
-        if (window.ResizeObserver && overlay) {
-            var ro = new ResizeObserver(function () {
-                if (chart && logosPlaced) placeLogosOverBars(chart);
-            });
-            ro.observe(canvas.parentElement);
-        }
     }
 
     function init() {
