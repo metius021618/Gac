@@ -74,11 +74,9 @@
         var canvas = document.getElementById('analisisChartPlataformas');
         if (!canvas || typeof Chart === 'undefined') return;
 
-        /* 50% entre color normal y pastel */
-        var colorByPlatform = { 'Netflix': '#F0575C', 'Disney+': '#59A2EE', 'HBO Max': '#A788F9', 'Spotify': '#51D480' };
         var labels = ventasPorPlataforma.map(function (p) { return p.nombre; });
         var values = ventasPorPlataforma.map(function (p) { return p.total; });
-        var colors = ventasPorPlataforma.map(function (p) { return colorByPlatform[p.nombre] || p.color || '#94A3B8'; });
+        var colors = ventasPorPlataforma.map(function (p) { return p.color || '#94A3B8'; });
 
         if (labels.length === 0) {
             labels = ['Netflix', 'Disney+', 'HBO Max', 'Spotify'];
@@ -115,7 +113,7 @@
                 scales: {
                     x: {
                         grid: { display: false, drawBorder: false },
-                        ticks: { color: '#94A3B8' }
+                        ticks: { color: '#94A3B8', maxRotation: 0, minRotation: 0 }
                     },
                     y: {
                         min: 0,

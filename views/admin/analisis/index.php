@@ -234,13 +234,13 @@ $content = ob_start();
                                 <tr>
                                     <td class="analisis-heatmap-rev"><?= htmlspecialchars($admin) ?></td>
                                     <?php foreach ($heatmap['matrix'][$i] ?? [] as $val): 
-                                        $intensity = $maxVal > 0 ? $val / $maxVal : 0;
-                                        if ($intensity <= 0.25) $cls = 'analisis-heatmap--low';
-                                        elseif ($intensity <= 0.5) $cls = 'analisis-heatmap--mid';
-                                        elseif ($intensity <= 0.75) $cls = 'analisis-heatmap--high';
-                                        else $cls = 'analisis-heatmap--veryhigh';
+                                        $intensity = $maxVal > 0 ? (float) $val / $maxVal : 0;
+                                        $r = (int) round(30 + (168 - 30) * $intensity);
+                                        $g = (int) round(41 + (85 - 41) * $intensity);
+                                        $b = (int) round(59 + (247 - 59) * $intensity);
+                                        $bg = "rgb({$r},{$g},{$b})";
                                     ?>
-                                    <td class="analisis-heatmap-cell <?= $cls ?>"><?= (int) $val ?></td>
+                                    <td class="analisis-heatmap-cell" style="background: <?= $bg ?>;"><?= (int) $val ?></td>
                                     <?php endforeach; ?>
                                 </tr>
                                 <?php endforeach; ?>

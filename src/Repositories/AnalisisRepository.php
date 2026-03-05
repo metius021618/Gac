@@ -71,10 +71,10 @@ class AnalisisRepository
         try {
             $db = Database::getConnection();
             $stmt = $db->query("
-                SELECT COALESCE(ua.updated_by_username, '—') AS nombre, COUNT(*) AS cuentas
+                SELECT COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin') AS nombre, COUNT(*) AS cuentas
                 FROM user_access ua
                 WHERE YEAR(ua.created_at) = YEAR(CURDATE()) AND MONTH(ua.created_at) = MONTH(CURDATE())
-                GROUP BY ua.updated_by_username
+                GROUP BY COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin')
                 ORDER BY cuentas DESC
                 LIMIT 1
             ");
@@ -89,7 +89,7 @@ class AnalisisRepository
         } catch (PDOException $e) {
             // ignore
         }
-        return ['nombre' => '—', 'foto_url' => null, 'cuentas' => 0];
+        return ['nombre' => 'admin', 'foto_url' => null, 'cuentas' => 0];
     }
 
     /**
@@ -152,11 +152,12 @@ class AnalisisRepository
         }
     }
 
-    /** Colores por nombre de plataforma para gráficos */
+    /** Colores por nombre de plataforma para gráficos (incluye variantes de nombre en BD) */
     private const PLATFORM_COLORS = [
-        'Netflix' => '#E50914', 'Disney+' => '#1F80E0', 'HBO Max' => '#8B5CF6', 'Spotify' => '#1DB954',
-        'Paramount+' => '#0064FF', 'Prime Video' => '#00A8E1', 'Crunchyroll' => '#F47521',
-        'Canva' => '#00C4CC', 'ChatGPT' => '#10A37F',
+        'Netflix' => '#E50914', 'Disney+' => '#1F80E0', 'Disney' => '#1F80E0',
+        'HBO Max' => '#8B5CF6', 'Hbo Max' => '#8B5CF6', 'Spotify' => '#1DB954',
+        'Paramount+' => '#0064FF', 'Prime Video' => '#00A8E1', 'Amazon Prime Video' => '#00A8E1',
+        'Crunchyroll' => '#F47521', 'Canva' => '#00C4CC', 'ChatGPT' => '#10A37F',
     ];
 
     /**
@@ -196,9 +197,9 @@ class AnalisisRepository
         try {
             $db = Database::getConnection();
             $stmt = $db->query("
-                SELECT COALESCE(ua.updated_by_username, '—') AS nombre, COUNT(*) AS total
+                SELECT COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin') AS nombre, COUNT(*) AS total
                 FROM user_access ua
-                GROUP BY ua.updated_by_username
+                GROUP BY COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin')
                 ORDER BY total DESC
                 LIMIT 6
             ");
@@ -228,10 +229,10 @@ class AnalisisRepository
         try {
             $db = Database::getConnection();
             $stmt = $db->query("
-                SELECT COALESCE(ua.updated_by_username, '—') AS administrador, p.display_name AS plataforma, COUNT(ua.id) AS total
+                SELECT COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin') AS administrador, p.display_name AS plataforma, COUNT(ua.id) AS total
                 FROM user_access ua
                 INNER JOIN platforms p ON p.id = ua.platform_id
-                GROUP BY ua.updated_by_username, ua.platform_id, p.display_name
+                GROUP BY COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin'), ua.platform_id, p.display_name
             ");
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $administradores = [];
