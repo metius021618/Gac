@@ -421,4 +421,104 @@ class UserRepository
             ];
         }
     }
+
+    /**
+     * Buscar y paginar solo usuarios con rol REVENDEDOR, incluyendo
+     * el número de cuentas asignadas (user_access.password = username).
+     *
+     * @return array{data:array,total:int,page:int,per_page:int,total_pages:int}
+     */
+    public function searchResellersPaginate(int $page = 1, int $perPage = 15, string $search = ''): array
+    {
+        try {
+            $params = [];
+            $where = "WHERE UPPER(r.name) = 'REVENDEDOR'";
+
+            if ($search !== '') {
+                $searchLower = '%' . strtolower($search) . '%';
+                $where .= " AND (LOWER(u.username) LIKE :search OR LOWER(u.email) LIKE :search)";
+                $params[':search'] = $searchLower;
+            }
+
+            // Contar total de revendedores que tengan al menos 10 cuentas asignadas
+            $countSql = "
+                SELECT COUNT(*) AS total
+                FROM users u
+                INNER JOIN roles r ON u.role_id = r.id
+                {$where}
+                  AND (
+                      SELECT COUNT(*)
+                      FROM user_access ua
+                      WHERE ua.password = u.username
+                  ) >= 10
+            ";
+            $countStmt = $this->db->prepare($countSql);
+            $countStmt->execute($params);
+            $total = (int) ($countStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
+
+            $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
+            $offset = ($page - 1) * $perPage;
+            $limitClause = $perPage > 0 ? "LIMIT {$perPage} OFFSET {$offset}" : '';
+
+            // Datos con cantidad de cuentas (user_access.password = username)
+            // Solo incluir usuarios con al menos 10 cuentas asignadas
+            $sql = "
+                SELECT
+                    u.id,
+                    u.username,
+                    u.email,
+                    u.active,
+                    u.created_at,
+                    (
+                        SELECT COUNT(*)
+                        FROM user_access ua
+                        WHERE ua.password = u.username
+                    ) AS accounts_count
+                FROM users u
+                INNER JOIN roles r ON u.role_id = r.id
+                {$where}
+                  AND (
+                      SELECT COUNT(*)
+                      FROM user_access ua
+                      WHERE ua.password = u.username
+                  ) >= 10
+                ORDER BY u.created_at DESC
+                {$limitClause}
+            ";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+            return [
+                'data' => $data,
+                'total' => $total,
+                'page' => $page,
+                'per_page' => $perPage,
+                'total_pages' => $totalPages,
+            ];
+        } catch (PDOException $e) {
+            error_log('UserRepository::searchResellersPaginate error: ' . $e->getMessage());
+            return [
+                'data' => [],
+                'total' => 0,
+                'page' => $page,
+                'per_page' => $perPage,
+                'total_pages' => 1,
+            ];
+        }
+    }
+
+    /**
+     * Eliminar usuario por ID.
+     */
+    public function delete(int $id): bool
+    {
+        try {
+            $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id");
+            return $stmt->execute([':id' => $id]);
+        } catch (PDOException $e) {
+            error_log('UserRepository::delete error: ' . $e->getMessage());
+            return false;
+        }
+    }
 }

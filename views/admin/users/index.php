@@ -1,6 +1,8 @@
 <?php
 /**
- * GAC - Vista de Registro Masivo (Usuarios)
+ * GAC - Vista de Usuarios (Revendedores)
+ * Solo muestra usuarios auto-generados para revendedores
+ * con sus cuentas asignadas.
  */
 
 $content = ob_start();
@@ -8,8 +10,10 @@ $content = ob_start();
 
 <div class="admin-container">
     <div class="admin-header">
-        <h1 class="admin-title">Registro Masivo</h1>
-        <p class="admin-subtitle">Gestión de usuarios y clientes del sistema</p>
+        <h1 class="admin-title">Usuarios (Revendedores)</h1>
+        <p class="admin-subtitle">
+            Listado de usuarios que tienen 10 cuentas o más asignadas. Desde aquí puedes activar/desactivar o eliminar revendedores.
+        </p>
     </div>
 
     <div class="admin-content">
@@ -19,11 +23,6 @@ $content = ob_start();
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </span>
                 <input type="text" id="searchInput" class="search-input" placeholder="Buscar por usuario o email..." value="<?= htmlspecialchars($search_query) ?>">
-                <?php if (!empty($search_query)): ?>
-                    <button type="button" id="clearSearch" class="clear-search-btn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
-                <?php endif; ?>
             </div>
             <div class="per-page-selector">
                 <label for="perPage">Mostrar:</label>
@@ -43,41 +42,39 @@ $content = ob_start();
                     <tr>
                         <th>ID</th>
                         <th>Usuario</th>
-                        <th>Email</th>
-                        <th>Rol</th>
-                        <th>Estado</th>
-                        <th>Último Acceso</th>
-                        <th>Fecha Registro</th>
+                        <th>Cuentas</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($users)): ?>
                         <tr>
-                            <td colspan="7" class="text-center">
-                                <p class="empty-message">No hay usuarios registrados</p>
+                            <td colspan="4" class="text-center">
+                                <p class="empty-message">No hay usuarios revendedores registrados</p>
                             </td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($users as $user): ?>
                             <tr data-id="<?= $user['id'] ?>">
                                 <td><?= htmlspecialchars($user['id']) ?></td>
+                                <td><strong><?= htmlspecialchars($user['username']) ?></strong></td>
+                                <td><?= (int) ($user['accounts_count'] ?? 0) ?></td>
                                 <td>
-                                    <strong><?= htmlspecialchars($user['username']) ?></strong>
-                                </td>
-                                <td><?= htmlspecialchars($user['email']) ?></td>
-                                <td>
-                                    <span class="badge badge-info"><?= htmlspecialchars($user['role_display_name'] ?? $user['role_name'] ?? 'N/A') ?></span>
-                                </td>
-                                <td>
-                                    <span class="status-badge status-<?= $user['active'] ? 'active' : 'inactive' ?>">
-                                        <?= $user['active'] ? 'Activo' : 'Inactivo' ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <?= $user['last_login'] ? date('d/m/Y H:i', strtotime($user['last_login'])) : 'Nunca' ?>
-                                </td>
-                                <td>
-                                    <?= $user['created_at'] ? date('d/m/Y H:i', strtotime($user['created_at'])) : '-' ?>
+                                    <div class="table-actions">
+                                        <form method="post" action="/admin/users/toggle-active" style="display:inline-block;margin-right:4px;">
+                                            <input type="hidden" name="id" value="<?= (int) $user['id'] ?>">
+                                            <input type="hidden" name="active" value="<?= $user['active'] ? 0 : 1 ?>">
+                                            <button type="submit" class="btn btn-sm btn-secondary" title="Editar (activar/desactivar)">
+                                                Editar
+                                            </button>
+                                        </form>
+                                        <form method="post" action="/admin/users/delete" style="display:inline-block;" onsubmit="return confirm('¿Seguro que deseas eliminar este usuario revendedor?');">
+                                            <input type="hidden" name="id" value="<?= (int) $user['id'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Eliminar usuario">
+                                                Eliminar
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -86,10 +83,10 @@ $content = ob_start();
             </table>
         </div>
 
-        <!-- Paginación -->
+        <!-- Paginación simple -->
         <div class="pagination-container">
             <div class="pagination-info">
-                Mostrando <?= min($per_page > 0 ? $per_page : $total_records, $total_records) ?> de <?= $total_records ?> registros
+                Mostrando <?= min($per_page > 0 ? $per_page : $total_records, $total_records) ?> de <?= $total_records ?> usuarios
             </div>
             <div class="pagination-controls">
                 <?php if ($current_page > 1): ?>
@@ -111,13 +108,13 @@ $content = ob_start();
 <?php
 $content = ob_get_clean();
 
-$title = $title ?? 'Registro Masivo';
+$title = $title ?? 'Usuarios (Revendedores)';
 $show_nav = true;
 $show_footer = true;
 $footer_text = '';
 $footer_whatsapp = false;
 $additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/email_accounts.css'];
-$additional_js = ['/assets/js/admin/search-ajax.js', '/assets/js/admin/users.js'];
+$additional_js = ['/assets/js/admin/search-ajax.js'];
 
 require base_path('views/layouts/main.php');
 ?>

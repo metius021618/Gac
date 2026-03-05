@@ -72,6 +72,8 @@ class Application
         $router->get('/admin/dashboard', 'DashboardController@index', ['auth']);
         $router->get('/admin/analisis', 'AnalisisController@index', ['auth']);
         $router->get('/admin/users', 'UserController@index', ['auth']);
+        $router->post('/admin/users/toggle-active', 'UserController@toggleActive', ['auth']);
+        $router->post('/admin/users/delete', 'UserController@delete', ['auth']);
         $router->get('/admin/settings', 'SettingsController@index', ['auth']);
         $router->post('/admin/settings/update', 'SettingsController@update', ['auth']);
         $router->get('/admin/settings/role-views', 'SettingsController@roleViews', ['auth']);
