@@ -3,6 +3,7 @@
  * GAC - Vista Análisis (dashboard corporativo premium, dark mode, 12 columnas)
  * KPIs, evolución mensual, ventas por plataforma, ranking revendedores, heatmap.
  */
+$is_demo = !empty($is_demo);
 $total_cuentas = $total_cuentas ?? ['total' => 2590, 'crecimiento' => 15.6];
 $plataformas_activas = (int) ($plataformas_activas ?? 4);
 $plataformas_activas_list = $plataformas_activas_list ?? [];
@@ -21,7 +22,7 @@ $time_range_label = $time_range_label ?? 'Todo';
 $platforms_for_filter = $platforms_for_filter ?? [];
 $revendedores_for_filter = $revendedores_for_filter ?? [];
 $baseUrlAnalisis = '/admin/analisis';
-$analisisQueryParams = function ($overrides = []) use ($baseUrlAnalisis, $filter_date_from, $filter_date_to, $filter_time_range, $filter_platform_id, $filter_revendedor) {
+$analisisQueryParams = function ($overrides = []) use ($baseUrlAnalisis, $filter_date_from, $filter_date_to, $filter_time_range, $filter_platform_id, $filter_revendedor, $is_demo) {
     $p = array_merge([
         'date_from' => $filter_date_from,
         'date_to' => $filter_date_to,
@@ -29,6 +30,9 @@ $analisisQueryParams = function ($overrides = []) use ($baseUrlAnalisis, $filter
         'platform_id' => $filter_platform_id,
         'revendedor' => $filter_revendedor,
     ], $overrides);
+    if ($is_demo) {
+        $p['demo'] = '1';
+    }
     $p = array_filter($p, function ($v) { return $v !== '' && $v !== null; });
     return $baseUrlAnalisis . ($p ? '?' . http_build_query($p) : '');
 };
@@ -69,6 +73,12 @@ $plat_img = function ($key) use ($imagenes_plataformas_base, $imagenes_plataform
 
 $content = ob_start();
 ?>
+<?php if ($is_demo): ?>
+<div class="analisis-demo-banner">
+    <span class="analisis-demo-banner-text">Modo demostración — Datos de ejemplo</span>
+    <a href="<?= $baseUrlAnalisis ?>" class="analisis-demo-banner-link">Ver datos reales</a>
+</div>
+<?php endif; ?>
 <div class="analisis-filters-bar">
     <div class="analisis-filters-inner">
         <div class="analisis-filter-dropdown" data-filter="fecha" id="analisisTimeFilterDropdown">

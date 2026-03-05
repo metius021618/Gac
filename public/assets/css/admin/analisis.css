@@ -4,7 +4,37 @@
  */
  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
 
- /* Barra de filtros (arriba a la derecha, fuera del div de contenido) */
+ /* Banner modo demostración */
+.analisis-demo-banner {
+    width: 80%;
+    max-width: 80%;
+    margin: 0 auto;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: rgba(245, 208, 0, 0.15);
+    border: 1px solid rgba(245, 208, 0, 0.4);
+    border-radius: 10px;
+    font-family: 'Inter', 'Poppins', sans-serif;
+}
+.analisis-demo-banner-text {
+    color: #F8FAFC;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+.analisis-demo-banner-link {
+    color: #F5D000;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+.analisis-demo-banner-link:hover {
+    text-decoration: underline;
+}
+
+/* Barra de filtros (arriba a la derecha, fuera del div de contenido) */
 .analisis-filters-bar {
     width: 80%;
     max-width: 80%;
@@ -674,6 +704,7 @@
  }
  
  @media (max-width: 768px) {
+     .analisis-demo-banner { width: 100%; max-width: 100%; flex-wrap: wrap; padding: 8px 16px; }
      .analisis-filters-bar { width: 100%; max-width: 100%; padding: 8px 16px; justify-content: center; }
      .analisis-filters-inner { justify-content: center; }
      .analisis-page { padding: 16px; width: 100%; max-width: 100%; }
