@@ -1,7 +1,7 @@
 /* ============================
    Vistas de Revendedor
    ============================ */
-.revendedor-container {
+   .revendedor-container {
     max-width: 960px;
     margin: 0 auto;
     padding: var(--spacing-xl) var(--spacing-md);
@@ -21,6 +21,12 @@
 .revendedor-subtitle {
     color: var(--text-secondary);
     font-size: var(--font-size-base);
+    display: inline-block;
+    margin-top: var(--spacing-sm);
+    padding: 8px 14px;
+    border-radius: var(--border-radius-lg);
+    background: var(--card-bg);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.85);
 }
 
 .revendedor-dashboard-cards {
@@ -37,14 +43,14 @@
     gap: var(--spacing-md);
     padding: var(--spacing-lg);
     border-radius: 18px;
-    background: linear-gradient(145deg, #020617, #020617);
+    background: rgba(26, 35, 50, 0.95);
     border: 1px solid rgba(148, 163, 184, 0.4);
     box-shadow: 0 18px 45px rgba(15, 23, 42, 0.85);
     color: var(--text-primary);
     text-decoration: none;
     min-width: 220px;
-    max-width: 260px;
-    min-height: 200px;
+    max-width: 251px;
+    min-height: 350px;
     transform: translateY(0);
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
@@ -56,8 +62,9 @@
 }
 
 .revendedor-card-icon {
-    width: 56px;
-    height: 56px;
+    width: 80px;
+    height: 80px;
+    margin-left: 55px;
     border-radius: 999px;
     display: flex;
     align-items: center;
@@ -67,14 +74,16 @@
 }
 
 .revendedor-card-title {
-    font-size: 1.1rem;
+    font-size: 1.7rem;
     font-weight: 600;
-    margin-bottom: 4px;
+    margin-bottom: 16px;
+    text-align: center;
 }
 
 .revendedor-card-text {
     font-size: 0.9rem;
     color: var(--text-secondary);
+    text-align: center;
 }
 
 /* Lista de cuentas */
@@ -128,6 +137,12 @@
 
 .revendedor-table tbody tr:nth-child(odd) {
     background: rgba(15, 23, 42, 0.96);
+}
+
+/* Centrar contenido para que coincida con cabeceras */
+#revendedorAccountsTable th,
+#revendedorAccountsTable td {
+    text-align: center;
 }
 
 .revendedor-empty {
