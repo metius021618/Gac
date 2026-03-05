@@ -63,11 +63,12 @@ $content = ob_start();
                     </div>
                     <div class="analisis-kpi-value"><?= number_format($total_cuentas['total']) ?></div>
                     <div class="analisis-kpi-meta">
-                        <span class="analisis-kpi-growth analisis-kpi-growth--up"><svg class="analisis-growth-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>+<?= number_format($total_cuentas['crecimiento'], 1) ?>%</span>
-                        <span class="analisis-kpi-sub">Mes actual</span>
+                        <?php if ($total_cuentas['crecimiento'] != 0): ?><span class="analisis-kpi-growth analisis-kpi-growth--up"><svg class="analisis-growth-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>+<?= number_format($total_cuentas['crecimiento'], 1) ?>%</span><?php endif; ?>
+                        <span class="analisis-kpi-sub">Cuentas asignadas</span>
                     </div>
                 </div>
             </div>
+            <?php /* Card Plataformas Activas - oculto, se mantiene en código
             <div class="analisis-col analisis-col-3">
                 <div class="analisis-card analisis-kpi-card">
                     <div class="analisis-kpi-header">
@@ -97,6 +98,7 @@ $content = ob_start();
                     </div>
                 </div>
             </div>
+            */ ?>
             <div class="analisis-col analisis-col-3">
                 <div class="analisis-card analisis-kpi-card analisis-kpi-card--revendedor">
                     <div class="analisis-kpi-header">
@@ -117,6 +119,7 @@ $content = ob_start();
                     </div>
                 </div>
             </div>
+            <?php /* Card Total Ingresos - oculto, se mantiene en código
             <div class="analisis-col analisis-col-3">
                 <div class="analisis-card analisis-kpi-card">
                     <div class="analisis-kpi-header">
@@ -132,6 +135,7 @@ $content = ob_start();
                     </div>
                 </div>
             </div>
+            */ ?>
         </div>
 
         <!-- Fila 2: Gráfico evolución mensual -->

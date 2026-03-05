@@ -40,7 +40,17 @@
      gap: 20px;
  }
  
- .analisis-row--kpis .analisis-col-3 { grid-column: span 3; }
+ /* Fila KPI: solo 2 cards visibles → centrados */
+.analisis-row--kpis {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+.analisis-row--kpis .analisis-col-3 {
+    flex: 0 0 auto;
+    width: min(320px, 100%);
+}
  .analisis-row--three .analisis-col-4 { grid-column: span 4; }
  .analisis-col-12 { grid-column: span 12; }
  

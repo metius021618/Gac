@@ -33,33 +33,18 @@ class AnalisisRepository
     }
 
     /**
-     * Total cuentas vendidas (mes actual) y crecimiento % vs mes anterior
+     * Total cuentas vendidas = total cuentas asignadas (misma tabla que Lista de cuentas: user_access).
+     * COUNT de user_access = cuentas que están asignadas/vendidas.
      * @return array{total: int, crecimiento: float}
      */
     public function getTotalCuentasKpi(): array
     {
-        if (!$this->tablesExist()) {
-            return ['total' => 2590, 'crecimiento' => 15.6];
-        }
         try {
-            $db = Database::getConnection();
-            $stmt = $db->query("
-                SELECT COUNT(*) AS total FROM analisis_ventas
-                WHERE YEAR(fecha_venta) = YEAR(CURDATE()) AND MONTH(fecha_venta) = MONTH(CURDATE())
-            ");
-            $current = (int) $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-
-            $stmt = $db->query("
-                SELECT COUNT(*) AS total FROM analisis_ventas
-                WHERE fecha_venta >= DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 1 MONTH)
-                  AND fecha_venta < DATE_FORMAT(CURDATE(), '%Y-%m-01')
-            ");
-            $previous = (int) $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-            $crecimiento = $previous > 0 ? round((($current - $previous) / $previous) * 100, 1) : 0;
-
-            return ['total' => $current ?: 2590, 'crecimiento' => $crecimiento ?: 15.6];
-        } catch (PDOException $e) {
-            return ['total' => 2590, 'crecimiento' => 15.6];
+            $userAccessRepo = new UserAccessRepository();
+            $total = $userAccessRepo->countAll();
+            return ['total' => $total, 'crecimiento' => 0];
+        } catch (\Throwable $e) {
+            return ['total' => 0, 'crecimiento' => 0];
         }
     }
 
