@@ -15,6 +15,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // Confirmación al eliminar usuario asignado (Lista de cuentas)
+    document.querySelectorAll('.revendedor-subuser-delete-form').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            if (!confirm('¿Estás seguro de que deseas eliminar a este usuario asignado?')) {
+                e.preventDefault();
+            }
+        });
+    });
+
     // Búsqueda por correo en Lista de cuentas
     var searchInput = document.getElementById('revendedorSearch');
     if (searchInput) {

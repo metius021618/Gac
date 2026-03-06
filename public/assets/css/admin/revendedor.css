@@ -9,6 +9,10 @@
     border-radius: 32px;
     margin-top: 10rem;
 }
+.revendedor-accesos-page {
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+}
 
 .revendedor-header {
     text-align: center;
@@ -111,18 +115,37 @@
     color: #38bdf8;
 }
 
-/* Lista de cuentas: centrado */
+/* Lista de cuentas: ancho amplio y centrado */
 .revendedor-lista-container {
-    max-width: 960px;
+    max-width: 1200px;
+    width: 100%;
     margin-left: auto;
     margin-right: auto;
 }
 .revendedor-lista-header {
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 .revendedor-lista-header .admin-title {
     display: block;
     margin-top: 8px;
+}
+.revendedor-subusers-box {
+    text-align: center;
+}
+.revendedor-subusers-title {
+    text-align: center;
+}
+.revendedor-subusers-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    list-style: none;
+    padding-left: 0;
+    margin: 8px 0 0;
 }
 
 .revendedor-search {
@@ -226,11 +249,13 @@
     background: rgba(15, 23, 42, 0.9);
     border-radius: var(--border-radius-md);
     border: 1px solid rgba(148, 163, 184, 0.3);
+    text-align: center;
 }
 
 .revendedor-subusers-title {
     font-weight: 600;
     margin-bottom: 6px;
+    text-align: center;
 }
 
 .revendedor-subusers-list {
@@ -239,6 +264,7 @@
     padding: 0;
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 6px;
 }
 
