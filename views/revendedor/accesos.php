@@ -8,6 +8,10 @@ $content = ob_start();
 ?>
 
 <div class="revendedor-container">
+    <a href="/revendedor/dashboard" class="revendedor-btn-back" title="Volver al panel">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Atrás
+    </a>
     <div class="revendedor-header">
         <h1 class="revendedor-title">Accesos</h1>
         <p class="revendedor-subtitle">

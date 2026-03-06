@@ -7,8 +7,8 @@
 $content = ob_start();
 ?>
 
-<div class="admin-container">
-    <div class="admin-header">
+<div class="admin-container revendedor-lista-container">
+    <div class="admin-header revendedor-lista-header">
         <a href="/revendedor/dashboard" class="revendedor-btn-back" title="Volver al panel">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             Atrás

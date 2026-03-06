@@ -110,6 +110,20 @@
     color: #38bdf8;
 }
 
+/* Lista de cuentas: centrado */
+.revendedor-lista-container {
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.revendedor-lista-header {
+    text-align: center;
+}
+.revendedor-lista-header .admin-title {
+    display: block;
+    margin-top: 8px;
+}
+
 .revendedor-search {
     display: flex;
     justify-content: flex-end;
