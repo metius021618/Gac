@@ -111,8 +111,8 @@
         if (maxBar <= 0) {
             yMaxBar = 10;
         } else {
-            // Redondear hacia arriba al múltiplo de 5 más cercano (ej. 16 → 20)
-            yMaxBar = Math.ceil(maxBar / 5) * 5;
+            // Dar margen de ~20 puntos por encima del máximo (ej. 377 → 397)
+            yMaxBar = maxBar + 20;
         }
 
         new Chart(canvas, {
