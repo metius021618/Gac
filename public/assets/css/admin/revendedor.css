@@ -5,7 +5,7 @@
     max-width: 960px;
     margin: 0 auto;
     padding: var(--spacing-xl) var(--spacing-md);
-    background: #262e3c;
+    background: #262e3c00;
     border-radius: 32px;
     margin-top: 10rem;
 }
@@ -276,7 +276,7 @@
 }
 
 .revendedor-form {
-    background: #020617;
+    background: #262e3c;
     padding: var(--spacing-xl);
     border-radius: var(--border-radius-lg);
     box-shadow: 0 18px 45px rgba(15, 23, 42, 0.85);
