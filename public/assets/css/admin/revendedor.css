@@ -89,6 +89,27 @@
 }
 
 /* Lista de cuentas */
+.revendedor-btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px 14px;
+    background: rgba(30, 41, 59, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 8px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+.revendedor-btn-back:hover {
+    background: rgba(51, 65, 85, 0.95);
+    border-color: #38bdf8;
+    color: #38bdf8;
+}
+
 .revendedor-search {
     display: flex;
     justify-content: flex-end;

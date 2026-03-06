@@ -9,10 +9,11 @@ $content = ob_start();
 
 <div class="admin-container">
     <div class="admin-header">
+        <a href="/revendedor/dashboard" class="revendedor-btn-back" title="Volver al panel">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Atrás
+        </a>
         <h1 class="admin-title">Lista de cuentas</h1>
-        <p class="admin-subtitle">
-            Solo se muestran las cuentas que se te han asignado (vendidas) como revendedor.
-        </p>
     </div>
 
     <div class="admin-content">
