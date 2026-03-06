@@ -154,7 +154,7 @@ class UserAccessRepository
             $sql = "
                 SELECT id, email, password, platform_id, enabled, created_at, updated_at
                 FROM user_access
-                WHERE email = :email AND platform_id = :platform_id AND enabled = 1
+                WHERE LOWER(TRIM(email)) = LOWER(TRIM(:email)) AND platform_id = :platform_id
                 LIMIT 1
             ";
             
