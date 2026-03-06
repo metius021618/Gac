@@ -340,10 +340,10 @@ class AnalisisRepository
     }
 
     /**
-     * Heatmap: administrador x plataforma (opcionalmente filtrado por rango de fechas).
+     * Heatmap: administrador x plataforma (opcionalmente filtrado por rango de fechas y administrador).
      * @return array{administradores: string[], plataformas: string[], matrix: int[][]}
      */
-    public function getHeatmapPlataformaAdministrador(?string $dateFrom = null, ?string $dateTo = null): array
+    public function getHeatmapPlataformaAdministrador(?string $dateFrom = null, ?string $dateTo = null, ?string $admin = null): array
     {
         try {
             $db = Database::getConnection();
@@ -356,6 +356,14 @@ class AnalisisRepository
             if ($dateTo !== null && $dateTo !== '') {
                 $conditions[] = "ua.created_at <= :date_to";
                 $params[':date_to'] = $dateTo . ' 23:59:59';
+            }
+            if ($admin !== null && $admin !== '') {
+                if ($admin === 'admin') {
+                    $conditions[] = "(ua.updated_by_username IS NULL OR TRIM(COALESCE(ua.updated_by_username, '')) = '')";
+                } else {
+                    $conditions[] = "COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin') = :admin";
+                    $params[':admin'] = $admin;
+                }
             }
             $where = implode(' AND ', $conditions);
             $sql = "

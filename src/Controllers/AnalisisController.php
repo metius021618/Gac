@@ -58,7 +58,7 @@ class AnalisisController
         $evolucion = $repo->getEvolucionMensual($dateFrom, $dateTo, $filterAdmin ?: null, $filterPlataformaId);
         $ventasPorPlataforma = $repo->getVentasPorPlataforma($dateFrom, $dateTo, $filterAdmin ?: null);
         $rankingAdministradores = $repo->getRankingAdministradores($dateFrom, $dateTo, $filterPlataformaId);
-        $heatmap = $repo->getHeatmapPlataformaAdministrador($dateFrom, $dateTo);
+        $heatmap = $repo->getHeatmapPlataformaAdministrador($dateFrom, $dateTo, $filterAdmin ?: null);
 
         $administradoresParaFiltro = $repo->getAdministradoresParaFiltro();
         $plataformasParaFiltro = $repo->getPlataformasParaFiltro();
