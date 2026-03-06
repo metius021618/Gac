@@ -22,6 +22,15 @@
         gradient.addColorStop(0, 'rgba(34, 211, 238, 0.25)');
         gradient.addColorStop(1, 'rgba(34, 211, 238, 0.02)');
 
+        var maxValue = (values && values.length) ? Math.max.apply(null, values) : 0;
+        var yMax;
+        if (maxValue <= 0) {
+            yMax = 10;
+        } else {
+            // Redondear hacia arriba al múltiplo de 5 más cercano y sumar 5 (ej. 47 → 55)
+            yMax = Math.ceil(maxValue / 5) * 5 + 5;
+        }
+
         new Chart(canvas, {
             type: 'line',
             data: {
@@ -61,7 +70,7 @@
                     },
                     y: {
                         min: 0,
-                        max: 3000,
+                        max: yMax,
                         grid: { color: '#334155', drawBorder: false },
                         ticks: { color: '#94A3B8' }
                     }
