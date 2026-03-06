@@ -83,7 +83,20 @@
         var canvas = document.getElementById('analisisChartPlataformas');
         if (!canvas || typeof Chart === 'undefined') return;
 
-        var labels = ventasPorPlataforma.map(function (p) { return p.nombre; });
+        var labels = ventasPorPlataforma.map(function (p) {
+            var name = p.nombre || '';
+            var lower = name.toLowerCase();
+            if (lower.indexOf('amazon') !== -1 && lower.indexOf('prime') !== -1) {
+                return ['Amazon', 'Prime', 'Video'];
+            }
+            if (lower.indexOf('disney') !== -1) {
+                return 'Disney+';
+            }
+            if (lower.indexOf('hbo') !== -1) {
+                return ['HBO', 'Max'];
+            }
+            return name;
+        });
         var values = ventasPorPlataforma.map(function (p) { return p.total; });
         var colors = ventasPorPlataforma.map(function (p) { return p.color || '#94A3B8'; });
 
@@ -91,6 +104,15 @@
             labels = ['Netflix', 'Disney+', 'HBO Max', 'Spotify'];
             values = [1085, 760, 430, 315];
             colors = ['#F0575C', '#59A2EE', '#A788F9', '#51D480'];
+        }
+
+        var maxBar = (values && values.length) ? Math.max.apply(null, values) : 0;
+        var yMaxBar;
+        if (maxBar <= 0) {
+            yMaxBar = 10;
+        } else {
+            // Redondear hacia arriba al múltiplo de 5 más cercano (ej. 16 → 20)
+            yMaxBar = Math.ceil(maxBar / 5) * 5;
         }
 
         new Chart(canvas, {
@@ -126,6 +148,7 @@
                     },
                     y: {
                         min: 0,
+                        max: yMaxBar,
                         grid: { color: '#334155', drawBorder: false },
                         ticks: { color: '#94A3B8' }
                     }
