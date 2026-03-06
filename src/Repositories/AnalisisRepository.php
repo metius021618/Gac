@@ -124,8 +124,8 @@ class AnalisisRepository
     }
 
     /**
-     * Evolución mensual de ventas: solo meses en que se asignaron cuentas (user_access.created_at).
-     * Sin meses futuros. Opcionalmente filtra por rango de fechas, administrador y plataforma.
+     * Evolución de ventas por DÍA: solo días en que se asignaron cuentas (user_access.created_at).
+     * Sin días futuros. Respeta los filtros de rango de fechas, administrador y plataforma.
      * @param string|null $dateFrom Y-m-d
      * @param string|null $dateTo Y-m-d
      * @param string|null $admin updated_by_username
@@ -136,7 +136,7 @@ class AnalisisRepository
     {
         try {
             $db = Database::getConnection();
-            $conditions = ["ua.created_at <= CURDATE()"];
+            $conditions = ["DATE(ua.created_at) <= CURDATE()"];
             $params = [];
             if ($dateFrom !== null && $dateFrom !== '') {
                 $conditions[] = "ua.created_at >= :date_from";
@@ -160,11 +160,14 @@ class AnalisisRepository
             }
             $where = implode(' AND ', $conditions);
             $sql = "
-                SELECT DATE_FORMAT(ua.created_at, '%b ''%y') AS mes, COUNT(*) AS total
+                SELECT 
+                    DATE(ua.created_at) AS dia,
+                    DATE_FORMAT(ua.created_at, '%d %b') AS etiqueta,
+                    COUNT(*) AS total
                 FROM user_access ua
                 WHERE {$where}
-                GROUP BY YEAR(ua.created_at), MONTH(ua.created_at)
-                ORDER BY YEAR(ua.created_at), MONTH(ua.created_at)
+                GROUP BY DATE(ua.created_at)
+                ORDER BY dia
             ";
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
@@ -172,7 +175,7 @@ class AnalisisRepository
             $labels = [];
             $values = [];
             foreach ($rows as $r) {
-                $labels[] = $r['mes'];
+                $labels[] = $r['etiqueta'];
                 $values[] = (int) $r['total'];
             }
             return ['labels' => $labels, 'values' => $values];
