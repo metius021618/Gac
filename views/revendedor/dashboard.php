@@ -6,7 +6,7 @@
 $content = ob_start();
 ?>
 
-<div class="revendedor-container">
+<div class="revendedor-container revendedor-dashboard-page">
     <div class="revendedor-header">
         <h1 class="revendedor-title">Panel</h1>
         <p class="revendedor-subtitle">

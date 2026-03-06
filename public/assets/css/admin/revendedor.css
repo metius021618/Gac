@@ -13,6 +13,9 @@
     margin-top: 1rem;
     padding-top: 0.5rem;
 }
+.revendedor-dashboard-page {
+    margin-top: 2rem;
+}
 
 .revendedor-header {
     text-align: center;
@@ -123,14 +126,22 @@
     margin-right: auto;
 }
 .revendedor-lista-header {
-    text-align: center;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
+    justify-content: space-between;
+    position: relative;
+    min-height: 48px;
+}
+.revendedor-lista-header .revendedor-btn-back {
+    margin-bottom: 0;
+    flex-shrink: 0;
 }
 .revendedor-lista-header .admin-title {
-    display: block;
-    margin-top: 8px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
 }
 .revendedor-subusers-box {
     text-align: center;
