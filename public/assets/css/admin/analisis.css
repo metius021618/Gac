@@ -632,6 +632,29 @@ padding: 24px;
     max-height: 480px;
     overflow-y: auto;
 }
+/* Barra de búsqueda dentro del filtro Revendedor */
+.analisis-filter-revendedor-search-wrap {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--analisis-card-border);
+    margin-bottom: 4px;
+    list-style: none;
+}
+.analisis-filter-revendedor-search {
+    width: 100%;
+    padding: 6px 10px;
+    font-size: 0.8125rem;
+    color: var(--analisis-text);
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid #334155;
+    border-radius: 6px;
+    outline: none;
+}
+.analisis-filter-revendedor-search::placeholder {
+    color: #64748B;
+}
+.analisis-filter-revendedor-search:focus {
+    border-color: var(--analisis-accent);
+}
 .analisis-filter-menu a {
     display: block;
     padding: 8px 14px;

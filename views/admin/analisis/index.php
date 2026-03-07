@@ -129,9 +129,12 @@ $content = ob_start();
                 <span class="analisis-filter-sep"> - </span>
                 <span class="analisis-filter-value"><?= $filter_revendedor ? htmlspecialchars($filter_revendedor) : 'Todos' ?></span>
                 <ul class="analisis-filter-menu analisis-filter-menu--scroll-revendedor">
-                    <li><a href="<?= $analisisQueryParams(['revendedor' => '']) ?>">Todos</a></li>
+                    <li class="analisis-filter-revendedor-search-wrap">
+                        <input type="text" class="analisis-filter-revendedor-search" placeholder="Buscar revendedor..." autocomplete="off" aria-label="Buscar revendedor">
+                    </li>
+                    <li class="analisis-filter-option-todos"><a href="<?= $analisisQueryParams(['revendedor' => '']) ?>">Todos</a></li>
                     <?php foreach ($revendedores_para_filtro as $rev): ?>
-                    <li><a href="<?= $analisisQueryParams(['revendedor' => $rev['nombre']]) ?>"><?= htmlspecialchars($rev['nombre']) ?></a></li>
+                    <li class="analisis-filter-revendedor-option" data-name="<?= htmlspecialchars($rev['nombre']) ?>"><a href="<?= $analisisQueryParams(['revendedor' => $rev['nombre']]) ?>"><?= htmlspecialchars($rev['nombre']) ?></a></li>
                     <?php endforeach; ?>
                 </ul>
             </div>

@@ -202,6 +202,26 @@
                 menu.addEventListener('mouseleave', function () { scheduleClose(drop); });
             }
         });
+        // Filtro Revendedor: buscar al escribir (ocultar/mostrar opciones)
+        var revDrop = document.querySelector('.analisis-filter-dropdown[data-filter="revendedor"]');
+        if (revDrop) {
+            var searchInput = revDrop.querySelector('.analisis-filter-revendedor-search');
+            var revOptions = revDrop.querySelectorAll('.analisis-filter-revendedor-option');
+            if (searchInput && revOptions.length) {
+                searchInput.addEventListener('input', function () {
+                    var q = (this.value || '').trim().toLowerCase();
+                    revOptions.forEach(function (li) {
+                        var name = (li.getAttribute('data-name') || li.textContent || '').toLowerCase();
+                        li.style.display = (!q || name.indexOf(q) !== -1) ? '' : 'none';
+                    });
+                });
+                searchInput.addEventListener('click', function (e) { e.stopPropagation(); });
+                revDrop.addEventListener('mouseenter', function () {
+                    searchInput.value = '';
+                    revOptions.forEach(function (li) { li.style.display = ''; });
+                });
+            }
+        }
         var customLink = document.getElementById('analisisFechaPersonalizado');
         var modal = document.getElementById('analisisDateRangeModal');
         var closeBtn = document.getElementById('closeAnalisisDateModal');
