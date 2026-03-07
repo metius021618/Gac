@@ -13,7 +13,7 @@ $content = ob_start();
         <!-- Logo Section (circular) -->
         <div class="logo-section">
             <div class="consult-logo-wrap">
-                <img src="/assets/imagenes/logogato.png" alt="GAC" class="consult-logo">
+                <img src="/assets/imagenes/logogato.jpeg" alt="GAC" class="consult-logo">
             </div>
         </div>
 
