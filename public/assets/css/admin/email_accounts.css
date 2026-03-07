@@ -357,13 +357,23 @@
     align-items: center;
     gap: var(--spacing-sm);
 }
+/* Variables para filtros tipo Análisis (dropdown Plataforma mismo estilo/color) */
+.email-filters-bar.lista-cuentas-filters {
+    --analisis-text: #F8FAFC;
+    --analisis-text-secondary: #94A3B8;
+    --analisis-accent: #38BDF8;
+    --analisis-card-bg: #1E293B;
+    --analisis-card-border: #2D3748;
+}
 
-/* Filtro Tiempo en Lista de cuentas: ancho 30% mayor */
+/* Filtro Tiempo en Lista de cuentas: width 130px */
 .email-filters-bar #listaCuentasTimeFilterDropdown.activity-filter-dropdown {
-    min-width: 200px;
+    width: 130px;
+    min-width: 130px;
 }
 .email-filters-bar #listaCuentasTimeFilterDropdown .activity-filter-menu {
-    min-width: 208px;
+    min-width: 130px;
+    width: 130px;
 }
 
 .email-filter-select,

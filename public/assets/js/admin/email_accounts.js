@@ -37,9 +37,8 @@
                 e.preventDefault();
                 var base = this.getAttribute('data-export-base') || '/admin/email-accounts/export-lista-excel';
                 var search = searchInput && searchInput.value ? searchInput.value.trim() : '';
-                var platformEl = document.getElementById('filterPlatform');
                 var qs = new URLSearchParams(window.location.search);
-                var platformId = (platformEl && platformEl.value) ? platformEl.value : '';
+                var platformId = qs.get('platform_id') || '';
                 var dateFrom = qs.get('date_from') || '';
                 var dateTo = qs.get('date_to') || '';
                 var params = [];
@@ -140,6 +139,47 @@
                 window.location.href = '/admin/email-accounts?' + params.toString();
             });
         }
+    }
+
+    /**
+     * Dropdown Plataforma en Lista de cuentas: misma interacción que Análisis (hover abre/cierra).
+     */
+    function initListaCuentasPlatformDropdown() {
+        var drop = document.getElementById('listaCuentasPlatformDropdown');
+        if (!drop) return;
+        function scheduleClose(d) {
+            if (d._closeTimeout) clearTimeout(d._closeTimeout);
+            d._closeTimeout = setTimeout(function() {
+                d.classList.remove('open');
+                d._closeTimeout = null;
+            }, 120);
+        }
+        function cancelClose(d) {
+            if (d._closeTimeout) {
+                clearTimeout(d._closeTimeout);
+                d._closeTimeout = null;
+            }
+        }
+        drop.addEventListener('mouseenter', function() {
+            cancelClose(this);
+            this.classList.add('open');
+        });
+        drop.addEventListener('mouseleave', function() {
+            scheduleClose(this);
+        });
+        var menu = drop.querySelector('.analisis-filter-menu');
+        if (menu) {
+            menu.addEventListener('mouseenter', function() {
+                cancelClose(drop);
+                drop.classList.add('open');
+            });
+            menu.addEventListener('mouseleave', function() {
+                scheduleClose(drop);
+            });
+        }
+        document.addEventListener('click', function(e) {
+            if (drop && !drop.contains(e.target)) drop.classList.remove('open');
+        });
     }
 
     /**
@@ -385,13 +425,12 @@
 
     /**
      * Parámetros extra (plataforma y rango de tiempo) para la búsqueda/filtrado en Lista de cuentas.
-     * date_from/date_to se leen de la URL actual para mantener el filtro en peticiones AJAX.
+     * platform_id, date_from, date_to se leen de la URL actual (plataforma ahora es dropdown con links).
      */
     function getListaCuentasExtraParams() {
-        var platformSelect = document.getElementById('filterPlatform');
         var qs = new URLSearchParams(window.location.search);
         return {
-            platform_id: platformSelect ? platformSelect.value : '',
+            platform_id: qs.get('platform_id') || '',
             date_from: qs.get('date_from') || '',
             date_to: qs.get('date_to') || '',
             time_range: qs.get('time_range') || ''
@@ -430,24 +469,8 @@
                 }
             });
 
-            // Al cambiar plataforma, recargar lista (date_from/date_to van en getExtraParams desde la URL).
-            var filterPlatform = document.getElementById('filterPlatform');
-            var doFilterSearch = function() {
-                var params = {
-                    search: searchInput ? searchInput.value.trim() : '',
-                    page: 1,
-                    per_page: perPageSelect ? perPageSelect.value : 15
-                };
-                var extra = getListaCuentasExtraParams();
-                if (extra) {
-                    params.platform_id = extra.platform_id;
-                    params.date_from = extra.date_from;
-                    params.date_to = extra.date_to;
-                    params.time_range = extra.time_range;
-                }
-                window.SearchAJAX.performSearch(endpoint, params, renderCallback);
-            };
-            if (filterPlatform) filterPlatform.addEventListener('change', doFilterSearch);
+            // Filtro plataforma: ahora es dropdown con links (estilo Análisis); no hay change, se recarga por URL.
+            initListaCuentasPlatformDropdown();
         } else {
             console.error('SearchAJAX no está disponible');
         }

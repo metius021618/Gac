@@ -98,19 +98,30 @@ elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
             
             <div class="table-controls-right">
                 <div id="emailFiltersBar" class="email-filters-bar lista-cuentas-filters">
-                    <select id="filterPlatform" class="form-select email-filter-select" title="Filtrar por plataforma">
-                        <option value="">Plataforma</option>
-                        <?php
-                        $platforms_list = $platforms_list ?? [];
-                        $platform_id_filter = (int)($platform_id_filter ?? 0);
-                        foreach ($platforms_list as $p):
-                            $pid = (int)($p['id'] ?? 0);
-                            $pname = htmlspecialchars($p['display_name'] ?? $p['name'] ?? '', ENT_QUOTES, 'UTF-8');
-                            if ($pname === '') continue;
-                        ?>
-                            <option value="<?= $pid ?>" <?= $pid === $platform_id_filter ? 'selected' : '' ?>><?= $pname ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <?php
+                    $platforms_list = $platforms_list ?? [];
+                    $platform_id_filter = (int)($platform_id_filter ?? 0);
+                    $plataformaFilterLabel = 'Todas';
+                    foreach ($platforms_list as $p) {
+                        if ((int)($p['id'] ?? 0) === $platform_id_filter) {
+                            $plataformaFilterLabel = $p['display_name'] ?? $p['name'] ?? 'Todas';
+                            break;
+                        }
+                    }
+                    ?>
+                    <div class="analisis-filter-dropdown" data-filter="plataforma" id="listaCuentasPlatformDropdown">
+                        <span class="analisis-filter-label">Plataforma</span><span class="analisis-filter-sep"> - </span><span class="analisis-filter-value" id="listaCuentasPlatformValue"><?= htmlspecialchars($plataformaFilterLabel) ?></span>
+                        <ul class="analisis-filter-menu">
+                            <li><a href="<?= $queryParamsLista(['platform_id' => '', 'page' => 1]) ?>">Todas</a></li>
+                            <?php foreach ($platforms_list as $p):
+                                $pid = (int)($p['id'] ?? 0);
+                                $pname = htmlspecialchars($p['display_name'] ?? $p['name'] ?? '', ENT_QUOTES, 'UTF-8');
+                                if ($pname === '') continue;
+                            ?>
+                                <li><a href="<?= $queryParamsLista(['platform_id' => $pid, 'page' => 1]) ?>"><?= $pname ?></a></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
                     <div class="activity-filter-dropdown" data-filter="time" id="listaCuentasTimeFilterDropdown">
                         <span class="activity-filter-label">Tiempo</span><span class="activity-filter-sep"> - </span><span class="activity-filter-value" id="listaCuentasTimeFilterValue"><?= htmlspecialchars($timeRangeLabel) ?></span>
                         <ul class="activity-filter-menu">
@@ -203,7 +214,7 @@ $show_nav = true;
 $show_footer = true;
 $footer_text = '';
 $footer_whatsapp = false;
-$additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/email_accounts.css', '/assets/css/admin/user_activity.css'];
+$additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/email_accounts.css', '/assets/css/admin/user_activity.css', '/assets/css/admin/analisis.css'];
 $additional_js = ['/assets/js/admin/search-ajax.js', '/assets/js/admin/email_accounts.js'];
 
 require base_path('views/layouts/main.php');
