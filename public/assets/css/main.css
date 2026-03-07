@@ -164,9 +164,9 @@ body {
 }
 
 .logo {
-    height: 40px;
+    height: 68px;
     width: auto;
-    max-width: 200px;
+    max-width: 340px;
 }
 
 .main-nav {
@@ -507,7 +507,7 @@ body.nav-sidebar-open .nav-sidebar {
     }
     
     .logo {
-        height: 32px;
+        height: 54px;
     }
     
     .main-nav {
