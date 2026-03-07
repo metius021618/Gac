@@ -358,6 +358,14 @@
     gap: var(--spacing-sm);
 }
 
+/* Filtro Tiempo en Lista de cuentas: ancho 30% mayor */
+.email-filters-bar #listaCuentasTimeFilterDropdown.activity-filter-dropdown {
+    min-width: 200px;
+}
+.email-filters-bar #listaCuentasTimeFilterDropdown .activity-filter-menu {
+    min-width: 208px;
+}
+
 .email-filter-select,
 .email-filter-date {
     padding: var(--spacing-sm) var(--spacing-md);
