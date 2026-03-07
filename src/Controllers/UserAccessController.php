@@ -164,19 +164,15 @@ class UserAccessController
         if ($oauthRow && (int)($oauthRow['id'] ?? 0) > 0) {
             $this->userAccessRepository->delete((int) $oauthRow['id']);
         }
-        // No permitir duplicar la misma combinación correo + plataforma (sí se permiten varios correos iguales con distintas plataformas)
+        // Si ya existe el mismo correo + plataforma, es una edición (ej. desde Lista de cuentas cambiando solo el usuario): actualizar ese registro.
         $emailNorm = strtolower(trim($email));
         $existingAccess = $this->userAccessRepository->findByEmailAndPlatform($emailNorm, $platformId);
-        if ($existingAccess !== null) {
-            $platformName = $platform['display_name'] ?? $platform['name'] ?? 'esta plataforma';
-            json_response([
-                'success' => false,
-                'message' => "Ya existe un acceso para este correo con {$platformName}. No se permiten duplicados (mismo correo y misma plataforma). Edita el registro desde la lista de cuentas si necesitas cambiar el usuario o contraseña."
-            ], 400);
-            return;
-        }
         $updatedBy = $_SESSION['username'] ?? null;
-        $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId, $updatedBy);
+        if ($existingAccess !== null && (int)($existingAccess['id'] ?? 0) > 0) {
+            $success = $this->userAccessRepository->updateById((int) $existingAccess['id'], $emailNorm, $password, $platformId, $updatedBy);
+        } else {
+            $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId, $updatedBy);
+        }
 
         if ($success && function_exists('log_user_activity')) {
             $platformName = $platform['display_name'] ?? $platform['name'] ?? 'Plataforma';
