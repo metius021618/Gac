@@ -52,7 +52,10 @@
                             <?php if ($uv === null || user_can_view('registro_acceso', $uv)): ?>
                             <a href="/admin/user-access" class="nav-link">Registro de acceso</a>
                             <?php endif; ?>
-                            <?php if ($uv === null || user_can_view('administradores', $uv)): ?>
+                            <?php if ($uv === null || user_can_view('registro_masivo', $uv)): ?>
+                            <a href="/admin/email-accounts/bulk-register" class="nav-link">Registro masivo</a>
+                            <?php endif; ?>
+                            <?php if ($uv === null || user_can_view('usuarios', $uv) || user_can_view('administradores', $uv)): ?>
                             <a href="/admin/users" class="nav-link">Usuarios</a>
                             <?php endif; ?>
                         <?php else: ?>

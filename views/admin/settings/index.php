@@ -33,35 +33,6 @@ $content = ob_start();
     <div class="admin-content">
         <div class="settings-container">
 
-            <!-- Administradores (acceso desde configuración) -->
-            <?php if (function_exists('is_superadmin') && is_superadmin()): ?>
-            <div class="settings-section">
-                <div class="settings-section-header">
-                    <h2 class="settings-section-title">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        Administradores
-                    </h2>
-                    <p class="settings-section-description">
-                        Gestionar cuentas de administradores del sistema.
-                    </p>
-                </div>
-                <div class="form-card gmail-matrix-card">
-                    <a href="/admin/administrators" class="btn btn-primary">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                        Ver administradores
-                    </a>
-                </div>
-            </div>
-            <?php endif; ?>
-
             <!-- Cuenta Gmail matriz (solo una) -->
             <div class="settings-section">
                 <div class="settings-section-header">

@@ -55,10 +55,10 @@ class RoleViewsConfig
             'nav_label' => 'Plataformas',
             'url' => '/admin/platforms',
         ],
-        'administradores' => [
-            'label' => 'Administradores',
-            'nav_label' => 'Administradores',
-            'url' => '/admin/administrators',
+        'usuarios' => [
+            'label' => 'Usuarios',
+            'nav_label' => 'Usuarios',
+            'url' => '/admin/users',
         ],
     ];
 
@@ -73,7 +73,6 @@ class RoleViewsConfig
         'listar_outlook' => ['ver' => 'Ver', 'eliminar' => 'Eliminar'],
         'listar_pocoyoni' => ['ver' => 'Ver', 'eliminar' => 'Eliminar'],
         'plataformas_activas' => ['ver' => 'Ver', 'agregar' => 'Agregar', 'editar' => 'Editar', 'eliminar' => 'Eliminar'],
-        'administradores' => ['ver' => 'Ver', 'agregar' => 'Agregar', 'editar' => 'Editar', 'eliminar' => 'Eliminar'],
     ];
 
     /**
@@ -160,8 +159,7 @@ class RoleViewsConfig
             '/admin/email-accounts/bulk-register' => ['registro_masivo'],
             '/admin/email-subjects' => ['registro_asuntos'],
             '/admin/platforms' => ['plataformas_activas'],
-            '/admin/administrators' => ['administradores'],
-            '/admin/users' => ['administradores'],
+            '/admin/users' => ['usuarios', 'administradores'],
         ];
         if (isset($map[$path])) {
             return $map[$path];

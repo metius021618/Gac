@@ -24,10 +24,14 @@ class AdminController
     }
 
     /**
-     * Listar administradores y usuarios (todos los roles)
+     * Listar administradores y usuarios (todos los roles). Solo superadmin.
      */
     public function index(Request $request): void
     {
+        if (!function_exists('is_superadmin') || !is_superadmin()) {
+            redirect('/admin/dashboard');
+            return;
+        }
         $administrators = $this->userRepository->findAllUsersWithRoles();
         $roles = $this->roleRepository->findAll();
         $role_views_config = RoleViewsConfig::all();

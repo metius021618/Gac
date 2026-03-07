@@ -36,7 +36,10 @@ $hasCorreos = $in('listar_correos') || $in('listar_gmail') || $in('listar_outloo
                     <?php if ($in('registro_acceso')): ?>
                         <a href="#" class="nav-link" onclick="return false;">Registro de acceso</a>
                     <?php endif; ?>
-                    <?php if ($in('administradores')): ?>
+                    <?php if ($in('registro_masivo')): ?>
+                        <a href="#" class="nav-link" onclick="return false;">Registro masivo</a>
+                    <?php endif; ?>
+                    <?php if ($in('usuarios') || $in('administradores')): ?>
                         <a href="#" class="nav-link" onclick="return false;">Usuarios</a>
                     <?php endif; ?>
                 </nav>
@@ -156,7 +159,7 @@ $hasCorreos = $in('listar_correos') || $in('listar_gmail') || $in('listar_outloo
                     </span>
                     <?php endif; ?>
 
-                    <?php if ($in('administradores')): ?>
+                    <?php if ($in('usuarios') || $in('administradores')): ?>
                     <span class="stat-card stat-card-grey" style="pointer-events: none; cursor: default;">
                         <div class="stat-card-icon stat-icon-green">
                             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -166,7 +169,7 @@ $hasCorreos = $in('listar_correos') || $in('listar_gmail') || $in('listar_outloo
                         </div>
                         <div class="stat-card-content">
                             <div class="stat-card-value">—</div>
-                            <div class="stat-card-label">Administradores</div>
+                            <div class="stat-card-label">Usuarios</div>
                         </div>
                         <div class="stat-card-arrow">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
