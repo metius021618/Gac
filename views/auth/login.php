@@ -9,9 +9,11 @@ $content = ob_start();
 
 <div class="login-container">
     <div class="login-wrapper">
-        <!-- Logo Section -->
+        <!-- Logo Section (circular) -->
         <div class="login-logo-section">
-            <img src="/assets/imagenes/logogato.jpeg" alt="<?= gac_name() ?>" class="login-logo">
+            <div class="login-logo-wrap">
+                <img src="/assets/imagenes/logogato.jpeg" alt="<?= gac_name() ?>" class="login-logo">
+            </div>
         </div>
 
         <!-- Login Card -->

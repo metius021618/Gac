@@ -53,14 +53,26 @@ body.login-page .main-header {
    ============================================ */
 .login-logo-section {
     text-align: center;
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
     margin-top: var(--spacing-xs);
 }
 
+.login-logo-wrap {
+    display: inline-block;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: transparent;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
 .login-logo {
-    max-width: 160px;
-    height: auto;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 /* ============================================
