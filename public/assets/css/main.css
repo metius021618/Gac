@@ -159,7 +159,7 @@ body {
 }
 
 .main-header .container {
-    padding-left: var(--spacing-xs, 0.5rem);
+    padding-left: 0;
 }
 
 .logo-container {
