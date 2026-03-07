@@ -365,6 +365,17 @@
     --analisis-card-bg: #1E293B;
     --analisis-card-border: #2D3748;
 }
+/* Desplegable Plataforma: mismo ancho que el filtro (congruente) */
+.email-filters-bar #listaCuentasPlatformDropdown.analisis-filter-dropdown {
+    min-width: 0;
+}
+.email-filters-bar #listaCuentasPlatformDropdown .analisis-filter-menu {
+    left: 0;
+    right: 0;
+    width: 100%;
+    min-width: 100%;
+    box-sizing: border-box;
+}
 
 /* Filtro Tiempo en Lista de cuentas: width 130px */
 .email-filters-bar #listaCuentasTimeFilterDropdown.activity-filter-dropdown {

@@ -24,7 +24,7 @@ $hasCorreos = $in('listar_correos') || $in('listar_gmail') || $in('listar_outloo
         <div class="container">
             <div class="header-content">
                 <div class="logo-container">
-                    <img src="/assets/imagenes/letrapocoyoni.png" alt="<?= gac_name() ?>" class="logo">
+                    <img src="/assets/imagenes/letrapocoyoni.svg" alt="<?= gac_name() ?>" class="logo">
                 </div>
                 <nav class="main-nav">
                     <?php if ($in('dashboard') || !empty($allowed_keys)): ?>
