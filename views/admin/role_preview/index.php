@@ -1,11 +1,13 @@
 <?php
 /**
  * GAC - Vista previa del panel según vistas permitidas (iframe en Personalización de roles)
- * Renderiza EXACTAMENTE la misma apariencia que el dashboard real: header, nav y cards con mismos iconos y estructura
+ * Alineada con el dashboard actual. No se muestran Análisis ni Actividad de administrador (solo superadmin).
+ * En la preview no se muestra opción de Configuración (solo superadmin la tiene).
  */
 $allowed_views = $allowed_views ?? [];
 $allowed_keys = array_column($allowed_views, 'key');
 $in = function ($key) use ($allowed_keys) { return in_array($key, $allowed_keys, true); };
+$hasCorreos = $in('listar_correos') || $in('listar_gmail') || $in('listar_outlook') || $in('listar_pocoyoni');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -28,7 +30,7 @@ $in = function ($key) use ($allowed_keys) { return in_array($key, $allowed_keys,
                     <?php if ($in('dashboard') || !empty($allowed_keys)): ?>
                         <a href="#" class="nav-link" onclick="return false;">Dashboard</a>
                     <?php endif; ?>
-                    <?php if ($in('listar_correos') || $in('listar_gmail') || $in('listar_outlook') || $in('listar_pocoyoni')): ?>
+                    <?php if ($hasCorreos): ?>
                         <a href="#" class="nav-link" onclick="return false;">Correos</a>
                     <?php endif; ?>
                     <?php if ($in('administradores')): ?>
@@ -65,7 +67,7 @@ $in = function ($key) use ($allowed_keys) { return in_array($key, $allowed_keys,
                                 <polyline points="22,6 12,13 2,6"></polyline>
                             </svg>
                         </div>
-                        <div class="action-card-text">Listar correos</div>
+                        <div class="action-card-text">Lista de cuentas</div>
                     </span>
                     <?php endif; ?>
                     <?php if ($in('registro_acceso')): ?>
@@ -109,71 +111,39 @@ $in = function ($key) use ($allowed_keys) { return in_array($key, $allowed_keys,
                 </div>
             </div>
 
-            <!-- Cards de Estadísticas (igual estructura que dashboard real: Gmail, Outlook, Pocoyoni, Plataformas, Administradores) -->
+            <!-- Cards de Estadísticas (alineado con dashboard actual: Correos Registrados, Plataformas, Administradores; sin Análisis ni Actividad de administrador) -->
             <div class="dashboard-stats">
                 <div class="stats-cards-grid">
-                    <?php if ($in('listar_gmail') || $in('listar_outlook') || $in('listar_pocoyoni')): ?>
-                    <div class="stats-emails-wrapper">
-                        <?php if ($in('listar_gmail')): ?>
-                        <span class="stat-card stat-card-grey stat-card-email" style="pointer-events: none; cursor: default;">
-                            <div class="stat-card-icon" style="background: rgba(234,67,53,0.1);">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="#EA4335">
-                                    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.636H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.313l8.073-5.82C21.69 2.28 24 3.434 24 5.457z"/>
-                                </svg>
-                            </div>
-                            <div class="stat-card-content">
-                                <div class="stat-card-value">—</div>
-                                <div class="stat-card-label">Gmail</div>
-                            </div>
-                            <div class="stat-card-arrow">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </div>
-                        </span>
-                        <?php endif; ?>
-                        <?php if ($in('listar_outlook')): ?>
-                        <span class="stat-card stat-card-grey stat-card-email" style="pointer-events: none; cursor: default;">
-                            <div class="stat-card-icon" style="background: rgba(0,120,212,0.1);">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="#0078D4">
-                                    <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                                </svg>
-                            </div>
-                            <div class="stat-card-content">
-                                <div class="stat-card-value">—</div>
-                                <div class="stat-card-label">Outlook</div>
-                            </div>
-                            <div class="stat-card-arrow">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </div>
-                        </span>
-                        <?php endif; ?>
-                        <?php if ($in('listar_pocoyoni')): ?>
-                        <span class="stat-card stat-card-grey stat-card-email" style="pointer-events: none; cursor: default;">
-                            <div class="stat-card-icon" style="background: rgba(255,193,7,0.15);">
-                                <div style="width: 28px; height: 28px; background: #FFC107; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #333; font-size: 13px;">P</div>
-                            </div>
-                            <div class="stat-card-content">
-                                <div class="stat-card-value">—</div>
-                                <div class="stat-card-label">Pocoyoni</div>
-                            </div>
-                            <div class="stat-card-arrow">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </div>
-                        </span>
-                        <?php endif; ?>
-                    </div>
+                    <?php if ($hasCorreos): ?>
+                    <span class="stat-card stat-card-grey stat-card-email stat-card-link" style="pointer-events: none; cursor: default;">
+                        <div class="stat-card-icon stat-card-icon--correos">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                        </div>
+                        <div class="stat-card-content stat-card-content--value">
+                            <span class="stat-card-value">—</span>
+                            <span class="stat-card-label">Correos Registrados</span>
+                        </div>
+                        <div class="stat-card-arrow">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </span>
                     <?php endif; ?>
+
                     <?php if ($in('plataformas_activas')): ?>
                     <span class="stat-card stat-card-grey" style="pointer-events: none; cursor: default;">
                         <div class="stat-card-icon stat-icon-yellow">
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                                 <line x1="8" y1="21" x2="16" y2="21"></line>
                                 <line x1="12" y1="17" x2="12" y2="21"></line>
                             </svg>
                         </div>
-                        <div class="stat-card-content">
-                            <div class="stat-card-value">—</div>
-                            <div class="stat-card-label">Plataformas activas</div>
+                        <div class="stat-card-content stat-card-content--value">
+                            <span class="stat-card-value">—</span>
+                            <span class="stat-card-label">Plataformas activas</span>
                         </div>
                         <div class="stat-card-arrow">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -182,10 +152,11 @@ $in = function ($key) use ($allowed_keys) { return in_array($key, $allowed_keys,
                         </div>
                     </span>
                     <?php endif; ?>
+
                     <?php if ($in('administradores')): ?>
                     <span class="stat-card stat-card-grey" style="pointer-events: none; cursor: default;">
                         <div class="stat-card-icon stat-icon-green">
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="12" cy="7" r="4"></circle>
                             </svg>
