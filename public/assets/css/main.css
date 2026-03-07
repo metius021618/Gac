@@ -129,7 +129,7 @@ body {
    ============================================ */
 .main-header .main-nav .nav-link {
     font-family: var(--font-family);
-    font-size: 1rem;
+    font-size: 0.6rem;
     font-weight: 700;
     color: #ffffffc2;
     text-transform: uppercase;
