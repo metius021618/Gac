@@ -35,8 +35,11 @@ class EmailAccountController
         $page = max(1, (int)$request->get('page', 1));
         $perPage = $request->get('per_page', '15');
         $platformId = $request->get('platform_id') ? (int)$request->get('platform_id') : null;
-        $activityDate = trim($request->get('activity_date', ''));
-        
+        $dateFrom = trim($request->get('date_from', ''));
+        $dateTo = trim($request->get('date_to', ''));
+        $timeRange = trim($request->get('time_range', ''));
+        $activityDate = trim($request->get('activity_date', '')); // compat single date
+
         $allowedPerPage = ['15', '30', '60', '100', 'all'];
         if (!in_array($perPage, $allowedPerPage)) {
             $perPage = '15';
@@ -46,8 +49,8 @@ class EmailAccountController
         // Lista de cuentas: siempre desde user_access, sin filtro por dominio
         $matrixAccount = $this->emailAccountRepository->getGmailMatrixAccount();
         $excludeEmail = $matrixAccount && !empty($matrixAccount['email']) ? $matrixAccount['email'] : null;
-        $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, [], $excludeEmail, $platformId, $activityDate ?: null);
-        
+        $result = $this->userAccessRepository->searchAndPaginate($search, $page, $perPageInt, [], $excludeEmail, $platformId, $activityDate ?: null, $dateFrom ?: null, $dateTo ?: null);
+
         if ($request->isAjax()) {
             ob_start();
             $platformsForFilter = [];
@@ -66,7 +69,9 @@ class EmailAccountController
                 'platforms_for_filter' => $platformsForFilter,
                 'has_search' => $search !== '',
                 'platform_id_filter' => $platformId,
-                'activity_date_filter' => $activityDate
+                'filter_date_from' => $dateFrom,
+                'filter_date_to' => $dateTo,
+                'filter_time_range' => $timeRange,
             ]);
             require base_path('views/admin/email_accounts/_table.php');
             $tableHtml = ob_get_clean();
@@ -74,7 +79,9 @@ class EmailAccountController
                 'platforms' => $platformsForFilter,
                 'has_search' => $search !== '',
                 'platform_id' => $platformId,
-                'activity_date' => $activityDate
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'time_range' => $timeRange,
             ]);
             echo '<div class="admin-content">' . $tableHtml . '</div>';
             echo '<!-- GAC-EMAIL-FILTERS:' . htmlspecialchars($filtersData, ENT_QUOTES, 'UTF-8') . ' -->';
@@ -92,7 +99,9 @@ class EmailAccountController
             'search_query' => $search,
             'valid_per_page' => [15, 30, 60, 100, 0],
             'platform_id_filter' => $platformId,
-            'activity_date_filter' => $activityDate,
+            'filter_date_from' => $dateFrom,
+            'filter_date_to' => $dateTo,
+            'filter_time_range' => $timeRange,
             'platforms_list' => $platformsList,
         ]);
     }
@@ -155,18 +164,20 @@ class EmailAccountController
     }
 
     /**
-     * Exportar Lista de cuentas a Excel (solo lo mostrado: mismo search/platform_id/activity_date que la lista).
+     * Exportar Lista de cuentas a Excel (solo lo mostrado: mismo search/platform_id/date_from/date_to que la lista).
      * Columnas: Correo, Usuario, Plataforma, Actividad, Administrador. Cabeceras con estilos, compatible Excel.
      */
     public function exportListaCuentasExcel(Request $request): void
     {
         $search = trim($request->get('search', ''));
         $platformId = $request->get('platform_id') ? (int) $request->get('platform_id') : null;
+        $dateFrom = trim($request->get('date_from', ''));
+        $dateTo = trim($request->get('date_to', ''));
         $activityDate = trim($request->get('activity_date', ''));
 
         $matrixAccount = $this->emailAccountRepository->getGmailMatrixAccount();
         $excludeEmail = $matrixAccount && !empty($matrixAccount['email']) ? $matrixAccount['email'] : null;
-        $result = $this->userAccessRepository->searchAndPaginate($search, 1, 0, [], $excludeEmail, $platformId, $activityDate !== '' ? $activityDate : null);
+        $result = $this->userAccessRepository->searchAndPaginate($search, 1, 0, [], $excludeEmail, $platformId, $activityDate !== '' ? $activityDate : null, $dateFrom ?: null, $dateTo ?: null);
         $rows = $result['data'] ?? [];
 
         $filename = 'lista_cuentas_' . date('Y-m-d_His') . '.xls';

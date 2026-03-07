@@ -4,6 +4,28 @@
  */
 
 $content = ob_start();
+$filter_date_from = $filter_date_from ?? '';
+$filter_date_to = $filter_date_to ?? '';
+$filter_time_range = $filter_time_range ?? '';
+$baseUrlLista = '/admin/email-accounts';
+$queryParamsLista = function($overrides = []) use ($baseUrlLista, $current_page, $per_page, $search_query, $platform_id_filter, $filter_date_from, $filter_date_to, $filter_time_range) {
+    $p = array_merge([
+        'page' => $current_page ?? 1,
+        'per_page' => $per_page ?? 15,
+        'search' => $search_query ?? '',
+        'platform_id' => $platform_id_filter ?? '',
+        'date_from' => $filter_date_from,
+        'date_to' => $filter_date_to,
+        'time_range' => $filter_time_range,
+    ], $overrides);
+    $p = array_filter($p, function($v) { return $v !== '' && $v !== null; });
+    return $baseUrlLista . '?' . http_build_query($p);
+};
+$timeRangeLabel = 'Todo';
+if ($filter_time_range === '7') $timeRangeLabel = 'Últimos 7 días';
+elseif ($filter_time_range === '30') $timeRangeLabel = 'Últimos 30 días';
+elseif ($filter_time_range === '90') $timeRangeLabel = 'Últimos 90 días';
+elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
 ?>
 
 <div class="admin-container">
@@ -38,9 +60,7 @@ $content = ob_start();
 
     <div class="lista-cuentas-excel-bar">
         <a href="#" id="listaCuentasExcelBtn" class="btn btn-primary btn-excel-lista" title="Exportar a Excel (lo que se muestra)"
-           data-export-base="/admin/email-accounts/export-lista-excel"
-           data-platform-id="<?= (int)($platform_id_filter ?? 0) ?>"
-           data-activity-date="<?= htmlspecialchars($activity_date_filter ?? '', ENT_QUOTES, 'UTF-8') ?>">
+           data-export-base="/admin/email-accounts/export-lista-excel">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
@@ -77,7 +97,7 @@ $content = ob_start();
             </div>
             
             <div class="table-controls-right">
-                <div id="emailFiltersBar" class="email-filters-bar">
+                <div id="emailFiltersBar" class="email-filters-bar lista-cuentas-filters">
                     <select id="filterPlatform" class="form-select email-filter-select" title="Filtrar por plataforma">
                         <option value="">Plataforma</option>
                         <?php
@@ -91,7 +111,16 @@ $content = ob_start();
                             <option value="<?= $pid ?>" <?= $pid === $platform_id_filter ? 'selected' : '' ?>><?= $pname ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <input type="date" id="filterActivityDate" class="form-input email-filter-date" title="Filtrar por fecha de actividad" placeholder="Fecha" value="<?= htmlspecialchars($activity_date_filter ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                    <div class="activity-filter-dropdown" data-filter="time" id="listaCuentasTimeFilterDropdown">
+                        <span class="activity-filter-label">Tiempo</span><span class="activity-filter-sep"> - </span><span class="activity-filter-value" id="listaCuentasTimeFilterValue"><?= htmlspecialchars($timeRangeLabel) ?></span>
+                        <ul class="activity-filter-menu">
+                            <li><a href="<?= $queryParamsLista(['date_from' => '', 'date_to' => '', 'time_range' => '', 'page' => 1]) ?>">Todo</a></li>
+                            <li><a href="<?= $queryParamsLista(['date_from' => date('Y-m-d', strtotime('-7 days')), 'date_to' => date('Y-m-d'), 'time_range' => '7', 'page' => 1]) ?>">Últimos 7 días</a></li>
+                            <li><a href="<?= $queryParamsLista(['date_from' => date('Y-m-d', strtotime('-30 days')), 'date_to' => date('Y-m-d'), 'time_range' => '30', 'page' => 1]) ?>">Últimos 30 días</a></li>
+                            <li><a href="<?= $queryParamsLista(['date_from' => date('Y-m-d', strtotime('-90 days')), 'date_to' => date('Y-m-d'), 'time_range' => '90', 'page' => 1]) ?>">Últimos 90 días</a></li>
+                            <li><a href="#" id="listaCuentasTimeFilterCustom" class="activity-filter-custom-link">Personalizado</a></li>
+                        </ul>
+                    </div>
                 </div>
                 <?php if (function_exists('user_can_action') && user_can_action('listar_correos', 'eliminar')): ?>
                 <button id="multiSelectBtn" class="btn btn-secondary">
@@ -137,6 +166,35 @@ $content = ob_start();
     </div>
 </div>
 
+<!-- Modal rango de tiempo (Lista de cuentas) - mismo diseño que Actividad de administrador -->
+<div id="listaCuentasDateRangeModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-overlay"></div>
+    <div class="modal-container activity-date-range-modal">
+        <div class="modal-header activity-date-range-modal-header">
+            <h2 class="modal-title">Selecciona un rango de tiempo</h2>
+            <button type="button" class="modal-close modal-close--large" id="closeListaCuentasDateModal" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-content activity-date-range-fields">
+            <div class="activity-date-field-group">
+                <label class="activity-date-label">Hora de inicio</label>
+                <div class="activity-date-input-wrap">
+                    <input type="date" id="listaCuentasDateFrom" class="form-input activity-date-input">
+                </div>
+            </div>
+            <span class="activity-date-sep">a</span>
+            <div class="activity-date-field-group">
+                <label class="activity-date-label">Hora de finalización</label>
+                <div class="activity-date-input-wrap">
+                    <input type="date" id="listaCuentasDateTo" class="form-input activity-date-input">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer activity-date-range-footer">
+            <button type="button" class="btn btn-activity-date-continue" id="listaCuentasDateRangeApply">Continuar</button>
+        </div>
+    </div>
+</div>
+
 <?php
 $content = ob_get_clean();
 
@@ -145,7 +203,7 @@ $show_nav = true;
 $show_footer = true;
 $footer_text = '';
 $footer_whatsapp = false;
-$additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/email_accounts.css'];
+$additional_css = ['/assets/css/admin/main.css', '/assets/css/admin/email_accounts.css', '/assets/css/admin/user_activity.css'];
 $additional_js = ['/assets/js/admin/search-ajax.js', '/assets/js/admin/email_accounts.js'];
 
 require base_path('views/layouts/main.php');

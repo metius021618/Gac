@@ -301,7 +301,7 @@ class UserAccessRepository
      * Listar/buscar en user_access. Si hay texto, filtra por email o usuario (password).
      * @param string|null $excludeEmail Si se indica, se excluye este email (ej. cuenta Gmail matriz).
      */
-    public function searchAndPaginate(string $search = '', int $page = 1, int $perPage = 15, array $filterDomains = [], ?string $excludeEmail = null, ?int $platformId = null, ?string $activityDate = null): array
+    public function searchAndPaginate(string $search = '', int $page = 1, int $perPage = 15, array $filterDomains = [], ?string $excludeEmail = null, ?int $platformId = null, ?string $activityDate = null, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $logFile = defined('BASE_PATH') ? BASE_PATH . '/logs/search_debug.log' : (__DIR__ . '/../../logs/search_debug.log');
         $log = function ($msg) use ($logFile) {
@@ -348,8 +348,12 @@ class UserAccessRepository
                 $params[':platform_id'] = $platformId;
             }
 
-            // Filtro por fecha de actividad (solo fecha, sin hora)
-            if ($activityDate !== null && $activityDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $activityDate)) {
+            // Filtro por rango de fechas de actividad (date_from + date_to, como en Actividad de administrador)
+            if ($dateFrom !== null && $dateFrom !== '' && $dateTo !== null && $dateTo !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
+                $conditions[] = "DATE(COALESCE(ua.updated_at, ua.created_at)) BETWEEN :date_from AND :date_to";
+                $params[':date_from'] = $dateFrom;
+                $params[':date_to'] = $dateTo;
+            } elseif ($activityDate !== null && $activityDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $activityDate)) {
                 $conditions[] = "DATE(COALESCE(ua.updated_at, ua.created_at)) = :activity_date";
                 $params[':activity_date'] = $activityDate;
             }

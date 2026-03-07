@@ -38,15 +38,106 @@
                 var base = this.getAttribute('data-export-base') || '/admin/email-accounts/export-lista-excel';
                 var search = searchInput && searchInput.value ? searchInput.value.trim() : '';
                 var platformEl = document.getElementById('filterPlatform');
-                var dateInput = document.getElementById('filterActivityDate');
+                var qs = new URLSearchParams(window.location.search);
                 var platformId = (platformEl && platformEl.value) ? platformEl.value : '';
-                var activityDate = (dateInput && dateInput.value) ? dateInput.value : '';
+                var dateFrom = qs.get('date_from') || '';
+                var dateTo = qs.get('date_to') || '';
                 var params = [];
                 if (search) params.push('search=' + encodeURIComponent(search));
                 if (platformId && platformId !== '0') params.push('platform_id=' + encodeURIComponent(platformId));
-                if (activityDate) params.push('activity_date=' + encodeURIComponent(activityDate));
+                if (dateFrom) params.push('date_from=' + encodeURIComponent(dateFrom));
+                if (dateTo) params.push('date_to=' + encodeURIComponent(dateTo));
                 var url = base + (params.length ? '?' + params.join('&') : '');
                 window.location.href = url;
+            });
+        }
+
+        initListaCuentasTimeFilter();
+    }
+
+    /**
+     * Filtro Tiempo en Lista de cuentas: dropdown (Todo, 7, 30, 90, Personalizado) + modal, mismo modelo que Actividad de administrador.
+     */
+    function initListaCuentasTimeFilter() {
+        var timeDrop = document.getElementById('listaCuentasTimeFilterDropdown');
+        if (!timeDrop) return;
+
+        function scheduleClose(drop) {
+            if (drop._closeTimeout) clearTimeout(drop._closeTimeout);
+            drop._closeTimeout = setTimeout(function() {
+                drop.classList.remove('open');
+                drop._closeTimeout = null;
+            }, 120);
+        }
+        function cancelClose(drop) {
+            if (drop._closeTimeout) {
+                clearTimeout(drop._closeTimeout);
+                drop._closeTimeout = null;
+            }
+        }
+        timeDrop.addEventListener('mouseenter', function() {
+            cancelClose(this);
+            this.classList.add('open');
+        });
+        timeDrop.addEventListener('mouseleave', function() {
+            scheduleClose(this);
+        });
+        var timeMenu = timeDrop.querySelector('.activity-filter-menu');
+        if (timeMenu) {
+            timeMenu.addEventListener('mouseenter', function() {
+                cancelClose(timeDrop);
+                timeDrop.classList.add('open');
+            });
+            timeMenu.addEventListener('mouseleave', function() {
+                scheduleClose(timeDrop);
+            });
+        }
+        timeDrop.addEventListener('click', function(e) {
+            if (e.target.closest('.activity-filter-menu')) return;
+            this.classList.toggle('open');
+        });
+        document.addEventListener('click', function(e) {
+            if (timeDrop && !timeDrop.contains(e.target)) timeDrop.classList.remove('open');
+        });
+
+        var customLink = document.getElementById('listaCuentasTimeFilterCustom');
+        var modal = document.getElementById('listaCuentasDateRangeModal');
+        var closeBtn = document.getElementById('closeListaCuentasDateModal');
+        var overlay = modal && modal.querySelector('.modal-overlay');
+        var applyBtn = document.getElementById('listaCuentasDateRangeApply');
+        var inputFrom = document.getElementById('listaCuentasDateFrom');
+        var inputTo = document.getElementById('listaCuentasDateTo');
+
+        if (customLink) {
+            customLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (timeDrop) timeDrop.classList.remove('open');
+                if (modal) modal.classList.remove('hidden');
+                var today = new Date().toISOString().slice(0, 10);
+                var sixMonths = new Date();
+                sixMonths.setMonth(sixMonths.getMonth() - 6);
+                var defaultFrom = sixMonths.toISOString().slice(0, 10);
+                if (inputFrom) inputFrom.value = defaultFrom;
+                if (inputTo) inputTo.value = today;
+            });
+        }
+        function closeModal() {
+            if (modal) modal.classList.add('hidden');
+        }
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (overlay) overlay.addEventListener('click', closeModal);
+        if (applyBtn && inputFrom && inputTo) {
+            applyBtn.addEventListener('click', function() {
+                var from = inputFrom.value;
+                var to = inputTo.value;
+                if (!from || !to) return;
+                var params = new URLSearchParams(window.location.search);
+                params.set('date_from', from);
+                params.set('date_to', to);
+                params.set('time_range', 'custom');
+                params.set('page', '1');
+                window.location.href = '/admin/email-accounts?' + params.toString();
             });
         }
     }
@@ -293,14 +384,17 @@
 
 
     /**
-     * Parámetros extra (plataforma y fecha) para la búsqueda/filtrado en Lista de cuentas.
+     * Parámetros extra (plataforma y rango de tiempo) para la búsqueda/filtrado en Lista de cuentas.
+     * date_from/date_to se leen de la URL actual para mantener el filtro en peticiones AJAX.
      */
     function getListaCuentasExtraParams() {
         var platformSelect = document.getElementById('filterPlatform');
-        var dateInput = document.getElementById('filterActivityDate');
+        var qs = new URLSearchParams(window.location.search);
         return {
             platform_id: platformSelect ? platformSelect.value : '',
-            activity_date: dateInput ? dateInput.value : ''
+            date_from: qs.get('date_from') || '',
+            date_to: qs.get('date_to') || '',
+            time_range: qs.get('time_range') || ''
         };
     }
 
@@ -336,9 +430,8 @@
                 }
             });
 
-            // Al cambiar plataforma o fecha, recargar lista con los mismos filtros (servidor).
+            // Al cambiar plataforma, recargar lista (date_from/date_to van en getExtraParams desde la URL).
             var filterPlatform = document.getElementById('filterPlatform');
-            var filterActivityDate = document.getElementById('filterActivityDate');
             var doFilterSearch = function() {
                 var params = {
                     search: searchInput ? searchInput.value.trim() : '',
@@ -348,12 +441,13 @@
                 var extra = getListaCuentasExtraParams();
                 if (extra) {
                     params.platform_id = extra.platform_id;
-                    params.activity_date = extra.activity_date;
+                    params.date_from = extra.date_from;
+                    params.date_to = extra.date_to;
+                    params.time_range = extra.time_range;
                 }
                 window.SearchAJAX.performSearch(endpoint, params, renderCallback);
             };
             if (filterPlatform) filterPlatform.addEventListener('change', doFilterSearch);
-            if (filterActivityDate) filterActivityDate.addEventListener('change', doFilterSearch);
         } else {
             console.error('SearchAJAX no está disponible');
         }
