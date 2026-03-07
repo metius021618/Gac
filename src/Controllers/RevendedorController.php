@@ -53,7 +53,7 @@ class RevendedorController
         // Cuentas donde password = username del revendedor
         $accesses = $this->userAccessRepository->findByOwnerUsername($username);
 
-        // Calcular si cada acceso tiene subusuarios y listarlos (máx. 4 visibles)
+        // Calcular si cada acceso tiene subusuarios y listarlos
         $rows = [];
         foreach ($accesses as $row) {
             $accessId = (int) ($row['id'] ?? 0);
@@ -158,15 +158,6 @@ class RevendedorController
         }
 
         $accessId = (int) $access['id'];
-
-        // Validar máximo 4 subusuarios por correo (user_access)
-        $currentCount = $this->subuserRepository->countByAccessId($accessId);
-        if ($currentCount >= 4) {
-            $_SESSION['revendedor_flash'] = 'Cada correo puede tener como máximo 4 subusuarios asignados.';
-            $_SESSION['revendedor_flash_type'] = 'error';
-            redirect('/revendedor/accesos');
-            return;
-        }
 
         // Crear subusuario
         $createdId = $this->subuserRepository->create($accessId, $subUsername);
