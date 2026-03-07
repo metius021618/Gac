@@ -69,7 +69,7 @@
                         </svg>
                     </button>
                     <div class="user-menu-dropdown hidden" id="userMenuDropdown">
-                        <?php if (empty($hide_main_nav_links)): ?>
+                        <?php if (empty($hide_main_nav_links) && function_exists('is_superadmin') && is_superadmin()): ?>
                         <a href="/admin/settings" class="user-menu-item">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="3"></circle>
