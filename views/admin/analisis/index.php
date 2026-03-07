@@ -19,15 +19,17 @@ $filter_admin = $filter_admin ?? '';
 $filter_plataforma_id = $filter_plataforma_id ?? '';
 $administradores_para_filtro = $administradores_para_filtro ?? [];
 $plataformas_para_filtro = $plataformas_para_filtro ?? [];
+$analisis_mode = $analisis_mode ?? 'administradores';
 
 $analisisBaseUrl = '/admin/analisis';
-$analisisQueryParams = function($overrides = []) use ($analisisBaseUrl, $filter_time_range, $filter_date_from, $filter_date_to, $filter_admin, $filter_plataforma_id) {
+$analisisQueryParams = function($overrides = []) use ($analisisBaseUrl, $filter_time_range, $filter_date_from, $filter_date_to, $filter_admin, $filter_plataforma_id, $analisis_mode) {
     $p = array_merge([
         'time_range' => $filter_time_range,
         'date_from' => $filter_date_from,
         'date_to' => $filter_date_to,
         'admin' => $filter_admin,
         'plataforma_id' => $filter_plataforma_id,
+        'mode' => $analisis_mode,
     ], $overrides);
     $p = array_filter($p, function($v) { return $v !== '' && $v !== null; });
     return $analisisBaseUrl . '?' . http_build_query($p);
@@ -84,6 +86,13 @@ $plat_img = function ($key) use ($imagenes_plataformas_base, $imagenes_plataform
 $content = ob_start();
 ?>
 <div class="analisis-page">
+    <!-- Barra toggle Administradores / Revendedores -->
+    <div class="analisis-mode-bar <?= $analisis_mode === 'revendedores' ? 'mode-revendedores' : '' ?>">
+        <a href="<?= $analisisQueryParams(['mode' => 'administradores']) ?>" class="analisis-mode-option <?= $analisis_mode === 'administradores' ? 'is-active' : '' ?>" data-mode="administradores">Administradores</a>
+        <a href="<?= $analisisQueryParams(['mode' => 'revendedores']) ?>" class="analisis-mode-option <?= $analisis_mode === 'revendedores' ? 'is-active' : '' ?>" data-mode="revendedores">Revendedores</a>
+        <span class="analisis-mode-slider" aria-hidden="true"></span>
+    </div>
+
     <!-- Filtros: parte superior derecha, fuera del div del gráfico -->
     <div class="analisis-filters-bar">
         <div class="analisis-filters-inner">
@@ -98,6 +107,7 @@ $content = ob_start();
                     <li><a href="#" id="analisisFechaPersonalizado" class="analisis-filter-custom">Personalizado</a></li>
                 </ul>
             </div>
+            <?php if ($analisis_mode === 'administradores'): ?>
             <div class="analisis-filter-dropdown" data-filter="admin">
                 <span class="analisis-filter-label">Administrador</span>
                 <span class="analisis-filter-sep"> - </span>
@@ -109,6 +119,7 @@ $content = ob_start();
                     <?php endforeach; ?>
                 </ul>
             </div>
+            <?php endif; ?>
             <div class="analisis-filter-dropdown" data-filter="plataforma">
                 <span class="analisis-filter-label">Plataforma</span>
                 <span class="analisis-filter-sep"> - </span>
@@ -175,7 +186,7 @@ $content = ob_start();
             <div class="analisis-col analisis-col-3">
                 <div class="analisis-card analisis-kpi-card analisis-kpi-card--revendedor">
                     <div class="analisis-kpi-header">
-                        <span class="analisis-kpi-label">Administrador del Mes</span>
+                        <span class="analisis-kpi-label"><?= $analisis_mode === 'revendedores' ? 'Revendedor del Mes' : 'Administrador del Mes' ?></span>
                         <span class="analisis-kpi-icon analisis-kpi-icon--crown" title="Administrador destacado">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14 8h6l-5 4 2 8-7-5-7 5 2-8-5-4h6l2-6z"/></svg>
                         </span>
@@ -184,7 +195,7 @@ $content = ob_start();
                         <img src="<?= !empty($administrador_del_mes['foto_url']) ? htmlspecialchars($administrador_del_mes['foto_url']) : 'data:image/svg+xml,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="%23334155"><circle cx="24" cy="24" r="24"/><circle cx="24" cy="18" r="8"/><path d="M24 32c-6 0-10 4-10 8v2h20v-2c0-4-4-8-10-8z"/></svg>') ?>" alt="" class="analisis-revendedor-avatar" width="48" height="48">
                         <div class="analisis-revendedor-info">
                             <span class="analisis-revendedor-nombre"><?= htmlspecialchars($administrador_del_mes['nombre']) ?></span>
-                            <span class="analisis-revendedor-cuentas"><?= number_format($administrador_del_mes['cuentas']) ?> cuentas asignadas</span>
+                            <span class="analisis-revendedor-cuentas"><?= number_format($administrador_del_mes['cuentas']) ?> <?= $analisis_mode === 'revendedores' ? 'cuentas en su poder' : 'cuentas asignadas' ?></span>
                         </div>
                     </div>
                     <div class="analisis-progress-bar">
@@ -217,7 +228,7 @@ $content = ob_start();
                 <div class="analisis-card analisis-chart-card">
                     <h3 class="analisis-card-title">
                         <span class="analisis-chart-title-icon analisis-chart-title-icon--line"><svg width="33" height="33" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></span>
-                        Evolución Mensual de Ventas
+                        <?= $analisis_mode === 'revendedores' ? 'Evolución de ventas (asignaciones a clientes)' : 'Evolución Mensual de Ventas' ?>
                     </h3>
                     <div class="analisis-chart-wrap analisis-chart-wrap--line" style="height: 300px;">
                         <canvas id="analisisChartEvolucion" width="1200" height="300"></canvas>
@@ -246,7 +257,7 @@ $content = ob_start();
                 <div class="analisis-card analisis-chart-card">
                     <h3 class="analisis-card-title">
                         <span class="analisis-chart-title-icon analisis-chart-title-icon--users"><svg width="33" height="33" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
-                        Ranking de Administradores
+                        <?= $analisis_mode === 'revendedores' ? 'Ranking de Revendedores' : 'Ranking de Administradores' ?>
                     </h3>
                     <div class="analisis-ranking-list" id="analisisRankingList">
                         <?php
@@ -282,7 +293,7 @@ $content = ob_start();
                 <div class="analisis-card analisis-chart-card">
                     <h3 class="analisis-card-title">
                         <span class="analisis-chart-title-icon analisis-chart-title-icon--heatmap"><svg width="33" height="33" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg></span>
-                        Plataforma vs Administrador
+                        <?= $analisis_mode === 'revendedores' ? 'Plataforma vs Revendedor' : 'Plataforma vs Administrador' ?>
                     </h3>
                     <div class="analisis-heatmap-wrap">
                         <table class="analisis-heatmap-table">
@@ -364,7 +375,8 @@ window.ANALISIS_DATA = {
 window.ANALISIS_FILTERS = {
     baseUrl: '<?= $analisisBaseUrl ?>',
     admin: <?= json_encode($filter_admin) ?>,
-    plataforma_id: <?= json_encode($filter_plataforma_id) ?>
+    plataforma_id: <?= json_encode($filter_plataforma_id) ?>,
+    mode: <?= json_encode($analisis_mode) ?>
 };
 </script>
 <?php

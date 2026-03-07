@@ -27,6 +27,7 @@ class AnalisisController
         $dateTo = $request->get('date_to') ?? '';
         $filterAdmin = $request->get('admin') ?? '';
         $filterPlataformaId = $request->get('plataforma_id') !== null && $request->get('plataforma_id') !== '' ? (int) $request->get('plataforma_id') : null;
+        $mode = $request->get('mode') === 'revendedores' ? 'revendedores' : 'administradores';
 
         $today = date('Y-m-d');
         if ($timeRange === '7') {
@@ -53,18 +54,28 @@ class AnalisisController
         $totalCuentas = $repo->getTotalCuentasKpi();
         $plataformasActivas = $repo->getPlataformasActivasCount();
         $plataformasActivasList = $platformRepo->findAllEnabled();
-        $administradorDelMes = $repo->getAdministradorDelMes();
-        $totalIngresos = $repo->getTotalIngresosKpi();
-        $evolucion = $repo->getEvolucionMensual($dateFrom, $dateTo, $filterAdmin ?: null, $filterPlataformaId);
-        $ventasPorPlataforma = $repo->getVentasPorPlataforma($dateFrom, $dateTo, $filterAdmin ?: null, $filterPlataformaId);
-        $rankingAdministradores = $repo->getRankingAdministradores($dateFrom, $dateTo, null);
-        $heatmap = $repo->getHeatmapPlataformaAdministrador($dateFrom, $dateTo, $filterAdmin ?: null);
-
         $administradoresParaFiltro = $repo->getAdministradoresParaFiltro();
         $plataformasParaFiltro = $repo->getPlataformasParaFiltro();
 
+        if ($mode === 'revendedores') {
+            $administradorDelMes = $repo->getRevendedorDelMes();
+            $totalIngresos = ['total' => 0.0, 'crecimiento' => 0];
+            $evolucion = $repo->getEvolucionMensualRevendedores($dateFrom, $dateTo);
+            $ventasPorPlataforma = $repo->getVentasPorPlataformaRevendedores($dateFrom, $dateTo);
+            $rankingAdministradores = $repo->getRankingRevendedores();
+            $heatmap = $repo->getHeatmapPlataformaRevendedor();
+        } else {
+            $administradorDelMes = $repo->getAdministradorDelMes();
+            $totalIngresos = $repo->getTotalIngresosKpi();
+            $evolucion = $repo->getEvolucionMensual($dateFrom, $dateTo, $filterAdmin ?: null, $filterPlataformaId);
+            $ventasPorPlataforma = $repo->getVentasPorPlataforma($dateFrom, $dateTo, $filterAdmin ?: null, $filterPlataformaId);
+            $rankingAdministradores = $repo->getRankingAdministradores($dateFrom, $dateTo, null);
+            $heatmap = $repo->getHeatmapPlataformaAdministrador($dateFrom, $dateTo, $filterAdmin ?: null);
+        }
+
         $this->renderView('admin/analisis/index', [
             'title' => 'Análisis',
+            'analisis_mode' => $mode,
             'total_cuentas' => $totalCuentas,
             'plataformas_activas' => $plataformasActivas,
             'plataformas_activas_list' => $plataformasActivasList,

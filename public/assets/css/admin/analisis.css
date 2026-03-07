@@ -21,11 +21,59 @@
      margin: 0 auto;
      min-height: 100vh;
      background: linear-gradient(180deg, var(--analisis-bg-start) 0%, var(--analisis-bg-mid) 45%, var(--analisis-bg-end) 100%);
-     padding: 24px;
-     font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+padding: 24px;
+    font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
  }
- 
- .analisis-grid {
+
+/* Barra toggle Administradores / Revendedores */
+.analisis-mode-bar {
+    position: relative;
+    display: flex;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto 20px;
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid var(--analisis-card-border);
+    border-radius: 10px;
+    padding: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.analisis-mode-option {
+    flex: 1;
+    position: relative;
+    z-index: 1;
+    padding: 10px 20px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--analisis-text-secondary);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: color 0.25s ease;
+}
+.analisis-mode-option:hover {
+    color: var(--analisis-text);
+}
+.analisis-mode-option.is-active {
+    color: var(--analisis-text);
+}
+.analisis-mode-slider {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    background: rgba(56, 189, 248, 0.25);
+    border: 1px solid var(--analisis-accent);
+    border-radius: 8px;
+    transition: left 0.3s ease;
+    pointer-events: none;
+}
+.analisis-mode-bar.mode-revendedores .analisis-mode-slider {
+    left: calc(50% + 0px);
+}
+
+.analisis-grid {
      max-width: 1920px;
      margin: 0 auto;
      display: grid;

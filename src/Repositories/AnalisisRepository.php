@@ -412,4 +412,130 @@ class AnalisisRepository
             return ['administradores' => [], 'plataformas' => [], 'matrix' => []];
         }
     }
+
+    // ---------- Modo Revendedores ----------
+
+    public function getRevendedorDelMes(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("
+                SELECT ua.password AS nombre, COUNT(*) AS cuentas
+                FROM user_access ua
+                WHERE ua.password IS NOT NULL AND TRIM(ua.password) != ''
+                GROUP BY ua.password
+                ORDER BY cuentas DESC
+                LIMIT 1
+            ");
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row && (int) $row['cuentas'] > 0) {
+                return ['nombre' => $row['nombre'], 'foto_url' => null, 'cuentas' => (int) $row['cuentas']];
+            }
+        } catch (PDOException $e) {}
+        return ['nombre' => '—', 'foto_url' => null, 'cuentas' => 0];
+    }
+
+    public function getEvolucionMensualRevendedores(?string $dateFrom = null, ?string $dateTo = null): array
+    {
+        try {
+            $db = Database::getConnection();
+            $conditions = ["DATE(s.created_at) <= CURDATE()"];
+            $params = [];
+            if ($dateFrom !== null && $dateFrom !== '') {
+                $conditions[] = "s.created_at >= :date_from";
+                $params[':date_from'] = $dateFrom . ' 00:00:00';
+            }
+            if ($dateTo !== null && $dateTo !== '') {
+                $conditions[] = "s.created_at <= :date_to";
+                $params[':date_to'] = $dateTo . ' 23:59:59';
+            }
+            $where = implode(' AND ', $conditions);
+            $sql = "SELECT DATE(s.created_at) AS dia, DATE_FORMAT(s.created_at, '%d %b') AS etiqueta, COUNT(*) AS total FROM user_access_subusers s WHERE {$where} GROUP BY DATE(s.created_at) ORDER BY dia";
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $labels = []; $values = [];
+            foreach ($rows as $r) {
+                $labels[] = $r['etiqueta'];
+                $values[] = (int) $r['total'];
+            }
+            return ['labels' => $labels, 'values' => $values];
+        } catch (PDOException $e) {
+            return ['labels' => [], 'values' => []];
+        }
+    }
+
+    public function getVentasPorPlataformaRevendedores(?string $dateFrom = null, ?string $dateTo = null): array
+    {
+        try {
+            $db = Database::getConnection();
+            $conditions = ['1=1'];
+            $params = [];
+            if ($dateFrom !== null && $dateFrom !== '') {
+                $conditions[] = "s.created_at >= :date_from";
+                $params[':date_from'] = $dateFrom . ' 00:00:00';
+            }
+            if ($dateTo !== null && $dateTo !== '') {
+                $conditions[] = "s.created_at <= :date_to";
+                $params[':date_to'] = $dateTo . ' 23:59:59';
+            }
+            $where = implode(' AND ', $conditions);
+            $sql = "SELECT p.display_name AS nombre, COUNT(s.id) AS total FROM user_access_subusers s INNER JOIN user_access ua ON ua.id = s.user_access_id INNER JOIN platforms p ON p.id = ua.platform_id WHERE {$where} GROUP BY ua.platform_id, p.display_name ORDER BY total DESC";
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $out = [];
+            foreach ($rows as $r) {
+                $nombre = $r['nombre'] ?? 'Otro';
+                $out[] = ['nombre' => $nombre, 'total' => (int) $r['total'], 'color' => self::PLATFORM_COLORS[$nombre] ?? '#334155'];
+            }
+            return $out;
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
+    public function getRankingRevendedores(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("SELECT ua.password AS nombre, COUNT(*) AS total FROM user_access ua WHERE ua.password IS NOT NULL AND TRIM(ua.password) != '' GROUP BY ua.password ORDER BY total DESC LIMIT 6");
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $out = []; $rank = 1;
+            foreach ($rows as $r) {
+                $out[] = ['nombre' => $r['nombre'], 'foto_url' => null, 'total' => (int) $r['total'], 'rank' => $rank++];
+            }
+            return $out;
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
+    public function getHeatmapPlataformaRevendedor(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("SELECT ua.password AS revendedor, p.display_name AS plataforma, COUNT(ua.id) AS total FROM user_access ua INNER JOIN platforms p ON p.id = ua.platform_id WHERE ua.password IS NOT NULL AND TRIM(ua.password) != '' GROUP BY ua.password, ua.platform_id, p.display_name");
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $revendedores = []; $plataformas = []; $byRev = [];
+            foreach ($rows as $r) {
+                $rev = $r['revendedor']; $plat = $r['plataforma'];
+                if (!in_array($rev, $revendedores, true)) $revendedores[] = $rev;
+                if (!in_array($plat, $plataformas, true)) $plataformas[] = $plat;
+                if (!isset($byRev[$rev])) $byRev[$rev] = [];
+                $byRev[$rev][$plat] = (int) $r['total'];
+            }
+            $matrix = [];
+            foreach ($revendedores as $rev) {
+                $row = [];
+                foreach ($plataformas as $plat) {
+                    $row[] = $byRev[$rev][$plat] ?? 0;
+                }
+                $matrix[] = $row;
+            }
+            return ['administradores' => $revendedores, 'plataformas' => $plataformas, 'matrix' => $matrix];
+        } catch (PDOException $e) {
+            return ['administradores' => [], 'plataformas' => [], 'matrix' => []];
+        }
+    }
 }

@@ -233,6 +233,7 @@
                 params.set('date_to', to);
                 if (FILTERS.admin) params.set('admin', FILTERS.admin);
                 if (FILTERS.plataforma_id) params.set('plataforma_id', FILTERS.plataforma_id);
+                if (FILTERS.mode) params.set('mode', FILTERS.mode);
                 window.location.href = FILTERS.baseUrl + '?' + params.toString();
             });
         }
