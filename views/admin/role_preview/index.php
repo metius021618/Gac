@@ -31,7 +31,10 @@ $hasCorreos = $in('listar_correos') || $in('listar_gmail') || $in('listar_outloo
                         <a href="#" class="nav-link" onclick="return false;">Dashboard</a>
                     <?php endif; ?>
                     <?php if ($hasCorreos): ?>
-                        <a href="#" class="nav-link" onclick="return false;">Correos</a>
+                        <a href="#" class="nav-link" onclick="return false;">Lista de cuentas</a>
+                    <?php endif; ?>
+                    <?php if ($in('registro_acceso')): ?>
+                        <a href="#" class="nav-link" onclick="return false;">Registro de acceso</a>
                     <?php endif; ?>
                     <?php if ($in('administradores')): ?>
                         <a href="#" class="nav-link" onclick="return false;">Usuarios</a>

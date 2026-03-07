@@ -47,7 +47,10 @@
                             <a href="/admin/dashboard" class="nav-link">Dashboard</a>
                             <?php endif; ?>
                             <?php if ($uv === null || user_can_view('listar_correos', $uv) || user_can_view('listar_gmail', $uv) || user_can_view('listar_outlook', $uv) || user_can_view('listar_pocoyoni', $uv)): ?>
-                            <a href="/admin/email-accounts" class="nav-link">Correos</a>
+                            <a href="/admin/email-accounts" class="nav-link">Lista de cuentas</a>
+                            <?php endif; ?>
+                            <?php if ($uv === null || user_can_view('registro_acceso', $uv)): ?>
+                            <a href="/admin/user-access" class="nav-link">Registro de acceso</a>
                             <?php endif; ?>
                             <?php if ($uv === null || user_can_view('administradores', $uv)): ?>
                             <a href="/admin/users" class="nav-link">Usuarios</a>
