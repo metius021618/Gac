@@ -19,16 +19,19 @@ $filter_admin = $filter_admin ?? '';
 $filter_plataforma_id = $filter_plataforma_id ?? '';
 $administradores_para_filtro = $administradores_para_filtro ?? [];
 $plataformas_para_filtro = $plataformas_para_filtro ?? [];
+$revendedores_para_filtro = $revendedores_para_filtro ?? [];
+$filter_revendedor = $filter_revendedor ?? '';
 $analisis_mode = $analisis_mode ?? 'administradores';
 
 $analisisBaseUrl = '/admin/analisis';
-$analisisQueryParams = function($overrides = []) use ($analisisBaseUrl, $filter_time_range, $filter_date_from, $filter_date_to, $filter_admin, $filter_plataforma_id, $analisis_mode) {
+$analisisQueryParams = function($overrides = []) use ($analisisBaseUrl, $filter_time_range, $filter_date_from, $filter_date_to, $filter_admin, $filter_plataforma_id, $filter_revendedor, $analisis_mode) {
     $p = array_merge([
         'time_range' => $filter_time_range,
         'date_from' => $filter_date_from,
         'date_to' => $filter_date_to,
         'admin' => $filter_admin,
         'plataforma_id' => $filter_plataforma_id,
+        'revendedor' => $filter_revendedor,
         'mode' => $analisis_mode,
     ], $overrides);
     $p = array_filter($p, function($v) { return $v !== '' && $v !== null; });
@@ -116,6 +119,19 @@ $content = ob_start();
                     <li><a href="<?= $analisisQueryParams(['admin' => '']) ?>">Todos</a></li>
                     <?php foreach ($administradores_para_filtro as $a): ?>
                     <li><a href="<?= $analisisQueryParams(['admin' => $a['nombre']]) ?>"><?= htmlspecialchars($a['nombre']) ?></a></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
+            <?php if ($analisis_mode === 'revendedores'): ?>
+            <div class="analisis-filter-dropdown" data-filter="revendedor">
+                <span class="analisis-filter-label">Revendedor</span>
+                <span class="analisis-filter-sep"> - </span>
+                <span class="analisis-filter-value"><?= $filter_revendedor ? htmlspecialchars($filter_revendedor) : 'Todos' ?></span>
+                <ul class="analisis-filter-menu">
+                    <li><a href="<?= $analisisQueryParams(['revendedor' => '']) ?>">Todos</a></li>
+                    <?php foreach ($revendedores_para_filtro as $rev): ?>
+                    <li><a href="<?= $analisisQueryParams(['revendedor' => $rev['nombre']]) ?>"><?= htmlspecialchars($rev['nombre']) ?></a></li>
                     <?php endforeach; ?>
                 </ul>
             </div>
@@ -259,7 +275,7 @@ $content = ob_start();
                         <span class="analisis-chart-title-icon analisis-chart-title-icon--users"><svg width="33" height="33" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
                         <?= $analisis_mode === 'revendedores' ? 'Ranking de Revendedores' : 'Ranking de Administradores' ?>
                     </h3>
-                    <div class="analisis-ranking-list" id="analisisRankingList">
+                    <div class="analisis-ranking-list analisis-scrollable-max" id="analisisRankingList">
                         <?php
                         $rankNumColors = [1 => 'analisis-rank--gold', 2 => 'analisis-rank--copper', 3 => 'analisis-rank--silver'];
                         $barColors = [
@@ -295,7 +311,7 @@ $content = ob_start();
                         <span class="analisis-chart-title-icon analisis-chart-title-icon--heatmap"><svg width="33" height="33" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg></span>
                         <?= $analisis_mode === 'revendedores' ? 'Plataforma vs Revendedor' : 'Plataforma vs Administrador' ?>
                     </h3>
-                    <div class="analisis-heatmap-wrap">
+                    <div class="analisis-heatmap-wrap analisis-scrollable-max">
                         <table class="analisis-heatmap-table">
                             <thead>
                                 <tr>
@@ -376,6 +392,7 @@ window.ANALISIS_FILTERS = {
     baseUrl: '<?= $analisisBaseUrl ?>',
     admin: <?= json_encode($filter_admin) ?>,
     plataforma_id: <?= json_encode($filter_plataforma_id) ?>,
+    revendedor: <?= json_encode($filter_revendedor) ?>,
     mode: <?= json_encode($analisis_mode) ?>
 };
 </script>

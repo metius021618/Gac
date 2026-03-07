@@ -174,7 +174,7 @@
     }
 
     function initFilters() {
-        var FILTERS = window.ANALISIS_FILTERS || { baseUrl: '/admin/analisis', admin: '', plataforma_id: '' };
+        var FILTERS = window.ANALISIS_FILTERS || { baseUrl: '/admin/analisis', admin: '', plataforma_id: '', revendedor: '', mode: '' };
         function scheduleClose(drop) {
             if (drop._closeTimeout) clearTimeout(drop._closeTimeout);
             drop._closeTimeout = setTimeout(function () {
@@ -233,6 +233,7 @@
                 params.set('date_to', to);
                 if (FILTERS.admin) params.set('admin', FILTERS.admin);
                 if (FILTERS.plataforma_id) params.set('plataforma_id', FILTERS.plataforma_id);
+                if (FILTERS.revendedor) params.set('revendedor', FILTERS.revendedor);
                 if (FILTERS.mode) params.set('mode', FILTERS.mode);
                 window.location.href = FILTERS.baseUrl + '?' + params.toString();
             });

@@ -415,6 +415,18 @@ class AnalisisRepository
 
     // ---------- Modo Revendedores ----------
 
+    /** Lista de revendedores para el filtro (distinct user_access.password). */
+    public function getRevendedoresParaFiltro(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("SELECT DISTINCT ua.password AS nombre FROM user_access ua WHERE ua.password IS NOT NULL AND TRIM(ua.password) != '' ORDER BY ua.password ASC");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
     public function getRevendedorDelMes(): array
     {
         try {
@@ -435,7 +447,7 @@ class AnalisisRepository
         return ['nombre' => '—', 'foto_url' => null, 'cuentas' => 0];
     }
 
-    public function getEvolucionMensualRevendedores(?string $dateFrom = null, ?string $dateTo = null): array
+    public function getEvolucionMensualRevendedores(?string $dateFrom = null, ?string $dateTo = null, ?string $revendedor = null): array
     {
         try {
             $db = Database::getConnection();
@@ -449,8 +461,13 @@ class AnalisisRepository
                 $conditions[] = "s.created_at <= :date_to";
                 $params[':date_to'] = $dateTo . ' 23:59:59';
             }
+            if ($revendedor !== null && $revendedor !== '') {
+                $conditions[] = "ua.password = :revendedor";
+                $params[':revendedor'] = $revendedor;
+            }
             $where = implode(' AND ', $conditions);
-            $sql = "SELECT DATE(s.created_at) AS dia, DATE_FORMAT(s.created_at, '%d %b') AS etiqueta, COUNT(*) AS total FROM user_access_subusers s WHERE {$where} GROUP BY DATE(s.created_at) ORDER BY dia";
+            $join = ($revendedor !== null && $revendedor !== '') ? " INNER JOIN user_access ua ON ua.id = s.user_access_id" : "";
+            $sql = "SELECT DATE(s.created_at) AS dia, DATE_FORMAT(s.created_at, '%d %b') AS etiqueta, COUNT(*) AS total FROM user_access_subusers s {$join} WHERE {$where} GROUP BY DATE(s.created_at) ORDER BY dia";
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -465,7 +482,7 @@ class AnalisisRepository
         }
     }
 
-    public function getVentasPorPlataformaRevendedores(?string $dateFrom = null, ?string $dateTo = null): array
+    public function getVentasPorPlataformaRevendedores(?string $dateFrom = null, ?string $dateTo = null, ?string $revendedor = null): array
     {
         try {
             $db = Database::getConnection();
@@ -478,6 +495,10 @@ class AnalisisRepository
             if ($dateTo !== null && $dateTo !== '') {
                 $conditions[] = "s.created_at <= :date_to";
                 $params[':date_to'] = $dateTo . ' 23:59:59';
+            }
+            if ($revendedor !== null && $revendedor !== '') {
+                $conditions[] = "ua.password = :revendedor";
+                $params[':revendedor'] = $revendedor;
             }
             $where = implode(' AND ', $conditions);
             $sql = "SELECT p.display_name AS nombre, COUNT(s.id) AS total FROM user_access_subusers s INNER JOIN user_access ua ON ua.id = s.user_access_id INNER JOIN platforms p ON p.id = ua.platform_id WHERE {$where} GROUP BY ua.platform_id, p.display_name ORDER BY total DESC";
@@ -495,11 +516,19 @@ class AnalisisRepository
         }
     }
 
-    public function getRankingRevendedores(): array
+    public function getRankingRevendedores(?string $revendedor = null): array
     {
         try {
             $db = Database::getConnection();
-            $stmt = $db->query("SELECT ua.password AS nombre, COUNT(*) AS total FROM user_access ua WHERE ua.password IS NOT NULL AND TRIM(ua.password) != '' GROUP BY ua.password ORDER BY total DESC LIMIT 6");
+            $params = [];
+            $where = "ua.password IS NOT NULL AND TRIM(ua.password) != ''";
+            if ($revendedor !== null && $revendedor !== '') {
+                $where .= " AND ua.password = :revendedor";
+                $params[':revendedor'] = $revendedor;
+            }
+            $sql = "SELECT ua.password AS nombre, COUNT(*) AS total FROM user_access ua WHERE {$where} GROUP BY ua.password ORDER BY total DESC LIMIT 6";
+            $stmt = $params ? $db->prepare($sql) : $db->query($sql);
+            if ($params) $stmt->execute($params);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $out = []; $rank = 1;
             foreach ($rows as $r) {
@@ -511,11 +540,19 @@ class AnalisisRepository
         }
     }
 
-    public function getHeatmapPlataformaRevendedor(): array
+    public function getHeatmapPlataformaRevendedor(?string $revendedor = null): array
     {
         try {
             $db = Database::getConnection();
-            $stmt = $db->query("SELECT ua.password AS revendedor, p.display_name AS plataforma, COUNT(ua.id) AS total FROM user_access ua INNER JOIN platforms p ON p.id = ua.platform_id WHERE ua.password IS NOT NULL AND TRIM(ua.password) != '' GROUP BY ua.password, ua.platform_id, p.display_name");
+            $where = "ua.password IS NOT NULL AND TRIM(ua.password) != ''";
+            $params = [];
+            if ($revendedor !== null && $revendedor !== '') {
+                $where .= " AND ua.password = :revendedor";
+                $params[':revendedor'] = $revendedor;
+            }
+            $sql = "SELECT ua.password AS revendedor, p.display_name AS plataforma, COUNT(ua.id) AS total FROM user_access ua INNER JOIN platforms p ON p.id = ua.platform_id WHERE {$where} GROUP BY ua.password, ua.platform_id, p.display_name";
+            $stmt = $params ? $db->prepare($sql) : $db->query($sql);
+            if ($params) $stmt->execute($params);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $revendedores = []; $plataformas = []; $byRev = [];
             foreach ($rows as $r) {

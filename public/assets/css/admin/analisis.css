@@ -354,7 +354,16 @@ padding: 24px;
      min-height: 280px;
  }
  
- /* Ranking lista (igual a imagen referencia: rank | avatar | nombre | barra recta | número a la derecha) */
+ /* Scroll: máximo ~10 líneas visibles, el resto con scroll (Ranking y Heatmap) */
+.analisis-scrollable-max {
+    max-height: 420px;
+    overflow-y: auto;
+}
+.analisis-heatmap-wrap.analisis-scrollable-max {
+    overflow-x: auto;
+}
+
+/* Ranking lista (igual a imagen referencia: rank | avatar | nombre | barra recta | número a la derecha) */
  .analisis-ranking-list {
      display: flex;
      flex-direction: column;

@@ -28,6 +28,7 @@ class AnalisisController
         $filterAdmin = $request->get('admin') ?? '';
         $filterPlataformaId = $request->get('plataforma_id') !== null && $request->get('plataforma_id') !== '' ? (int) $request->get('plataforma_id') : null;
         $mode = $request->get('mode') === 'revendedores' ? 'revendedores' : 'administradores';
+        $filterRevendedor = $mode === 'revendedores' ? trim((string) $request->get('revendedor', '')) : '';
 
         $today = date('Y-m-d');
         if ($timeRange === '7') {
@@ -56,14 +57,15 @@ class AnalisisController
         $plataformasActivasList = $platformRepo->findAllEnabled();
         $administradoresParaFiltro = $repo->getAdministradoresParaFiltro();
         $plataformasParaFiltro = $repo->getPlataformasParaFiltro();
+        $revendedoresParaFiltro = $mode === 'revendedores' ? $repo->getRevendedoresParaFiltro() : [];
 
         if ($mode === 'revendedores') {
             $administradorDelMes = $repo->getRevendedorDelMes();
             $totalIngresos = ['total' => 0.0, 'crecimiento' => 0];
-            $evolucion = $repo->getEvolucionMensualRevendedores($dateFrom, $dateTo);
-            $ventasPorPlataforma = $repo->getVentasPorPlataformaRevendedores($dateFrom, $dateTo);
-            $rankingAdministradores = $repo->getRankingRevendedores();
-            $heatmap = $repo->getHeatmapPlataformaRevendedor();
+            $evolucion = $repo->getEvolucionMensualRevendedores($dateFrom, $dateTo, $filterRevendedor ?: null);
+            $ventasPorPlataforma = $repo->getVentasPorPlataformaRevendedores($dateFrom, $dateTo, $filterRevendedor ?: null);
+            $rankingAdministradores = $repo->getRankingRevendedores($filterRevendedor ?: null);
+            $heatmap = $repo->getHeatmapPlataformaRevendedor($filterRevendedor ?: null);
         } else {
             $administradorDelMes = $repo->getAdministradorDelMes();
             $totalIngresos = $repo->getTotalIngresosKpi();
@@ -90,8 +92,10 @@ class AnalisisController
             'filter_date_to' => $dateTo,
             'filter_admin' => $filterAdmin,
             'filter_plataforma_id' => $filterPlataformaId,
+            'filter_revendedor' => $filterRevendedor,
             'administradores_para_filtro' => $administradoresParaFiltro,
             'plataformas_para_filtro' => $plataformasParaFiltro,
+            'revendedores_para_filtro' => $revendedoresParaFiltro,
         ]);
     }
 
