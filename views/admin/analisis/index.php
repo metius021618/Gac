@@ -128,7 +128,7 @@ $content = ob_start();
                 <span class="analisis-filter-label">Revendedor</span>
                 <span class="analisis-filter-sep"> - </span>
                 <span class="analisis-filter-value"><?= $filter_revendedor ? htmlspecialchars($filter_revendedor) : 'Todos' ?></span>
-                <ul class="analisis-filter-menu">
+                <ul class="analisis-filter-menu analisis-filter-menu--scroll-revendedor">
                     <li><a href="<?= $analisisQueryParams(['revendedor' => '']) ?>">Todos</a></li>
                     <?php foreach ($revendedores_para_filtro as $rev): ?>
                     <li><a href="<?= $analisisQueryParams(['revendedor' => $rev['nombre']]) ?>"><?= htmlspecialchars($rev['nombre']) ?></a></li>

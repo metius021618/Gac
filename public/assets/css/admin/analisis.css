@@ -456,13 +456,15 @@ padding: 24px;
      text-align: right;
  }
  
- /* Heatmap */
+ /* Heatmap: scroll horizontal para ver más plataformas */
  .analisis-heatmap-wrap {
      overflow-x: auto;
+     overflow-y: auto;
+     -webkit-overflow-scrolling: touch;
  }
- 
  .analisis-heatmap-table {
      width: 100%;
+     min-width: max-content;
      border-collapse: collapse;
      font-size: 0.8125rem;
  }
@@ -601,6 +603,11 @@ padding: 24px;
 }
 .analisis-filter-dropdown.open .analisis-filter-menu {
     display: block;
+}
+/* Filtro Revendedor: máximo 15 opciones visibles, el resto con scroll */
+.analisis-filter-menu--scroll-revendedor {
+    max-height: 480px;
+    overflow-y: auto;
 }
 .analisis-filter-menu a {
     display: block;
