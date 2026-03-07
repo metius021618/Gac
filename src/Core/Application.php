@@ -117,7 +117,9 @@ class Application
         $router->get('/admin/user-activity/export-excel', 'UserActivityController@exportExcel', ['auth']);
         $router->get('/admin/user-access', 'UserAccessController@index', ['auth']);
         $router->get('/admin/user-access/list', 'UserAccessController@list', ['auth']);
+        $router->get('/admin/user-access/actualizar', 'UserAccessController@actualizarForm', ['auth']);
         $router->post('/admin/user-access', 'UserAccessController@store', ['auth']);
+        $router->post('/admin/user-access/actualizar', 'UserAccessController@update', ['auth']);
         $router->post('/admin/user-access/delete', 'UserAccessController@delete', ['auth']);
         
         // Rutas Gmail

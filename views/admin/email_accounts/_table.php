@@ -29,7 +29,7 @@ $can_delete = function_exists('user_can_action') && user_can_action($email_view_
             <?php if (empty($email_accounts)): ?>
                 <tr>
                     <td colspan="8" class="text-center">
-                        <p class="empty-message">No hay registros de acceso. Usa "Asignar/Actualizar Usuario" o "Registro masivo" para agregar.</p>
+                        <p class="empty-message">No hay registros de acceso. Usa "Asignar usuario" o "Registro masivo" para agregar.</p>
                     </td>
                 </tr>
             <?php else: ?>
@@ -54,7 +54,7 @@ $can_delete = function_exists('user_can_action') && user_can_action($email_view_
                         <td class="administrador-cell text-center"><?= htmlspecialchars($account['updated_by_username'] ?? '—') ?></td>
                         <td class="actions-cell text-center">
                             <?php if ($can_edit): ?>
-                            <a href="/admin/user-access?email=<?= rawurlencode($account['email'] ?? '') ?>&platform_id=<?= (int)($account['platform_id'] ?? 0) ?>" 
+                            <a href="/admin/user-access/actualizar?id=<?= (int)($account['id'] ?? 0) ?>" 
                                class="btn-icon btn-edit" 
                                title="Editar acceso">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

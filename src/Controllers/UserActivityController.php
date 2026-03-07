@@ -86,19 +86,17 @@ class UserActivityController
 
         echo '<table border="1" cellpadding="2" cellspacing="0" style="border-collapse:collapse;">';
         echo '<tr style="background:#2563eb;color:#ffffff;font-weight:bold;">';
-        echo '<td>Usuario</td><td>Acción</td><td>Descripción</td><td>Fecha</td><td>Hora</td>';
+        echo '<td>Acción</td><td>Administrador</td><td>Descripción</td><td>Fecha</td>';
         echo '</tr>';
         foreach ($rows as $r) {
             $created = $r['created_at'] ?? '';
-            $datePart = $created ? date('d/m/Y', strtotime($created)) : '—';
-            $timePart = $created ? date('H:i', strtotime($created)) : '—';
+            $fechaHora = $created ? date('d/m/Y H:i', strtotime($created)) : '—';
             $actionLabel = \Gac\Repositories\UserActivityLogRepository::actionLabel($r['action'] ?? '');
             echo '<tr>';
-            echo '<td>' . htmlspecialchars($r['username'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
             echo '<td>' . htmlspecialchars($actionLabel, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars($r['username'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
             echo '<td>' . htmlspecialchars($r['description'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-            echo '<td>' . htmlspecialchars($datePart, ENT_QUOTES, 'UTF-8') . '</td>';
-            echo '<td>' . htmlspecialchars($timePart, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars($fechaHora, ENT_QUOTES, 'UTF-8') . '</td>';
             echo '</tr>';
         }
         echo '</table>';

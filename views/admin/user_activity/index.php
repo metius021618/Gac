@@ -75,7 +75,7 @@ elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
                 </ul>
             </div>
             <div class="activity-filter-dropdown" data-filter="admin">
-                <span class="activity-filter-label">Usuario</span><span class="activity-filter-sep"> - </span><span class="activity-filter-value"><?= $filter_admin ? htmlspecialchars($filter_admin) : 'Todos' ?></span>
+                <span class="activity-filter-label">Administrador</span><span class="activity-filter-sep"> - </span><span class="activity-filter-value"><?= $filter_admin ? htmlspecialchars($filter_admin) : 'Todos' ?></span>
                 <ul class="activity-filter-menu">
                     <li><a href="<?= $queryParams(['admin' => '', 'page' => 1]) ?>">Todos</a></li>
                     <?php foreach ($usernames as $u): ?>
@@ -118,38 +118,35 @@ elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
             <table class="admin-table" id="userActivityTable">
                 <thead>
                     <tr>
-                        <th style="width: 14%;">USUARIO</th>
                         <th style="width: 14%;">ACCIÓN</th>
+                        <th style="width: 14%;">ADMINISTRADOR</th>
                         <th style="width: 44%;">DESCRIPCIÓN</th>
-                        <th style="width: 14%;">
+                        <th style="width: 28%;">
                             <a href="<?= $queryParams(['order' => $order === 'desc' ? 'asc' : 'desc']) ?>" class="sortable-header sortable-header--date">
                                 FECHA
                                 <?= $order === 'desc' ? '<span class="sort-icon">▼</span>' : '<span class="sort-icon">▲</span>' ?>
                             </a>
                         </th>
-                        <th style="width: 14%;">HORA</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($activities)): ?>
                         <tr>
-                            <td colspan="5" class="text-center">
+                            <td colspan="4" class="text-center">
                                 <p class="empty-message">No hay actividad registrada.</p>
                             </td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($activities as $row): 
                             $created = $row['created_at'] ?? '';
-                            $datePart = $created ? date('d/m/Y', strtotime($created)) : '—';
-                            $timePart = $created ? date('H:i', strtotime($created)) : '—';
+                            $fechaHora = $created ? date('d/m/Y H:i', strtotime($created)) : '—';
                             $actionLabel = \Gac\Repositories\UserActivityLogRepository::actionLabel($row['action'] ?? '');
                         ?>
                             <tr>
-                                <td><?= htmlspecialchars($row['username'] ?? '') ?></td>
                                 <td><span class="activity-tag activity-tag--<?= htmlspecialchars($row['action'] ?? '') ?>"><?= htmlspecialchars($actionLabel) ?></span></td>
+                                <td><?= htmlspecialchars($row['username'] ?? '') ?></td>
                                 <td class="activity-description"><?= nl2br(htmlspecialchars($row['description'] ?? '')) ?></td>
-                                <td><?= $datePart ?></td>
-                                <td><?= $timePart ?></td>
+                                <td><?= $fechaHora ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>

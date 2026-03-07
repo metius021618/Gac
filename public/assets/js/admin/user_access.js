@@ -49,7 +49,8 @@
 
         try {
             const formData = new FormData(form);
-            const response = await fetch('/admin/user-access', {
+            const formAction = form.getAttribute('action') || '/admin/user-access';
+            const response = await fetch(formAction, {
                 method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 body: formData
@@ -58,8 +59,12 @@
             const data = await response.json();
 
             if (data.success) {
-                await window.GAC.success(data.message || 'Acceso registrado correctamente', 'Éxito');
-                form.reset();
+                await window.GAC.success(data.message || 'Guardado correctamente', 'Éxito');
+                if (formAction.indexOf('actualizar') !== -1) {
+                    window.location.href = '/admin/user-access/list';
+                } else {
+                    form.reset();
+                }
             } else {
                 if (data.detail) {
                     console.error('[Registro acceso] Detalle del error:', data.detail);

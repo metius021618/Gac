@@ -1,72 +1,32 @@
 <?php
 /**
- * GAC - Vista "Asignar usuario"
- * Solo registrar: correo, usuario y plataforma. No permite duplicar (correo + misma plataforma).
+ * GAC - Vista "Actualizar usuario"
+ * Editar un registro existente por ID (correo, usuario, plataforma).
  */
 
 $content = ob_start();
+$access = $access ?? [];
+$access_id = (int)($access['id'] ?? 0);
+$prefill_email = $access['email'] ?? '';
+$prefill_password = $access['password'] ?? '';
+$prefill_platform_id = (int)($access['platform_id'] ?? 0);
 ?>
 
 <div class="admin-container">
     <div class="admin-header">
         <h1 class="admin-title">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
             </svg>
-            Asignar usuario
+            Actualizar usuario
         </h1>
     </div>
 
-    <?php if (!empty($_SESSION['gmail_success'])): ?>
-        <div class="alert alert-success" role="alert">
-            <?= htmlspecialchars($_SESSION['gmail_success']) ?>
-            <?php unset($_SESSION['gmail_success']); ?>
-        </div>
-    <?php endif; ?>
-    <?php if (!empty($_SESSION['gmail_error'])): ?>
-        <div class="alert alert-danger" role="alert">
-            <?= htmlspecialchars($_SESSION['gmail_error']) ?>
-            <?php unset($_SESSION['gmail_error']); ?>
-        </div>
-    <?php endif; ?>
-    <?php
-    $showOutlookSuccess = !empty($_SESSION['outlook_success']) || (!empty($_GET['outlook_connected']) && $_GET['outlook_connected'] === '1');
-    $outlookSuccessText = !empty($_SESSION['outlook_success']) ? $_SESSION['outlook_success'] : 'Cuenta Outlook conectada correctamente.';
-    if ($showOutlookSuccess): ?>
-        <div class="alert alert-success" role="alert">
-            <?= htmlspecialchars($outlookSuccessText) ?>
-            <?php unset($_SESSION['outlook_success']); ?>
-        </div>
-        <?php if (!empty($_GET['outlook_connected'])): ?>
-        <script>
-        (function(){ var u = new URL(window.location.href); u.searchParams.delete('outlook_connected'); if (u.search !== window.location.search) window.history.replaceState({}, '', u.pathname + u.search); })();
-        </script>
-        <?php endif; ?>
-    <?php endif; ?>
-    <?php if (!empty($_SESSION['outlook_error'])): ?>
-        <div class="alert alert-danger" role="alert">
-            <?= htmlspecialchars($_SESSION['outlook_error']) ?>
-            <?php unset($_SESSION['outlook_error']); ?>
-        </div>
-    <?php endif; ?>
-
     <div class="admin-content">
-        <div class="form-card" style="margin-bottom: 1.5rem;">
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
-                <a href="/outlook/connect" class="btn btn-primary" id="outlookConnectBtn" style="background-color: #0078d4;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                        <circle cx="12" cy="11" r="3" fill="currentColor"/>
-                    </svg>
-                    Conectar Outlook
-                </a>
-            </div>
-        </div>
-
-        <!-- Formulario -->
         <div class="form-card">
-            <form id="userAccessForm" class="user-access-form" action="/admin/user-access" method="post">
+            <form id="userAccessForm" class="user-access-form" action="/admin/user-access/actualizar" method="post">
+                <input type="hidden" name="id" value="<?= $access_id ?>">
                 <!-- Campo Correo -->
                 <div class="form-group">
                     <label for="email" class="form-label">
@@ -82,7 +42,7 @@ $content = ob_start();
                         name="email" 
                         class="form-input" 
                         placeholder="correo@ejemplo.com"
-                        value="<?= htmlspecialchars($prefill_email ?? '') ?>"
+                        value="<?= htmlspecialchars($prefill_email) ?>"
                         required
                         autocomplete="email"
                     >
@@ -103,8 +63,9 @@ $content = ob_start();
                         id="password" 
                         name="password" 
                         class="form-input" 
-                        placeholder="Usuario de acceso (opcional: si no se asigna, el correo se guarda como Stock)"
-                        value="<?= htmlspecialchars($prefill_password ?? '') ?>"
+                        placeholder="Usuario de acceso"
+                        value="<?= htmlspecialchars($prefill_password) ?>"
+                        required
                         autocomplete="off"
                     >
                     <span class="form-error" id="passwordError"></span>
@@ -120,13 +81,8 @@ $content = ob_start();
                         </svg>
                         Plataforma
                     </label>
-                    <select 
-                        id="platform_id" 
-                        name="platform_id" 
-                        class="form-select"
-                    >
-                        <?php $prefill_platform_id = (int)($prefill_platform_id ?? 0); ?>
-                        <option value="" <?= $prefill_platform_id ? '' : 'selected' ?>>Seleccione una plataforma (opcional: si no se asigna, el correo se guarda como Stock)</option>
+                    <select id="platform_id" name="platform_id" class="form-select" required>
+                        <option value="">Seleccione una plataforma</option>
                         <?php foreach ($platforms as $platform): ?>
                             <option value="<?= $platform['id'] ?>" <?= ($platform['id'] == $prefill_platform_id) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($platform['display_name']) ?>
@@ -136,7 +92,6 @@ $content = ob_start();
                     <span class="form-error" id="platformError"></span>
                 </div>
 
-                <!-- Botón Guardar -->
                 <?php if (function_exists('user_can_action') && user_can_action('registro_acceso', 'editar')): ?>
                 <button type="submit" class="btn btn-primary btn-save">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -155,7 +110,7 @@ $content = ob_start();
 <?php
 $content = ob_get_clean();
 
-$title = $title ?? 'Asignar usuario';
+$title = $title ?? 'Actualizar usuario';
 $show_nav = true;
 $show_footer = true;
 $footer_text = '';

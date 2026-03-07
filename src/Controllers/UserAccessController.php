@@ -26,35 +26,83 @@ class UserAccessController
     }
 
     /**
-     * Mostrar formulario de registro de accesos (puede prellenar con email y platform_id por URL).
-     * Si viene email + platform_id, se busca el acceso existente y se precarga el usuario asignado para edición.
+     * Vista "Asignar usuario": solo registrar. Validación: no duplicar (correo + plataforma).
      */
     public function index(Request $request): void
     {
         $platforms = $this->platformRepository->findAllEnabled();
-        $prefill_email = trim($request->get('email', ''));
-        $prefill_platform_id = (int) $request->get('platform_id', 0);
-        $prefill_password = '';
-
-        if ($prefill_email !== '' && $prefill_platform_id > 0) {
-            $emailNorm = strtolower($prefill_email);
-            $existing = $this->userAccessRepository->findByEmailAndPlatform($emailNorm, $prefill_platform_id);
-            if ($existing && isset($existing['password'])) {
-                $prefill_password = $existing['password'];
-                // No prellenar si es placeholder OAuth (el usuario debe poner el acceso real)
-                if (in_array($prefill_password, ['Gmail (OAuth)', 'Outlook (OAuth)'], true)) {
-                    $prefill_password = '';
-                }
-            }
-        }
-
         $this->renderView('admin/user_access/index', [
-            'title' => 'Registro de Accesos',
+            'title' => 'Asignar usuario',
             'platforms' => $platforms,
-            'prefill_email' => $prefill_email,
-            'prefill_platform_id' => $prefill_platform_id,
-            'prefill_password' => $prefill_password
+            'prefill_email' => '',
+            'prefill_platform_id' => 0,
+            'prefill_password' => '',
+            'is_actualizar' => false,
         ]);
+    }
+
+    /**
+     * Vista "Actualizar usuario": editar por id. Carga el registro y muestra formulario.
+     */
+    public function actualizarForm(Request $request): void
+    {
+        $id = (int) $request->get('id', 0);
+        if ($id <= 0) {
+            redirect('/admin/user-access/list');
+            return;
+        }
+        $access = $this->userAccessRepository->getAccessById($id);
+        if (!$access) {
+            redirect('/admin/user-access/list');
+            return;
+        }
+        $platforms = $this->platformRepository->findAllEnabled();
+        $access['id'] = $id;
+        $this->renderView('admin/user_access/actualizar', [
+            'title' => 'Actualizar usuario',
+            'platforms' => $platforms,
+            'access' => $access,
+            'is_actualizar' => true,
+        ]);
+    }
+
+    /**
+     * POST Actualizar usuario: actualizar solo por id (sin validación de duplicado).
+     */
+    public function update(Request $request): void
+    {
+        $id = (int) $request->input('id', 0);
+        if ($id <= 0) {
+            json_response(['success' => false, 'message' => 'ID inválido'], 400);
+            return;
+        }
+        $access = $this->userAccessRepository->getAccessById($id);
+        if (!$access) {
+            json_response(['success' => false, 'message' => 'Registro no encontrado'], 404);
+            return;
+        }
+        $email = strtolower(trim($request->input('email', '')));
+        $password = trim($request->input('password', ''));
+        $platformId = (int) $request->input('platform_id', 0);
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            json_response(['success' => false, 'message' => 'Correo obligatorio y válido'], 400);
+            return;
+        }
+        if ($password === '' || $platformId <= 0) {
+            json_response(['success' => false, 'message' => 'Usuario y plataforma son obligatorios al actualizar'], 400);
+            return;
+        }
+        $updatedBy = $_SESSION['username'] ?? null;
+        $success = $this->userAccessRepository->updateById($id, $email, $password, $platformId, $updatedBy);
+        if ($success && function_exists('log_user_activity')) {
+            $platformName = $access['platform_display_name'] ?? $access['platform_name'] ?? 'Plataforma';
+            log_user_activity('edicion', sprintf('Editó el correo %s | %s | %s', $email, $password, $platformName));
+        }
+        if ($success) {
+            json_response(['success' => true, 'message' => 'Usuario actualizado correctamente']);
+        } else {
+            json_response(['success' => false, 'message' => 'Error al actualizar'], 500);
+        }
     }
 
     /**
@@ -164,15 +212,19 @@ class UserAccessController
         if ($oauthRow && (int)($oauthRow['id'] ?? 0) > 0) {
             $this->userAccessRepository->delete((int) $oauthRow['id']);
         }
-        // Si ya existe el mismo correo + plataforma, es una edición (ej. desde Lista de cuentas cambiando solo el usuario): actualizar ese registro.
+        // Asignar usuario: no permitir duplicar (correo + plataforma). Mismo correo con otra plataforma sí; mismo correo + misma plataforma no.
         $emailNorm = strtolower(trim($email));
         $existingAccess = $this->userAccessRepository->findByEmailAndPlatform($emailNorm, $platformId);
-        $updatedBy = $_SESSION['username'] ?? null;
-        if ($existingAccess !== null && (int)($existingAccess['id'] ?? 0) > 0) {
-            $success = $this->userAccessRepository->updateById((int) $existingAccess['id'], $emailNorm, $password, $platformId, $updatedBy);
-        } else {
-            $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId, $updatedBy);
+        if ($existingAccess !== null) {
+            $platformName = $platform['display_name'] ?? $platform['name'] ?? 'esta plataforma';
+            json_response([
+                'success' => false,
+                'message' => "Ya existe un acceso para este correo con {$platformName}. No se permiten duplicados (mismo correo y misma plataforma). Usa \"Actualizar usuario\" desde la lista de cuentas para editar."
+            ], 400);
+            return;
         }
+        $updatedBy = $_SESSION['username'] ?? null;
+        $success = $this->userAccessRepository->createOrUpdate($email, $password, $platformId, $updatedBy);
 
         if ($success && function_exists('log_user_activity')) {
             $platformName = $platform['display_name'] ?? $platform['name'] ?? 'Plataforma';
