@@ -447,18 +447,22 @@ class AnalisisRepository
         return ['nombre' => '—', 'foto_url' => null, 'cuentas' => 0];
     }
 
+    /**
+     * Evolución de ventas (solo revendedores): lo que se le vendió al revendedor por día.
+     * Cuenta user_access por fecha de creación (cuentas asignadas al revendedor ese día).
+     */
     public function getEvolucionMensualRevendedores(?string $dateFrom = null, ?string $dateTo = null, ?string $revendedor = null): array
     {
         try {
             $db = Database::getConnection();
-            $conditions = ["DATE(s.created_at) <= CURDATE()"];
+            $conditions = ["ua.password IS NOT NULL AND TRIM(ua.password) != ''"];
             $params = [];
             if ($dateFrom !== null && $dateFrom !== '') {
-                $conditions[] = "s.created_at >= :date_from";
+                $conditions[] = "ua.created_at >= :date_from";
                 $params[':date_from'] = $dateFrom . ' 00:00:00';
             }
             if ($dateTo !== null && $dateTo !== '') {
-                $conditions[] = "s.created_at <= :date_to";
+                $conditions[] = "ua.created_at <= :date_to";
                 $params[':date_to'] = $dateTo . ' 23:59:59';
             }
             if ($revendedor !== null && $revendedor !== '') {
@@ -466,8 +470,7 @@ class AnalisisRepository
                 $params[':revendedor'] = $revendedor;
             }
             $where = implode(' AND ', $conditions);
-            $join = ($revendedor !== null && $revendedor !== '') ? " INNER JOIN user_access ua ON ua.id = s.user_access_id" : "";
-            $sql = "SELECT DATE(s.created_at) AS dia, DATE_FORMAT(s.created_at, '%d %b') AS etiqueta, COUNT(*) AS total FROM user_access_subusers s {$join} WHERE {$where} GROUP BY DATE(s.created_at) ORDER BY dia";
+            $sql = "SELECT DATE(ua.created_at) AS dia, DATE_FORMAT(ua.created_at, '%d %b') AS etiqueta, COUNT(*) AS total FROM user_access ua WHERE {$where} GROUP BY DATE(ua.created_at) ORDER BY dia";
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -482,28 +485,24 @@ class AnalisisRepository
         }
     }
 
+    /**
+     * Ventas por plataforma (solo revendedores): total de cuentas que tiene el revendedor por plataforma.
+     * Si se filtra por revendedor: sus cuentas por plataforma (ej. 15 Disney, 15 Netflix). Sin filtro: total por plataforma de todos los revendedores.
+     */
     public function getVentasPorPlataformaRevendedores(?string $dateFrom = null, ?string $dateTo = null, ?string $revendedor = null): array
     {
         try {
             $db = Database::getConnection();
-            $conditions = ['1=1'];
+            $conditions = ["ua.password IS NOT NULL AND TRIM(ua.password) != ''"];
             $params = [];
-            if ($dateFrom !== null && $dateFrom !== '') {
-                $conditions[] = "s.created_at >= :date_from";
-                $params[':date_from'] = $dateFrom . ' 00:00:00';
-            }
-            if ($dateTo !== null && $dateTo !== '') {
-                $conditions[] = "s.created_at <= :date_to";
-                $params[':date_to'] = $dateTo . ' 23:59:59';
-            }
             if ($revendedor !== null && $revendedor !== '') {
                 $conditions[] = "ua.password = :revendedor";
                 $params[':revendedor'] = $revendedor;
             }
             $where = implode(' AND ', $conditions);
-            $sql = "SELECT p.display_name AS nombre, COUNT(s.id) AS total FROM user_access_subusers s INNER JOIN user_access ua ON ua.id = s.user_access_id INNER JOIN platforms p ON p.id = ua.platform_id WHERE {$where} GROUP BY ua.platform_id, p.display_name ORDER BY total DESC";
-            $stmt = $db->prepare($sql);
-            $stmt->execute($params);
+            $sql = "SELECT p.display_name AS nombre, COUNT(ua.id) AS total FROM user_access ua INNER JOIN platforms p ON p.id = ua.platform_id WHERE {$where} GROUP BY ua.platform_id, p.display_name ORDER BY total DESC";
+            $stmt = $params ? $db->prepare($sql) : $db->query($sql);
+            if ($params) $stmt->execute($params);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $out = [];
             foreach ($rows as $r) {
