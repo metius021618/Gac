@@ -111,7 +111,7 @@ $hasCorreos = $in('listar_correos') || $in('listar_gmail') || $in('listar_outloo
                                 <polyline points="10 9 9 9 8 9"></polyline>
                             </svg>
                         </div>
-                        <div class="action-card-text">Registro de Asuntos</div>
+                        <div class="action-card-text">Asuntos</div>
                     </span>
                     <?php endif; ?>
                 </div>

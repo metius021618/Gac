@@ -65,7 +65,7 @@ $content = ob_start();
             </a>
             <?php endif; ?>
             <?php if ($can('registro_asuntos')): ?>
-            <!-- Registro de Asuntos -->
+            <!-- Asuntos -->
             <a href="/admin/email-subjects" class="action-card">
                 <div class="action-card-icon">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -76,7 +76,7 @@ $content = ob_start();
                         <polyline points="10 9 9 9 8 9"></polyline>
                     </svg>
                 </div>
-                <div class="action-card-text">Registro de Asuntos</div>
+                <div class="action-card-text">Asuntos</div>
             </a>
             <?php endif; ?>
         </div>

@@ -31,8 +31,8 @@ class RoleViewsConfig
             'url' => '/admin/email-accounts/bulk-register',
         ],
         'registro_asuntos' => [
-            'label' => 'Registro de asuntos',
-            'nav_label' => 'Registro de asuntos',
+            'label' => 'Asuntos',
+            'nav_label' => 'Asuntos',
             'url' => '/admin/email-subjects',
         ],
         'listar_gmail' => [
