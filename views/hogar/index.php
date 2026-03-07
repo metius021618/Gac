@@ -10,9 +10,11 @@ $content = ob_start();
 
 <div class="consult-container">
     <div class="consult-wrapper">
-        <!-- Logo Section -->
+        <!-- Logo Section (circular) -->
         <div class="logo-section">
-            <img src="/assets/imagenes/LGOGATITOPOCOYONI.png" alt="GAC" class="consult-logo">
+            <div class="consult-logo-wrap">
+                <img src="/assets/imagenes/LGOGATITOPOCOYONI.png" alt="GAC" class="consult-logo">
+            </div>
         </div>
 
         <!-- Main Card -->

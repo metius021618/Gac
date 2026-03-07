@@ -34,19 +34,32 @@
 }
 
 /* ============================================
-   LOGO SECTION
+   LOGO SECTION (circular + espacio para que el card no solape)
    ============================================ */
 .logo-section {
     text-align: center;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
     margin-top: 0;
+    padding-bottom: var(--spacing-md);
+}
+
+.consult-logo-wrap {
+    display: inline-block;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: transparent;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    animation: pulse 3s ease-in-out infinite;
 }
 
 .consult-logo {
-    max-width: 180px;
-    height: auto;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-    animation: pulse 3s ease-in-out infinite;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 @keyframes pulse {
@@ -80,7 +93,7 @@
     box-shadow: var(--shadow-xl), var(--shadow-glow);
     border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all var(--transition-base);
-    margin-top: -25px;
+    margin-top: 0;
 }
 
 .consult-card:hover {
@@ -460,8 +473,9 @@
 }
 
 @media (max-width: 480px) {
-    .consult-logo {
-        max-width: 150px;
+    .consult-logo-wrap {
+        width: 130px;
+        height: 130px;
     }
     
     .consult-container {
