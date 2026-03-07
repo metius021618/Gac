@@ -237,10 +237,10 @@ class AnalisisRepository
     ];
 
     /**
-     * Ventas por plataforma (opcionalmente filtrado por rango de fechas y administrador).
+     * Ventas por plataforma (opcionalmente filtrado por rango de fechas, administrador y plataforma).
      * @return array<array{nombre: string, total: int, color: string}>
      */
-    public function getVentasPorPlataforma(?string $dateFrom = null, ?string $dateTo = null, ?string $admin = null): array
+    public function getVentasPorPlataforma(?string $dateFrom = null, ?string $dateTo = null, ?string $admin = null, ?int $platformId = null): array
     {
         try {
             $db = Database::getConnection();
@@ -261,6 +261,10 @@ class AnalisisRepository
                     $conditions[] = "COALESCE(NULLIF(TRIM(ua.updated_by_username), ''), 'admin') = :admin";
                     $params[':admin'] = $admin;
                 }
+            }
+            if ($platformId !== null && $platformId > 0) {
+                $conditions[] = "ua.platform_id = :platform_id";
+                $params[':platform_id'] = $platformId;
             }
             $where = implode(' AND ', $conditions);
             $sql = "

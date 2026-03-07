@@ -56,7 +56,7 @@ class AnalisisController
         $administradorDelMes = $repo->getAdministradorDelMes();
         $totalIngresos = $repo->getTotalIngresosKpi();
         $evolucion = $repo->getEvolucionMensual($dateFrom, $dateTo, $filterAdmin ?: null, $filterPlataformaId);
-        $ventasPorPlataforma = $repo->getVentasPorPlataforma($dateFrom, $dateTo, $filterAdmin ?: null);
+        $ventasPorPlataforma = $repo->getVentasPorPlataforma($dateFrom, $dateTo, $filterAdmin ?: null, $filterPlataformaId);
         $rankingAdministradores = $repo->getRankingAdministradores($dateFrom, $dateTo, $filterPlataformaId);
         $heatmap = $repo->getHeatmapPlataformaAdministrador($dateFrom, $dateTo, $filterAdmin ?: null);
 
