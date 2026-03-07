@@ -77,11 +77,21 @@ $content = ob_start();
             </div>
             
             <div class="table-controls-right">
-                <div id="emailFiltersBar" class="email-filters-bar" style="display: none;">
+                <div id="emailFiltersBar" class="email-filters-bar">
                     <select id="filterPlatform" class="form-select email-filter-select" title="Filtrar por plataforma">
                         <option value="">Plataforma</option>
+                        <?php
+                        $platforms_list = $platforms_list ?? [];
+                        $platform_id_filter = (int)($platform_id_filter ?? 0);
+                        foreach ($platforms_list as $p):
+                            $pid = (int)($p['id'] ?? 0);
+                            $pname = htmlspecialchars($p['display_name'] ?? $p['name'] ?? '', ENT_QUOTES, 'UTF-8');
+                            if ($pname === '') continue;
+                        ?>
+                            <option value="<?= $pid ?>" <?= $pid === $platform_id_filter ? 'selected' : '' ?>><?= $pname ?></option>
+                        <?php endforeach; ?>
                     </select>
-                    <input type="date" id="filterActivityDate" class="form-input email-filter-date" title="Filtrar por fecha de actividad" placeholder="Fecha">
+                    <input type="date" id="filterActivityDate" class="form-input email-filter-date" title="Filtrar por fecha de actividad" placeholder="Fecha" value="<?= htmlspecialchars($activity_date_filter ?? '', ENT_QUOTES, 'UTF-8') ?>">
                 </div>
                 <?php if (function_exists('user_can_action') && user_can_action('listar_correos', 'eliminar')): ?>
                 <button id="multiSelectBtn" class="btn btn-secondary">

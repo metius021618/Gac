@@ -10,16 +10,19 @@ namespace Gac\Controllers;
 use Gac\Core\Request;
 use Gac\Repositories\EmailAccountRepository;
 use Gac\Repositories\UserAccessRepository;
+use Gac\Repositories\PlatformRepository;
 
 class EmailAccountController
 {
     private EmailAccountRepository $emailAccountRepository;
     private UserAccessRepository $userAccessRepository;
+    private PlatformRepository $platformRepository;
 
     public function __construct()
     {
         $this->emailAccountRepository = new EmailAccountRepository();
         $this->userAccessRepository = new UserAccessRepository();
+        $this->platformRepository = new PlatformRepository();
     }
 
     /**
@@ -78,6 +81,7 @@ class EmailAccountController
             return;
         }
 
+        $platformsList = $this->platformRepository->findAllEnabled();
         $this->renderView('admin/email_accounts/index', [
             'title' => 'Lista de cuentas',
             'email_accounts' => $result['data'],
@@ -89,6 +93,7 @@ class EmailAccountController
             'valid_per_page' => [15, 30, 60, 100, 0],
             'platform_id_filter' => $platformId,
             'activity_date_filter' => $activityDate,
+            'platforms_list' => $platformsList,
         ]);
     }
 

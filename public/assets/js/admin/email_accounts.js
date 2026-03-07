@@ -37,9 +37,10 @@
                 e.preventDefault();
                 var base = this.getAttribute('data-export-base') || '/admin/email-accounts/export-lista-excel';
                 var search = searchInput && searchInput.value ? searchInput.value.trim() : '';
-                var platformId = this.getAttribute('data-platform-id') || '';
+                var platformEl = document.getElementById('filterPlatform');
                 var dateInput = document.getElementById('filterActivityDate');
-                var activityDate = (dateInput && dateInput.value) ? dateInput.value : (this.getAttribute('data-activity-date') || '');
+                var platformId = (platformEl && platformEl.value) ? platformEl.value : '';
+                var activityDate = (dateInput && dateInput.value) ? dateInput.value : '';
                 var params = [];
                 if (search) params.push('search=' + encodeURIComponent(search));
                 if (platformId && platformId !== '0') params.push('platform_id=' + encodeURIComponent(platformId));
@@ -282,110 +283,50 @@
     }
 
     /**
-     * Actualizar barra de filtros (plataforma + fecha) cuando hay búsqueda.
-     * La lógica se basa SOLO en lo que hay en la tabla actual (no en JSON del servidor).
+     * Actualizar barra de filtros tras recargar tabla por AJAX.
+     * Los filtros se muestran siempre; las opciones de plataforma vienen del servidor en la carga inicial.
      */
     function updateEmailFiltersBar() {
         const bar = document.getElementById('emailFiltersBar');
-        const platformSelect = document.getElementById('filterPlatform');
-        const dateInput = document.getElementById('filterActivityDate');
-        if (!bar || !platformSelect || !dateInput) return;
-
-        const hasSearch = searchInput && searchInput.value.trim().length > 0;
-
-        // Obtener plataformas únicas de la tabla actual
-        const rows = document.querySelectorAll('#emailAccountsTable tbody tr');
-        const platforms = new Set();
-        rows.forEach(row => {
-            const badge = row.querySelector('.platform-cell .platform-badge');
-            const text = badge ? badge.textContent.trim() : '';
-            if (text) platforms.add(text);
-        });
-
-        if (!hasSearch || platforms.size === 0) {
-            bar.style.display = 'none';
-            platformSelect.innerHTML = '<option value="">Plataforma</option>';
-            dateInput.value = '';
-            return;
-        }
-
-        bar.style.display = 'flex';
-
-        const currentVal = platformSelect.value;
-        platformSelect.innerHTML = '<option value="">Plataforma</option>';
-        platforms.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            if (name === currentVal) opt.selected = true;
-            platformSelect.appendChild(opt);
-        });
-
-        // Reaplicar filtros sobre la tabla con los valores actuales
-        triggerSearchWithFilters();
-
-        // Eventos para filtrar al cambiar
-        platformSelect.onchange = () => { triggerSearchWithFilters(); if (window.__gacRefreshExportHref) window.__gacRefreshExportHref(); };
-        dateInput.onchange = () => { triggerSearchWithFilters(); if (window.__gacRefreshExportHref) window.__gacRefreshExportHref(); };
-    }
-
-    function triggerSearchWithFilters() {
-        const platformSelect = document.getElementById('filterPlatform');
-        const dateInput = document.getElementById('filterActivityDate');
-        const platformVal = platformSelect ? platformSelect.value : '';
-        const dateVal = dateInput ? dateInput.value : '';
-
-        const rows = document.querySelectorAll('#emailAccountsTable tbody tr');
-        rows.forEach(row => {
-            // Fila vacía de mensaje
-            if (row.querySelector('.empty-message')) return;
-
-            const badge = row.querySelector('.platform-cell .platform-badge');
-            const platformText = badge ? badge.textContent.trim() : '';
-            const syncTimeEl = row.querySelector('.sync-time');
-            const activityText = syncTimeEl ? syncTimeEl.textContent.trim() : '';
-
-            let visible = true;
-
-            if (platformVal && platformText !== platformVal) {
-                visible = false;
-            }
-
-            if (visible && dateVal && activityText.length >= 10) {
-                const datePart = activityText.substring(0, 10); // dd/mm/yyyy
-                const parts = datePart.split('/');
-                if (parts.length === 3) {
-                    const rowDate = parts[2] + '-' + parts[1].padStart(2, '0') + '-' + parts[0].padStart(2, '0');
-                    if (rowDate !== dateVal) {
-                        visible = false;
-                    }
-                }
-            }
-
-            row.style.display = visible ? '' : 'none';
-        });
+        if (bar) bar.style.display = 'flex';
     }
 
 
     /**
-     * Inicializar búsqueda AJAX
+     * Parámetros extra (plataforma y fecha) para la búsqueda/filtrado en Lista de cuentas.
+     */
+    function getListaCuentasExtraParams() {
+        var platformSelect = document.getElementById('filterPlatform');
+        var dateInput = document.getElementById('filterActivityDate');
+        return {
+            platform_id: platformSelect ? platformSelect.value : '',
+            activity_date: dateInput ? dateInput.value : ''
+        };
+    }
+
+    /**
+     * Inicializar búsqueda AJAX y filtros (plataforma/fecha visibles desde el inicio).
      */
     function initSearch() {
         if (!searchInput || !perPageSelect) return;
+
+        var endpoint = window.location.pathname;
+        var renderCallback = function(html) {
+            window.SearchAJAX.updateTableContent(html);
+            initTable();
+            reapplyMultiSelectState();
+            updateEmailFiltersBar();
+        };
 
         if (window.SearchAJAX) {
             window.SearchAJAX.init({
                 searchInput: searchInput,
                 perPageSelect: perPageSelect,
                 clearSearchBtn: clearSearchBtn,
-                endpoint: window.location.pathname,
+                endpoint: endpoint,
                 minSearchLength: 1,
-                renderCallback: function(html) {
-                    window.SearchAJAX.updateTableContent(html);
-                    initTable();
-                    reapplyMultiSelectState();
-                    updateEmailFiltersBar();
-                },
+                renderCallback: renderCallback,
+                getExtraParams: getListaCuentasExtraParams,
                 onSearchComplete: function() {
                     if (clearSearchBtn && searchInput.value.trim()) {
                         clearSearchBtn.style.display = 'flex';
@@ -394,6 +335,25 @@
                     }
                 }
             });
+
+            // Al cambiar plataforma o fecha, recargar lista con los mismos filtros (servidor).
+            var filterPlatform = document.getElementById('filterPlatform');
+            var filterActivityDate = document.getElementById('filterActivityDate');
+            var doFilterSearch = function() {
+                var params = {
+                    search: searchInput ? searchInput.value.trim() : '',
+                    page: 1,
+                    per_page: perPageSelect ? perPageSelect.value : 15
+                };
+                var extra = getListaCuentasExtraParams();
+                if (extra) {
+                    params.platform_id = extra.platform_id;
+                    params.activity_date = extra.activity_date;
+                }
+                window.SearchAJAX.performSearch(endpoint, params, renderCallback);
+            };
+            if (filterPlatform) filterPlatform.addEventListener('change', doFilterSearch);
+            if (filterActivityDate) filterActivityDate.addEventListener('change', doFilterSearch);
         } else {
             console.error('SearchAJAX no está disponible');
         }
