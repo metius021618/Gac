@@ -162,6 +162,11 @@ body {
     padding-left: 0;
 }
 
+/* Logo más a la izquierda solo en panel (admin, revendedor, etc.) */
+.main-header .logo-container {
+    margin-left: -78px;
+}
+
 .logo-container {
     display: flex;
     align-items: center;
