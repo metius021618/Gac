@@ -56,8 +56,8 @@ class RoleViewsConfig
             'url' => '/admin/platforms',
         ],
         'usuarios' => [
-            'label' => 'Usuarios',
-            'nav_label' => 'Usuarios',
+            'label' => 'Revendedores',
+            'nav_label' => 'Revendedores',
             'url' => '/admin/users',
         ],
     ];

@@ -129,6 +129,27 @@ class AuthController
             return;
         }
 
+        // Revendedor: bloquear si tiene menos de 10 cuentas asignadas
+        try {
+            $db = \Gac\Helpers\Database::getConnection();
+            $stmt = $db->prepare("SELECT name FROM roles WHERE id = :id LIMIT 1");
+            $stmt->execute([':id' => $user['role_id']]);
+            $roleRow = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($roleRow && isset($roleRow['name']) && strtoupper($roleRow['name']) === 'REVENDEDOR') {
+                $accessRepo = new \Gac\Repositories\UserAccessRepository();
+                $count = $accessRepo->countByRevendedorUsername($user['username']);
+                if ($count < 10) {
+                    json_response([
+                        'success' => false,
+                        'message' => 'Tu cuenta está bloqueada. No tienes 10 o más cuentas asignadas.'
+                    ], 403);
+                    return;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Si falla la comprobación, continuar (no bloquear por error técnico)
+        }
+
         // Login exitoso
         $this->createSession($user, $remember);
         $this->clearFailedAttempts($username);

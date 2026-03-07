@@ -280,6 +280,24 @@ class UserAccessRepository
     }
 
     /**
+     * Cuenta cuántas cuentas (user_access) tiene asignadas un revendedor (password = username).
+     */
+    public function countByRevendedorUsername(string $username): int
+    {
+        if (trim($username) === '') {
+            return 0;
+        }
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("SELECT COUNT(*) FROM user_access WHERE password = :username");
+            $stmt->execute([':username' => $username]);
+            return (int) $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            return 0;
+        }
+    }
+
+    /**
      * Listar/buscar en user_access. Si hay texto, filtra por email o usuario (password).
      * @param string|null $excludeEmail Si se indica, se excluye este email (ej. cuenta Gmail matriz).
      */

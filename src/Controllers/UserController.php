@@ -30,7 +30,7 @@ class UserController
         $paginationData = $userRepository->searchResellersPaginate($page, $perPage, $search);
 
         $this->renderView('admin/users/index', [
-            'title' => 'Usuarios (Revendedores)',
+            'title' => 'Revendedores',
             'users' => $paginationData['data'],
             'total_records' => $paginationData['total'],
             'current_page' => $paginationData['page'],

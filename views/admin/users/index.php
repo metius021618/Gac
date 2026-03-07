@@ -1,8 +1,7 @@
 <?php
 /**
- * GAC - Vista de Usuarios (Revendedores)
- * Solo muestra usuarios auto-generados para revendedores
- * con sus cuentas asignadas.
+ * GAC - Vista de Revendedores
+ * Lista todos los revendedores; acceso bloqueado automáticamente si tienen menos de 10 cuentas.
  */
 
 $content = ob_start();
@@ -10,9 +9,9 @@ $content = ob_start();
 
 <div class="admin-container">
     <div class="admin-header">
-        <h1 class="admin-title">Usuarios (Revendedores)</h1>
+        <h1 class="admin-title">Revendedores</h1>
         <p class="admin-subtitle">
-            Listado de usuarios que tienen 10 cuentas o más asignadas. Desde aquí puedes activar/desactivar o eliminar revendedores.
+            Listado de revendedores. Quienes tengan menos de 10 cuentas asignadas aparecen con acceso bloqueado. Desde aquí puedes activar/desactivar o eliminar.
         </p>
     </div>
 
@@ -51,27 +50,34 @@ $content = ob_start();
                     <?php if (empty($users)): ?>
                         <tr>
                             <td colspan="5" class="text-center">
-                                <p class="empty-message">No hay usuarios revendedores registrados</p>
+                                <p class="empty-message">No hay revendedores registrados</p>
                             </td>
                         </tr>
                     <?php else: ?>
-                        <?php foreach ($users as $user): ?>
+                        <?php foreach ($users as $user):
+                            $accountsCount = (int) ($user['accounts_count'] ?? 0);
+                            $accessBlockedBySystem = $accountsCount < 10;
+                        ?>
                             <tr data-id="<?= $user['id'] ?>">
                                 <td><?= htmlspecialchars($user['id']) ?></td>
                                 <td><strong><?= htmlspecialchars($user['username']) ?></strong></td>
-                                <td><?= (int) ($user['accounts_count'] ?? 0) ?></td>
+                                <td><?= $accountsCount ?></td>
                                 <td>
-                                    <form method="post" action="/admin/users/toggle-active">
-                                        <input type="hidden" name="id" value="<?= (int) $user['id'] ?>">
-                                        <input type="hidden" name="active" value="<?= $user['active'] ? 0 : 1 ?>">
-                                        <label class="toggle-switch">
-                                            <input type="checkbox"
-                                                   class="toggle-input"
-                                                   <?= $user['active'] ? 'checked' : '' ?>
-                                                   onchange="this.form.submit()">
-                                            <span class="toggle-slider"></span>
-                                        </label>
-                                    </form>
+                                    <?php if ($accessBlockedBySystem): ?>
+                                        <span class="access-blocked-label" title="Menos de 10 cuentas asignadas">Bloqueado</span>
+                                    <?php else: ?>
+                                        <form method="post" action="/admin/users/toggle-active">
+                                            <input type="hidden" name="id" value="<?= (int) $user['id'] ?>">
+                                            <input type="hidden" name="active" value="<?= $user['active'] ? 0 : 1 ?>">
+                                            <label class="toggle-switch">
+                                                <input type="checkbox"
+                                                       class="toggle-input"
+                                                       <?= $user['active'] ? 'checked' : '' ?>
+                                                       onchange="this.form.submit()">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </form>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <div class="table-actions">
@@ -95,7 +101,7 @@ $content = ob_start();
         <!-- Paginación simple -->
         <div class="pagination-container">
             <div class="pagination-info">
-                Mostrando <?= min($per_page > 0 ? $per_page : $total_records, $total_records) ?> de <?= $total_records ?> usuarios
+                Mostrando <?= min($per_page > 0 ? $per_page : $total_records, $total_records) ?> de <?= $total_records ?> revendedores
             </div>
             <div class="pagination-controls">
                 <?php if ($current_page > 1): ?>
@@ -117,7 +123,7 @@ $content = ob_start();
 <?php
 $content = ob_get_clean();
 
-$title = $title ?? 'Usuarios (Revendedores)';
+$title = $title ?? 'Revendedores';
 $show_nav = true;
 $show_footer = true;
 $footer_text = '';

@@ -40,7 +40,7 @@ $hasCorreos = $in('listar_correos') || $in('listar_gmail') || $in('listar_outloo
                         <a href="#" class="nav-link" onclick="return false;">Registro masivo</a>
                     <?php endif; ?>
                     <?php if ($in('usuarios') || $in('administradores')): ?>
-                        <a href="#" class="nav-link" onclick="return false;">Usuarios</a>
+                        <a href="#" class="nav-link" onclick="return false;">Revendedores</a>
                     <?php endif; ?>
                 </nav>
                 <div class="user-menu-container">
@@ -169,7 +169,7 @@ $hasCorreos = $in('listar_correos') || $in('listar_gmail') || $in('listar_outloo
                         </div>
                         <div class="stat-card-content">
                             <div class="stat-card-value">—</div>
-                            <div class="stat-card-label">Usuarios</div>
+                            <div class="stat-card-label">Revendedores</div>
                         </div>
                         <div class="stat-card-arrow">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

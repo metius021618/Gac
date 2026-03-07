@@ -470,17 +470,12 @@ class UserRepository
                 $params[':search'] = $searchLower;
             }
 
-            // Contar total de revendedores que tengan al menos 10 cuentas asignadas
+            // Contar total de revendedores (todos, tengan o no 10+ cuentas)
             $countSql = "
                 SELECT COUNT(*) AS total
                 FROM users u
                 INNER JOIN roles r ON u.role_id = r.id
                 {$where}
-                  AND (
-                      SELECT COUNT(*)
-                      FROM user_access ua
-                      WHERE ua.password = u.username
-                  ) >= 10
             ";
             $countStmt = $this->db->prepare($countSql);
             $countStmt->execute($params);
@@ -490,8 +485,7 @@ class UserRepository
             $offset = ($page - 1) * $perPage;
             $limitClause = $perPage > 0 ? "LIMIT {$perPage} OFFSET {$offset}" : '';
 
-            // Datos con cantidad de cuentas (user_access.password = username)
-            // Solo incluir usuarios con al menos 10 cuentas asignadas
+            // Datos con cantidad de cuentas (user_access.password = username); incluir todos los revendedores
             $sql = "
                 SELECT
                     u.id,
@@ -507,11 +501,6 @@ class UserRepository
                 FROM users u
                 INNER JOIN roles r ON u.role_id = r.id
                 {$where}
-                  AND (
-                      SELECT COUNT(*)
-                      FROM user_access ua
-                      WHERE ua.password = u.username
-                  ) >= 10
                 ORDER BY u.created_at DESC
                 {$limitClause}
             ";
