@@ -184,6 +184,10 @@ body {
     background: rgba(255, 255, 255, 0.05);
 }
 
+.nav-link--dashboard {
+    text-transform: uppercase;
+}
+
 /* ============================================
    USER MENU
    ============================================ */

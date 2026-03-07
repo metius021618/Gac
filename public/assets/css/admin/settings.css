@@ -54,6 +54,17 @@
     margin: 0 0 var(--spacing-md) 0;
 }
 
+/* Mismo estilo que los enlaces del navbar (fuente, grosor, color) */
+.settings-section-title--nav-style {
+    font-family: 'Helvetica Now MT Text', 'Helvetica Now MT Micro', 'Helvetica Now', Helvetica, Arial, sans-serif;
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+.settings-section-title--nav-style svg {
+    color: var(--text-secondary);
+}
+
 .settings-section-title svg {
     color: var(--color-primary);
     flex-shrink: 0;
