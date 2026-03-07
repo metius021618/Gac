@@ -125,13 +125,17 @@ body {
 }
 
 /* ============================================
-   HEADER - Fuente Helvetica Now solo en navbar
+   HEADER - Navbar con misma fuente que "Administradores" en Configuración
    ============================================ */
-@import url('https://fonts.cdnfonts.com/css/helvetica-now-mt-micro');
+.main-header .main-nav .nav-link {
+    font-family: var(--font-family);
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--text-primary);
+}
 
-.main-header .main-nav .nav-link,
 .main-header .user-welcome {
-    font-family: 'Helvetica Now MT Text', 'Helvetica Now MT Micro', 'Helvetica Now', Helvetica, Arial, sans-serif;
+    font-family: var(--font-family);
     font-weight: 400;
 }
 
@@ -171,20 +175,19 @@ body {
 }
 
 .nav-link {
-    color: var(--text-secondary);
     text-decoration: none;
-    font-weight: 500;
     transition: color var(--transition-base);
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--border-radius-sm);
 }
 
-.nav-link:hover {
-    color: var(--text-primary);
+.main-header .main-nav .nav-link:hover {
     background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
 }
 
-.nav-link--dashboard {
+/* Dashboard en mayúsculas (misma fuente que Administradores en Configuración) */
+.main-header .main-nav .nav-link--dashboard {
     text-transform: uppercase;
 }
 
