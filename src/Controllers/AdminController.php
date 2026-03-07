@@ -32,7 +32,7 @@ class AdminController
             redirect('/admin/dashboard');
             return;
         }
-        $administrators = $this->userRepository->findAllUsersWithRoles();
+        $administrators = $this->userRepository->findAllUsersWithRolesExcludingRevendedor();
         $roles = $this->roleRepository->findAll();
         $role_views_config = RoleViewsConfig::all();
         

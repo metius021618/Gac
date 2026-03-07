@@ -269,6 +269,36 @@ class UserRepository
     }
 
     /**
+     * Usuarios con su rol excluyendo el rol REVENDEDOR (para panel Administradores en Configuración).
+     * @return array
+     */
+    public function findAllUsersWithRolesExcludingRevendedor(): array
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    u.id,
+                    u.username,
+                    u.email,
+                    u.active,
+                    u.last_login,
+                    u.created_at,
+                    r.name as role_name,
+                    r.display_name as role_display_name
+                FROM users u
+                LEFT JOIN roles r ON u.role_id = r.id
+                WHERE UPPER(COALESCE(r.name, '')) != 'REVENDEDOR'
+                ORDER BY u.created_at DESC
+            ");
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (PDOException $e) {
+            error_log("Error al obtener usuarios excluyendo revendedor: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Contar administradores
      * 
      * @return int
