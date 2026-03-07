@@ -7,8 +7,8 @@
     <title><?= isset($title) ? htmlspecialchars($title) . ' - ' : '' ?><?= gac_name() ?></title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/assets/imagenes/pocofinal.png">
-    <link rel="apple-touch-icon" href="/assets/imagenes/pocofinal.png">
+    <link rel="icon" type="image/png" href="/assets/imagenes/pocooofinal.png">
+    <link rel="apple-touch-icon" href="/assets/imagenes/pocooofinal.png">
     
     <!-- CSS -->
     <link rel="stylesheet" href="/assets/css/main.css">
@@ -33,7 +33,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo-container">
-                    <img src="/assets/imagenes/pocofinal.png" alt="<?= gac_name() ?>" class="logo">
+                    <img src="/assets/imagenes/pocooofinal.png" alt="<?= gac_name() ?>" class="logo">
                 </div>
                 <?php if (isset($show_nav) && $show_nav): ?>
                 <button type="button" class="nav-sidebar-toggle" id="navSidebarToggle" aria-label="Abrir menú">
