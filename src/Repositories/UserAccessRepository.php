@@ -377,7 +377,7 @@ class UserAccessRepository
                 FROM user_access ua
                 LEFT JOIN platforms p ON ua.platform_id = p.id
                 {$whereClause}
-                ORDER BY ua.created_at DESC
+                ORDER BY COALESCE(ua.updated_at, ua.created_at) DESC
                 {$limitClause}
             ";
             
