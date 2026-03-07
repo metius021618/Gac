@@ -617,6 +617,6 @@ body.nav-sidebar-open .nav-sidebar {
     color: var(--color-primary-light);
     text-decoration: none;
 }
--.legal-content a:hover {
+.legal-content a:hover {
     text-decoration: underline;
 }

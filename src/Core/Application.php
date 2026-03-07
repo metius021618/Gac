@@ -47,6 +47,7 @@ class Application
         // Rutas de gestión de cuentas de email (requieren autenticación)
         $router->get('/admin/email-accounts', 'EmailAccountController@index', ['auth']);
         $router->get('/admin/email-accounts/export-excel', 'EmailAccountController@exportExcel', ['auth']);
+        $router->get('/admin/email-accounts/export-lista-excel', 'EmailAccountController@exportListaCuentasExcel', ['auth']);
         $router->get('/admin/correos-registrados', 'EmailAccountController@correosRegistrados', ['auth']);
         $router->get('/admin/correos-registrados/export-excel', 'EmailAccountController@exportCorreosRegistradosExcel', ['auth']);
         $router->get('/admin/email-accounts/create', 'EmailAccountController@create', ['auth']);

@@ -30,6 +30,24 @@
             initTable();
             initSearch();
         }
+
+        var excelBtn = document.getElementById('listaCuentasExcelBtn');
+        if (excelBtn) {
+            excelBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var base = this.getAttribute('data-export-base') || '/admin/email-accounts/export-lista-excel';
+                var search = searchInput && searchInput.value ? searchInput.value.trim() : '';
+                var platformId = this.getAttribute('data-platform-id') || '';
+                var dateInput = document.getElementById('filterActivityDate');
+                var activityDate = (dateInput && dateInput.value) ? dateInput.value : (this.getAttribute('data-activity-date') || '');
+                var params = [];
+                if (search) params.push('search=' + encodeURIComponent(search));
+                if (platformId && platformId !== '0') params.push('platform_id=' + encodeURIComponent(platformId));
+                if (activityDate) params.push('activity_date=' + encodeURIComponent(activityDate));
+                var url = base + (params.length ? '?' + params.join('&') : '');
+                window.location.href = url;
+            });
+        }
     }
 
     /**

@@ -36,6 +36,23 @@ $content = ob_start();
         </div>
     <?php endif; ?>
 
+    <div class="lista-cuentas-excel-bar">
+        <a href="#" id="listaCuentasExcelBtn" class="btn btn-primary btn-excel-lista" title="Exportar a Excel (lo que se muestra)"
+           data-export-base="/admin/email-accounts/export-lista-excel"
+           data-platform-id="<?= (int)($platform_id_filter ?? 0) ?>"
+           data-activity-date="<?= htmlspecialchars($activity_date_filter ?? '', ENT_QUOTES, 'UTF-8') ?>">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M8 13h2"></path>
+                <path d="M8 17h2"></path>
+                <path d="M14 13h2"></path>
+                <path d="M14 17h2"></path>
+            </svg>
+            Excel
+        </a>
+    </div>
+
     <div class="admin-content">
         <div class="table-controls">
             <div class="search-box">

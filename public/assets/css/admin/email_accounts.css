@@ -23,6 +23,18 @@
     border: 1px solid #f5c6cb;
 }
 
+/* Lista de cuentas: botón Excel arriba a la derecha, fuera del div principal */
+.lista-cuentas-excel-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+.lista-cuentas-excel-bar .btn-excel-lista {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
 /* ============================================
    CHECKBOXES Y SELECCIÓN MÚLTIPLE
    ============================================ */

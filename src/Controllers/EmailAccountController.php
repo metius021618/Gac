@@ -86,7 +86,9 @@ class EmailAccountController
             'per_page' => $result['per_page'],
             'total_pages' => $result['total_pages'],
             'search_query' => $search,
-            'valid_per_page' => [15, 30, 60, 100, 0]
+            'valid_per_page' => [15, 30, 60, 100, 0],
+            'platform_id_filter' => $platformId,
+            'activity_date_filter' => $activityDate,
         ]);
     }
 
@@ -143,6 +145,54 @@ class EmailAccountController
             echo '</tr>';
         }
 
+        echo '</table>';
+        exit;
+    }
+
+    /**
+     * Exportar Lista de cuentas a Excel (solo lo mostrado: mismo search/platform_id/activity_date que la lista).
+     * Columnas: Correo, Usuario, Plataforma, Actividad, Administrador. Cabeceras con estilos, compatible Excel.
+     */
+    public function exportListaCuentasExcel(Request $request): void
+    {
+        $search = trim($request->get('search', ''));
+        $platformId = $request->get('platform_id') ? (int) $request->get('platform_id') : null;
+        $activityDate = trim($request->get('activity_date', ''));
+
+        $matrixAccount = $this->emailAccountRepository->getGmailMatrixAccount();
+        $excludeEmail = $matrixAccount && !empty($matrixAccount['email']) ? $matrixAccount['email'] : null;
+        $result = $this->userAccessRepository->searchAndPaginate($search, 1, 0, [], $excludeEmail, $platformId, $activityDate !== '' ? $activityDate : null);
+        $rows = $result['data'] ?? [];
+
+        $filename = 'lista_cuentas_' . date('Y-m-d_His') . '.xls';
+        header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        header('Pragma: public');
+
+        echo '<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;">';
+        echo '<tr style="background:#2563eb;color:#ffffff;font-weight:bold;">';
+        echo '<td>Correo</td>';
+        echo '<td>Usuario</td>';
+        echo '<td>Plataforma</td>';
+        echo '<td>Actividad</td>';
+        echo '<td>Administrador</td>';
+        echo '</tr>';
+
+        foreach ($rows as $r) {
+            $actividad = !empty($r['updated_at']) ? date('d/m/Y H:i', strtotime($r['updated_at'])) : (!empty($r['created_at']) ? date('d/m/Y H:i', strtotime($r['created_at'])) : '—');
+            $email = $r['email'] ?? '';
+            $usuario = $r['password'] ?? '';
+            $plataforma = $r['platform_display_name'] ?? $r['platform_name'] ?? '—';
+            $admin = $r['updated_by_username'] ?? '—';
+            echo '<tr>';
+            echo '<td>' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars($usuario, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars($plataforma, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars($actividad, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td>' . htmlspecialchars($admin, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '</tr>';
+        }
         echo '</table>';
         exit;
     }
