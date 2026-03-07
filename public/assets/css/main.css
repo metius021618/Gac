@@ -158,6 +158,10 @@ body {
     gap: var(--spacing-md);
 }
 
+.main-header .container {
+    padding-left: var(--spacing-xs, 0.5rem);
+}
+
 .logo-container {
     display: flex;
     align-items: center;
