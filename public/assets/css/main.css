@@ -131,7 +131,8 @@ body {
     font-family: var(--font-family);
     font-size: 1rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #ffffffc2;
+    text-transform: uppercase;
 }
 
 .main-header .user-welcome {
@@ -183,12 +184,7 @@ body {
 
 .main-header .main-nav .nav-link:hover {
     background: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
-}
-
-/* Dashboard en mayúsculas (misma fuente que Administradores en Configuración) */
-.main-header .main-nav .nav-link--dashboard {
-    text-transform: uppercase;
+    color: #ffffff;
 }
 
 /* ============================================
