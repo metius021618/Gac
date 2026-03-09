@@ -80,6 +80,7 @@ $content = ob_start();
                     <?php if (!empty($gmail_matrix_account) && !empty($gmail_matrix_account['email'])): ?>
                         <p class="gmail-matrix-label">Cuenta configurada:</p>
                         <p class="gmail-matrix-email"><?= htmlspecialchars($gmail_matrix_account['email']) ?></p>
+                        <p class="gmail-matrix-hint text-muted small mt-1">Para comprobar que el token está bien, en el servidor ejecuta: <code>python3 cron/verify_gmail_token.py</code></p>
                     <?php else: ?>
                         <p class="gmail-matrix-empty">Aún no hay ninguna cuenta Gmail configurada.</p>
                     <?php endif; ?>
