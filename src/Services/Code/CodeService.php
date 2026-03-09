@@ -137,12 +137,16 @@ class CodeService
         $minutesAgo = $lastEmail['minutes_ago'] ?? 0;
         $timeAgoText = $lastEmail['time_ago_text'] ?? 'hace tiempo';
 
+        // Fecha para mostrar en zona horaria Perú (America/Lima, GMT-5)
+        $receivedAtDisplay = $this->formatReceivedAtForPeru($lastEmail['received_at'] ?? '');
+
         // Retornar el correo completo (sin marcar como consumido, solo mostrar)
         $response = [
             'success' => true,
             'message' => $isMasterKeyUsed ? 'Correo encontrado (clave maestra)' : 'Correo encontrado',
             'platform' => $platform['display_name'],
             'received_at' => $lastEmail['received_at'],
+            'received_at_display' => $receivedAtDisplay,
             'minutes_ago' => $minutesAgo,
             'time_ago_text' => $timeAgoText,
             'email_from' => $lastEmail['email_from'] ?? '',
@@ -192,17 +196,50 @@ class CodeService
         }
 
         $minutesAgo = $lastEmail['minutes_ago'] ?? 0;
+        $receivedAtDisplay = $this->formatReceivedAtForPeru($lastEmail['received_at'] ?? '');
         return [
             'success' => true,
             'message' => 'Correo encontrado',
             'platform' => 'Netflix',
             'received_at' => $lastEmail['received_at'],
+            'received_at_display' => $receivedAtDisplay,
             'minutes_ago' => $minutesAgo,
             'time_ago_text' => $lastEmail['time_ago_text'] ?? 'hace tiempo',
             'email_from' => $lastEmail['email_from'] ?? '',
             'email_subject' => $lastEmail['subject'] ?? $subject,
             'email_body' => $lastEmail['email_body'] ?? ''
         ];
+    }
+
+    /**
+     * Formatear received_at (guardado en UTC) a hora de Perú (America/Lima, GMT-5).
+     * Formato en español: "9 de marzo de 2026, 4:58 p. m."
+     */
+    private function formatReceivedAtForPeru(string $receivedAt): string
+    {
+        $receivedAt = trim($receivedAt);
+        if ($receivedAt === '') {
+            return '';
+        }
+        try {
+            $utc = $receivedAt . (str_contains($receivedAt, 'Z') || str_contains($receivedAt, '+') ? '' : ' UTC');
+            $dt = new \DateTime($utc, new \DateTimeZone('UTC'));
+            $dt->setTimezone(new \DateTimeZone('America/Lima'));
+            if (class_exists(\IntlDateFormatter::class)) {
+                $fmt = new \IntlDateFormatter(
+                    'es_PE',
+                    \IntlDateFormatter::LONG,
+                    \IntlDateFormatter::SHORT,
+                    'America/Lima',
+                    \IntlDateFormatter::GREGORIAN,
+                    'd \'de\' MMMM \'de\' y, h:mm a'
+                );
+                return $fmt->format($dt);
+            }
+            return $dt->format('d/m/Y H:i');
+        } catch (\Exception $e) {
+            return $receivedAt;
+        }
     }
 
     /**

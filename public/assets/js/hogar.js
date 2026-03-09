@@ -133,18 +133,22 @@
         if (modalSubject) modalSubject.textContent = data.email_subject || 'Sin asunto';
         if (modalFrom) modalFrom.textContent = data.email_from || 'Desconocido';
         if (modalDate) {
-            // received_at se guarda en UTC; interpretar como UTC y mostrar en zona horaria de Perú (GMT-5)
-            const raw = (data.received_at || '').trim();
-            const utcStr = raw.includes('Z') || raw.includes('+') ? raw : raw ? raw.replace(' ', 'T') + 'Z' : '';
-            const date = utcStr ? new Date(utcStr) : new Date();
-            modalDate.textContent = date.toLocaleString('es-ES', {
-                timeZone: 'America/Lima',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            // Preferir fecha ya formateada en Perú (backend); si no, formatear en JS con America/Lima
+            if (data.received_at_display) {
+                modalDate.textContent = data.received_at_display;
+            } else {
+                const raw = (data.received_at || '').trim();
+                const utcStr = raw.includes('Z') || raw.includes('+') ? raw : raw ? raw.replace(' ', 'T') + 'Z' : '';
+                const date = utcStr ? new Date(utcStr) : new Date();
+                modalDate.textContent = date.toLocaleString('es-ES', {
+                    timeZone: 'America/Lima',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
         }
         if (modalBody && data.email_body) {
             const isHTML = data.email_body.trim().startsWith('<');
