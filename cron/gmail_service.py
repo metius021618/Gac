@@ -144,26 +144,26 @@ def _extract_name(addr_str):
 
 
 def _parse_date(date_str):
-    """Parsear fecha RFC2822 a Y-m-d H:%M:%S en UTC (evita desfase por zona horaria del servidor)."""
+    """Parsear fecha RFC2822 a Y-m-d H:%M:%SZ en UTC (Z indica UTC para que PHP muestre bien en Perú)."""
     if not date_str:
-        return datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        return datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ')
     try:
         t = parsedate_tz(date_str)
         if t:
             ts = mktime_tz(t)
-            return datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+            return datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%SZ')
     except Exception:
         pass
-    return datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    return datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ')
 
 
 def _parse_internal_date(internal_date_ms):
-    """internalDate de Gmail está en UTC (ms desde epoch). Guardar en UTC para no sumar hora del servidor."""
+    """internalDate de Gmail está en UTC (ms desde epoch). Guardar con Z para que PHP sepa que es UTC."""
     if internal_date_ms is None:
         return None
     try:
         ts = int(internal_date_ms) / 1000.0
-        return datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+        return datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%SZ')
     except (TypeError, ValueError, OSError):
         return None
 
