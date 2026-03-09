@@ -323,11 +323,12 @@
         if (modalSubject) modalSubject.textContent = data.email_subject || 'Sin asunto';
         if (modalFrom) modalFrom.textContent = data.email_from || 'Desconocido';
         if (modalDate) {
-            // received_at se guarda en UTC; interpretar como UTC para que toLocaleString muestre hora local del usuario
+            // received_at se guarda en UTC; interpretar como UTC y mostrar en zona horaria de Perú (GMT-5)
             const raw = (data.received_at || '').trim();
             const utcStr = raw.includes('Z') || raw.includes('+') ? raw : raw ? raw.replace(' ', 'T') + 'Z' : '';
             const date = utcStr ? new Date(utcStr) : new Date();
             modalDate.textContent = date.toLocaleString('es-ES', {
+                timeZone: 'America/Lima',
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',

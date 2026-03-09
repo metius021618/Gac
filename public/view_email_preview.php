@@ -257,7 +257,7 @@ try {
                     $receivedAt = $code['received_at'] ?? '';
                     if ($receivedAt) {
                         $dt = new DateTime($receivedAt . ' UTC', new DateTimeZone('UTC'));
-                        $dt->setTimezone(new DateTimeZone(date_default_timezone_get() ?: 'UTC'));
+                        $dt->setTimezone(new DateTimeZone('America/Lima'));
                         echo $dt->format('d/m/Y H:i');
                     } else {
                         echo '-';
