@@ -13,6 +13,16 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
+# Perú = UTC-5. Guardar fecha en hora Perú (igual que Gmail) para que se muestre como en el correo.
+PERU_OFFSET = timedelta(hours=5)
+
+
+def _timestamp_to_peru_str(ts):
+    """Convertir timestamp UTC a hora Perú (America/Lima) y devolver Y-m-d H:%M:%S."""
+    utc_dt = datetime.utcfromtimestamp(ts)
+    peru_dt = utc_dt - PERU_OFFSET
+    return peru_dt.strftime('%Y-%m-%d %H:%M:%S')
+
 
 class ImapService:
     """Servicio para leer emails desde IMAP"""
@@ -153,19 +163,19 @@ class ImapService:
                 else:
                     logger.warning(f"  No se encontró destinatario en cuerpo (asunto: {subject[:50]}), se usará cuenta maestra")
         
-        # Obtener fecha
+        # Obtener fecha desde cabecera Date del correo; guardar en hora Perú (igual que Gmail / @pocoyoni)
         date_str = msg['Date'] or ''
         try:
             date_tuple = email.utils.parsedate_tz(date_str)
             if date_tuple:
                 timestamp = email.utils.mktime_tz(date_tuple)
-                date = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                date = _timestamp_to_peru_str(timestamp)
             else:
-                date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                timestamp = datetime.now().timestamp()
-        except:
-            date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            timestamp = datetime.now().timestamp()
+                date = _timestamp_to_peru_str(datetime.utcnow().timestamp())
+                timestamp = datetime.utcnow().timestamp()
+        except Exception:
+            date = _timestamp_to_peru_str(datetime.utcnow().timestamp())
+            timestamp = datetime.utcnow().timestamp()
         
         # Cuerpo ya obtenido arriba (para poder extraer destinatario del body)
         return {
