@@ -8,7 +8,7 @@ original se extrae de los headers (To, X-Original-To) para guardar recipient_ema
 import base64
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from email.header import decode_header as email_decode_header
 from email.utils import parsedate_tz, mktime_tz
 
@@ -143,27 +143,38 @@ def _extract_name(addr_str):
     return (m.group(1).strip().strip('"') or '') if m else ''
 
 
+# Perú = UTC-5 (sin horario de verano). Guardamos siempre en hora Perú para mostrar igual que en el correo.
+PERU_OFFSET = timedelta(hours=5)
+
+
+def _timestamp_to_peru_str(ts):
+    """Convertir timestamp UTC a hora Perú (America/Lima) y devolver Y-m-d H:%M:%S."""
+    utc_dt = datetime.utcfromtimestamp(ts)
+    peru_dt = utc_dt - PERU_OFFSET
+    return peru_dt.strftime('%Y-%m-%d %H:%M:%S')
+
+
 def _parse_date(date_str):
-    """Parsear fecha RFC2822 a Y-m-d H:%M:%SZ en UTC (Z indica UTC para que PHP muestre bien en Perú)."""
+    """Parsear cabecera Date del correo (RFC2822) y guardar en hora Perú (lo que ve el usuario en el correo)."""
     if not date_str:
-        return datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ')
+        return _timestamp_to_peru_str(datetime.utcnow().timestamp())
     try:
         t = parsedate_tz(date_str)
         if t:
             ts = mktime_tz(t)
-            return datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%SZ')
+            return _timestamp_to_peru_str(ts)
     except Exception:
         pass
-    return datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ')
+    return _timestamp_to_peru_str(datetime.utcnow().timestamp())
 
 
 def _parse_internal_date(internal_date_ms):
-    """internalDate de Gmail está en UTC (ms desde epoch). Guardar con Z para que PHP sepa que es UTC."""
+    """internalDate de Gmail (ms UTC). Convertir a hora Perú para guardar (mismo criterio que cabecera Date)."""
     if internal_date_ms is None:
         return None
     try:
         ts = int(internal_date_ms) / 1000.0
-        return datetime.utcfromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%SZ')
+        return _timestamp_to_peru_str(ts)
     except (TypeError, ValueError, OSError):
         return None
 
@@ -434,7 +445,7 @@ class GmailService:
             orig = x_original_to or original_recipient
             to_primary = (_extract_email(orig) or (to_list[0] if to_list else account_email) or account_email).strip().lower()
             internal_date = msg.get('internalDate')
-            date = _parse_internal_date(internal_date) if internal_date else _parse_date(date_header_str)
+            date = _parse_date(date_header_str) if date_header_str else (_parse_internal_date(internal_date) if internal_date else _timestamp_to_peru_str(datetime.utcnow().timestamp()))
             return {
                 'message_number': msg_id,
                 'subject': subject,
@@ -487,9 +498,11 @@ class GmailService:
 
         body_text, body_html = _get_body_from_payload(payload)
         body = body_text or body_html or ''
-        # Preferir internalDate (cuando Gmail recibió el correo) sobre el header Date (puede venir mal del remitente)
+        # Usar la cabecera Date del correo (lo que ve el usuario en el cliente); si no hay, internalDate de Gmail
         internal_date = msg.get('internalDate')
-        date = _parse_internal_date(internal_date) if internal_date else _parse_date(date_header_str)
+        date = _parse_date(date_header_str) if date_header_str else (_parse_internal_date(internal_date) if internal_date else None)
+        if not date:
+            date = _timestamp_to_peru_str(datetime.utcnow().timestamp())
 
         return {
             'message_number': msg.get('id', ''),

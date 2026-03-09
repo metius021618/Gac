@@ -212,9 +212,8 @@ class CodeService
     }
 
     /**
-     * Formatear received_at a hora de Perú (America/Lima, GMT-5).
-     * - Si tiene "Z" o "+": está en UTC → convertir a Lima.
-     * - Si no tiene Z (datos antiguos): se guardó en hora del servidor del cron (p. ej. España UTC+1) → interpretar así y convertir a Lima.
+     * Formatear received_at para mostrar. El cron guarda ya en hora Perú (cabecera Date del correo).
+     * Si tiene "Z" (datos antiguos en UTC), convertir a Lima; si no, es ya hora Perú.
      */
     private function formatReceivedAtForPeru(string $receivedAt): string
     {
@@ -223,16 +222,13 @@ class CodeService
             return '';
         }
         try {
-            $hasUtcMarker = str_contains($receivedAt, 'Z') || str_contains($receivedAt, '+') || preg_match('/-\d{2}:?\d{2}$/', $receivedAt);
-            if ($hasUtcMarker) {
+            if (str_contains($receivedAt, 'Z')) {
                 $parseStr = preg_replace('/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})Z$/', '$1T$2Z', $receivedAt);
                 $dt = new \DateTime($parseStr);
+                $dt->setTimezone(new \DateTimeZone('America/Lima'));
             } else {
-                // Datos antiguos: guardados en hora del servidor del cron (p. ej. Europe/Madrid)
-                $storedTz = $_ENV['STORED_DATETIME_TZ'] ?? 'Europe/Madrid';
-                $dt = new \DateTime($receivedAt, new \DateTimeZone($storedTz));
+                $dt = new \DateTime($receivedAt, new \DateTimeZone('America/Lima'));
             }
-            $dt->setTimezone(new \DateTimeZone('America/Lima'));
             if (class_exists(\IntlDateFormatter::class)) {
                 $fmt = new \IntlDateFormatter(
                     'es_PE',
