@@ -252,12 +252,41 @@ VALUES (
 
 ## 🧪 Testing
 
-### Probar Lectura Manual
+### Ver logs del lector IMAP (@pocoyoni) y Gmail
+
+Los lectores escriben en **archivo** y en **consola**:
+
+| Dónde | Ruta / Cómo |
+|-------|----------------|
+| **Archivo (todos los cron)** | `logs/cron.log` (dentro del proyecto, ej. `SISTEMA_GAC/logs/cron.log`) |
+| **Lector continuo (sync_loop)** | `logs/sync_loop.log` (salida del bucle que lanza los lectores) |
+| **En vivo (ejecución manual)** | Ejecutar el script y ver la salida en la terminal |
+
+**Ver logs en el servidor:**
+
+```bash
+cd /ruta/a/SISTEMA_GAC   # o app.pocoyoni.com
+
+# Ver últimas líneas del cron (IMAP + Gmail)
+tail -f logs/cron.log
+
+# Ver últimas 200 líneas
+tail -n 200 logs/cron.log
+
+# Si usas sync_loop (lector continuo)
+tail -f logs/sync_loop.log
+```
+
+**Ejecutar el lector IMAP a mano** (para ver en pantalla si llegan correos y por qué no se guardan):
 
 ```bash
 cd SISTEMA_GAC
 python3 cron/email_reader.py
 ```
+
+En el log verás: cuántos emails se leyeron, asunto y destinatario de cada uno, cuántos pasaron el filtro de asuntos, y si se guardaron o se saltaron (ya existían, plataforma deshabilitada, etc.). Si el correo no aparece en "Recibido", no está llegando al buzón IMAP o el cron no lo está leyendo (ej. solo últimos 7 días). Si aparece en "Recibido" pero "Emails filtrados: 0", el asunto no está en la tabla **Asuntos de correo** (Admin → Asuntos de correo).
+
+---
 
 ### Probar Componentes Individuales
 

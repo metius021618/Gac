@@ -139,13 +139,19 @@ def main():
                 # Leer emails
                 emails = imap_service.read_account(account)
                 logger.info(f"  - Emails leídos: {len(emails)}")
+                for i, e in enumerate(emails[:20]):
+                    logger.info(f"  - Recibido[{i}]: asunto=%r → destinatario=%s", (e.get('subject') or '')[:70], e.get('to_primary') or (e.get('to') or [None])[0] or '')
+                if len(emails) > 20:
+                    logger.info(f"  - ... y {len(emails) - 20} más")
                 if not emails:
                     EmailAccountRepository.update_sync_status(account_id, 'success')
                 else:
                     # Filtrar por asunto o por DE (plataforma: Disney+, Netflix, etc.)
                     filtered_emails = filter_service.filter_by_subject(emails)
-                    logger.info(f"  - Emails filtrados: {len(filtered_emails)}")
-                    
+                    logger.info(f"  - Emails filtrados (asuntos en BD): {len(filtered_emails)}")
+                    if not filtered_emails and emails:
+                        subs = list(set((e.get('subject') or '')[:60] for e in emails))
+                        logger.info(f"  - Ningún asunto coincide con email_subjects. Asuntos en buzón: %s", subs[:10])
                     if not filtered_emails:
                         EmailAccountRepository.update_sync_status(account_id, 'success')
                     else:
@@ -154,12 +160,14 @@ def main():
                         for email_data in filtered_emails:
                             platform = email_data.get('matched_platform')
                             if not platform:
+                                logger.info(f"  - Saltado (sin plataforma): asunto=%s", (email_data.get('subject') or '')[:50])
                                 continue
                             platform_obj = PlatformRepository.find_by_name(platform)
                             if not platform_obj:
-                                logger.warning(f"  - Plataforma '{platform}' no encontrada, saltando")
+                                logger.warning(f"  - Plataforma '{platform}' no encontrada, saltando asunto=%s", (email_data.get('subject') or '')[:50])
                                 continue
                             if not platform_obj['enabled']:
+                                logger.info(f"  - Saltado (plataforma %s deshabilitada): asunto=%s", platform, (email_data.get('subject') or '')[:50])
                                 continue
                             email_from = email_data.get('from', '') or ''
                             recipient_email = (email_data.get('to_primary', '') or (email_data.get('to', [None])[0] or '')).strip().lower()
@@ -174,6 +182,8 @@ def main():
                                     account_id, email_from, recipient_email, subject, received_at, email_body
                                 ):
                                     logger.info(f"  - ✓ Cuerpo actualizado para email ya registrado ({recipient_email})")
+                                else:
+                                    logger.info(f"  - Ya existía en BD (no se guarda de nuevo): asunto=%s → %s", subject[:50], recipient_email)
                                 continue
                             save_data = {
                                 'email_account_id': account_id,
