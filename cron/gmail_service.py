@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 try:
     from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
+    from google.auth.exceptions import RefreshError
     from googleapiclient.discovery import build
     try:
         from google_auth_httplib2 import AuthorizedHttp
@@ -352,6 +353,7 @@ class GmailService:
         refresh_token = (account.get('oauth_refresh_token') or '').strip()
         if not refresh_token or not self.client_id or not self.client_secret:
             return None
+        account_email = (account.get('email') or '').strip() or '(sin email)'
         creds = Credentials(
             token=None,
             refresh_token=refresh_token,
@@ -360,7 +362,14 @@ class GmailService:
             client_secret=self.client_secret,
             scopes=['https://www.googleapis.com/auth/gmail.modify']
         )
-        creds.refresh(Request())
+        try:
+            creds.refresh(Request())
+        except RefreshError as e:
+            logger.error(
+                "Token Gmail expirado o revocado para %s. Reautoriza desde Admin → Configuración → Configurar/Cambiar cuenta Gmail matriz. Error: %s",
+                account_email, e
+            )
+            return None
         if _HAS_HTTPLIB2:
             base_http = httplib2.Http()
             fixed_http = _fix_alt_param_http(base_http)

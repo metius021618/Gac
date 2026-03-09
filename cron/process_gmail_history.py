@@ -62,7 +62,10 @@ def main():
     gmail = GmailService()
     service = gmail._build_service(gaccount)
     if not service:
-        logger.error("No se pudo construir cliente Gmail.")
+        logger.error(
+            "No se pudo construir cliente Gmail (revisa credenciales o token expirado). "
+            "Reautoriza desde Admin → Configuración → Configurar/Cambiar cuenta Gmail matriz."
+        )
         return 1
 
     # Gmail API puede tardar unos segundos en propagar el mensaje a history; si viene vacío, reintentar una vez
