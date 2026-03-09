@@ -253,7 +253,16 @@ try {
             </div>
             <div class="info-row">
                 <span class="info-label">Fecha:</span>
-                <span class="info-value"><?= date('d/m/Y H:i', strtotime($code['received_at'])) ?></span>
+                <span class="info-value"><?php
+                    $receivedAt = $code['received_at'] ?? '';
+                    if ($receivedAt) {
+                        $dt = new DateTime($receivedAt . ' UTC', new DateTimeZone('UTC'));
+                        $dt->setTimezone(new DateTimeZone(date_default_timezone_get() ?: 'UTC'));
+                        echo $dt->format('d/m/Y H:i');
+                    } else {
+                        echo '-';
+                    }
+                ?></span>
             </div>
             <div class="info-row">
                 <span class="info-label">Plataforma:</span>

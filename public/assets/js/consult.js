@@ -323,7 +323,10 @@
         if (modalSubject) modalSubject.textContent = data.email_subject || 'Sin asunto';
         if (modalFrom) modalFrom.textContent = data.email_from || 'Desconocido';
         if (modalDate) {
-            const date = new Date(data.received_at);
+            // received_at se guarda en UTC; interpretar como UTC para que toLocaleString muestre hora local del usuario
+            const raw = (data.received_at || '').trim();
+            const utcStr = raw.includes('Z') || raw.includes('+') ? raw : raw ? raw.replace(' ', 'T') + 'Z' : '';
+            const date = utcStr ? new Date(utcStr) : new Date();
             modalDate.textContent = date.toLocaleString('es-ES', {
                 year: 'numeric',
                 month: 'long',
