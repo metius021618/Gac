@@ -234,7 +234,7 @@ class GmailService:
             token_uri='https://oauth2.googleapis.com/token',
             client_id=self.client_id,
             client_secret=self.client_secret,
-            scopes=['https://www.googleapis.com/auth/gmail.modify']
+            scopes=['https://www.googleapis.com/auth/gmail.readonly']
         )
         creds.refresh(Request())
 
@@ -324,7 +324,7 @@ class GmailService:
             token_uri='https://oauth2.googleapis.com/token',
             client_id=self.client_id,
             client_secret=self.client_secret,
-            scopes=['https://www.googleapis.com/auth/gmail.modify']
+            scopes=['https://www.googleapis.com/auth/gmail.readonly']
         )
         creds.refresh(Request())
         if _HAS_HTTPLIB2:
@@ -360,7 +360,7 @@ class GmailService:
             token_uri='https://oauth2.googleapis.com/token',
             client_id=self.client_id,
             client_secret=self.client_secret,
-            scopes=['https://www.googleapis.com/auth/gmail.modify']
+            scopes=['https://www.googleapis.com/auth/gmail.readonly']
         )
         try:
             creds.refresh(Request())
