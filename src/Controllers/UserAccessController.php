@@ -48,12 +48,12 @@ class UserAccessController
     {
         $id = (int) $request->get('id', 0);
         if ($id <= 0) {
-            redirect('/admin/user-access');
+            redirect('/admin/user-access/list');
             return;
         }
         $access = $this->userAccessRepository->getAccessById($id);
         if (!$access) {
-            redirect('/admin/user-access');
+            redirect('/admin/user-access/list');
             return;
         }
         $platforms = $this->platformRepository->findAllEnabled();
@@ -311,8 +311,16 @@ class UserAccessController
             return;
         }
         
-        // La vista list no existe; redirigir a la vista principal de registro de acceso
-        redirect('/admin/user-access');
+        $this->renderView('admin/user_access/list', [
+            'title' => 'Lista de Accesos',
+            'accesses' => $result['data'],
+            'total_records' => $result['total'],
+            'current_page' => $result['page'],
+            'per_page' => $result['per_page'],
+            'total_pages' => $result['total_pages'],
+            'search_query' => $search,
+            'valid_per_page' => [15, 30, 60, 100, 0]
+        ]);
     }
 
     /**

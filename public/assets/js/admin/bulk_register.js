@@ -73,9 +73,10 @@
                 
                 // Popup específico si hay correos que no se registraron por duplicado (ya existen con esa plataforma)
                 if (result.duplicate_emails && result.duplicate_emails.length > 0) {
-                    const platformName = result.platform_name || 'esta plataforma';
-                    const duplicateMsg = 'Los siguientes correos no se registraron porque ya tienen acceso a ' + platformName + ' (no se permiten duplicados: mismo correo y misma plataforma).\n\n' +
-                        result.duplicate_emails.join('\n');
+                    const duplicateLines = result.duplicate_emails.map(function(email) {
+                        return '- ' + email;
+                    }).join('\n');
+                    const duplicateMsg = 'No se registró:\n' + duplicateLines + '\n\nCorregir las observaciones para registrar este bloque.';
                     await window.GAC.error(duplicateMsg, 'Correos no registrados');
                 }
                 

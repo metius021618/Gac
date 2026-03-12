@@ -61,7 +61,8 @@
             if (data.success) {
                 await window.GAC.success(data.message || 'Guardado correctamente', 'Éxito');
                 if (formAction.indexOf('actualizar') !== -1) {
-                    window.location.href = '/admin/user-access';
+                    // Tras actualizar un usuario, volver a la vista "Lista de cuentas"
+                    window.location.href = '/admin/email-accounts';
                 } else {
                     form.reset();
                 }
