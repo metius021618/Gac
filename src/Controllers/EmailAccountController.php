@@ -948,25 +948,28 @@ class EmailAccountController
             }
         }
 
-        // Crear accesos de usuario masivamente
+        // Crear accesos de usuario masivamente (no sobrescribe: correo + misma plataforma = error, como en registro simple)
         $userAccessRepository = new \Gac\Repositories\UserAccessRepository();
         $updatedBy = $_SESSION['username'] ?? null;
         $result = $userAccessRepository->bulkCreate($validEmails, $accessCode, $platformId, $updatedBy);
 
+        $platformName = trim($platform['display_name'] ?? $platform['name'] ?? 'Plataforma');
         if (function_exists('log_user_activity')) {
-            $platformName = trim($platform['display_name'] ?? $platform['name'] ?? 'Plataforma');
+            $duplicatesLower = array_map('strtolower', array_map('trim', $result['duplicate_emails'] ?? []));
             foreach ($validEmails as $e) {
-                log_user_activity('agregar_correo', sprintf('Registró el correo %s | %s | %s', trim($e), $accessCode, $platformName));
+                if (!in_array(strtolower(trim($e)), $duplicatesLower, true)) {
+                    log_user_activity('agregar_correo', sprintf('Registró el correo %s | %s | %s', trim($e), $accessCode, $platformName));
+                }
             }
         }
 
         $message = sprintf(
-            'Se procesaron %d correo(s) correctamente. %d nuevo(s), %d actualizado(s).',
-            $result['success'] + $result['duplicates'],
-            $result['success'],
-            $result['duplicates']
+            'Se registraron %d correo(s) correctamente.',
+            $result['success']
         );
-
+        if (!empty($result['duplicate_emails'])) {
+            $message .= ' ' . count($result['duplicate_emails']) . ' correo(s) no se registraron porque ya existen con ' . $platformName . '.';
+        }
         if (!empty($invalidEmails)) {
             $message .= ' ' . count($invalidEmails) . ' correo(s) rechazados (formato inválido o dominio no permitido).';
         }
@@ -977,11 +980,13 @@ class EmailAccountController
             'stats' => [
                 'total' => count($validEmails),
                 'created' => $result['success'],
-                'updated' => $result['duplicates'],
+                'duplicate_count' => count($result['duplicate_emails'] ?? []),
                 'invalid' => count($invalidEmails),
                 'accounts_created' => $createdAccounts
             ],
-            'invalid_emails' => $invalidEmails
+            'invalid_emails' => $invalidEmails,
+            'duplicate_emails' => $result['duplicate_emails'] ?? [],
+            'platform_name' => $platformName
         ], 200);
     }
 

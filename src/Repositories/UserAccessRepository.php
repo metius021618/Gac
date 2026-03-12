@@ -511,54 +511,79 @@ class UserAccessRepository
     }
 
     /**
-     * Crear múltiples accesos de usuario masivamente
+     * Crear múltiples accesos de usuario masivamente.
+     * No sobrescribe: si el correo ya existe con la misma plataforma, se omite (restricción igual que registro simple).
      * @param string|null $updatedBy Usuario admin que realiza la acción
-     * @return array ['success' => int, 'duplicates' => int, 'errors' => array]
+     * @return array ['success' => int, 'duplicate_emails' => string[], 'errors' => array]
      */
     public function bulkCreate(array $emails, string $password, int $platformId, ?string $updatedBy = null): array
     {
         $success = 0;
-        $duplicates = 0;
+        $duplicateEmails = [];
         $errors = [];
+        
+        $emails = array_values(array_unique(array_filter(array_map(function ($e) {
+            return trim((string) $e);
+        }, $emails))));
+        
+        if (empty($emails)) {
+            return ['success' => 0, 'duplicate_emails' => [], 'errors' => []];
+        }
         
         try {
             $db = Database::getConnection();
-            $db->beginTransaction();
             
+            // Obtener correos que ya tienen acceso con esta plataforma (no sobrescribir)
+            $placeholders = implode(',', array_fill(0, count($emails), 'LOWER(TRIM(?))'));
+            $stmtCheck = $db->prepare("
+                SELECT LOWER(TRIM(email)) AS email
+                FROM user_access
+                WHERE platform_id = ? AND LOWER(TRIM(email)) IN ($placeholders)
+            ");
+            $paramsCheck = array_merge([$platformId], $emails);
+            $stmtCheck->execute($paramsCheck);
+            $existing = [];
+            while ($row = $stmtCheck->fetch(PDO::FETCH_ASSOC)) {
+                $existing[$row['email']] = true;
+            }
+            
+            $toInsert = [];
+            foreach ($emails as $email) {
+                if ($email === '') {
+                    continue;
+                }
+                $key = strtolower($email);
+                if (isset($existing[$key])) {
+                    $duplicateEmails[] = $email;
+                } else {
+                    $toInsert[] = $email;
+                }
+            }
+            
+            if (empty($toInsert)) {
+                return [
+                    'success' => 0,
+                    'duplicate_emails' => $duplicateEmails,
+                    'errors' => $errors
+                ];
+            }
+            
+            $db->beginTransaction();
             $sql = "
                 INSERT INTO user_access (email, password, platform_id, enabled, updated_by_username)
                 VALUES (:email, :password, :platform_id, 1, :updated_by)
-                ON DUPLICATE KEY UPDATE
-                    password = :password_update,
-                    enabled = 1,
-                    updated_at = NOW(),
-                    updated_by_username = :updated_by2
             ";
-            
             $stmt = $db->prepare($sql);
             $by = $updatedBy ?? '';
             
-            foreach ($emails as $email) {
-                $email = trim($email);
-                if (empty($email)) {
-                    continue;
-                }
-                
+            foreach ($toInsert as $email) {
                 try {
                     $stmt->bindValue(':email', $email, PDO::PARAM_STR);
                     $stmt->bindValue(':password', $password, PDO::PARAM_STR);
                     $stmt->bindValue(':platform_id', $platformId, PDO::PARAM_INT);
                     $stmt->bindValue(':updated_by', $by, PDO::PARAM_STR);
-                    $stmt->bindValue(':password_update', $password, PDO::PARAM_STR);
-                    $stmt->bindValue(':updated_by2', $by, PDO::PARAM_STR);
-                    
                     if ($stmt->execute()) {
-                        // Verificar si fue insert o update
-                        if ($stmt->rowCount() > 0) {
-                            $success++;
-                        } else {
-                            $duplicates++;
-                        }
+                        $success++;
                     }
                 } catch (PDOException $e) {
                     $errors[] = "Error con {$email}: " . $e->getMessage();
@@ -566,15 +591,12 @@ class UserAccessRepository
             }
             
             $db->commit();
-            foreach ($emails as $e) {
-                $e = trim(strtolower((string) $e));
-                if ($e !== '') {
-                    $this->touchEmailAccountUpdatedAt($e);
-                }
+            foreach ($toInsert as $e) {
+                $this->touchEmailAccountUpdatedAt($e);
             }
             return [
                 'success' => $success,
-                'duplicates' => $duplicates,
+                'duplicate_emails' => $duplicateEmails,
                 'errors' => $errors
             ];
         } catch (PDOException $e) {
@@ -584,7 +606,7 @@ class UserAccessRepository
             error_log("Error al crear accesos masivamente: " . $e->getMessage());
             return [
                 'success' => 0,
-                'duplicates' => 0,
+                'duplicate_emails' => $duplicateEmails,
                 'errors' => ['Error general: ' . $e->getMessage()]
             ];
         }

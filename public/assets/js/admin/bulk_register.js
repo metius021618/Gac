@@ -66,10 +66,18 @@
                 
                 // Agregar detalles si hay correos inválidos
                 if (result.invalid_emails && result.invalid_emails.length > 0) {
-                    message += '\n\nCorreos rechazados:\n' + result.invalid_emails.join('\n');
+                    message += '\n\nCorreos rechazados (formato o dominio no permitido):\n' + result.invalid_emails.join('\n');
                 }
                 
-                await window.GAC.success(message, 'Registro Masivo Exitoso');
+                await window.GAC.success(message, 'Registro Masivo');
+                
+                // Popup específico si hay correos que no se registraron por duplicado (ya existen con esa plataforma)
+                if (result.duplicate_emails && result.duplicate_emails.length > 0) {
+                    const platformName = result.platform_name || 'esta plataforma';
+                    const duplicateMsg = 'Los siguientes correos no se registraron porque ya tienen acceso a ' + platformName + ' (no se permiten duplicados: mismo correo y misma plataforma).\n\n' +
+                        result.duplicate_emails.join('\n');
+                    await window.GAC.error(duplicateMsg, 'Correos no registrados');
+                }
                 
                 // Limpiar formulario
                 bulkRegisterForm.reset();
