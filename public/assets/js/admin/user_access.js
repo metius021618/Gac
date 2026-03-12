@@ -61,7 +61,7 @@
             if (data.success) {
                 await window.GAC.success(data.message || 'Guardado correctamente', 'Éxito');
                 if (formAction.indexOf('actualizar') !== -1) {
-                    window.location.href = '/admin/user-access/list';
+                    window.location.href = '/admin/user-access';
                 } else {
                     form.reset();
                 }
