@@ -72,8 +72,11 @@ use Gac\Core\Application;
 try {
     $app = new Application();
     $app->run();
-} catch (\Exception $e) {
-    error_log("Error fatal en Application: " . $e->getMessage());
+} catch (\Throwable $e) {
+    error_log(
+        'Error fatal en Application: ' . $e->getMessage()
+        . ' en ' . $e->getFile() . ':' . $e->getLine()
+    );
     http_response_code(500);
     header('Content-Type: application/json');
     echo json_encode([
