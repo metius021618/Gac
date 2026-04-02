@@ -8,6 +8,9 @@ DirectoryIndex index.php index.html
     RewriteEngine On
     RewriteBase /
 
+    # Página por defecto antigua del hosting / marcadores: ir a la raíz de GAC
+    RewriteRule ^inicio\.php$ / [R=301,L,NC]
+
     # Excluir archivos y directorios que existen físicamente
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
