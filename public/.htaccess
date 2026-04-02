@@ -1,6 +1,9 @@
 # GAC - Apache Configuration
 # Rewrite Rules para URLs amigables
 
+# Raíz del sitio: usar index.php (evita que el hosting intente inicio.php u otros antes que GAC)
+DirectoryIndex index.php index.html
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
