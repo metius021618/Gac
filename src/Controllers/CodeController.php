@@ -227,6 +227,13 @@ class CodeController
             json_response(['success' => false, 'message' => 'Método no permitido'], 405);
             return;
         }
+        if (!$this->isPhpExecAvailable()) {
+            json_response([
+                'success' => false,
+                'message' => 'Este hosting no permite lanzar procesos desde PHP (función exec deshabilitada). Inicia el lector por SSH o cron: cd /ruta/al/proyecto && bash cron/ensure_reader_loop.sh — o añade ensure_reader_loop.sh al crontab cada 2 minutos.',
+            ]);
+            return;
+        }
         @set_time_limit(15);
         $pidFile = base_path('logs' . DIRECTORY_SEPARATOR . 'reader_loop.pid');
         $logDir = base_path('logs');
@@ -257,6 +264,18 @@ class CodeController
             @exec(sprintf('(cd %s && nohup python3 %s >> %s 2>&1 &)', escapeshellarg($root), escapeshellarg($script), escapeshellarg($logFile)));
         }
         json_response(['success' => true, 'message' => 'Lector continuo iniciado. Ejecutará los lectores cada pocos segundos.']);
+    }
+
+    /**
+     * Comprobar si PHP puede usar exec() (mucho hosting compartido lo deshabilita, p. ej. SiteGround).
+     */
+    private function isPhpExecAvailable(): bool
+    {
+        if (!function_exists('exec')) {
+            return false;
+        }
+        $disabled = array_filter(array_map('trim', explode(',', (string) ini_get('disable_functions'))));
+        return !in_array('exec', $disabled, true);
     }
 
     /**

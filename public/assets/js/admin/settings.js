@@ -410,7 +410,7 @@
             const res = await fetchWithTimeout('/admin/reader-loop/start', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-            }, 10000);
+            }, 30000);
             const data = await res.json();
             if (msgEl) msgEl.textContent = data.message || (data.success ? 'Solicitud enviada.' : (data.message || ''));
             await updateReaderLoopStatus();
