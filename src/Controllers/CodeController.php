@@ -200,6 +200,10 @@ class CodeController
      */
     public function readerLoopStatus(Request $request): void
     {
+        // Liberar candado de sesión: si otro request (p. ej. startReaderLoop) sigue abierto, sin esto el sitio "cuelga" en nuevas pestañas.
+        if (function_exists('session_status') && session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
         $pidFile = base_path('logs' . DIRECTORY_SEPARATOR . 'reader_loop.pid');
         $running = false;
         if (file_exists($pidFile)) {
@@ -226,6 +230,9 @@ class CodeController
         if ($request->method() !== 'POST') {
             json_response(['success' => false, 'message' => 'Método no permitido'], 405);
             return;
+        }
+        if (function_exists('session_status') && session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
         }
         if (!$this->isPhpExecAvailable()) {
             json_response([
