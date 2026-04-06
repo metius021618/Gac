@@ -5,7 +5,7 @@ Recibe el POST de Google Cloud Pub/Sub cuando Gmail detecta cambios en la bandej
 Responsabilidad única: validar payload, extraer historyId y disparar el worker de procesamiento.
 NO parsea correos ni escribe en BD.
 
-URL del webhook (configurar en la suscripción Push de Pub/Sub): https://app.pocoyoni.com/gmail/push
+URL del webhook (configurar en la suscripción Push de Pub/Sub): https://new.pocoyoni.com/gmail/push (o la que definas en GMAIL_WEBHOOK_URL)
 
 Uso como servidor HTTP:
   python cron/gmail_webhook_receiver.py
@@ -211,9 +211,9 @@ def run_standalone_server():
 if __name__ == '__main__':
     try:
         from cron.config import GMAIL_CONFIG
-        webhook_url = GMAIL_CONFIG.get('webhook_url', 'https://app.pocoyoni.com/gmail/push')
+        webhook_url = GMAIL_CONFIG.get('webhook_url', 'https://new.pocoyoni.com/gmail/push')
     except Exception:
-        webhook_url = 'https://app.pocoyoni.com/gmail/push'
+        webhook_url = 'https://new.pocoyoni.com/gmail/push'
     logger.info("Webhook URL (configurar en Pub/Sub): %s", webhook_url)
     app = create_app()
     if app is not None:

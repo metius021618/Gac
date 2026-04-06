@@ -1,7 +1,7 @@
 <?php
 /**
  * Página de diagnóstico del webhook Gmail (solo para pruebas).
- * Abre en el navegador: https://app.pocoyoni.com/gmail/push/debug.php
+ * Abre en el navegador: https://TU_DOMINIO/gmail/push/debug.php (ej. new.pocoyoni.com)
  * Eliminar o restringir en producción.
  */
 header('Content-Type: text/html; charset=utf-8');

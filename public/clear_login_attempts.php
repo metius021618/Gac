@@ -1,7 +1,7 @@
 <?php
 /**
  * Script para limpiar intentos de login bloqueados
- * Ejecutar desde el navegador: https://app.pocoyoni.com/clear_login_attempts.php
+ * Ejecutar desde el navegador: https://TU_DOMINIO/clear_login_attempts.php (ej. new.pocoyoni.com)
  */
 
 session_start();

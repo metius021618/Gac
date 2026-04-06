@@ -35,7 +35,7 @@ GMAIL_CONFIG = {
     # Topic Pub/Sub para Gmail Watch (event-driven). Formato: projects/PROJECT_ID/topics/TOPIC_NAME
     'pubsub_topic': os.getenv('GMAIL_PUBSUB_TOPIC', ''),
     # URL pública del webhook (configurar esta misma URL en la suscripción Push de Pub/Sub)
-    'webhook_url': os.getenv('GMAIL_WEBHOOK_URL', 'https://app.pocoyoni.com/gmail/push'),
+    'webhook_url': os.getenv('GMAIL_WEBHOOK_URL', 'https://new.pocoyoni.com/gmail/push'),
 }
 
 # Configuración Outlook/Microsoft Graph API

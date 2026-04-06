@@ -2,7 +2,7 @@
 /**
  * GAC - Endpoint webhook para Gmail Pub/Sub push
  * Recibe el POST de Google Cloud Pub/Sub, extrae historyId y ejecuta el worker Python en segundo plano.
- * URL: https://app.pocoyoni.com/gmail/push (o /gmail/push/)
+ * URL: https://new.pocoyoni.com/gmail/push (o /gmail/push/) — debe coincidir con GMAIL_WEBHOOK_URL y Pub/Sub
  *
  * Si el servidor usa "public" como raíz web, usa public/gmail/push/index.php (mismo contenido).
  */
