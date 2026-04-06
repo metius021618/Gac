@@ -26,6 +26,28 @@ class UserAccessController
     }
 
     /**
+     * Servidor/puerto/cifrado para nuevas filas: copia de la cuenta maestra, o .env (IMAP_*), o SiteGround por defecto.
+     *
+     * @param  array<string, mixed>  $masterConfig
+     * @return array{imap_server: string, imap_port: int, imap_encryption: string}
+     */
+    private function imapConnectionFromMaster(array $masterConfig): array
+    {
+        $defaultHost = (defined('IMAP_HOST') && IMAP_HOST !== '') ? IMAP_HOST : 'gtxm1328.siteground.biz';
+        $server = isset($masterConfig['imap_server']) && (string) $masterConfig['imap_server'] !== ''
+            ? (string) $masterConfig['imap_server']
+            : $defaultHost;
+        $port = defined('IMAP_PORT') ? (int) IMAP_PORT : 993;
+        $enc = defined('IMAP_ENCRYPTION') ? IMAP_ENCRYPTION : 'ssl';
+
+        return [
+            'imap_server' => $server,
+            'imap_port' => (int) ($masterConfig['imap_port'] ?? $port),
+            'imap_encryption' => (string) ($masterConfig['imap_encryption'] ?? $enc),
+        ];
+    }
+
+    /**
      * Vista "Asignar usuario": solo registrar. Validación: no duplicar (correo + plataforma).
      */
     public function index(Request $request): void
@@ -141,13 +163,14 @@ class UserAccessController
             if (!$existing) {
                 $masterAccount = $this->emailAccountRepository->findByEmail('streaming@pocoyoni.com');
                 $masterConfig = $masterAccount && !empty($masterAccount['provider_config']) ? json_decode($masterAccount['provider_config'], true) : [];
+                $imapConn = $this->imapConnectionFromMaster(is_array($masterConfig) ? $masterConfig : []);
                 $accountData = [
                     'email' => $email,
                     'type' => 'imap',
                     'provider_config' => [
-                        'imap_server' => $masterConfig['imap_server'] ?? 'premium211.web-hosting.com',
-                        'imap_port' => $masterConfig['imap_port'] ?? 993,
-                        'imap_encryption' => $masterConfig['imap_encryption'] ?? 'ssl',
+                        'imap_server' => $imapConn['imap_server'],
+                        'imap_port' => $imapConn['imap_port'],
+                        'imap_encryption' => $imapConn['imap_encryption'],
                         'imap_user' => $email,
                         'imap_password' => $password ?: '',
                         'is_master' => false,
@@ -184,13 +207,14 @@ class UserAccessController
         if (!$emailAccount) {
             $masterAccount = $this->emailAccountRepository->findByEmail('streaming@pocoyoni.com');
             $masterConfig = $masterAccount && !empty($masterAccount['provider_config']) ? json_decode($masterAccount['provider_config'], true) : [];
+            $imapConn = $this->imapConnectionFromMaster(is_array($masterConfig) ? $masterConfig : []);
             $accountData = [
                 'email' => $email,
                 'type' => 'imap',
                 'provider_config' => [
-                    'imap_server' => $masterConfig['imap_server'] ?? 'premium211.web-hosting.com',
-                    'imap_port' => $masterConfig['imap_port'] ?? 993,
-                    'imap_encryption' => $masterConfig['imap_encryption'] ?? 'ssl',
+                    'imap_server' => $imapConn['imap_server'],
+                    'imap_port' => $imapConn['imap_port'],
+                    'imap_encryption' => $imapConn['imap_encryption'],
                     'imap_user' => $email,
                     'imap_password' => $password,
                     'is_master' => false,
