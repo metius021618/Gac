@@ -46,6 +46,10 @@ if ($rawInput !== false && $rawInput !== '') {
 // Raíz del proyecto: desde public_html/gmail/push/ son 3 niveles arriba (push->gmail->public_html->raíz)
 $basePath = dirname(__DIR__, 3);
 $python3 = 'python3';
+$venvPython = $basePath . DIRECTORY_SEPARATOR . '.venv' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'python';
+if (is_file($venvPython)) {
+    $python3 = $venvPython;
+}
 $workerScript = $basePath . DIRECTORY_SEPARATOR . 'cron' . DIRECTORY_SEPARATOR . 'process_gmail_history.py';
 
 if ($historyId !== null && $historyId !== '' && is_file($workerScript)) {
