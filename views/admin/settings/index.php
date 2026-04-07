@@ -104,7 +104,7 @@ $content = ob_start();
                         Lector continuo de correos
                     </h2>
                     <p class="settings-section-description">
-                        Ejecuta los lectores (Gmail, Outlook, IMAP) cada pocos segundos en segundo plano, sin depender del cron del servidor. El intervalo se configura en <code>.env</code> con <code>CRON_READER_LOOP_SECONDS</code> (por defecto 10 segundos).
+                        El estado refleja si corre <code>sync_loop.py</code> (Gmail, Outlook e IMAP) o el bucle solo IMAP (<code>imap_loop.py</code>, p. ej. vía <code>cron/ensure_imap_loop.sh</code>). El intervalo del sync se configura en <code>.env</code> con <code>CRON_READER_LOOP_SECONDS</code> (por defecto 10 segundos).
                     </p>
                 </div>
                 <div class="form-card gmail-matrix-card">

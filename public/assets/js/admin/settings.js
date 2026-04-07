@@ -383,7 +383,15 @@
             const res = await fetchWithTimeout('/admin/reader-loop/status', { headers: { 'X-Requested-With': 'XMLHttpRequest' } }, 5000);
             const data = await res.json();
             if (data.running) {
-                statusEl.textContent = 'Corriendo';
+                let label = 'Activo';
+                if (data.mode === 'imap_loop') {
+                    label = 'Activo (bucle IMAP)';
+                } else if (data.mode === 'sync_loop') {
+                    label = 'Activo (Gmail + Outlook + IMAP)';
+                } else if (data.mode === 'both') {
+                    label = 'Activo (sync_loop e imap_loop)';
+                }
+                statusEl.textContent = label;
                 statusEl.style.color = '#059669';
                 if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Ya está en ejecución'; }
             } else {

@@ -196,7 +196,7 @@ class CodeController
     }
 
     /**
-     * Estado del lector continuo (sync_loop.py): si está corriendo o no.
+     * Estado del lector continuo: sync_loop.py (reader_loop.pid) y/o imap_loop.py (imap_loop.pid).
      */
     public function readerLoopStatus(Request $request): void
     {
@@ -204,21 +204,18 @@ class CodeController
         if (function_exists('session_status') && session_status() === PHP_SESSION_ACTIVE) {
             session_write_close();
         }
-        $pidFile = base_path('logs' . DIRECTORY_SEPARATOR . 'reader_loop.pid');
-        $running = false;
-        if (file_exists($pidFile)) {
-            $pid = (int) trim((string) @file_get_contents($pidFile));
-            if ($pid > 0) {
-                if (DIRECTORY_SEPARATOR === '\\') {
-                    @exec('tasklist /FI "PID eq ' . $pid . '" 2>NUL', $out);
-                    $running = !empty($out) && count($out) > 1 && stripos(implode(' ', $out), (string) $pid) !== false;
-                } else {
-                    @exec('kill -0 ' . $pid . ' 2>/dev/null', $_, $code);
-                    $running = ($code === 0);
-                }
-            }
+        $sync = $this->isPidFileProcessRunning('logs' . DIRECTORY_SEPARATOR . 'reader_loop.pid');
+        $imap = $this->isPidFileProcessRunning('logs' . DIRECTORY_SEPARATOR . 'imap_loop.pid');
+        $running = $sync || $imap;
+        $mode = 'none';
+        if ($sync && $imap) {
+            $mode = 'both';
+        } elseif ($sync) {
+            $mode = 'sync_loop';
+        } elseif ($imap) {
+            $mode = 'imap_loop';
         }
-        json_response(['running' => $running]);
+        json_response(['running' => $running, 'mode' => $mode]);
     }
 
     /**
@@ -242,7 +239,6 @@ class CodeController
             return;
         }
         @set_time_limit(15);
-        $pidFile = base_path('logs' . DIRECTORY_SEPARATOR . 'reader_loop.pid');
         $logDir = base_path('logs');
         if (!is_dir($logDir)) {
             @mkdir($logDir, 0755, true);
@@ -254,15 +250,17 @@ class CodeController
             json_response(['success' => false, 'message' => 'No se encontró sync_loop.py']);
             return;
         }
-        if (file_exists($pidFile)) {
-            $pid = (int) trim((string) @file_get_contents($pidFile));
-            if ($pid > 0 && DIRECTORY_SEPARATOR !== '\\') {
-                @exec('kill -0 ' . $pid . ' 2>/dev/null', $_, $code);
-                if ($code === 0) {
-                    json_response(['success' => false, 'message' => 'El lector continuo ya está en ejecución.', 'running' => true]);
-                    return;
-                }
-            }
+        if ($this->isPidFileProcessRunning('logs' . DIRECTORY_SEPARATOR . 'imap_loop.pid')) {
+            json_response([
+                'success' => false,
+                'message' => 'El bucle IMAP (imap_loop.py) ya está en ejecución. Detén ese proceso antes de iniciar sync_loop, o usa solo uno.',
+                'running' => true,
+            ]);
+            return;
+        }
+        if ($this->isPidFileProcessRunning('logs' . DIRECTORY_SEPARATOR . 'reader_loop.pid')) {
+            json_response(['success' => false, 'message' => 'El lector continuo ya está en ejecución.', 'running' => true]);
+            return;
         }
         if (DIRECTORY_SEPARATOR === '\\') {
             @exec('start /B cd /d ' . escapeshellarg($root) . ' && python ' . $script . ' >> ' . escapeshellarg($logFile) . ' 2>&1');
@@ -271,6 +269,29 @@ class CodeController
             @exec(sprintf('(cd %s && nohup python3 %s >> %s 2>&1 &)', escapeshellarg($root), escapeshellarg($script), escapeshellarg($logFile)));
         }
         json_response(['success' => true, 'message' => 'Lector continuo iniciado. Ejecutará los lectores cada pocos segundos.']);
+    }
+
+    /**
+     * Comprueba si el PID guardado en logs/*.pid sigue vivo (Unix: kill -0; Windows: tasklist).
+     */
+    private function isPidFileProcessRunning(string $pidRelativePath): bool
+    {
+        $path = base_path(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $pidRelativePath));
+        if (!file_exists($path)) {
+            return false;
+        }
+        $pid = (int) trim((string) @file_get_contents($path));
+        if ($pid <= 0) {
+            return false;
+        }
+        if (DIRECTORY_SEPARATOR === '\\') {
+            @exec('tasklist /FI "PID eq ' . $pid . '" 2>NUL', $out);
+
+            return !empty($out) && count($out) > 1 && stripos(implode(' ', $out), (string) $pid) !== false;
+        }
+        @exec('kill -0 ' . $pid . ' 2>/dev/null', $_, $code);
+
+        return ($code === 0);
     }
 
     /**
