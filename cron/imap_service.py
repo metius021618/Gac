@@ -29,6 +29,24 @@ class ImapService:
     
     def __init__(self):
         pass
+
+    @staticmethod
+    def _imap_login(mail, username: str, password: str) -> None:
+        """
+        imaplib codifica LOGIN con ASCII; contraseñas con ñ/acentos fallan.
+        AUTHENTICATE PLAIN envía credenciales en UTF-8 dentro del payload base64.
+        """
+        try:
+            mail.login(username, password)
+        except UnicodeEncodeError:
+            blob = b'\x00' + username.encode('utf-8') + b'\x00' + password.encode('utf-8')
+
+            def plain_cb(response):
+                if not response:
+                    return blob
+                return b''
+
+            mail.authenticate('PLAIN', plain_cb)
     
     def read_account(self, account):
         """Leer emails de una cuenta IMAP"""
@@ -38,8 +56,12 @@ class ImapService:
         server = config.get('imap_server', '')
         port = config.get('imap_port', 993)
         encryption = config.get('imap_encryption', 'ssl')
-        username = config.get('imap_user', '')
-        password = config.get('imap_password', '')
+        username = config.get('imap_user', '') or ''
+        password = config.get('imap_password', '') or ''
+        if isinstance(username, bytes):
+            username = username.decode('utf-8', errors='replace')
+        if isinstance(password, bytes):
+            password = password.decode('utf-8', errors='replace')
         
         if not server or not username or not password:
             raise Exception("Configuración IMAP incompleta")
@@ -53,7 +75,7 @@ class ImapService:
                 if encryption == 'tls':
                     mail.starttls()
             
-            mail.login(username, password)
+            self._imap_login(mail, username, password)
             mail.select('INBOX')
 
             # Buscar solo correos recientes (últimos 7 días) para reducir tiempo; si falla, usar ALL
