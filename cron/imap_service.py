@@ -33,12 +33,14 @@ class ImapService:
     @staticmethod
     def _imap_login(mail, username: str, password: str) -> None:
         """
-        imaplib codifica LOGIN con ASCII; contraseñas con ñ/acentos fallan.
-        AUTHENTICATE PLAIN envía credenciales en UTF-8 dentro del payload base64.
+        imaplib usa ASCII por defecto en LOGIN; ñ/acentos rompen o fuerzan PLAIN.
+        Orden: LOGIN con UTF-8 en el cable si hace falta (Dovecot/SiteGround suelen aceptarlo);
+        si falla, AUTHENTICATE PLAIN; si solo ASCII, LOGIN normal.
         """
-        try:
-            mail.login(username, password)
-        except UnicodeEncodeError:
+        needs_utf8 = any(ord(c) > 127 for c in (username + password))
+        enc_orig = mail._encoding
+
+        def plain_login() -> None:
             blob = b'\x00' + username.encode('utf-8') + b'\x00' + password.encode('utf-8')
 
             def plain_cb(response):
@@ -47,6 +49,22 @@ class ImapService:
                 return b''
 
             mail.authenticate('PLAIN', plain_cb)
+
+        try:
+            if needs_utf8:
+                mail._encoding = 'utf-8'
+                try:
+                    mail.login(username, password)
+                except imaplib.IMAP4.error:
+                    mail._encoding = enc_orig
+                    logger.info('IMAP: LOGIN UTF-8 no aceptado o credenciales; probando AUTHENTICATE PLAIN')
+                    plain_login()
+            else:
+                mail.login(username, password)
+        except UnicodeEncodeError:
+            mail._encoding = enc_orig
+            logger.info('IMAP: LOGIN con ASCII imposible; probando AUTHENTICATE PLAIN')
+            plain_login()
     
     def read_account(self, account):
         """Leer emails de una cuenta IMAP"""
@@ -62,6 +80,8 @@ class ImapService:
             username = username.decode('utf-8', errors='replace')
         if isinstance(password, bytes):
             password = password.decode('utf-8', errors='replace')
+        username = username.strip()
+        password = password.strip()
         
         if not server or not username or not password:
             raise Exception("Configuración IMAP incompleta")
