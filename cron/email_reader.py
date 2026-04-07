@@ -24,14 +24,15 @@ from cron.repositories import EmailAccountRepository, PlatformRepository, CodeRe
 from cron.imap_service import ImapService
 from cron.email_filter import EmailFilterService
 
-# Configurar logging
+# Logging: solo consola si stderr es TTY (SSH interactivo). En cron evita duplicar líneas en cron.log.
+_log_handlers = [logging.FileHandler(LOG_CONFIG['file'])]
+if sys.stderr.isatty():
+    _log_handlers.append(logging.StreamHandler())
+
 logging.basicConfig(
     level=getattr(logging, LOG_CONFIG['level'].upper(), logging.INFO),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(LOG_CONFIG['file']),
-        logging.StreamHandler()
-    ]
+    handlers=_log_handlers
 )
 
 logger = logging.getLogger(__name__)

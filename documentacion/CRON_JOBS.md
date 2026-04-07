@@ -56,6 +56,18 @@ Cron Job (email_reader.py)
    - Guarda en BD
 4. Actualiza estados de sincronización
 
+### 1b. Bucle continuo solo IMAP (`imap_loop.py` + `ensure_imap_loop.sh`)
+
+**Ubicación:** `cron/imap_loop.py`, `cron/ensure_imap_loop.sh`
+
+**Función:** Un solo proceso ejecuta `email_reader.py` en bucle con pausa entre ciclos (`CRON_READER_LOOP_SECONDS` en `.env`, mínimo 1 s). Evita depender de un cron cada minuto para IMAP.
+
+**Recomendación en SiteGround:** programa **solo** `ensure_imap_loop.sh` cada 2–5 minutos (reinicia el bucle si se cayó) y **desactiva** el cron que lanza `email_reader.py` cada minuto para no leer el buzón dos veces.
+
+**Logs:** `logs/imap_loop.log` (wrapper) y `logs/cron.log` (cada ciclo del lector).
+
+**PID:** `logs/imap_loop.pid` (no confundir con `reader_loop.pid` de `sync_loop.py`).
+
 ### 2. `imap_service.py`
 
 **Función:** Conecta y lee emails desde servidores IMAP.
