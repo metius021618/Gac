@@ -42,6 +42,9 @@ class CodeService
      */
     public function consultCode(string $platformSlug, string $userEmail, string $username): array
     {
+        $userEmail = trim($userEmail);
+        $username = trim($username);
+
         // Validar email
         if (!filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
             return [

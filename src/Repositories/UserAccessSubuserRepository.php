@@ -144,15 +144,16 @@ class UserAccessSubuserRepository
                 SELECT 1
                 FROM user_access_subusers sus
                 INNER JOIN user_access ua ON ua.id = sus.user_access_id
-                WHERE LOWER(ua.email) = LOWER(:email)
+                WHERE LOWER(TRIM(ua.email)) = LOWER(TRIM(:email))
                   AND ua.platform_id = :platform_id
-                  AND sus.username = :username
+                  AND LOWER(TRIM(sus.username)) = LOWER(TRIM(:username))
+                  AND ua.enabled = 1
                 LIMIT 1
             ");
             $stmt->execute([
-                ':email' => $email,
+                ':email' => trim($email),
                 ':platform_id' => $platformId,
-                ':username' => $username,
+                ':username' => trim($username),
             ]);
             return (bool) $stmt->fetchColumn();
         } catch (PDOException $e) {

@@ -180,10 +180,14 @@ class UserAccessRepository
      */
     public function verifyAccess(string $email, string $password, int $platformId): bool
     {
+        $email = trim($email);
+        $password = trim($password);
+
         $access = $this->findByEmailAndPlatform($email, $platformId);
-        
-        if ($access && $access['password'] === $password) {
-            // Usuario principal (password) coincide
+
+        // Misma lógica que en escritorio pero tolerante a mayúsculas/espacios (teclados móviles, autocompletado).
+        if ($access && (int) ($access['enabled'] ?? 0) === 1
+            && strcasecmp(trim((string) ($access['password'] ?? '')), $password) === 0) {
             return true;
         }
 
