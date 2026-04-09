@@ -74,6 +74,7 @@
             var timeoutId = setTimeout(function() { ctrl.abort(); }, FETCH_TIMEOUT_MS);
             return fetch(API_ENDPOINT, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
