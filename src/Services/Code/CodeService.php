@@ -79,15 +79,10 @@ class CodeService
             ];
         }
 
-        // Clave maestra: admin logueado + usuario = clave maestra → no verificar acceso, pero buscar por el CORREO que escribió (Gmail/Outlook/IMAP)
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        // Clave maestra: si está habilitada y el campo "Usuario" coincide con la clave configurada, no se exige user_access.
         $masterEnabled = $this->settingsRepository->getValue('master_consult_enabled', '0') === '1';
         $masterUsername = trim($this->settingsRepository->getValue('master_consult_username', ''));
-        $isAdminLoggedIn = !empty($_SESSION['logged_in']);
-        // Misma tolerancia que verifyAccess: mayúsculas/teclado móvil. Requiere sesión admin en el mismo navegador.
-        $isMasterKeyUsed = $masterEnabled && $masterUsername !== '' && $isAdminLoggedIn
+        $isMasterKeyUsed = $masterEnabled && $masterUsername !== ''
             && strcasecmp($username, $masterUsername) === 0;
 
         // Si no es clave maestra, verificar que el usuario tenga acceso registrado

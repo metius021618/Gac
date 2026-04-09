@@ -177,7 +177,7 @@ $content = ob_start();
                             Acceso maestro a consulta de códigos
                         </h2>
                         <p class="settings-section-description">
-                            Si está habilitado, un administrador logueado puede usar la clave maestra en "Consulta tu código" y ver el último código de la plataforma (de cualquier cuenta), no solo el suyo.
+                            Si está habilitado, quien escriba la clave maestra en el campo "Usuario" de "Consulta tu código" puede consultar el último código de cualquier correo y plataforma, sin estar logueado en el panel (trátala como secreto compartido).
                         </p>
                     </div>
                     <div class="form-group">
@@ -185,14 +185,14 @@ $content = ob_start();
                             <input type="checkbox" id="master_consult_enabled" name="master_consult_enabled" value="1" <?= (!empty($master_consult_enabled) && $master_consult_enabled === '1') ? 'checked' : '' ?>>
                             Habilitar acceso maestro
                         </label>
-                        <small class="form-help">Solo funciona si el usuario está logueado como administrador en el panel.</small>
+                        <small class="form-help">No requiere iniciar sesión en el panel; cualquiera que conozca la clave puede consultar. Desactívala o cámbiala si se filtra.</small>
                     </div>
                     <div class="form-group">
                         <label for="master_consult_username" class="form-label">Usuario/clave maestra</label>
                         <input type="text" id="master_consult_username" name="master_consult_username" class="form-input" 
                                value="<?= htmlspecialchars($master_consult_username ?? '') ?>" 
                                placeholder="Ej: MAESTRO o clave secreta">
-                        <small class="form-help">El admin escribe este valor en el campo "Usuario" en Consulta tu código (y cualquier correo/plataforma) para ver el último código de esa plataforma.</small>
+                        <small class="form-help">Quien consulte escribe este valor en el campo "Usuario" junto con el correo y la plataforma deseados.</small>
                     </div>
 
                     <div class="form-actions">
