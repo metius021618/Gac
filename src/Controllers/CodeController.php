@@ -196,7 +196,7 @@ class CodeController
     }
 
     /**
-     * Estado del lector continuo: sync_loop.py (reader_loop.pid) y/o imap_loop.py (imap_loop.pid).
+     * Estado del lector continuo: sync_loop, imap_loop y/o gmail_loop (PIDs en logs/).
      */
     public function readerLoopStatus(Request $request): void
     {
@@ -206,16 +206,29 @@ class CodeController
         }
         $sync = $this->isPidFileProcessRunning('logs' . DIRECTORY_SEPARATOR . 'reader_loop.pid');
         $imap = $this->isPidFileProcessRunning('logs' . DIRECTORY_SEPARATOR . 'imap_loop.pid');
-        $running = $sync || $imap;
-        $mode = 'none';
-        if ($sync && $imap) {
-            $mode = 'both';
-        } elseif ($sync) {
-            $mode = 'sync_loop';
-        } elseif ($imap) {
-            $mode = 'imap_loop';
+        $gmailLoop = $this->isPidFileProcessRunning('logs' . DIRECTORY_SEPARATOR . 'gmail_loop.pid');
+        $loops = [];
+        if ($sync) {
+            $loops[] = 'sync_loop';
         }
-        json_response(['running' => $running, 'mode' => $mode]);
+        if ($imap) {
+            $loops[] = 'imap_loop';
+        }
+        if ($gmailLoop) {
+            $loops[] = 'gmail_loop';
+        }
+        $running = $loops !== [];
+        $mode = 'none';
+        if ($running) {
+            if (count($loops) === 1) {
+                $mode = $loops[0];
+            } elseif ($sync && $imap && count($loops) === 2) {
+                $mode = 'both';
+            } else {
+                $mode = 'multi';
+            }
+        }
+        json_response(['running' => $running, 'mode' => $mode, 'loops' => $loops]);
     }
 
     /**
@@ -254,6 +267,14 @@ class CodeController
             json_response([
                 'success' => false,
                 'message' => 'El bucle IMAP (imap_loop.py) ya está en ejecución. Detén ese proceso antes de iniciar sync_loop, o usa solo uno.',
+                'running' => true,
+            ]);
+            return;
+        }
+        if ($this->isPidFileProcessRunning('logs' . DIRECTORY_SEPARATOR . 'gmail_loop.pid')) {
+            json_response([
+                'success' => false,
+                'message' => 'El bucle Gmail (gmail_loop.py) ya está en ejecución. Detén ese proceso antes de iniciar sync_loop, o usa solo uno.',
                 'running' => true,
             ]);
             return;

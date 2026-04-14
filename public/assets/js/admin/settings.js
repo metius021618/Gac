@@ -384,12 +384,21 @@
             const data = await res.json();
             if (data.running) {
                 let label = 'Activo';
+                const loops = Array.isArray(data.loops) ? data.loops : [];
                 if (data.mode === 'imap_loop') {
                     label = 'Activo (bucle IMAP)';
                 } else if (data.mode === 'sync_loop') {
                     label = 'Activo (Gmail + Outlook + IMAP)';
                 } else if (data.mode === 'both') {
                     label = 'Activo (sync_loop e imap_loop)';
+                } else if (data.mode === 'gmail_loop') {
+                    label = 'Activo (bucle Gmail API)';
+                } else if (data.mode === 'multi' && loops.length > 1) {
+                    const names = [];
+                    if (loops.includes('sync_loop')) names.push('sync');
+                    if (loops.includes('imap_loop')) names.push('IMAP');
+                    if (loops.includes('gmail_loop')) names.push('Gmail API');
+                    label = 'Activo (' + names.join(' + ') + ')';
                 }
                 statusEl.textContent = label;
                 statusEl.style.color = '#059669';
