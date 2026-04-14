@@ -5,6 +5,7 @@ GAC - Servicio IMAP para Python
 import imaplib
 import re
 import email
+import os
 from email.header import decode_header
 from email.policy import default as email_policy_default
 import logging
@@ -30,6 +31,51 @@ class ImapService:
     
     def __init__(self):
         pass
+
+    @staticmethod
+    def _uid_cache_path(account_id):
+        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        log_dir = os.path.join(root_dir, 'logs')
+        if not os.path.isdir(log_dir):
+            os.makedirs(log_dir, exist_ok=True)
+        safe_id = str(account_id if account_id is not None else 'default')
+        return os.path.join(log_dir, f'imap_last_uid_{safe_id}.txt')
+
+    @staticmethod
+    def _load_last_uid(account_id):
+        setting_key = f"imap_last_uid_{account_id}" if account_id is not None else "imap_last_uid_default"
+        from_db = 0
+        try:
+            val = SettingsRepository.get(setting_key, '0')
+            from_db = int(str(val or '0').strip())
+        except Exception:
+            from_db = 0
+
+        from_file = 0
+        try:
+            cache_path = ImapService._uid_cache_path(account_id)
+            if os.path.isfile(cache_path):
+                with open(cache_path, 'r', encoding='utf-8') as f:
+                    from_file = int((f.read() or '0').strip())
+        except Exception:
+            from_file = 0
+
+        # Tomar el mayor para no retroceder jamás.
+        return max(from_db, from_file)
+
+    @staticmethod
+    def _save_last_uid(account_id, uid_value):
+        uid_value = int(uid_value)
+        setting_key = f"imap_last_uid_{account_id}" if account_id is not None else "imap_last_uid_default"
+        ok_db = SettingsRepository.set(setting_key, str(uid_value), 'string')
+        try:
+            cache_path = ImapService._uid_cache_path(account_id)
+            with open(cache_path, 'w', encoding='utf-8') as f:
+                f.write(str(uid_value))
+        except Exception as e:
+            logger.warning("No se pudo guardar cache local de UID: %s", e)
+        if not ok_db:
+            logger.warning("No se pudo guardar last_uid en settings (key=%s)", setting_key)
 
     @staticmethod
     def _imap_login(mail, username: str, password: str) -> None:
@@ -101,12 +147,7 @@ class ImapService:
 
             # Estrategia incremental por UID: evita releer siempre el mismo bloque histórico.
             account_id = account.get('id')
-            setting_key = f"imap_last_uid_{account_id}" if account_id is not None else "imap_last_uid_default"
-            last_uid_raw = SettingsRepository.get(setting_key, '0')
-            try:
-                last_uid = int(str(last_uid_raw or '0').strip())
-            except Exception:
-                last_uid = 0
+            last_uid = self._load_last_uid(account_id)
 
             max_fetch = 80
             email_uids = []
@@ -115,6 +156,15 @@ class ImapService:
                 status, messages = mail.uid('search', None, f'UID {last_uid + 1}:*')
                 if status == 'OK' and messages and messages[0]:
                     email_uids = messages[0].split()
+                    # Protección adicional por si el servidor devuelve algo inesperado.
+                    filtered = []
+                    for uid in email_uids:
+                        try:
+                            if int(uid) > last_uid:
+                                filtered.append(uid)
+                        except Exception:
+                            continue
+                    email_uids = filtered
                 else:
                     logger.debug("IMAP incremental: sin nuevos UIDs (last_uid=%s)", last_uid)
                     return []
@@ -166,7 +216,7 @@ class ImapService:
 
             # Guardar el mayor UID visto para siguiente corrida incremental.
             if max_uid_seen > last_uid:
-                SettingsRepository.set(setting_key, str(max_uid_seen), 'string')
+                self._save_last_uid(account_id, max_uid_seen)
             
             mail.close()
             mail.logout()
