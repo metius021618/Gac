@@ -10,6 +10,13 @@
 http_response_code(200);
 header('Content-Type: text/plain; charset=utf-8');
 
+// Raíz del proyecto: desde public_html/gmail/push/ son 3 niveles arriba (push->gmail->public_html->raíz)
+$basePath = dirname(__DIR__, 3);
+$logsDir = $basePath . DIRECTORY_SEPARATOR . 'logs';
+if (!is_dir($logsDir)) {
+    @mkdir($logsDir, 0755, true);
+}
+
 // Solo aceptar POST (Pub/Sub envía POST)
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo 'ok';
@@ -43,23 +50,29 @@ if ($rawInput !== false && $rawInput !== '') {
     }
 }
 
-// Raíz del proyecto: desde public_html/gmail/push/ son 3 niveles arriba (push->gmail->public_html->raíz)
-$basePath = dirname(__DIR__, 3);
+$workerScript = $basePath . DIRECTORY_SEPARATOR . 'cron' . DIRECTORY_SEPARATOR . 'process_gmail_history.py';
+$workerOk = is_file($workerScript);
+
+if (is_dir($logsDir)) {
+    $dbg = date('Y-m-d H:i:s')
+        . ' POST bytes=' . (is_string($rawInput) ? strlen($rawInput) : 0)
+        . ' historyId=' . ($historyId !== null && $historyId !== '' ? $historyId : '(vacío)')
+        . ' worker_py=' . ($workerOk ? 'ok' : 'NO_ENCONTRADO')
+        . "\n";
+    @file_put_contents($logsDir . DIRECTORY_SEPARATOR . 'gmail_webhook_debug.log', $dbg, FILE_APPEND | LOCK_EX);
+}
+
 $python3 = 'python3';
 $venvPython = $basePath . DIRECTORY_SEPARATOR . '.venv' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'python';
 if (is_file($venvPython)) {
     $python3 = $venvPython;
 }
-$workerScript = $basePath . DIRECTORY_SEPARATOR . 'cron' . DIRECTORY_SEPARATOR . 'process_gmail_history.py';
 
-if ($historyId !== null && $historyId !== '' && is_file($workerScript)) {
-    $logFile = $basePath . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'gmail_webhook.log';
-    $logsDir = dirname($logFile);
+if ($historyId !== null && $historyId !== '' && $workerOk) {
+    $logFile = $logsDir . DIRECTORY_SEPARATOR . 'gmail_webhook.log';
     $workerLog = $logsDir . DIRECTORY_SEPARATOR . 'gmail_push_worker.log';
     $workerLogEscaped = escapeshellarg($workerLog);
-    if (is_dir($logsDir)) {
-        @file_put_contents($logFile, date('Y-m-d H:i:s') . " push historyId=" . $historyId . "\n", FILE_APPEND | LOCK_EX);
-    }
+    @file_put_contents($logFile, date('Y-m-d H:i:s') . " push historyId=" . $historyId . "\n", FILE_APPEND | LOCK_EX);
     $historyIdEscaped = escapeshellarg($historyId);
     if (DIRECTORY_SEPARATOR === '\\') {
         $cmd = sprintf(
@@ -80,9 +93,7 @@ if ($historyId !== null && $historyId !== '' && is_file($workerScript)) {
         );
     }
     @exec($cmd);
-    if (is_dir($logsDir)) {
-        @file_put_contents($logFile, date('Y-m-d H:i:s') . " worker lanzado (historyId=" . $historyId . ")\n", FILE_APPEND | LOCK_EX);
-    }
+    @file_put_contents($logFile, date('Y-m-d H:i:s') . " worker lanzado (historyId=" . $historyId . ")\n", FILE_APPEND | LOCK_EX);
 }
 
 echo 'ok';
