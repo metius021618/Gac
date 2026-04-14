@@ -5,21 +5,36 @@
  * Restringe o borra en producción si no quieres que sea público.
  */
 header('Content-Type: text/html; charset=utf-8');
+header('Cache-Control: no-store, no-cache, must-revalidate');
+header('Pragma: no-cache');
 
 // Misma raíz que index.php (public/gmail/push → 3 niveles arriba)
 $basePath = dirname(__DIR__, 3);
+$basePathReal = realpath($basePath);
+if ($basePathReal !== false) {
+    $basePath = $basePathReal;
+}
+
 $logsDir = $basePath . DIRECTORY_SEPARATOR . 'logs';
 if (!is_dir($logsDir)) {
     @mkdir($logsDir, 0755, true);
+}
+$logsDirResolved = realpath($logsDir);
+if ($logsDirResolved !== false) {
+    $logsDir = $logsDirResolved;
 }
 
 $logFile = $logsDir . DIRECTORY_SEPARATOR . 'gmail_webhook.log';
 $debugLog = $logsDir . DIRECTORY_SEPARATOR . 'gmail_webhook_debug.log';
 $workerScript = $basePath . DIRECTORY_SEPARATOR . 'cron' . DIRECTORY_SEPARATOR . 'process_gmail_history.py';
 
+// Evitar stat cache desactualizado respecto a lo que ves por SSH (mismo request)
+clearstatcache(true, $logsDir);
+clearstatcache(true, $logFile);
+clearstatcache(true, $debugLog);
+
 $logsDirExists = is_dir($logsDir);
 $logsDirWritable = $logsDirExists && is_writable($logsDir);
-$debugLogExists = file_exists($debugLog);
 $workerExists = is_file($workerScript);
 
 $testWriteOk = false;
@@ -27,14 +42,21 @@ if ($logsDirExists) {
     $testLine = date('Y-m-d H:i:s') . " [DEBUG] prueba de escritura desde debug.php\n";
     $testWriteOk = @file_put_contents($logFile, $testLine, FILE_APPEND | LOCK_EX) !== false;
 }
+
+clearstatcache(true, $logFile);
+clearstatcache(true, $debugLog);
 $logFileExists = file_exists($logFile);
+$logFileReadable = $logFileExists && is_readable($logFile);
+$debugLogExists = file_exists($debugLog);
+$debugLogReadable = $debugLogExists && is_readable($debugLog);
 
 function tail_lines(string $path, int $max = 30): array
 {
-    if (!is_readable($path)) {
+    clearstatcache(true, $path);
+    if (!is_readable($path) || !is_file($path)) {
         return [];
     }
-    $lines = file($path);
+    $lines = @file($path);
     if ($lines === false) {
         return [];
     }
@@ -42,6 +64,8 @@ function tail_lines(string $path, int $max = 30): array
     return array_slice($lines, -$max);
 }
 
+clearstatcache(true, $logFile);
+clearstatcache(true, $debugLog);
 $logLines = tail_lines($logFile, 30);
 $debugLines = tail_lines($debugLog, 30);
 
@@ -100,9 +124,9 @@ process_gmail_history   = <?= htmlspecialchars($workerScript) ?></pre>
 
 logs/ escribible        : <?= $logsDirWritable ? '<span class="ok">Sí</span>' : '<span class="err">No</span>' ?>
 
-gmail_webhook.log       : <?= $logFileExists ? '<span class="ok">Existe</span>' : '<span class="err">No existe aún</span>' ?>
+gmail_webhook.log       : <?= $logFileExists ? '<span class="ok">Existe</span>' : '<span class="err">No existe aún</span>' ?> — legible PHP: <?= $logFileReadable ? '<span class="ok">Sí</span>' : '<span class="err">No</span>' ?>
 
-gmail_webhook_debug.log : <?= $debugLogExists ? '<span class="ok">Existe</span>' : '<span class="err">No existe aún</span>' ?> (una línea por cada POST)
+gmail_webhook_debug.log : <?= $debugLogExists ? '<span class="ok">Existe</span>' : '<span class="err">No existe aún</span>' ?> — legible PHP: <?= $debugLogReadable ? '<span class="ok">Sí</span>' : '<span class="err">No</span>' ?> (una línea por cada POST)
 
 process_gmail_history   : <?= $workerExists ? '<span class="ok">Existe</span>' : '<span class="err">No existe</span>' ?>
 
@@ -112,7 +136,15 @@ Escritura de prueba     : <?= $testWriteOk ? '<span class="ok">OK</span>' : '<sp
     <div class="section">
         <h2>Últimas 30 líneas — gmail_webhook_debug.log</h2>
         <?php if (empty($debugLines)): ?>
-            <pre class="err">(vacío: aún no ha entrado ningún POST a /gmail/push, o el path base es incorrecto)</pre>
+            <?php if ($debugLogExists && !$debugLogReadable): ?>
+            <pre class="err">El archivo existe pero PHP no puede leerlo (permisos o usuario distinto al de SSH).
+
+<?= htmlspecialchars($debugLog) ?></pre>
+            <?php elseif (!$debugLogExists): ?>
+            <pre class="err">(sin archivo: aún no ha entrado ningún POST a /gmail/push, o el path base no coincide con el de tu tail en SSH)</pre>
+            <?php else: ?>
+            <pre class="err">(archivo legible pero sin líneas que mostrar)</pre>
+            <?php endif; ?>
         <?php else: ?>
             <pre><?= htmlspecialchars(implode('', $debugLines)) ?></pre>
         <?php endif; ?>
