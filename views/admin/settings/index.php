@@ -104,7 +104,7 @@ $content = ob_start();
                         Lector continuo de correos
                     </h2>
                     <p class="settings-section-description">
-                        El estado refleja si corre <code>sync_loop.py</code>, el bucle IMAP (<code>imap_loop.py</code> / <code>ensure_imap_loop.sh</code>) y/o el bucle Gmail API (<code>gmail_loop.py</code> / <code>ensure_gmail_loop.sh</code>). Intervalos en <code>.env</code>: <code>CRON_READER_LOOP_SECONDS</code>, <code>CRON_GMAIL_MIN_INTERVAL_SECONDS</code>.
+                        El estado refleja si corre <code>sync_loop.py</code> (Gmail, Outlook e IMAP) o el bucle solo IMAP (<code>imap_loop.py</code>, p. ej. vía <code>cron/ensure_imap_loop.sh</code>). El intervalo del sync se configura en <code>.env</code> con <code>CRON_READER_LOOP_SECONDS</code> (por defecto 10 segundos).
                     </p>
                 </div>
                 <div class="form-card gmail-matrix-card">

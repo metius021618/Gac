@@ -68,16 +68,6 @@ Cron Job (email_reader.py)
 
 **PID:** `logs/imap_loop.pid` (no confundir con `reader_loop.pid` de `sync_loop.py`).
 
-### 1c. Bucle continuo solo Gmail API (`gmail_loop.py` + `ensure_gmail_loop.sh`)
-
-**Ubicación:** `cron/gmail_loop.py`, `cron/ensure_gmail_loop.sh`
-
-**Función:** Ejecuta `email_reader_gmail.py` en bucle con pausa entre ciclos (`CRON_GMAIL_MIN_INTERVAL_SECONDS` en `.env`, mínimo 60 s por cuota de la API). `email_reader_gmail.py` por sí solo es **una sola corrida**; el bucle lo mantiene vivo como `imap_loop` hace con IMAP.
-
-**Recomendación:** programa `ensure_gmail_loop.sh` cada 2–5 minutos en Site Tools si no usas otro cron que llame a `email_reader_gmail.py` con frecuencia. Convive con el webhook Pub/Sub.
-
-**Logs:** `logs/gmail_loop.log` · **PID:** `logs/gmail_loop.pid`
-
 ### 2. `imap_service.py`
 
 **Función:** Conecta y lee emails desde servidores IMAP.
