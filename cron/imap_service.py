@@ -10,6 +10,7 @@ from email.policy import default as email_policy_default
 import logging
 import json
 from datetime import datetime, timedelta
+from cron.repositories import SettingsRepository
 
 logger = logging.getLogger(__name__)
 
@@ -98,35 +99,74 @@ class ImapService:
             self._imap_login(mail, username, password)
             mail.select('INBOX')
 
-            # Buscar solo correos recientes (últimos 7 días) para reducir tiempo; si falla, usar ALL
-            max_fetch = 80
-            email_ids = []
+            # Estrategia incremental por UID: evita releer siempre el mismo bloque histórico.
+            account_id = account.get('id')
+            setting_key = f"imap_last_uid_{account_id}" if account_id is not None else "imap_last_uid_default"
+            last_uid_raw = SettingsRepository.get(setting_key, '0')
             try:
-                since_date = (datetime.now() - timedelta(days=7)).strftime('%d-%b-%Y')
-                status, messages = mail.search(None, 'SINCE', since_date)
-                if status == 'OK' and messages[0]:
-                    email_ids = messages[0].split()
+                last_uid = int(str(last_uid_raw or '0').strip())
             except Exception:
-                pass
-            if not email_ids:
-                status, messages = mail.search(None, 'ALL')
-                if status != 'OK':
-                    raise Exception("Error al buscar emails")
-                email_ids = messages[0].split()
+                last_uid = 0
+
+            max_fetch = 80
+            email_uids = []
+            if last_uid > 0:
+                # Solo correos nuevos desde el último UID procesado.
+                status, messages = mail.uid('search', None, f'UID {last_uid + 1}:*')
+                if status == 'OK' and messages and messages[0]:
+                    email_uids = messages[0].split()
+                else:
+                    logger.debug("IMAP incremental: sin nuevos UIDs (last_uid=%s)", last_uid)
+                    return []
+            else:
+                # Primera corrida: traer recientes para sembrar estado sin recorrer todo el histórico.
+                try:
+                    since_date = (datetime.now() - timedelta(days=3)).strftime('%d-%b-%Y')
+                    status, messages = mail.search(None, 'SINCE', since_date)
+                    if status == 'OK' and messages and messages[0]:
+                        seq_ids = messages[0].split()
+                        recent_seq = seq_ids[-max_fetch:] if len(seq_ids) > max_fetch else seq_ids
+                        for seq_id in recent_seq:
+                            ustatus, udata = mail.fetch(seq_id, '(UID)')
+                            if ustatus == 'OK' and udata and udata[0]:
+                                raw = udata[0][0] if isinstance(udata[0], tuple) else udata[0]
+                                match = re.search(rb'UID\s+(\d+)', raw if isinstance(raw, bytes) else str(raw).encode('utf-8', errors='ignore'))
+                                if match:
+                                    email_uids.append(match.group(1))
+                except Exception:
+                    email_uids = []
+                if not email_uids:
+                    status, messages = mail.uid('search', None, 'ALL')
+                    if status != 'OK':
+                        raise Exception("Error al buscar emails por UID")
+                    email_uids = messages[0].split() if messages and messages[0] else []
+                if len(email_uids) > max_fetch:
+                    email_uids = email_uids[-max_fetch:]
 
             # Leer desde el más reciente (máximo max_fetch para ir más rápido)
             emails = []
-            start = max(0, len(email_ids) - max_fetch)
+            start = max(0, len(email_uids) - max_fetch)
 
             account_email = (account.get('email') or '').strip().lower()
-            for email_id in reversed(email_ids[start:]):
+            max_uid_seen = last_uid
+            for email_uid in reversed(email_uids[start:]):
                 try:
-                    email_data = self._read_email(mail, email_id, account_email)
+                    email_data = self._read_email(mail, email_uid, account_email, use_uid=True)
                     if email_data:
                         emails.append(email_data)
+                        try:
+                            current_uid = int(email_uid)
+                            if current_uid > max_uid_seen:
+                                max_uid_seen = current_uid
+                        except Exception:
+                            pass
                 except Exception as e:
-                    logger.error(f"Error al leer email #{email_id}: {e}")
+                    logger.error(f"Error al leer email UID #{email_uid}: {e}")
                     continue
+
+            # Guardar el mayor UID visto para siguiente corrida incremental.
+            if max_uid_seen > last_uid:
+                SettingsRepository.set(setting_key, str(max_uid_seen), 'string')
             
             mail.close()
             mail.logout()
@@ -137,10 +177,13 @@ class ImapService:
             logger.error(f"Error al conectar con IMAP: {e}")
             raise
     
-    def _read_email(self, mail, email_id, account_email=''):
+    def _read_email(self, mail, email_id, account_email='', use_uid=False):
         """Leer un email específico sin marcar como leído (BODY.PEEK[] no setea \\Seen)."""
         # BODY.PEEK[] evita que el servidor marque el mensaje como leído; RFC822 suele setear \Seen
-        status, msg_data = mail.fetch(email_id, '(BODY.PEEK[])')
+        if use_uid:
+            status, msg_data = mail.uid('fetch', email_id, '(BODY.PEEK[] UID)')
+        else:
+            status, msg_data = mail.fetch(email_id, '(BODY.PEEK[])')
         
         if status != 'OK':
             return None
