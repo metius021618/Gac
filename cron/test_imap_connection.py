@@ -29,8 +29,17 @@ def test_imap_connection(account_id=None):
     try:
         # Obtener cuentas
         if account_id:
-            accounts = [EmailAccountRepository.find_by_id(account_id)]
-            if not accounts[0]:
+            imap_accounts = EmailAccountRepository.find_by_type('imap')
+            account_match = None
+            for acc in imap_accounts:
+                try:
+                    if int(acc.get('id', 0)) == int(account_id):
+                        account_match = acc
+                        break
+                except Exception:
+                    continue
+            accounts = [account_match] if account_match else []
+            if not accounts:
                 print(f"✗ Cuenta con ID {account_id} no encontrada")
                 return False
         else:
