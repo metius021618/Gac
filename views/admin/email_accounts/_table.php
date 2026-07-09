@@ -13,9 +13,6 @@ $can_delete = function_exists('user_can_action') && user_can_action($email_view_
     <table class="admin-table" id="emailAccountsTable">
         <thead>
             <tr>
-                <th class="checkbox-column" style="display: none; width: 40px;">
-                    <input type="checkbox" id="selectAll" title="Seleccionar todos">
-                </th>
                 <th class="text-center" style="width: 60px;">ID</th>
                 <th class="text-center" style="width: 25%;">Correo</th>
                 <th class="text-center" style="width: 15%;">Usuario (acceso)</th>
@@ -28,7 +25,7 @@ $can_delete = function_exists('user_can_action') && user_can_action($email_view_
         <tbody id="tableBody">
             <?php if (empty($email_accounts)): ?>
                 <tr>
-                    <td colspan="8" class="text-center">
+                    <td colspan="7" class="text-center">
                         <p class="empty-message">No hay registros de acceso. Usa "Asignar usuario" o "Registro masivo" para agregar.</p>
                     </td>
                 </tr>
@@ -38,12 +35,11 @@ $can_delete = function_exists('user_can_action') && user_can_action($email_view_
                     // Datos desde user_access: email, password (usuario), platform_display_name
                     $usuario = $account['password'] ?? '';
                     $plataforma = $account['platform_display_name'] ?? $account['platform_name'] ?? '—';
-                    $actividad = !empty($account['updated_at']) ? date('d/m/Y H:i', strtotime($account['updated_at'])) : (!empty($account['created_at']) ? date('d/m/Y H:i', strtotime($account['created_at'])) : '—');
+                    $actividad = !empty($account['updated_at'])
+                        ? format_datetime_peru($account['updated_at'])
+                        : (!empty($account['created_at']) ? format_datetime_peru($account['created_at']) : '—');
                     ?>
                     <tr data-id="<?= (int)$account['id'] ?>" class="table-row">
-                        <td class="checkbox-column" style="display: none;">
-                            <input type="checkbox" class="row-checkbox" value="<?= (int)$account['id'] ?>">
-                        </td>
                         <td class="text-center"><?= (int)$account['id'] ?></td>
                         <td class="email-cell text-center"><?= htmlspecialchars($account['email'] ?? '') ?></td>
                         <td class="user-cell text-center"><?= htmlspecialchars($usuario) ?></td>

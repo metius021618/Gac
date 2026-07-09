@@ -197,6 +197,43 @@ if (!function_exists('is_superadmin')) {
     }
 }
 
+if (!function_exists('format_datetime_peru')) {
+    /**
+     * Formatear fecha/hora de BD (UTC) a zona horaria de Perú.
+     */
+    function format_datetime_peru(?string $datetime, string $format = 'd/m/Y H:i', string $empty = '—'): string
+    {
+        if ($datetime === null || $datetime === '') {
+            return $empty;
+        }
+        try {
+            $dt = new \DateTime($datetime, new \DateTimeZone('UTC'));
+            $dt->setTimezone(new \DateTimeZone('America/Lima'));
+            return $dt->format($format);
+        } catch (\Throwable $e) {
+            return $empty;
+        }
+    }
+}
+
+if (!function_exists('excel_utf8_output_start')) {
+    /**
+     * Inicio de exportación Excel HTML con codificación UTF-8 (ñ, tildes).
+     */
+    function excel_utf8_output_start(): void
+    {
+        echo "\xEF\xBB\xBF";
+        echo '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head><body>';
+    }
+}
+
+if (!function_exists('excel_utf8_output_end')) {
+    function excel_utf8_output_end(): void
+    {
+        echo '</body></html>';
+    }
+}
+
 if (!function_exists('user_can_action')) {
     /**
      * Comprobar si el usuario actual puede realizar una acción en una vista.

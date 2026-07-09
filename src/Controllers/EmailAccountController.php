@@ -138,6 +138,8 @@ class EmailAccountController
         header('Cache-Control: max-age=0');
         header('Pragma: public');
 
+        excel_utf8_output_start();
+
         echo '<table border="1" cellpadding="2" cellspacing="0" style="border-collapse:collapse;">';
         echo '<tr style="background:#2563eb;color:#ffffff;font-weight:bold;">';
         echo '<td>Correo</td>';
@@ -147,7 +149,9 @@ class EmailAccountController
         echo '</tr>';
 
         foreach ($rows as $r) {
-            $actividad = !empty($r['updated_at']) ? date('d/m/Y H:i', strtotime($r['updated_at'])) : (!empty($r['created_at']) ? date('d/m/Y H:i', strtotime($r['created_at'])) : '—');
+            $actividad = !empty($r['updated_at'])
+                ? format_datetime_peru($r['updated_at'])
+                : (!empty($r['created_at']) ? format_datetime_peru($r['created_at']) : '—');
             $email = $r['email'] ?? '';
             $usuario = $r['password'] ?? '';
             $plataforma = $r['platform_display_name'] ?? $r['platform_name'] ?? '—';
@@ -160,6 +164,7 @@ class EmailAccountController
         }
 
         echo '</table>';
+        excel_utf8_output_end();
         exit;
     }
 
@@ -169,6 +174,12 @@ class EmailAccountController
      */
     public function exportListaCuentasExcel(Request $request): void
     {
+        if (!function_exists('is_superadmin') || !is_superadmin()) {
+            http_response_code(403);
+            echo 'No autorizado';
+            exit;
+        }
+
         $search = trim($request->get('search', ''));
         $platformId = $request->get('platform_id') ? (int) $request->get('platform_id') : null;
         $dateFrom = trim($request->get('date_from', ''));
@@ -186,6 +197,8 @@ class EmailAccountController
         header('Cache-Control: max-age=0');
         header('Pragma: public');
 
+        excel_utf8_output_start();
+
         echo '<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;">';
         echo '<tr style="background:#2563eb;color:#ffffff;font-weight:bold;">';
         echo '<td>Correo</td>';
@@ -196,7 +209,9 @@ class EmailAccountController
         echo '</tr>';
 
         foreach ($rows as $r) {
-            $actividad = !empty($r['updated_at']) ? date('d/m/Y H:i', strtotime($r['updated_at'])) : (!empty($r['created_at']) ? date('d/m/Y H:i', strtotime($r['created_at'])) : '—');
+            $actividad = !empty($r['updated_at'])
+                ? format_datetime_peru($r['updated_at'])
+                : (!empty($r['created_at']) ? format_datetime_peru($r['created_at']) : '—');
             $email = $r['email'] ?? '';
             $usuario = $r['password'] ?? '';
             $plataforma = $r['platform_display_name'] ?? $r['platform_name'] ?? '—';
@@ -210,6 +225,7 @@ class EmailAccountController
             echo '</tr>';
         }
         echo '</table>';
+        excel_utf8_output_end();
         exit;
     }
 
@@ -301,6 +317,8 @@ class EmailAccountController
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Cache-Control: max-age=0');
         header('Pragma: public');
+
+        excel_utf8_output_start();
 
         echo '<table border="1" cellpadding="2" cellspacing="0" style="border-collapse:collapse;">';
         echo '<tr style="background:#2563eb;color:#ffffff;font-weight:bold;">';
