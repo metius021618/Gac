@@ -302,7 +302,19 @@
 
 .activity-description {
     word-break: break-word;
-    max-width: 400px;
+    max-width: none;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#userActivityTable th,
+#userActivityTable td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+#userActivityTable .activity-description {
+    text-align: center;
 }
 
 /* ============================================

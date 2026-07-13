@@ -219,11 +219,18 @@ if (!function_exists('format_datetime_peru')) {
 if (!function_exists('excel_utf8_output_start')) {
     /**
      * Inicio de exportación Excel HTML con codificación UTF-8 (ñ, tildes).
+     * BOM + meta charset + namespaces Office para que Excel abra bien en Windows.
      */
     function excel_utf8_output_start(): void
     {
         echo "\xEF\xBB\xBF";
-        echo '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head><body>';
+        echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+        echo '<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">';
+        echo '<meta charset="UTF-8">';
+        echo '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>';
+        echo '<x:Name>Hoja1</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>';
+        echo '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
+        echo '</head><body>';
     }
 }
 

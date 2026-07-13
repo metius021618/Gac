@@ -118,10 +118,10 @@ elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
             <table class="admin-table" id="userActivityTable">
                 <thead>
                     <tr>
-                        <th style="width: 14%;">ACCIÓN</th>
-                        <th style="width: 14%;">ADMINISTRADOR</th>
-                        <th style="width: 44%;">DESCRIPCIÓN</th>
-                        <th style="width: 28%;">
+                        <th class="text-center" style="width: 16%;">ACCIÓN</th>
+                        <th class="text-center" style="width: 16%;">ADMINISTRADOR</th>
+                        <th class="text-center" style="width: 48%;">DESCRIPCIÓN</th>
+                        <th class="text-center" style="width: 20%;">
                             <a href="<?= $queryParams(['order' => $order === 'desc' ? 'asc' : 'desc']) ?>" class="sortable-header sortable-header--date">
                                 FECHA
                                 <?= $order === 'desc' ? '<span class="sort-icon">▼</span>' : '<span class="sort-icon">▲</span>' ?>
@@ -137,16 +137,19 @@ elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
                             </td>
                         </tr>
                     <?php else: ?>
-                        <?php foreach ($activities as $row): 
-                            $created = $row['created_at'] ?? '';
-                            $fechaHora = $created ? date('d/m/Y H:i', strtotime($created)) : '—';
+                        <?php foreach ($activities as $row):
+                            $fechaHora = format_datetime_peru($row['created_at'] ?? null);
                             $actionLabel = \Gac\Repositories\UserActivityLogRepository::actionLabel($row['action'] ?? '');
+                            $description = $row['description'] ?? '';
+                            if ($description !== '' && !mb_check_encoding($description, 'UTF-8')) {
+                                $description = mb_convert_encoding($description, 'UTF-8', 'ISO-8859-1,Windows-1252,UTF-8');
+                            }
                         ?>
                             <tr>
-                                <td><span class="activity-tag activity-tag--<?= htmlspecialchars($row['action'] ?? '') ?>"><?= htmlspecialchars($actionLabel) ?></span></td>
-                                <td><?= htmlspecialchars($row['username'] ?? '') ?></td>
-                                <td class="activity-description"><?= nl2br(htmlspecialchars($row['description'] ?? '')) ?></td>
-                                <td><?= $fechaHora ?></td>
+                                <td class="text-center"><span class="activity-tag activity-tag--<?= htmlspecialchars($row['action'] ?? '', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($actionLabel, ENT_QUOTES, 'UTF-8') ?></span></td>
+                                <td class="text-center"><?= htmlspecialchars($row['username'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+                                <td class="activity-description text-center"><?= nl2br(htmlspecialchars($description, ENT_QUOTES, 'UTF-8')) ?></td>
+                                <td class="text-center"><?= htmlspecialchars($fechaHora, ENT_QUOTES, 'UTF-8') ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>

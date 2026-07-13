@@ -84,22 +84,31 @@ class UserActivityController
         header('Cache-Control: max-age=0');
         header('Pragma: public');
 
-        echo '<table border="1" cellpadding="2" cellspacing="0" style="border-collapse:collapse;">';
+        excel_utf8_output_start();
+
+        echo '<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;">';
         echo '<tr style="background:#2563eb;color:#ffffff;font-weight:bold;">';
-        echo '<td>Acción</td><td>Administrador</td><td>Descripción</td><td>Fecha</td>';
+        echo '<td style="text-align:center;vertical-align:middle;">Acción</td>';
+        echo '<td style="text-align:center;vertical-align:middle;">Administrador</td>';
+        echo '<td style="text-align:center;vertical-align:middle;">Descripción</td>';
+        echo '<td style="text-align:center;vertical-align:middle;">Fecha</td>';
         echo '</tr>';
         foreach ($rows as $r) {
-            $created = $r['created_at'] ?? '';
-            $fechaHora = $created ? date('d/m/Y H:i', strtotime($created)) : '—';
+            $fechaHora = format_datetime_peru($r['created_at'] ?? null);
             $actionLabel = \Gac\Repositories\UserActivityLogRepository::actionLabel($r['action'] ?? '');
+            $description = $r['description'] ?? '';
+            if ($description !== '' && !mb_check_encoding($description, 'UTF-8')) {
+                $description = mb_convert_encoding($description, 'UTF-8', 'ISO-8859-1,Windows-1252,UTF-8');
+            }
             echo '<tr>';
-            echo '<td>' . htmlspecialchars($actionLabel, ENT_QUOTES, 'UTF-8') . '</td>';
-            echo '<td>' . htmlspecialchars($r['username'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-            echo '<td>' . htmlspecialchars($r['description'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-            echo '<td>' . htmlspecialchars($fechaHora, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td style="text-align:center;vertical-align:middle;">' . htmlspecialchars($actionLabel, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td style="text-align:center;vertical-align:middle;">' . htmlspecialchars($r['username'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td style="text-align:left;vertical-align:middle;">' . htmlspecialchars($description, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td style="text-align:center;vertical-align:middle;">' . htmlspecialchars($fechaHora, ENT_QUOTES, 'UTF-8') . '</td>';
             echo '</tr>';
         }
         echo '</table>';
+        excel_utf8_output_end();
         exit;
     }
 
