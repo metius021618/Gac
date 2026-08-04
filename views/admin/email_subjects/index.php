@@ -19,9 +19,19 @@ $content = ob_start();
 
     <div class="admin-content">
         <?php $category_filter = $category_filter ?? 'general'; ?>
-        <div class="subject-category-tabs" id="subjectCategoryTabs">
-            <a href="/admin/email-subjects?category=general" class="subject-category-tab <?= $category_filter === 'general' ? 'active' : '' ?>" data-category="general">Generales</a>
-            <a href="/admin/email-subjects?category=modo_viaje" class="subject-category-tab <?= $category_filter === 'modo_viaje' ? 'active' : '' ?>" data-category="modo_viaje">MODO VIAJE</a>
+        <div class="subject-category-bar">
+            <div class="subject-category-tabs" id="subjectCategoryTabs" role="tablist" aria-label="Categoría de asuntos">
+                <a href="/admin/email-subjects?category=general"
+                   class="subject-category-tab <?= $category_filter === 'general' ? 'active' : '' ?>"
+                   data-category="general"
+                   role="tab"
+                   aria-selected="<?= $category_filter === 'general' ? 'true' : 'false' ?>">Generales</a>
+                <a href="/admin/email-subjects?category=modo_viaje"
+                   class="subject-category-tab <?= $category_filter === 'modo_viaje' ? 'active' : '' ?>"
+                   data-category="modo_viaje"
+                   role="tab"
+                   aria-selected="<?= $category_filter === 'modo_viaje' ? 'true' : 'false' ?>">Modo Viaje</a>
+            </div>
         </div>
         <div class="table-controls">
             <div class="table-controls-left">
