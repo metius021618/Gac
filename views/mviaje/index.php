@@ -27,7 +27,6 @@ $content = ob_start();
 
             <div class="hogar-note">
                 <strong>⚠️ Nota:</strong><br>
-                Se busca el último correo cuyo asunto coincida exactamente con los registrados en <strong>MODO VIAJE</strong>.<br>
                 Espera unos segundos desde el envío del correo antes de consultar.
             </div>
 
