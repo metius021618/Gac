@@ -20,9 +20,12 @@ $content = ob_start();
                 <h1 class="card-title">Modo Viaje</h1>
             </div>
 
-            <div class="hogar-mode-switch">
-                <a href="/hogar" class="btn btn-secondary btn-mode-switch">Código temporal Netflix</a>
-                <span class="btn btn-primary btn-mode-switch is-active">Modo Viaje</span>
+            <div class="hogar-mode-switch" data-active="viaje">
+                <div class="hogar-mode-track" role="tablist" aria-label="Modo de consulta">
+                    <span class="hogar-mode-slider" aria-hidden="true"></span>
+                    <a href="/hogar" class="hogar-mode-option" data-mode="hogar" role="tab" aria-selected="false">Código temporal Netflix</a>
+                    <a href="/MViaje" class="hogar-mode-option is-active" data-mode="viaje" role="tab" aria-selected="true">Modo Viaje</a>
+                </div>
             </div>
 
             <div class="hogar-note">
@@ -110,7 +113,7 @@ $footer_whatsapp = true;
 $footer_whatsapp_number = '920859333';
 $footer_whatsapp_text = 'Hola, tengo una duda';
 $additional_css = ['/assets/css/consult.css'];
-$additional_js = ['/assets/js/mviaje.js'];
+$additional_js = ['/assets/js/hogar-mode-switch.js', '/assets/js/mviaje.js'];
 
 require base_path('views/layouts/main.php');
 ?>
