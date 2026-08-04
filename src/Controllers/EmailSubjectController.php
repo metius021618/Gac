@@ -40,16 +40,18 @@ class EmailSubjectController
             $search = isset($q['search']) ? (string)$q['search'] : $search;
         }
 
+        $category = $this->emailSubjectRepository->normalizeCategory((string) $request->get('category', 'general'));
+
         $validPerPage = [10, 15, 30, 60, 100, 0]; // 0 para "Todos"
         if (!in_array($perPage, $validPerPage)) {
             $perPage = 15; // Default
         }
 
         $logFile = base_path('logs' . DIRECTORY_SEPARATOR . 'email_subjects_search.log');
-        $logLine = date('Y-m-d H:i:s') . ' [email-subjects] GET=' . json_encode($_GET) . ' REQUEST_URI=' . ($_SERVER['REQUEST_URI'] ?? '') . ' isAjax=' . ($request->isAjax() ? '1' : '0') . ' search="' . $search . '" page=' . $page . ' per_page=' . $perPage . "\n";
+        $logLine = date('Y-m-d H:i:s') . ' [email-subjects] GET=' . json_encode($_GET) . ' REQUEST_URI=' . ($_SERVER['REQUEST_URI'] ?? '') . ' isAjax=' . ($request->isAjax() ? '1' : '0') . ' search="' . $search . '" category=' . $category . ' page=' . $page . ' per_page=' . $perPage . "\n";
         @file_put_contents($logFile, $logLine, FILE_APPEND | LOCK_EX);
 
-        $paginationData = $this->emailSubjectRepository->searchAndPaginate($search, $page, $perPage);
+        $paginationData = $this->emailSubjectRepository->searchAndPaginate($search, $page, $perPage, $category);
 
         @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [email-subjects] total=' . $paginationData['total'] . ' rows=' . count($paginationData['data']) . "\n", FILE_APPEND | LOCK_EX);
 
@@ -63,7 +65,8 @@ class EmailSubjectController
                 'per_page' => $paginationData['per_page'],
                 'total_pages' => $paginationData['total_pages'],
                 'search_query' => $search,
-                'valid_per_page' => $validPerPage
+                'valid_per_page' => $validPerPage,
+                'category_filter' => $category,
             ]);
             require base_path('views/admin/email_subjects/_table.php');
             $tableHtml = ob_get_clean();
@@ -81,7 +84,8 @@ class EmailSubjectController
             'per_page' => $paginationData['per_page'],
             'total_pages' => $paginationData['total_pages'],
             'search_query' => $search,
-            'valid_per_page' => $validPerPage
+            'valid_per_page' => $validPerPage,
+            'category_filter' => $category,
         ]);
     }
 
@@ -101,7 +105,7 @@ class EmailSubjectController
     }
 
     /**
-     * Guardar nuevo asunto
+     * Guardar nuevo asunto (mismo payload que el front: platform_id, subject_line, category).
      */
     public function store(Request $request): void
     {
@@ -113,51 +117,73 @@ class EmailSubjectController
             return;
         }
 
-        $platformId = (int)$request->input('platform_id', 0);
-        $subjectLine = trim($request->input('subject_line', ''));
+        $result = $this->storeFromPayload($request->all());
+        json_response($result['body'], $result['code']);
+    }
 
-        // Validaciones
-        if ($platformId <= 0 || empty($subjectLine)) {
-            json_response([
-                'success' => false,
-                'message' => 'Todos los campos son requeridos'
-            ], 400);
-            return;
+    /**
+     * Lógica de alta usada por el front (JSON) y por tests unitarios.
+     * No inserta directo en BD: pasa por validaciones del controlador + repository->save.
+     *
+     * @param array $payload {platform_id, subject_line, category?}
+     * @return array{body: array, code: int}
+     */
+    public function storeFromPayload(array $payload): array
+    {
+        $platformId = (int)($payload['platform_id'] ?? 0);
+        $subjectLine = trim((string)($payload['subject_line'] ?? ''));
+        $category = $this->emailSubjectRepository->normalizeCategory((string)($payload['category'] ?? 'general'));
+
+        if ($platformId <= 0 || $subjectLine === '') {
+            return [
+                'code' => 400,
+                'body' => [
+                    'success' => false,
+                    'message' => 'Todos los campos son requeridos'
+                ]
+            ];
         }
 
-        // Verificar que la plataforma exista
         $platform = $this->platformRepository->findById($platformId);
         if (!$platform) {
-            json_response([
-                'success' => false,
-                'message' => 'La plataforma seleccionada no existe'
-            ], 400);
-            return;
+            return [
+                'code' => 400,
+                'body' => [
+                    'success' => false,
+                    'message' => 'La plataforma seleccionada no existe'
+                ]
+            ];
         }
 
-        // Guardar asunto
-        $data = [
+        $subjectId = $this->emailSubjectRepository->save([
             'platform_id' => $platformId,
-            'subject_line' => $subjectLine
-        ];
-
-        $subjectId = $this->emailSubjectRepository->save($data);
+            'subject_line' => $subjectLine,
+            'category' => $category,
+        ]);
 
         if ($subjectId) {
-            json_response([
-                'success' => true,
-                'message' => 'Asunto agregado correctamente',
-                'id' => $subjectId
-            ], 201);
-        } else {
-            $isDuplicate = \Gac\Repositories\EmailSubjectRepository::getLastError() === 'duplicate';
-            json_response([
+            return [
+                'code' => 201,
+                'body' => [
+                    'success' => true,
+                    'message' => 'Asunto agregado correctamente',
+                    'id' => $subjectId,
+                    'category' => $category,
+                    'subject_line' => $subjectLine,
+                ]
+            ];
+        }
+
+        $isDuplicate = EmailSubjectRepository::getLastError() === 'duplicate';
+        return [
+            'code' => $isDuplicate ? 409 : 500,
+            'body' => [
                 'success' => false,
                 'message' => $isDuplicate
                     ? 'Ya existe un asunto con el mismo texto para esta plataforma.'
                     : 'Error al guardar el asunto.'
-            ], $isDuplicate ? 409 : 500);
-        }
+            ]
+        ];
     }
 
     /**
@@ -201,6 +227,7 @@ class EmailSubjectController
         $id = (int)$request->input('id', 0);
         $platformId = (int)$request->input('platform_id', 0);
         $subjectLine = trim($request->input('subject_line', ''));
+        $category = $this->emailSubjectRepository->normalizeCategory((string)$request->input('category', 'general'));
 
         // Validaciones
         if ($id <= 0 || $platformId <= 0 || empty($subjectLine)) {
@@ -234,7 +261,8 @@ class EmailSubjectController
         // Actualizar asunto
         $data = [
             'platform_id' => $platformId,
-            'subject_line' => $subjectLine
+            'subject_line' => $subjectLine,
+            'category' => $category,
         ];
 
         $updated = $this->emailSubjectRepository->update($id, $data);

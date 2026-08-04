@@ -39,6 +39,7 @@ $can_delete_subject = function_exists('user_can_action') && user_can_action('reg
                                     data-id="<?= $subject['id'] ?>"
                                     data-platform-id="<?= $subject['platform_id'] ?>"
                                     data-subject-line="<?= htmlspecialchars($subject['subject_line']) ?>"
+                                    data-category="<?= htmlspecialchars($subject['category'] ?? ($category_filter ?? 'general')) ?>"
                                     title="Editar">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>

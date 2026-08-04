@@ -20,6 +20,17 @@
     const subjectIdInput = document.getElementById('subjectId');
     const modalPlatformSelect = document.getElementById('modal_platform_id');
     const modalSubjectLineInput = document.getElementById('modal_subject_line');
+    const modalCategoryInput = document.getElementById('modal_category');
+
+    function getActiveCategory() {
+        const params = new URLSearchParams(window.location.search);
+        const fromUrl = (params.get('category') || '').trim();
+        if (fromUrl === 'modo_viaje') return 'modo_viaje';
+        const activeTab = document.querySelector('.subject-category-tab.active');
+        if (activeTab && activeTab.dataset.category === 'modo_viaje') return 'modo_viaje';
+        if (modalCategoryInput && modalCategoryInput.value === 'modo_viaje') return 'modo_viaje';
+        return 'general';
+    }
 
     /** Función de búsqueda (se asigna en initSearch, la usa la paginación) */
     var runSearch = function() {};
@@ -84,7 +95,11 @@
         
         // Actualizar título
         if (modalTitle) {
-            modalTitle.textContent = 'Nuevo Asunto';
+            modalTitle.textContent = getActiveCategory() === 'modo_viaje' ? 'Nuevo Asunto MODO VIAJE' : 'Nuevo Asunto';
+        }
+
+        if (modalCategoryInput) {
+            modalCategoryInput.value = getActiveCategory();
         }
         
         // Limpiar ID (modo crear)
@@ -105,6 +120,7 @@
         const id = btn.dataset.id;
         const platformId = btn.dataset.platformId;
         const subjectLine = btn.dataset.subjectLine;
+        const category = btn.dataset.category || getActiveCategory();
         
         if (!id || !subjectModal) return;
         
@@ -120,10 +136,14 @@
         if (modalSubjectLineInput) {
             modalSubjectLineInput.value = subjectLine || '';
         }
+
+        if (modalCategoryInput) {
+            modalCategoryInput.value = category === 'modo_viaje' ? 'modo_viaje' : 'general';
+        }
         
         // Actualizar título
         if (modalTitle) {
-            modalTitle.textContent = 'Editar Asunto';
+            modalTitle.textContent = category === 'modo_viaje' ? 'Editar Asunto MODO VIAJE' : 'Editar Asunto';
         }
         
         // Limpiar errores
@@ -160,6 +180,9 @@
         }
         if (modalSubjectLineInput) {
             modalSubjectLineInput.value = '';
+        }
+        if (modalCategoryInput) {
+            modalCategoryInput.value = getActiveCategory();
         }
         clearAllErrors();
     }
@@ -259,6 +282,9 @@
                 clearSearchBtn: clearSearchBtn,
                 endpoint: window.location.pathname,
                 minSearchLength: 0,
+                getExtraParams: function() {
+                    return { category: getActiveCategory() };
+                },
                 renderCallback: function(html) {
                     window.SearchAJAX.updateTableContent(html);
                     emailSubjectsTable = document.getElementById('emailSubjectsTable');
@@ -273,7 +299,8 @@
                 window.SearchAJAX.performSearch(window.location.pathname, {
                     search: searchInput.value.trim(),
                     page: page || 1,
-                    per_page: perPageSelect.value
+                    per_page: perPageSelect.value,
+                    category: getActiveCategory()
                 }, function(html) {
                     window.SearchAJAX.updateTableContent(html);
                     emailSubjectsTable = document.getElementById('emailSubjectsTable');

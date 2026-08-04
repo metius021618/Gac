@@ -34,6 +34,8 @@ class Application
         $router->post('/codes/consult', 'CodeController@consult');
         $router->get('/hogar', 'HogarController@index');
         $router->post('/hogar', 'HogarController@index');
+        $router->get('/MViaje', 'MViajeController@index');
+        $router->post('/MViaje', 'MViajeController@index');
         $router->get('/politica-privacidad', 'LegalController@politicaPrivacidad');
         $router->get('/condiciones-servicio', 'LegalController@condicionesServicio');
 

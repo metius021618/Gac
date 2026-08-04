@@ -308,6 +308,85 @@ class CodeRepository
     }
 
     /**
+     * Último correo cuyo asunto coincide exactamente con alguno de la lista (Modo Viaje).
+     *
+     * @param string $recipientEmail
+     * @param string[] $subjects Asuntos exactos
+     * @param string|null $origin
+     */
+    public function findLastEmailBySubjects(string $recipientEmail, array $subjects, ?string $origin = null): ?array
+    {
+        $subjects = array_values(array_filter(array_map(static function ($s) {
+            return trim((string) $s);
+        }, $subjects), static function ($s) {
+            return $s !== '';
+        }));
+        if ($subjects === []) {
+            return null;
+        }
+        if (count($subjects) === 1) {
+            return $this->findLastEmailBySubject($recipientEmail, $subjects[0], $origin);
+        }
+
+        try {
+            $db = Database::getConnection();
+            $placeholders = [];
+            $params = [
+                'recipient_email' => strtolower($recipientEmail),
+            ];
+            foreach ($subjects as $i => $subject) {
+                $key = 'subject_' . $i;
+                $placeholders[] = ':' . $key;
+                $params[$key] = $subject;
+            }
+            $originClause = '';
+            if ($origin === 'gmail' || $origin === 'outlook' || $origin === 'imap') {
+                $originClause = ' AND c.origin = :origin';
+                $params['origin'] = $origin;
+            }
+            $inList = implode(', ', $placeholders);
+            $stmt = $db->prepare("
+                SELECT 
+                    c.id,
+                    c.code,
+                    c.email_from,
+                    c.subject,
+                    c.email_body,
+                    c.received_at,
+                    c.status,
+                    c.origin,
+                    c.recipient_email,
+                    TIMESTAMPDIFF(MINUTE, c.received_at, NOW()) as minutes_ago
+                FROM codes c
+                WHERE LOWER(c.recipient_email) = :recipient_email
+                  AND c.subject IN ({$inList})
+                  {$originClause}
+                ORDER BY c.received_at DESC, c.id DESC
+                LIMIT 1
+            ");
+            $stmt->execute($params);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$result) {
+                return null;
+            }
+            $minutesAgo = (int) ($result['minutes_ago'] ?? 0);
+            if ($minutesAgo < 60) {
+                $result['time_ago_text'] = "hace {$minutesAgo} minuto(s)";
+            } elseif ($minutesAgo < 1440) {
+                $hoursAgo = floor($minutesAgo / 60);
+                $result['time_ago_text'] = "hace {$hoursAgo} hora(s)";
+            } else {
+                $daysAgo = floor($minutesAgo / 1440);
+                $result['time_ago_text'] = "hace {$daysAgo} día(s)";
+            }
+            return $result;
+        } catch (PDOException $e) {
+            error_log('Error findLastEmailBySubjects: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Último correo de una plataforma (cualquier destinatario). Para acceso maestro admin.
      *
      * @param int $platformId ID de la plataforma

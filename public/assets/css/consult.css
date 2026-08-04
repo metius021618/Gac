@@ -119,6 +119,28 @@
     line-height: 1.5;
 }
 
+.hogar-mode-switch {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    justify-content: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.btn-mode-switch {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+}
+
+.btn-mode-switch.is-active {
+    pointer-events: none;
+}
+
 .card-title {
     font-size: var(--font-size-3xl);
     font-weight: 700;

@@ -31,17 +31,18 @@ class EmailSubjectRepository
      * @param int $perPage Registros por página
      * @return array ['data' => [], 'total' => int, 'page' => int, 'per_page' => int, 'total_pages' => int]
      */
-    public function searchAndPaginate(string $search = '', int $page = 1, int $perPage = 15): array
+    public function searchAndPaginate(string $search = '', int $page = 1, int $perPage = 15, string $category = 'general'): array
     {
         try {
             $db = Database::getConnection();
             $params = [];
-            $whereClause = 'WHERE es.active = 1';
+            $category = $this->normalizeCategory($category);
+            $whereClause = 'WHERE es.active = 1 AND es.category = :category';
+            $params[':category'] = $category;
 
             $searchTrim = trim($search);
             if ($searchTrim !== '') {
                 $term = mb_strtolower($searchTrim);
-                // Tres placeholders (PDO no permite repetir el mismo :q en una sola sentencia)
                 $whereClause .= " AND (
                     LOWER(es.subject_line) LIKE CONCAT('%', :q1, '%')
                     OR LOWER(COALESCE(p.display_name,'')) LIKE CONCAT('%', :q2, '%')
@@ -65,7 +66,7 @@ class EmailSubjectRepository
 
             $logFile = defined('BASE_PATH') ? BASE_PATH . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'email_subjects_search.log' : '';
             if ($logFile) {
-                @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [repository] search="' . $searchTrim . '" total=' . $total . "\n", FILE_APPEND | LOCK_EX);
+                @file_put_contents($logFile, date('Y-m-d H:i:s') . ' [repository] search="' . $searchTrim . '" category=' . $category . ' total=' . $total . "\n", FILE_APPEND | LOCK_EX);
             }
 
             // Calcular paginación
@@ -79,6 +80,7 @@ class EmailSubjectRepository
                     es.id,
                     es.platform_id,
                     es.subject_line,
+                    es.category,
                     es.active,
                     es.created_at,
                     es.updated_at,
@@ -116,6 +118,47 @@ class EmailSubjectRepository
                 'per_page' => $perPage,
                 'total_pages' => 1
             ];
+        }
+    }
+
+    /**
+     * Normalizar categoría de asunto.
+     */
+    public function normalizeCategory(?string $category): string
+    {
+        $c = strtolower(trim((string) $category));
+        return $c === 'modo_viaje' ? 'modo_viaje' : 'general';
+    }
+
+    /**
+     * Asuntos activos de Modo Viaje (texto exacto para consulta y lectura).
+     * @return string[]
+     */
+    public function getModoViajeSubjectLines(): array
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->query("
+                SELECT es.subject_line
+                FROM email_subjects es
+                INNER JOIN platforms p ON es.platform_id = p.id
+                WHERE es.active = 1
+                  AND es.category = 'modo_viaje'
+                  AND p.enabled = 1
+                ORDER BY es.id DESC
+            ");
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            $lines = [];
+            foreach ($rows as $row) {
+                $line = trim((string) ($row['subject_line'] ?? ''));
+                if ($line !== '') {
+                    $lines[] = $line;
+                }
+            }
+            return array_values(array_unique($lines));
+        } catch (PDOException $e) {
+            error_log('Error getModoViajeSubjectLines: ' . $e->getMessage());
+            return [];
         }
     }
 
@@ -170,6 +213,7 @@ class EmailSubjectRepository
                     es.id,
                     es.platform_id,
                     es.subject_line,
+                    es.category,
                     es.active,
                     es.created_at,
                     es.updated_at,
@@ -193,7 +237,7 @@ class EmailSubjectRepository
     /**
      * Guardar nuevo asunto
      * 
-     * @param array $data ['platform_id' => int, 'subject_line' => string]
+     * @param array $data ['platform_id' => int, 'subject_line' => string, 'category' => string]
      * @return int|false ID del asunto creado o false en caso de error
      */
     public function save(array $data): int|false
@@ -201,14 +245,16 @@ class EmailSubjectRepository
         self::$lastError = '';
         try {
             $db = Database::getConnection();
+            $category = $this->normalizeCategory($data['category'] ?? 'general');
             $stmt = $db->prepare("
-                INSERT INTO email_subjects (platform_id, subject_line, active)
-                VALUES (:platform_id, :subject_line, 1)
+                INSERT INTO email_subjects (platform_id, subject_line, category, active)
+                VALUES (:platform_id, :subject_line, :category, 1)
             ");
             
             $stmt->execute([
                 ':platform_id' => $data['platform_id'],
-                ':subject_line' => $data['subject_line']
+                ':subject_line' => $data['subject_line'],
+                ':category' => $category,
             ]);
             
             return (int) $db->lastInsertId();
@@ -227,17 +273,19 @@ class EmailSubjectRepository
      * Actualizar asunto
      * 
      * @param int $id
-     * @param array $data ['platform_id' => int, 'subject_line' => string]
+     * @param array $data ['platform_id' => int, 'subject_line' => string, 'category' => string]
      * @return bool
      */
     public function update(int $id, array $data): bool
     {
         try {
             $db = Database::getConnection();
+            $category = $this->normalizeCategory($data['category'] ?? 'general');
             $stmt = $db->prepare("
                 UPDATE email_subjects
                 SET platform_id = :platform_id,
                     subject_line = :subject_line,
+                    category = :category,
                     updated_at = NOW()
                 WHERE id = :id AND active = 1
             ");
@@ -245,7 +293,8 @@ class EmailSubjectRepository
             return $stmt->execute([
                 ':id' => $id,
                 ':platform_id' => $data['platform_id'],
-                ':subject_line' => $data['subject_line']
+                ':subject_line' => $data['subject_line'],
+                ':category' => $category,
             ]);
         } catch (PDOException $e) {
             error_log("Error al actualizar asunto de email: " . $e->getMessage());

@@ -14,6 +14,7 @@ use Gac\Repositories\PlatformRepository;
 use Gac\Repositories\UserAccessRepository;
 use Gac\Repositories\EmailAccountRepository;
 use Gac\Repositories\SettingsRepository;
+use Gac\Repositories\EmailSubjectRepository;
 
 class CodeService
 {
@@ -22,6 +23,7 @@ class CodeService
     private UserAccessRepository $userAccessRepository;
     private EmailAccountRepository $emailAccountRepository;
     private SettingsRepository $settingsRepository;
+    private EmailSubjectRepository $emailSubjectRepository;
 
     public function __construct()
     {
@@ -30,6 +32,7 @@ class CodeService
         $this->userAccessRepository = new UserAccessRepository();
         $this->emailAccountRepository = new EmailAccountRepository();
         $this->settingsRepository = new SettingsRepository();
+        $this->emailSubjectRepository = new EmailSubjectRepository();
     }
 
     /**
@@ -207,6 +210,61 @@ class CodeService
             'time_ago_text' => $lastEmail['time_ago_text'] ?? 'hace tiempo',
             'email_from' => $lastEmail['email_from'] ?? '',
             'email_subject' => $lastEmail['subject'] ?? $subject,
+            'email_body' => $lastEmail['email_body'] ?? ''
+        ];
+    }
+
+    /**
+     * Consultar correo Modo Viaje (vista /MViaje).
+     * Busca el último correo cuyo asunto coincida exactamente con alguno
+     * registrado en email_subjects.category = modo_viaje.
+     */
+    public function consultCodeModoViaje(string $userEmail): array
+    {
+        if (!filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
+            return [
+                'success' => false,
+                'message' => 'El email ingresado no es válido'
+            ];
+        }
+
+        $userEmailLower = strtolower(trim($userEmail));
+        $originFilter = null;
+        if (substr($userEmailLower, -11) === '@gmail.com') {
+            $originFilter = 'gmail';
+        } elseif (substr($userEmailLower, -12) === '@outlook.com' || substr($userEmailLower, -11) === '@hotmail.com' || substr($userEmailLower, -9) === '@live.com') {
+            $originFilter = 'outlook';
+        }
+
+        $subjects = $this->emailSubjectRepository->getModoViajeSubjectLines();
+        if ($subjects === []) {
+            return [
+                'success' => false,
+                'message' => 'No hay asuntos configurados en MODO VIAJE. Regístralos en Asuntos de correo.'
+            ];
+        }
+
+        $lastEmail = $this->codeRepository->findLastEmailBySubjects($userEmailLower, $subjects, $originFilter);
+
+        if (!$lastEmail || strtolower(trim($lastEmail['recipient_email'] ?? '')) !== $userEmailLower) {
+            return [
+                'success' => false,
+                'message' => 'No se encontraron correos de Modo Viaje para este correo. Espera unos segundos desde el envío y vuelve a consultar.'
+            ];
+        }
+
+        $minutesAgo = $lastEmail['minutes_ago'] ?? 0;
+        $receivedAtDisplay = $this->formatReceivedAtForPeru($lastEmail['received_at'] ?? '');
+        return [
+            'success' => true,
+            'message' => 'Correo encontrado',
+            'platform' => 'Modo Viaje',
+            'received_at' => $lastEmail['received_at'],
+            'received_at_display' => $receivedAtDisplay,
+            'minutes_ago' => $minutesAgo,
+            'time_ago_text' => $lastEmail['time_ago_text'] ?? 'hace tiempo',
+            'email_from' => $lastEmail['email_from'] ?? '',
+            'email_subject' => $lastEmail['subject'] ?? '',
             'email_body' => $lastEmail['email_body'] ?? ''
         ];
     }

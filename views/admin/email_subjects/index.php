@@ -18,6 +18,11 @@ $content = ob_start();
     </div>
 
     <div class="admin-content">
+        <?php $category_filter = $category_filter ?? 'general'; ?>
+        <div class="subject-category-tabs" id="subjectCategoryTabs">
+            <a href="/admin/email-subjects?category=general" class="subject-category-tab <?= $category_filter === 'general' ? 'active' : '' ?>" data-category="general">Generales</a>
+            <a href="/admin/email-subjects?category=modo_viaje" class="subject-category-tab <?= $category_filter === 'modo_viaje' ? 'active' : '' ?>" data-category="modo_viaje">MODO VIAJE</a>
+        </div>
         <div class="table-controls">
             <div class="table-controls-left">
                 <div class="search-input-wrapper">
@@ -95,6 +100,7 @@ $content = ob_start();
         <div class="modal-content">
             <form id="emailSubjectForm" class="admin-form email-subjects-form" novalidate>
                 <input type="hidden" id="subjectId" name="id" value="">
+                <input type="hidden" id="modal_category" name="category" value="<?= htmlspecialchars($category_filter ?? 'general') ?>">
                 
                 <div class="form-group">
                     <label for="modal_platform_id" class="form-label">
