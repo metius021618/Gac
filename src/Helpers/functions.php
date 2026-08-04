@@ -12,7 +12,7 @@ if (!function_exists('gac_version')) {
     function gac_version(): string
     {
         // Bump para forzar recarga de CSS/JS en clientes con cache.
-        return defined('GAC_VERSION') ? GAC_VERSION : '2.0.1-modo-viaje';
+        return defined('GAC_VERSION') ? GAC_VERSION : '2.0.2-lista-filtros';
     }
 }
 

@@ -17,28 +17,120 @@
     let isLoading = false;
 
     /**
-     * Conservar búsqueda actual al navegar por filtros de plataforma/tiempo.
+     * Término de búsqueda actual: prioriza el input (lo que el usuario escribe).
      */
-    function mergeCurrentSearchIntoFilterUrl(href) {
-        var url = new URL(href, window.location.origin);
-        var current = new URLSearchParams(window.location.search);
-        var search = current.get('search') || (searchInput && searchInput.value ? searchInput.value.trim() : '');
-        if (search) {
-            url.searchParams.set('search', search);
-        } else {
-            url.searchParams.delete('search');
+    function getCurrentSearchTerm() {
+        if (searchInput && searchInput.value.trim()) {
+            return searchInput.value.trim();
         }
-        return url.toString();
+        var qs = new URLSearchParams(window.location.search);
+        return (qs.get('search') || '').trim();
     }
 
-    function bindFilterLinksPreserveSearch(container) {
-        if (!container) return;
-        container.querySelectorAll('a[href]').forEach(function(link) {
-            if (link.id === 'listaCuentasTimeFilterCustom') return;
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                window.location.href = mergeCurrentSearchIntoFilterUrl(link.href);
+    /**
+     * Aplicar filtros de plataforma/tiempo por AJAX sin perder el buscador.
+     */
+    function applyListaCuentasFilters(overrides) {
+        overrides = overrides || {};
+        var qs = new URLSearchParams(window.location.search);
+        var search = getCurrentSearchTerm();
+        var params = {
+            search: search,
+            page: overrides.page != null ? overrides.page : 1,
+            per_page: (perPageSelect && perPageSelect.value) ? perPageSelect.value : (qs.get('per_page') || '15'),
+            platform_id: overrides.platform_id !== undefined ? overrides.platform_id : (qs.get('platform_id') || ''),
+            date_from: overrides.date_from !== undefined ? overrides.date_from : (qs.get('date_from') || ''),
+            date_to: overrides.date_to !== undefined ? overrides.date_to : (qs.get('date_to') || ''),
+            time_range: overrides.time_range !== undefined ? overrides.time_range : (qs.get('time_range') || '')
+        };
+
+        if (!window.SearchAJAX) {
+            var url = new URL('/admin/email-accounts', window.location.origin);
+            Object.keys(params).forEach(function(k) {
+                if (params[k] !== '' && params[k] !== null && params[k] !== undefined) {
+                    url.searchParams.set(k, String(params[k]));
+                }
             });
+            window.location.href = url.toString();
+            return;
+        }
+
+        window.SearchAJAX.performSearch('/admin/email-accounts', params, function(html) {
+            window.SearchAJAX.updateTableContent(html);
+            initTable();
+            updateEmailFiltersBar();
+            updateFilterLabelsFromUrl();
+            if (clearSearchBtn) {
+                clearSearchBtn.style.display = search ? 'flex' : 'none';
+            }
+            if (searchInput && searchInput.value !== search) {
+                searchInput.value = search;
+            }
+        });
+    }
+
+    function updateFilterLabelsFromUrl() {
+        var qs = new URLSearchParams(window.location.search);
+        var platformId = qs.get('platform_id') || '';
+        var platformValue = document.getElementById('listaCuentasPlatformValue');
+        if (platformValue) {
+            var label = 'Todas';
+            if (platformId) {
+                var drop = document.getElementById('listaCuentasPlatformDropdown');
+                var match = drop && drop.querySelector('a[href*="platform_id=' + platformId + '"]');
+                if (match) label = match.textContent.trim();
+            }
+            platformValue.textContent = label;
+        }
+        var timeValue = document.getElementById('listaCuentasTimeFilterValue');
+        if (timeValue) {
+            var tr = qs.get('time_range') || '';
+            if (tr === '7') timeValue.textContent = 'Últimos 7 días';
+            else if (tr === '30') timeValue.textContent = 'Últimos 30 días';
+            else if (tr === '90') timeValue.textContent = 'Últimos 90 días';
+            else if (tr === 'custom' || (qs.get('date_from') && qs.get('date_to'))) timeValue.textContent = 'Personalizado';
+            else timeValue.textContent = 'Todo';
+        }
+    }
+
+    /**
+     * Interceptar clicks de filtros (plataforma/tiempo) y conservar búsqueda.
+     */
+    function bindFilterLinksPreserveSearch(container) {
+        if (!container || container.dataset.filterBound === 'true') return;
+        container.dataset.filterBound = 'true';
+        container.addEventListener('click', function(e) {
+            var link = e.target.closest('a[href]');
+            if (!link || !container.contains(link)) return;
+            if (link.id === 'listaCuentasTimeFilterCustom') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            var url = new URL(link.href, window.location.origin);
+            var sp = url.searchParams;
+            var overrides = {
+                page: 1,
+                platform_id: sp.has('platform_id') ? (sp.get('platform_id') || '') : undefined,
+                date_from: sp.has('date_from') ? (sp.get('date_from') || '') : undefined,
+                date_to: sp.has('date_to') ? (sp.get('date_to') || '') : undefined,
+                time_range: sp.has('time_range') ? (sp.get('time_range') || '') : undefined
+            };
+
+            // Links "Todo" / "Todas" limpian esos params
+            if (container.id === 'listaCuentasPlatformDropdown') {
+                overrides.platform_id = sp.get('platform_id') || '';
+            }
+            if (container.id === 'listaCuentasTimeFilterDropdown') {
+                overrides.date_from = sp.get('date_from') || '';
+                overrides.date_to = sp.get('date_to') || '';
+                overrides.time_range = sp.get('time_range') || '';
+            }
+
+            var drop = container.closest('.analisis-filter-dropdown, .activity-filter-dropdown') || container;
+            drop.classList.remove('open');
+
+            applyListaCuentasFilters(overrides);
         });
     }
 
@@ -157,18 +249,13 @@
                 var from = inputFrom.value;
                 var to = inputTo.value;
                 if (!from || !to) return;
-                var params = new URLSearchParams(window.location.search);
-                params.set('date_from', from);
-                params.set('date_to', to);
-                params.set('time_range', 'custom');
-                params.set('page', '1');
-                var search = searchInput && searchInput.value ? searchInput.value.trim() : params.get('search') || '';
-                if (search) {
-                    params.set('search', search);
-                } else {
-                    params.delete('search');
-                }
-                window.location.href = '/admin/email-accounts?' + params.toString();
+                closeModal();
+                applyListaCuentasFilters({
+                    date_from: from,
+                    date_to: to,
+                    time_range: 'custom',
+                    page: 1
+                });
             });
         }
     }
@@ -302,13 +389,16 @@
                     } else if (clearSearchBtn) {
                         clearSearchBtn.style.display = 'none';
                     }
+                    updateFilterLabelsFromUrl();
                 }
             });
 
             // Filtro plataforma: ahora es dropdown con links (estilo Análisis); no hay change, se recarga por URL.
             initListaCuentasPlatformDropdown();
+            updateFilterLabelsFromUrl();
         } else {
             console.error('SearchAJAX no está disponible');
+            initListaCuentasPlatformDropdown();
         }
     }
 
