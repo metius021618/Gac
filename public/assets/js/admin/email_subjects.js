@@ -23,11 +23,13 @@
     const modalCategoryInput = document.getElementById('modal_category');
 
     function getActiveCategory() {
-        const params = new URLSearchParams(window.location.search);
-        const fromUrl = (params.get('category') || '').trim();
+        var switchEl = document.querySelector('.subject-category-switch');
+        if (switchEl && switchEl.getAttribute('data-active') === 'modo_viaje') return 'modo_viaje';
+        var params = new URLSearchParams(window.location.search);
+        var fromUrl = (params.get('category') || '').trim();
         if (fromUrl === 'modo_viaje') return 'modo_viaje';
-        const activeTab = document.querySelector('.subject-category-tab.active');
-        if (activeTab && activeTab.dataset.category === 'modo_viaje') return 'modo_viaje';
+        var activeOpt = document.querySelector('.subject-category-option.is-active');
+        if (activeOpt && activeOpt.dataset.category === 'modo_viaje') return 'modo_viaje';
         if (modalCategoryInput && modalCategoryInput.value === 'modo_viaje') return 'modo_viaje';
         return 'general';
     }
@@ -52,6 +54,46 @@
             initSearch();
             initPagination();
         }
+
+        initCategorySwitch();
+    }
+
+    /**
+     * Animación del slider Generales / Modo Viaje antes de navegar.
+     */
+    function initCategorySwitch() {
+        var root = document.querySelector('.subject-category-switch');
+        if (!root) return;
+        var options = root.querySelectorAll('.subject-category-option');
+        var navigating = false;
+
+        options.forEach(function (opt) {
+            opt.addEventListener('click', function (e) {
+                var category = opt.getAttribute('data-category');
+                var href = opt.getAttribute('href');
+                if (!category || !href) return;
+
+                if (opt.classList.contains('is-active') || root.getAttribute('data-active') === category) {
+                    e.preventDefault();
+                    return;
+                }
+
+                e.preventDefault();
+                if (navigating) return;
+                navigating = true;
+
+                root.setAttribute('data-active', category);
+                options.forEach(function (o) {
+                    var on = o.getAttribute('data-category') === category;
+                    o.classList.toggle('is-active', on);
+                    o.setAttribute('aria-selected', on ? 'true' : 'false');
+                });
+
+                window.setTimeout(function () {
+                    window.location.href = href;
+                }, 300);
+            });
+        });
     }
 
     /**

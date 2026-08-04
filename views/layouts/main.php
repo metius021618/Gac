@@ -11,11 +11,11 @@
     <link rel="apple-touch-icon" href="/assets/imagenes/pocooofinal.png">
     
     <!-- CSS -->
-    <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="stylesheet" href="/assets/css/components/modal.css">
+    <link rel="stylesheet" href="/assets/css/main.css?v=<?= htmlspecialchars(gac_version()) ?>">
+    <link rel="stylesheet" href="/assets/css/components/modal.css?v=<?= htmlspecialchars(gac_version()) ?>">
     <?php if (isset($additional_css)): ?>
         <?php foreach ($additional_css as $css): ?>
-            <link rel="stylesheet" href="<?= $css ?>">
+            <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=<?= htmlspecialchars(gac_version()) ?>">
         <?php endforeach; ?>
     <?php endif; ?>
     
@@ -175,11 +175,11 @@
     <?php endif; ?>
 
     <!-- JavaScript -->
-    <script src="/assets/js/components/modal.js"></script>
-    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/components/modal.js?v=<?= htmlspecialchars(gac_version()) ?>"></script>
+    <script src="/assets/js/main.js?v=<?= htmlspecialchars(gac_version()) ?>"></script>
     <?php if (isset($additional_js)): ?>
         <?php foreach ($additional_js as $js): ?>
-            <script src="<?= $js ?>"></script>
+            <script src="<?= htmlspecialchars($js) ?>?v=<?= htmlspecialchars(gac_version()) ?>"></script>
         <?php endforeach; ?>
     <?php endif; ?>
 </body>
