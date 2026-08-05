@@ -1,0 +1,19 @@
+# Reglas GAC / SISTEMA_GAC
+
+## Tras cada cambio de código
+1. `git add .`
+2. `git commit -m "..."`
+3. `git push origin main`
+4. Pull automático en producción (SiteGround):
+
+```powershell
+ssh -o BatchMode=yes -o ConnectTimeout=15 -p 18765 u2553-kpdyyrivjtwb@gtxm1328.siteground.biz 'cd ~/www/new.pocoyoni.com; git pull origin main; git log -1 --oneline'
+```
+
+## Servidor
+- SSH: `u2553-kpdyyrivjtwb@gtxm1328.siteground.biz` puerto `18765`
+- Proyecto: `~/www/new.pocoyoni.com`
+- Origin: `https://github.com/metius021618/Gac`
+
+## Docs
+Actualizar `documentacion/` cuando el cambio lo requiera. Responder en español.
