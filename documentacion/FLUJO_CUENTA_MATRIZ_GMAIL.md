@@ -92,7 +92,7 @@ Ese valor se guarda en el dict como `to_primary` y luego en BD como `recipient_e
 
 El cron usa el **refresh_token** guardado en `email_accounts` para la cuenta enlazada en `gmail_matrix`. Si ese token expira o se revoca (cambio de contraseña, revocación en Google, etc.):
 
-1. **Reautoriza desde el panel:** Admin → **Configuración** → botón **"Configurar cuenta Gmail matriz"** o **"Cambiar cuenta Gmail matriz"**.
+1. **Reautoriza desde el panel:** Admin → **Configuración** → botón **"Configurar cuenta Gmail matriz"** o **"Cambiar Cuenta"**.
 2. Inicia sesión en Google y acepta los permisos. Así se guarda un **nuevo** refresh_token en la misma cuenta que usa el cron.
 3. El cron lee la cuenta desde `gmail_matrix` → `email_accounts`; si reautorizas desde Configuración, se actualiza esa misma fila.
 
@@ -105,4 +105,4 @@ Si inicias sesión desde otra pantalla (por ejemplo "Correos registrados") sin u
 - **API:** Gmail API (readonly). La que ya usamos está bien; no hace falta otra.
 - **Gestión:** Solo desde **Configuración** en el panel: un solo botón para configurar o cambiar la cuenta Gmail matriz.
 - **Flujo:** Configurar en panel → OAuth → se guarda una sola cuenta Gmail en `email_accounts` y se enlaza en `gmail_matrix` → el cron la lee con Gmail API, saca el destinatario de los headers y guarda códigos por `recipient_email`.
-- **Token expirado/revocado:** Reautorizar siempre desde **Configuración → Configurar/Cambiar cuenta Gmail matriz** para que se actualice el token que usa el cron.
+- **Token expirado/revocado:** Reautorizar siempre desde **Configuración → Configurar cuenta Gmail matriz / Cambiar Cuenta** para que se actualice el token que usa el cron.

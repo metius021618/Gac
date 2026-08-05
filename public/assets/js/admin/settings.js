@@ -34,7 +34,7 @@
     }
 
     /**
-     * Al hacer clic en "Cambiar cuenta Gmail matriz" mostrar modal de confirmación
+     * Al hacer clic en "Cambiar Cuenta" mostrar modal de confirmación
      */
     function initGmailMatrixConfirm() {
         const btn = document.getElementById('gmailMatrixChangeBtn');

@@ -26,7 +26,7 @@ Solo puede haber **una** cuenta Gmail matriz. Se configura desde ConfiguraciÃ³
 
 1. Entra al panel de admin (sesiÃ³n iniciada).
 2. Ve a **ConfiguraciÃ³n** (menÃº del panel).
-3. En la secciÃ³n **â€œConfigurar cuenta Google (Gmail matriz)â€** pulsa **â€œConfigurar cuenta Gmail matrizâ€** (o **â€œCambiar cuenta Gmail matrizâ€** si ya hay una).
+3. En la sección **"Configurar cuenta Google (Gmail matriz)"** pulsa **"Configurar cuenta Gmail matriz"** (o **"Cambiar Cuenta"** si ya hay una).
 4. Inicia sesiÃ³n en Google con la cuenta Gmail que recibe los reenvÃ­os y acepta los permisos de solo lectura.
 5. Tras autorizar, volverÃ¡s a ConfiguraciÃ³n; la cuenta quedarÃ¡ guardada como la Ãºnica Gmail. Si habÃ­a otra, se sustituye.
 
