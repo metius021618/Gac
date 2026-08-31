@@ -1,17 +1,16 @@
 /**
- * GAC - Selector segmentado Código temporal / Actualizar hogar (sin recargar página)
+ * GAC - Selector Código temporal / Actualizar hogar (sin recargar ni cambiar URL)
+ * La URL permanece siempre en /hogar.
  */
 (function () {
     'use strict';
 
     var MODE_META = {
         hogar: {
-            title: 'Consulta tu código Netflix',
-            path: '/hogar'
+            title: 'Consulta tu código Netflix'
         },
         viaje: {
-            title: 'Actualizar hogar',
-            path: '/MViaje'
+            title: 'Actualizar hogar'
         }
     };
 
@@ -20,7 +19,7 @@
         return mode === 'viaje' ? 'viaje' : 'hogar';
     }
 
-    function applyMode(root, mode, updateUrl) {
+    function applyMode(root, mode) {
         if (!root || !MODE_META[mode]) return;
 
         root.setAttribute('data-active', mode);
@@ -36,13 +35,6 @@
             titleEl.textContent = MODE_META[mode].title;
         }
 
-        if (updateUrl !== false && window.history && window.history.replaceState) {
-            var targetPath = MODE_META[mode].path;
-            if (window.location.pathname !== targetPath) {
-                window.history.replaceState({ consultMode: mode }, '', targetPath);
-            }
-        }
-
         document.dispatchEvent(new CustomEvent('hogarConsultModeChange', { detail: { mode: mode } }));
     }
 
@@ -51,21 +43,15 @@
         if (!root) return;
 
         var initial = root.getAttribute('data-initial-mode') || getActiveMode(root);
-        applyMode(root, initial === 'viaje' ? 'viaje' : 'hogar', false);
+        applyMode(root, initial === 'viaje' ? 'viaje' : 'hogar');
 
         var options = root.querySelectorAll('.hogar-mode-option');
         options.forEach(function (opt) {
             opt.addEventListener('click', function () {
                 var mode = opt.getAttribute('data-mode');
                 if (!mode || mode === getActiveMode(root)) return;
-                applyMode(root, mode === 'viaje' ? 'viaje' : 'hogar', true);
+                applyMode(root, mode === 'viaje' ? 'viaje' : 'hogar');
             });
-        });
-
-        window.addEventListener('popstate', function () {
-            var path = window.location.pathname || '';
-            var mode = path.toLowerCase().indexOf('/mviaje') !== -1 ? 'viaje' : 'hogar';
-            applyMode(root, mode, false);
         });
     }
 

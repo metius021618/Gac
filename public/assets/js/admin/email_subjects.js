@@ -50,8 +50,8 @@
     function categoryModalTitle(isEdit) {
         var prefix = isEdit ? 'Editar' : 'Nuevo';
         var c = getActiveCategory();
-        if (c === 'modo_viaje') return prefix + ' Asunto MODO VIAJE';
-        if (c === 'modo_hogar') return prefix + ' Asunto MODO HOGAR';
+        if (c === 'modo_viaje') return prefix + ' Asunto Actualizar Hogar';
+        if (c === 'modo_hogar') return prefix + ' Asunto Código Temporal';
         return prefix + ' Asunto';
     }
 
@@ -80,7 +80,7 @@
     }
 
     /**
-     * Animación del slider Generales / Modo Hogar / Modo Viaje antes de navegar.
+     * Animación del slider Generales / Código Temporal / Actualizar Hogar antes de navegar.
      */
     function initCategorySwitch() {
         var root = document.querySelector('.subject-category-switch');

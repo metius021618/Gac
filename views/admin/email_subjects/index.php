@@ -32,12 +32,12 @@ $content = ob_start();
                        class="subject-category-option <?= $category_filter === 'modo_hogar' ? 'is-active' : '' ?>"
                        data-category="modo_hogar"
                        role="tab"
-                       aria-selected="<?= $category_filter === 'modo_hogar' ? 'true' : 'false' ?>">Modo Hogar</a>
+                       aria-selected="<?= $category_filter === 'modo_hogar' ? 'true' : 'false' ?>">Código Temporal</a>
                     <a href="/admin/email-subjects?category=modo_viaje"
                        class="subject-category-option <?= $category_filter === 'modo_viaje' ? 'is-active' : '' ?>"
                        data-category="modo_viaje"
                        role="tab"
-                       aria-selected="<?= $category_filter === 'modo_viaje' ? 'true' : 'false' ?>">Modo Viaje</a>
+                       aria-selected="<?= $category_filter === 'modo_viaje' ? 'true' : 'false' ?>">Actualizar Hogar</a>
                 </div>
             </div>
         </div>

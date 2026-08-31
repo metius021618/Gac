@@ -28,10 +28,8 @@ class MViajeController
             return;
         }
 
-        $this->renderView('hogar/index', [
-            'title' => 'Actualizar hogar',
-            'initial_mode' => 'viaje',
-        ]);
+        // La UI pública vive solo en /hogar; /MViaje queda como API POST.
+        redirect('/hogar');
     }
 
     private function processConsult(Request $request): void
