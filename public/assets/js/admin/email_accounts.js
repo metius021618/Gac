@@ -77,8 +77,18 @@
             var label = 'Todas';
             if (platformId) {
                 var drop = document.getElementById('listaCuentasPlatformDropdown');
-                var match = drop && drop.querySelector('a[href*="platform_id=' + platformId + '"]');
-                if (match) label = match.textContent.trim();
+                var links = drop ? drop.querySelectorAll('a[href]') : [];
+                for (var i = 0; i < links.length; i++) {
+                    try {
+                        var linkParams = new URL(links[i].href, window.location.origin).searchParams;
+                        if ((linkParams.get('platform_id') || '') === String(platformId)) {
+                            label = (links[i].textContent || '').trim() || 'Todas';
+                            break;
+                        }
+                    } catch (err) {
+                        // ignore invalid href
+                    }
+                }
             }
             platformValue.textContent = label;
         }
