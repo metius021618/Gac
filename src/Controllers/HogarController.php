@@ -32,7 +32,8 @@ class HogarController
         }
 
         $this->renderView('hogar/index', [
-            'title' => 'Consulta tu código Netflix'
+            'title' => 'Consulta tu código Netflix',
+            'initial_mode' => 'hogar',
         ]);
     }
 

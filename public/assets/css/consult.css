@@ -168,17 +168,21 @@
     justify-content: center;
     text-align: center;
     padding: 12px 14px;
+    margin: 0;
     border: none;
     border-radius: 999px;
     background: transparent !important;
     color: rgba(255, 255, 255, 0.7) !important;
     text-decoration: none !important;
+    font-family: inherit;
     font-size: 0.9rem;
     font-weight: 600;
     line-height: 1.25;
     cursor: pointer;
     transition: color 0.25s ease;
     white-space: normal;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .hogar-mode-option:hover {

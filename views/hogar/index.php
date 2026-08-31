@@ -1,33 +1,33 @@
 <?php
 /**
- * GAC - Vista Hogar - Consulta código temporal Netflix
- * 
- * Vista simplificada para consultar correos con asuntos de categoría Modo Hogar.
+ * GAC - Vista consulta Hogar / Actualizar hogar (tabs sin recarga)
  */
+
+$initial_mode = ($initial_mode ?? 'hogar') === 'viaje' ? 'viaje' : 'hogar';
+$card_title_hogar = 'Consulta tu código Netflix';
+$card_title_viaje = 'Actualizar hogar';
 
 $content = ob_start();
 ?>
 
 <div class="consult-container">
     <div class="consult-wrapper">
-        <!-- Logo Section (circular) -->
         <div class="logo-section">
             <div class="consult-logo-wrap">
                 <img src="/assets/imagenes/logogato.jpeg" alt="GAC" class="consult-logo">
             </div>
         </div>
 
-        <!-- Main Card -->
         <div class="consult-card">
             <div class="card-header">
-                <h1 class="card-title">Consulta tu código Netflix</h1>
+                <h1 class="card-title" id="consultCardTitle"><?= htmlspecialchars($initial_mode === 'viaje' ? $card_title_viaje : $card_title_hogar) ?></h1>
             </div>
 
-            <div class="hogar-mode-switch" data-active="hogar">
+            <div class="hogar-mode-switch" data-active="<?= htmlspecialchars($initial_mode) ?>" data-initial-mode="<?= htmlspecialchars($initial_mode) ?>">
                 <div class="hogar-mode-track" role="tablist" aria-label="Modo de consulta">
                     <span class="hogar-mode-slider" aria-hidden="true"></span>
-                    <a href="/hogar" class="hogar-mode-option is-active" data-mode="hogar" role="tab" aria-selected="true">Código temporal</a>
-                    <a href="/MViaje" class="hogar-mode-option" data-mode="viaje" role="tab" aria-selected="false">Actualizar hogar</a>
+                    <button type="button" class="hogar-mode-option <?= $initial_mode === 'hogar' ? 'is-active' : '' ?>" data-mode="hogar" role="tab" aria-selected="<?= $initial_mode === 'hogar' ? 'true' : 'false' ?>">Código temporal</button>
+                    <button type="button" class="hogar-mode-option <?= $initial_mode === 'viaje' ? 'is-active' : '' ?>" data-mode="viaje" role="tab" aria-selected="<?= $initial_mode === 'viaje' ? 'true' : 'false' ?>">Actualizar hogar</button>
                 </div>
             </div>
 
@@ -37,8 +37,7 @@ $content = ob_start();
                 Si no llega el correo, puedes solicitar el código nuevamente.
             </div>
 
-            <!-- Form -->
-            <form id="hogarForm" class="consult-form" novalidate>
+            <form id="consultForm" class="consult-form" novalidate>
                 <div class="form-group">
                     <label for="email" class="form-label">
                         <svg class="form-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -47,11 +46,11 @@ $content = ob_start();
                         </svg>
                         Correo
                     </label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        name="email" 
-                        class="form-input" 
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
                         placeholder="tu@correo.com"
                         required
                         autocomplete="email"
@@ -60,7 +59,7 @@ $content = ob_start();
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-submit" id="submitBtn">
-                    <span class="btn-text">Código temporal</span>
+                    <span class="btn-text">Consultar</span>
                     <span class="btn-loader" id="btnLoader">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 12a9 9 0 11-6.219-8.56"/>
@@ -69,8 +68,7 @@ $content = ob_start();
                 </button>
             </form>
         </div>
-        
-        <!-- Modal de Email Completo -->
+
         <div id="emailModal" class="email-modal hidden">
             <div class="email-modal-overlay"></div>
             <div class="email-modal-container">
@@ -110,8 +108,8 @@ $content = ob_start();
 <?php
 $content = ob_get_clean();
 
-$title = $title ?? 'Consulta tu código Netflix';
-$description = 'Consulta tu código temporal de Netflix. Espera 5–15 segundos desde el envío del código antes de consultar.';
+$title = $title ?? ($initial_mode === 'viaje' ? 'Actualizar hogar' : 'Consulta tu código Netflix');
+$description = 'Consulta tu código temporal. Espera 5–15 segundos desde el envío del código antes de consultar.';
 $show_nav = false;
 $footer_text = 'Tienes alguna duda, comunicate conmigo';
 $footer_contact = false;
@@ -119,7 +117,7 @@ $footer_whatsapp = true;
 $footer_whatsapp_number = '920859333';
 $footer_whatsapp_text = 'Hola, tengo una duda';
 $additional_css = ['/assets/css/consult.css'];
-$additional_js = ['/assets/js/hogar-mode-switch.js', '/assets/js/hogar.js'];
+$additional_js = ['/assets/js/hogar-mode-switch.js', '/assets/js/hogar-consult.js'];
 
 require base_path('views/layouts/main.php');
 ?>

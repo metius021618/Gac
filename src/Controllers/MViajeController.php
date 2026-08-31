@@ -28,8 +28,9 @@ class MViajeController
             return;
         }
 
-        $this->renderView('mviaje/index', [
-            'title' => 'Modo Viaje'
+        $this->renderView('hogar/index', [
+            'title' => 'Actualizar hogar',
+            'initial_mode' => 'viaje',
         ]);
     }
 
