@@ -26,6 +26,16 @@ if (!function_exists('gac_name')) {
     }
 }
 
+if (!function_exists('gac_whatsapp_wa_me')) {
+    /**
+     * Número WhatsApp para enlaces wa.me (Perú: 51 + celular sin +).
+     */
+    function gac_whatsapp_wa_me(): string
+    {
+        return '51940709976';
+    }
+}
+
 if (!function_exists('base_path')) {
     /**
      * Obtener ruta base del proyecto

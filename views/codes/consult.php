@@ -153,7 +153,6 @@ $show_nav = false;
 $footer_text = 'Tienes alguna duda, comunicate conmigo';
 $footer_contact = false;
 $footer_whatsapp = true;
-$footer_whatsapp_number = '920859333';
 $footer_whatsapp_text = 'Hola, tengo una duda';
 $additional_css = ['/assets/css/consult.css'];
 $additional_js = ['/assets/js/consult.js'];

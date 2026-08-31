@@ -151,7 +151,7 @@
                 </a>
                 <?php endif; ?>
                 <?php if (isset($footer_whatsapp) && $footer_whatsapp): ?>
-                <a href="https://wa.me/<?= isset($footer_whatsapp_number) ? htmlspecialchars($footer_whatsapp_number) : '' ?>?text=<?= urlencode(isset($footer_whatsapp_text) ? $footer_whatsapp_text : 'Hola') ?>" 
+                <a href="https://wa.me/<?= htmlspecialchars($footer_whatsapp_number ?? gac_whatsapp_wa_me()) ?>?text=<?= urlencode(isset($footer_whatsapp_text) ? $footer_whatsapp_text : 'Hola') ?>" 
                    class="footer-whatsapp" 
                    target="_blank" 
                    rel="noopener noreferrer">
