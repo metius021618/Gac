@@ -26,8 +26,8 @@ $content = ob_start();
             <div class="hogar-mode-switch" data-active="hogar">
                 <div class="hogar-mode-track" role="tablist" aria-label="Modo de consulta">
                     <span class="hogar-mode-slider" aria-hidden="true"></span>
-                    <a href="/hogar" class="hogar-mode-option is-active" data-mode="hogar" role="tab" aria-selected="true">Código temporal Netflix</a>
-                    <a href="/MViaje" class="hogar-mode-option" data-mode="viaje" role="tab" aria-selected="false">Modo Viaje</a>
+                    <a href="/hogar" class="hogar-mode-option is-active" data-mode="hogar" role="tab" aria-selected="true">Código temporal</a>
+                    <a href="/MViaje" class="hogar-mode-option" data-mode="viaje" role="tab" aria-selected="false">Actualizar hogar</a>
                 </div>
             </div>
 
