@@ -7,13 +7,14 @@
 4. Pull automático en producción (SiteGround):
 
 ```powershell
-ssh -o BatchMode=yes -o ConnectTimeout=15 -p 18765 u2553-kpdyyrivjtwb@gtxm1328.siteground.biz 'cd ~/www/new.pocoyoni.com; git pull origin main; git log -1 --oneline'
+ssh -o BatchMode=yes -o ConnectTimeout=15 -p 18765 u2553-kpdyyrivjtwb@gtxm1328.siteground.biz 'cd ~/www/new.pocoyoni.com; git pull origin main; bash scripts/sync_public_html_assets.sh; git log -1 --oneline'
 ```
 
 ## Servidor
 - SSH: `u2553-kpdyyrivjtwb@gtxm1328.siteground.biz` puerto `18765`
 - Proyecto: `~/www/new.pocoyoni.com`
 - Origin: `https://github.com/metius021618/Gac`
+- **Importante:** el document root sirve `public_html/assets`. Tras el pull hay que sincronizar `public/assets` → `public_html/assets` (`scripts/sync_public_html_assets.sh`).
 
 ## Docs
 Actualizar `documentacion/` cuando el cambio lo requiera. Responder en español.
