@@ -246,7 +246,7 @@ class CodeRepository
     }
 
     /**
-     * Buscar el último correo por asunto exacto y destinatario (para vista Hogar Netflix).
+     * Buscar el último correo por asunto exacto y destinatario.
      *
      * @param string $recipientEmail Email del destinatario
      * @param string $subject Asunto exacto a buscar (ej. "Tu código de acceso temporal de Netflix")

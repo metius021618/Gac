@@ -23,15 +23,36 @@
     const modalCategoryInput = document.getElementById('modal_category');
 
     function getActiveCategory() {
+        var allowed = { general: true, modo_hogar: true, modo_viaje: true };
+        function ok(c) {
+            c = (c || '').trim();
+            return allowed[c] ? c : '';
+        }
+
         var switchEl = document.querySelector('.subject-category-switch');
-        if (switchEl && switchEl.getAttribute('data-active') === 'modo_viaje') return 'modo_viaje';
+        var fromSwitch = ok(switchEl && switchEl.getAttribute('data-active'));
+        if (fromSwitch) return fromSwitch;
+
         var params = new URLSearchParams(window.location.search);
-        var fromUrl = (params.get('category') || '').trim();
-        if (fromUrl === 'modo_viaje') return 'modo_viaje';
+        var fromUrl = ok(params.get('category'));
+        if (fromUrl) return fromUrl;
+
         var activeOpt = document.querySelector('.subject-category-option.is-active');
-        if (activeOpt && activeOpt.dataset.category === 'modo_viaje') return 'modo_viaje';
-        if (modalCategoryInput && modalCategoryInput.value === 'modo_viaje') return 'modo_viaje';
+        var fromOpt = ok(activeOpt && activeOpt.dataset.category);
+        if (fromOpt) return fromOpt;
+
+        var fromModal = ok(modalCategoryInput && modalCategoryInput.value);
+        if (fromModal) return fromModal;
+
         return 'general';
+    }
+
+    function categoryModalTitle(isEdit) {
+        var prefix = isEdit ? 'Editar' : 'Nuevo';
+        var c = getActiveCategory();
+        if (c === 'modo_viaje') return prefix + ' Asunto MODO VIAJE';
+        if (c === 'modo_hogar') return prefix + ' Asunto MODO HOGAR';
+        return prefix + ' Asunto';
     }
 
     /** Función de búsqueda (se asigna en initSearch, la usa la paginación) */
@@ -59,7 +80,7 @@
     }
 
     /**
-     * Animación del slider Generales / Modo Viaje antes de navegar.
+     * Animación del slider Generales / Modo Hogar / Modo Viaje antes de navegar.
      */
     function initCategorySwitch() {
         var root = document.querySelector('.subject-category-switch');
@@ -137,7 +158,7 @@
         
         // Actualizar título
         if (modalTitle) {
-            modalTitle.textContent = getActiveCategory() === 'modo_viaje' ? 'Nuevo Asunto MODO VIAJE' : 'Nuevo Asunto';
+            modalTitle.textContent = categoryModalTitle(false);
         }
 
         if (modalCategoryInput) {
@@ -180,12 +201,12 @@
         }
 
         if (modalCategoryInput) {
-            modalCategoryInput.value = category === 'modo_viaje' ? 'modo_viaje' : 'general';
+            modalCategoryInput.value = category;
         }
         
         // Actualizar título
         if (modalTitle) {
-            modalTitle.textContent = category === 'modo_viaje' ? 'Editar Asunto MODO VIAJE' : 'Editar Asunto';
+            modalTitle.textContent = categoryModalTitle(true);
         }
         
         // Limpiar errores

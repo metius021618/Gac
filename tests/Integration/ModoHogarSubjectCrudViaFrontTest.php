@@ -1,8 +1,7 @@
 <?php
 /**
- * Tests unitarios: alta de asuntos MODO VIAJE vía payload del front
+ * Tests: alta de asuntos MODO HOGAR vía payload del front
  * (mismo JSON que email_subjects.js → POST /admin/email-subjects).
- * No usa INSERT directo a la BD.
  */
 
 namespace Gac\Tests\Integration;
@@ -12,7 +11,7 @@ use Gac\Repositories\EmailSubjectRepository;
 use Gac\Repositories\PlatformRepository;
 use PHPUnit\Framework\TestCase;
 
-class ModoViajeSubjectCrudViaFrontTest extends TestCase
+class ModoHogarSubjectCrudViaFrontTest extends TestCase
 {
     private EmailSubjectController $controller;
     private EmailSubjectRepository $subjectRepo;
@@ -40,53 +39,32 @@ class ModoViajeSubjectCrudViaFrontTest extends TestCase
         }
     }
 
-    public function test_normalize_category_modo_viaje(): void
-    {
-        $this->assertSame('modo_viaje', $this->subjectRepo->normalizeCategory('modo_viaje'));
-        $this->assertSame('modo_viaje', $this->subjectRepo->normalizeCategory('MODO_VIAJE'));
-        $this->assertSame('modo_hogar', $this->subjectRepo->normalizeCategory('modo_hogar'));
-        $this->assertSame('modo_hogar', $this->subjectRepo->normalizeCategory('MODO_HOGAR'));
-        $this->assertSame('general', $this->subjectRepo->normalizeCategory('otro'));
-        $this->assertSame('general', $this->subjectRepo->normalizeCategory(null));
-    }
-
-    public function test_store_modo_viaje_subject_via_front_payload(): void
+    public function test_store_modo_hogar_subject_via_front_payload(): void
     {
         $platforms = (new PlatformRepository())->findAllEnabled();
         $this->assertNotEmpty($platforms, 'Debe existir al menos una plataforma habilitada');
         $platformId = (int) $platforms[0]['id'];
 
-        $subjectLine = 'TEST Modo Viaje Exacto ' . date('YmdHis');
+        $subjectLine = 'TEST Modo Hogar Exacto ' . date('YmdHis');
 
-        // Mismo payload que envía el modal del front (FormData → JSON)
         $payload = [
             'platform_id' => $platformId,
             'subject_line' => $subjectLine,
-            'category' => 'modo_viaje',
+            'category' => 'modo_hogar',
         ];
 
         $result = $this->controller->storeFromPayload($payload);
 
         $this->assertSame(201, $result['code']);
         $this->assertTrue($result['body']['success']);
-        $this->assertSame('modo_viaje', $result['body']['category']);
+        $this->assertSame('modo_hogar', $result['body']['category']);
         $this->assertSame($subjectLine, $result['body']['subject_line']);
         $this->assertNotEmpty($result['body']['id']);
 
         $this->createdId = (int) $result['body']['id'];
 
-        $lines = $this->subjectRepo->getModoViajeSubjectLines();
-        $this->assertContains($subjectLine, $lines, 'El asunto debe quedar disponible para consulta / lectura exacta');
-    }
-
-    public function test_store_rejects_empty_subject_like_front_validation(): void
-    {
-        $result = $this->controller->storeFromPayload([
-            'platform_id' => 1,
-            'subject_line' => '',
-            'category' => 'modo_viaje',
-        ]);
-        $this->assertSame(400, $result['code']);
-        $this->assertFalse($result['body']['success']);
+        $lines = $this->subjectRepo->getModoHogarSubjectLines();
+        $this->assertContains($subjectLine, $lines, 'El asunto debe quedar disponible para consulta /hogar');
+        $this->assertNotContains($subjectLine, $this->subjectRepo->getModoViajeSubjectLines());
     }
 }

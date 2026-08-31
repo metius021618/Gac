@@ -1,6 +1,6 @@
 /**
- * GAC - JavaScript Vista Hogar (Consulta código temporal Netflix)
- * Solo busca correos con asunto "Tu código de acceso temporal de Netflix"
+ * GAC - JavaScript Vista Hogar
+ * Consulta correos con asuntos category=modo_hogar (coincidencia exacta).
  */
 
 (function() {
@@ -64,7 +64,7 @@
                 const emailBody = data.email_body || '<p style="color: #ffc107; padding: 20px; text-align: center;">El contenido del email no está disponible en este momento. Por favor intenta más tarde.</p>';
                 showEmailModal({ ...data, email_body: emailBody });
             } else {
-                showError(data.message || 'No se encontraron correos con el código temporal de Netflix.');
+                showError(data.message || 'No se encontraron correos de Modo Hogar para este correo.');
             }
         } catch (error) {
             console.error('Error:', error);

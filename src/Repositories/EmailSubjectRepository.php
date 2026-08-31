@@ -122,31 +122,42 @@ class EmailSubjectRepository
     }
 
     /**
-     * Normalizar categoría de asunto.
+     * Normalizar categoría de asunto: general | modo_hogar | modo_viaje.
      */
     public function normalizeCategory(?string $category): string
     {
         $c = strtolower(trim((string) $category));
-        return $c === 'modo_viaje' ? 'modo_viaje' : 'general';
+        if ($c === 'modo_viaje') {
+            return 'modo_viaje';
+        }
+        if ($c === 'modo_hogar') {
+            return 'modo_hogar';
+        }
+        return 'general';
     }
 
     /**
-     * Asuntos activos de Modo Viaje (texto exacto para consulta y lectura).
+     * Asuntos activos de una categoría (texto exacto para consulta /hogar o /MViaje).
      * @return string[]
      */
-    public function getModoViajeSubjectLines(): array
+    public function getSubjectLinesByCategory(string $category): array
     {
+        $category = $this->normalizeCategory($category);
+        if ($category === 'general') {
+            return [];
+        }
         try {
             $db = Database::getConnection();
-            $stmt = $db->query("
+            $stmt = $db->prepare("
                 SELECT es.subject_line
                 FROM email_subjects es
                 INNER JOIN platforms p ON es.platform_id = p.id
                 WHERE es.active = 1
-                  AND es.category = 'modo_viaje'
+                  AND es.category = :category
                   AND p.enabled = 1
                 ORDER BY es.id DESC
             ");
+            $stmt->execute([':category' => $category]);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
             $lines = [];
             foreach ($rows as $row) {
@@ -157,9 +168,27 @@ class EmailSubjectRepository
             }
             return array_values(array_unique($lines));
         } catch (PDOException $e) {
-            error_log('Error getModoViajeSubjectLines: ' . $e->getMessage());
+            error_log('Error getSubjectLinesByCategory: ' . $e->getMessage());
             return [];
         }
+    }
+
+    /**
+     * Asuntos activos de Modo Hogar (consulta /hogar).
+     * @return string[]
+     */
+    public function getModoHogarSubjectLines(): array
+    {
+        return $this->getSubjectLinesByCategory('modo_hogar');
+    }
+
+    /**
+     * Asuntos activos de Modo Viaje (consulta /MViaje).
+     * @return string[]
+     */
+    public function getModoViajeSubjectLines(): array
+    {
+        return $this->getSubjectLinesByCategory('modo_viaje');
     }
 
     /**

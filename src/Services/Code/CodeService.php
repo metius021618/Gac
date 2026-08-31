@@ -164,9 +164,9 @@ class CodeService
     }
 
     /**
-     * Consultar código temporal de Netflix (vista Hogar).
-     * Solo busca correos con asunto "Tu código de acceso temporal de Netflix".
-     * No requiere usuario ni plataforma, solo correo.
+     * Consultar correo Modo Hogar (vista /hogar).
+     * Busca el último correo cuyo asunto coincida exactamente con alguno
+     * registrado en email_subjects.category = modo_hogar.
      *
      * @param string $userEmail Email del usuario que consulta
      * @return array Resultado de la consulta
@@ -188,13 +188,20 @@ class CodeService
             $originFilter = 'outlook';
         }
 
-        $subject = 'Tu código de acceso temporal de Netflix';
-        $lastEmail = $this->codeRepository->findLastEmailBySubject($userEmailLower, $subject, $originFilter);
+        $subjects = $this->emailSubjectRepository->getModoHogarSubjectLines();
+        if ($subjects === []) {
+            return [
+                'success' => false,
+                'message' => 'No hay asuntos configurados en MODO HOGAR. Regístralos en Asuntos de correo.'
+            ];
+        }
+
+        $lastEmail = $this->codeRepository->findLastEmailBySubjects($userEmailLower, $subjects, $originFilter);
 
         if (!$lastEmail || strtolower(trim($lastEmail['recipient_email'] ?? '')) !== $userEmailLower) {
             return [
                 'success' => false,
-                'message' => 'No se encontraron correos con el código temporal de Netflix. Espera 5–15 segundos desde el envío del código antes de consultar.'
+                'message' => 'No se encontraron correos de Modo Hogar para este correo. Espera 5–15 segundos desde el envío del código antes de consultar.'
             ];
         }
 
@@ -203,13 +210,13 @@ class CodeService
         return [
             'success' => true,
             'message' => 'Correo encontrado',
-            'platform' => 'Netflix',
+            'platform' => 'Hogar',
             'received_at' => $lastEmail['received_at'],
             'received_at_display' => $receivedAtDisplay,
             'minutes_ago' => $minutesAgo,
             'time_ago_text' => $lastEmail['time_ago_text'] ?? 'hace tiempo',
             'email_from' => $lastEmail['email_from'] ?? '',
-            'email_subject' => $lastEmail['subject'] ?? $subject,
+            'email_subject' => $lastEmail['subject'] ?? '',
             'email_body' => $lastEmail['email_body'] ?? ''
         ];
     }

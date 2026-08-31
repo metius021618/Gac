@@ -2,7 +2,7 @@
 /**
  * GAC - Vista Hogar - Consulta código temporal Netflix
  * 
- * Vista simplificada para consultar solo códigos con asunto "Tu código de acceso temporal de Netflix"
+ * Vista simplificada para consultar correos con asuntos de categoría Modo Hogar.
  */
 
 $content = ob_start();

@@ -2,7 +2,7 @@
 /**
  * GAC - Controlador Vista Hogar (Consulta código Netflix)
  * 
- * Vista simplificada para consultar solo códigos temporales de Netflix.
+ * Vista simplificada para consultar correos de Modo Hogar (asuntos en tabla).
  * 
  * @package Gac\Controllers
  */
@@ -37,7 +37,7 @@ class HogarController
     }
 
     /**
-     * Procesar consulta de código temporal Netflix
+     * Procesar consulta de Modo Hogar.
      */
     private function processConsult(Request $request): void
     {

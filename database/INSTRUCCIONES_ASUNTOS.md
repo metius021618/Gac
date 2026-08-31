@@ -11,6 +11,7 @@ email_subjects
 ├── id (INT, PRIMARY KEY, AUTO_INCREMENT)
 ├── platform_id (INT, FOREIGN KEY → platforms.id)
 ├── subject_line (VARCHAR(500)) - El asunto del correo
+├── category (VARCHAR(32)) - general | modo_hogar | modo_viaje
 ├── active (TINYINT(1)) - 1 = activo, 0 = eliminado (soft delete)
 ├── created_at (TIMESTAMP)
 └── updated_at (TIMESTAMP)
