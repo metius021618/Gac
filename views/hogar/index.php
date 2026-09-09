@@ -111,10 +111,9 @@ $content = ob_get_clean();
 $title = $title ?? ($initial_mode === 'viaje' ? 'Actualizar hogar' : 'Consulta tu código Netflix');
 $description = 'Consulta tu código temporal. Espera 5–15 segundos desde el envío del código antes de consultar.';
 $show_nav = false;
-$footer_text = 'Tienes alguna duda, comunicate conmigo';
+$footer_text = '';
 $footer_contact = false;
-$footer_whatsapp = true;
-$footer_whatsapp_text = 'Hola, tengo una duda';
+$footer_whatsapp = false;
 $additional_css = ['/assets/css/consult.css'];
 $additional_js = ['/assets/js/hogar-mode-switch.js', '/assets/js/hogar-consult.js'];
 
