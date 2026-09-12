@@ -21,21 +21,29 @@
     const modalPlatformSelect = document.getElementById('modal_platform_id');
     const modalSubjectLineInput = document.getElementById('modal_subject_line');
     const modalCategoryInput = document.getElementById('modal_category');
+    const modalBodyMatchInput = document.getElementById('modal_body_match');
+    const modalBodyMatchGroup = document.getElementById('modalBodyMatchGroup');
 
     function getActiveCategory() {
-        var allowed = { general: true, modo_hogar: true, modo_viaje: true };
+        var allowed = {
+            general: true,
+            modo_hogar: true,
+            modo_viaje: true,
+            especial_leer: true,
+            especial_no_leer: true
+        };
         function ok(c) {
             c = (c || '').trim();
             return allowed[c] ? c : '';
         }
 
-        var switchEl = document.querySelector('.subject-category-switch');
-        var fromSwitch = ok(switchEl && switchEl.getAttribute('data-active'));
-        if (fromSwitch) return fromSwitch;
-
         var params = new URLSearchParams(window.location.search);
         var fromUrl = ok(params.get('category'));
         if (fromUrl) return fromUrl;
+
+        var specialActive = document.querySelector('.subject-special-option.is-active');
+        var fromSpecial = ok(specialActive && specialActive.dataset.category);
+        if (fromSpecial) return fromSpecial;
 
         var activeOpt = document.querySelector('.subject-category-option.is-active');
         var fromOpt = ok(activeOpt && activeOpt.dataset.category);
@@ -47,11 +55,32 @@
         return 'general';
     }
 
+    function isSpecialCategory(c) {
+        return c === 'especial_leer' || c === 'especial_no_leer';
+    }
+
+    function syncBodyMatchVisibility() {
+        var show = isSpecialCategory(getActiveCategory());
+        if (modalBodyMatchGroup) {
+            modalBodyMatchGroup.style.display = show ? '' : 'none';
+        }
+        if (modalBodyMatchInput) {
+            if (show) {
+                modalBodyMatchInput.setAttribute('required', 'required');
+            } else {
+                modalBodyMatchInput.removeAttribute('required');
+                modalBodyMatchInput.value = '';
+            }
+        }
+    }
+
     function categoryModalTitle(isEdit) {
         var prefix = isEdit ? 'Editar' : 'Nuevo';
         var c = getActiveCategory();
         if (c === 'modo_viaje') return prefix + ' Asunto Actualizar Hogar';
         if (c === 'modo_hogar') return prefix + ' Asunto Código Temporal';
+        if (c === 'especial_leer') return prefix + ' Asunto especial (sí se lee)';
+        if (c === 'especial_no_leer') return prefix + ' Asunto especial (no se lee)';
         return prefix + ' Asunto';
     }
 
@@ -77,6 +106,8 @@
         }
 
         initCategorySwitch();
+        syncBodyMatchVisibility();
+        initSpecialAccessPanel();
     }
 
     /**
@@ -94,18 +125,28 @@
                 var href = opt.getAttribute('href');
                 if (!category || !href) return;
 
-                if (opt.classList.contains('is-active') || root.getAttribute('data-active') === category) {
-                    e.preventDefault();
-                    return;
+                if (opt.classList.contains('is-active') || root.getAttribute('data-active') === category
+                    || (root.getAttribute('data-active') === 'especiales' && (category === 'especial_leer' || category === 'especial_no_leer'))) {
+                    if (opt.classList.contains('is-active')) {
+                        e.preventDefault();
+                        return;
+                    }
                 }
 
                 e.preventDefault();
                 if (navigating) return;
                 navigating = true;
 
-                root.setAttribute('data-active', category);
+                var activeKey = (category === 'especial_leer' || category === 'especial_no_leer') ? 'especiales' : category;
+                root.setAttribute('data-active', activeKey);
                 options.forEach(function (o) {
-                    var on = o.getAttribute('data-category') === category;
+                    var oc = o.getAttribute('data-category');
+                    var on = oc === category || (activeKey === 'especiales' && (oc === 'especial_leer' || oc === 'especial_no_leer') && o.classList.contains('is-active'));
+                    if (activeKey === 'especiales') {
+                        on = (oc === 'especial_leer' || oc === 'especial_no_leer');
+                    } else {
+                        on = oc === category;
+                    }
                     o.classList.toggle('is-active', on);
                     o.setAttribute('aria-selected', on ? 'true' : 'false');
                 });
@@ -115,6 +156,75 @@
                 }, 300);
             });
         });
+    }
+
+    function initSpecialAccessPanel() {
+        var listEl = document.getElementById('specialAccessList');
+        if (!listEl) return;
+        var searchEl = document.getElementById('specialAccessSearch');
+        var timer = null;
+
+        function render(rows) {
+            if (!rows || !rows.length) {
+                listEl.innerHTML = '<p class="empty-message">No hay usuarios registrados</p>';
+                return;
+            }
+            listEl.innerHTML = rows.map(function (row) {
+                var checked = Number(row.can_view_special) === 1 ? 'checked' : '';
+                return '<label class="special-access-row">'
+                    + '<input type="checkbox" data-email="' + String(row.email).replace(/"/g, '&quot;') + '" ' + checked + '>'
+                    + '<span class="special-access-email">' + String(row.email) + '</span>'
+                    + '<span class="special-access-meta">' + (row.platforms || 0) + ' plataforma(s)</span>'
+                    + '</label>';
+            }).join('');
+        }
+
+        async function load(q) {
+            try {
+                var url = '/admin/email-subjects/special-access?search=' + encodeURIComponent(q || '');
+                var res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                var data = await res.json();
+                if (data.success) render(data.data || []);
+                else listEl.innerHTML = '<p class="empty-message">Error al cargar</p>';
+            } catch (err) {
+                listEl.innerHTML = '<p class="empty-message">Error de conexión</p>';
+            }
+        }
+
+        listEl.addEventListener('change', async function (e) {
+            var cb = e.target.closest('input[type="checkbox"][data-email]');
+            if (!cb) return;
+            var email = cb.getAttribute('data-email');
+            var enabled = cb.checked ? 1 : 0;
+            cb.disabled = true;
+            try {
+                var res = await fetch('/admin/email-subjects/special-access', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ email: email, enabled: enabled })
+                });
+                var data = await res.json();
+                if (!data.success) {
+                    cb.checked = !cb.checked;
+                    if (window.GAC) await window.GAC.error(data.message || 'No se pudo actualizar', 'Error');
+                }
+            } catch (err) {
+                cb.checked = !cb.checked;
+            } finally {
+                cb.disabled = false;
+            }
+        });
+
+        if (searchEl) {
+            searchEl.addEventListener('input', function () {
+                clearTimeout(timer);
+                timer = setTimeout(function () { load(searchEl.value.trim()); }, 250);
+            });
+        }
+        load('');
     }
 
     /**
@@ -164,6 +274,7 @@
         if (modalCategoryInput) {
             modalCategoryInput.value = getActiveCategory();
         }
+        syncBodyMatchVisibility();
         
         // Limpiar ID (modo crear)
         if (subjectIdInput) {
@@ -184,6 +295,7 @@
         const platformId = btn.dataset.platformId;
         const subjectLine = btn.dataset.subjectLine;
         const category = btn.dataset.category || getActiveCategory();
+        const bodyMatch = btn.dataset.bodyMatch || '';
         
         if (!id || !subjectModal) return;
         
@@ -203,6 +315,11 @@
         if (modalCategoryInput) {
             modalCategoryInput.value = category;
         }
+
+        if (modalBodyMatchInput) {
+            modalBodyMatchInput.value = bodyMatch;
+        }
+        syncBodyMatchVisibility();
         
         // Actualizar título
         if (modalTitle) {
@@ -247,6 +364,10 @@
         if (modalCategoryInput) {
             modalCategoryInput.value = getActiveCategory();
         }
+        if (modalBodyMatchInput) {
+            modalBodyMatchInput.value = '';
+        }
+        syncBodyMatchVisibility();
         clearAllErrors();
     }
 

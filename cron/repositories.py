@@ -217,6 +217,7 @@ class EmailSubjectRepository:
                 FROM email_subjects es
                 INNER JOIN platforms p ON es.platform_id = p.id
                 WHERE es.active = 1 AND p.enabled = 1
+                  AND es.category IN ('general', 'modo_hogar', 'modo_viaje')
                 ORDER BY p.name, es.subject_line
             """)
             rows = cursor.fetchall()
@@ -231,11 +232,62 @@ class EmailSubjectRepository:
                     continue
                 if name not in result:
                     result[name] = []
-                result[name].append(line)
+                if line not in result[name]:
+                    result[name].append(line)
+            # También indexar asuntos especiales por plataforma (para match de asunto)
+            for rule in EmailSubjectRepository.get_special_rules():
+                name = (rule.get('platform_name') or '').strip().lower()
+                line = (rule.get('subject_line') or '').strip()
+                if not name or not line:
+                    continue
+                if name not in result:
+                    result[name] = []
+                if line not in result[name]:
+                    result[name].append(line)
             return result
         except Error as e:
             logger.error(f"Error al obtener asuntos desde email_subjects: {e}")
             return {}
+
+    @staticmethod
+    def get_special_rules():
+        """Reglas de asuntos especiales: asunto + cuerpo + acción leer|no_leer."""
+        try:
+            db = Database.get_connection()
+            if USE_PYMYSQL:
+                cursor = db.cursor(DictCursor)
+            else:
+                cursor = db.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT es.id, es.subject_line, es.body_match, es.special_action,
+                       es.category, p.name AS platform_name, p.id AS platform_id
+                FROM email_subjects es
+                INNER JOIN platforms p ON es.platform_id = p.id
+                WHERE es.active = 1 AND p.enabled = 1
+                  AND es.category IN ('especial_leer', 'especial_no_leer')
+                  AND es.body_match IS NOT NULL AND TRIM(es.body_match) <> ''
+                ORDER BY es.id DESC
+            """)
+            rows = cursor.fetchall() or []
+            cursor.close()
+            rules = []
+            for row in rows:
+                action = (row.get('special_action') or '').strip().lower()
+                cat = (row.get('category') or '').strip().lower()
+                if not action:
+                    action = 'leer' if cat == 'especial_leer' else 'no_leer'
+                rules.append({
+                    'id': row.get('id'),
+                    'subject_line': (row.get('subject_line') or '').strip(),
+                    'body_match': row.get('body_match') or '',
+                    'special_action': action,
+                    'platform_name': (row.get('platform_name') or '').strip().lower(),
+                    'platform_id': row.get('platform_id'),
+                })
+            return rules
+        except Error as e:
+            logger.error(f"Error get_special_rules: {e}")
+            return []
 
     @staticmethod
     def get_subjects_for_platform(platform_name):
@@ -382,9 +434,10 @@ class CodeRepository:
                     received_at,
                     origin,
                     status,
+                    is_special,
                     recipient_email
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, 'available', %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, 'available', %s, %s
                 )
             """, (
                 code_data['email_account_id'],
@@ -392,9 +445,10 @@ class CodeRepository:
                 code_data['code'],
                 code_data.get('email_from'),
                 code_data.get('subject'),
-                code_data.get('email_body'),  # Cuerpo del email (HTML o texto)
+                code_data.get('email_body'),
                 received_at,
                 code_data.get('origin', 'imap'),
+                1 if code_data.get('is_special') else 0,
                 code_data.get('recipient_email')
             ))
             
@@ -494,16 +548,17 @@ class CodeRepository:
             cursor.execute("""
                 INSERT INTO codes (
                     email_account_id, platform_id, code, email_from, subject, email_body,
-                    received_at, origin, status, recipient_email,
+                    received_at, origin, status, is_special, recipient_email,
                     email_date, gmail_message_id, is_current
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, 'available', %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, 'available', %s, %s,
                     %s, %s, 1
                 )
             """, (
                 email_account_id, platform_id,
                 code_data['code'], code_data.get('email_from'), code_data.get('subject'),
                 code_data.get('email_body'), received_at, code_data.get('origin', 'gmail'),
+                1 if code_data.get('is_special') else 0,
                 code_data.get('recipient_email'),
                 email_date, gmail_message_id
             ))

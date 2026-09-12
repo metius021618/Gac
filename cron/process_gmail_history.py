@@ -105,6 +105,21 @@ def main():
         full = gmail.get_message_full(service, msg_id, account_email)
         if not full:
             continue
+        # Re-evaluar con cuerpo: descartar compra / marcar especial
+        full['matched_platform'] = platform
+        decision = filter_service.classify_email(full)
+        action = decision.get('action')
+        if action == EmailFilterService.ACTION_DISCARD:
+            logger.info(
+                "Descartado (asunto especial no_leer): msg_id=%s asunto=%s",
+                msg_id, (full.get('subject') or '')[:60],
+            )
+            continue
+        if decision.get('platform'):
+            platform = decision['platform']
+            platform_obj = PlatformRepository.find_by_name(platform)
+            if not platform_obj or not platform_obj.get('enabled'):
+                continue
         recipient_email = (full.get('to_primary') or account_email).strip().lower()
         # origin según destinatario: patito@hotmail.com -> outlook (para que la consulta lo encuentre)
         save_data = {
@@ -119,11 +134,17 @@ def main():
             'recipient_email': recipient_email,
             'email_date': full.get('date'),
             'gmail_message_id': msg_id,
+            'is_special': 1 if action == EmailFilterService.ACTION_SAVE_SPECIAL else 0,
         }
         code_id = CodeRepository.save_otp_current(save_data)
         if code_id:
             saved += 1
-            logger.info("OTP guardado: msg_id=%s -> %s", msg_id, recipient_email)
+            logger.info(
+                "OTP guardado%s: msg_id=%s -> %s",
+                " (especial)" if save_data['is_special'] else "",
+                msg_id,
+                recipient_email,
+            )
 
     SettingsRepository.set('gmail_last_history_id', new_history_id)
     # Para monitor de salud: último evento procesado (check_gmail_watch_health.py alerta si no hay eventos en X h)

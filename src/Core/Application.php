@@ -106,6 +106,8 @@ class Application
         $router->get('/admin/email-subjects/edit', 'EmailSubjectController@edit', ['auth']);
         $router->post('/admin/email-subjects/update', 'EmailSubjectController@update', ['auth']);
         $router->post('/admin/email-subjects/delete', 'EmailSubjectController@destroy', ['auth']);
+        $router->get('/admin/email-subjects/special-access', 'EmailSubjectController@specialAccessList', ['auth']);
+        $router->post('/admin/email-subjects/special-access', 'EmailSubjectController@specialAccessToggle', ['auth']);
         
         // Rutas de administradores
         $router->get('/admin/administrators', 'AdminController@index', ['auth']);

@@ -133,6 +133,7 @@ class EmailSubjectController
         $platformId = (int)($payload['platform_id'] ?? 0);
         $subjectLine = trim((string)($payload['subject_line'] ?? ''));
         $category = $this->emailSubjectRepository->normalizeCategory((string)($payload['category'] ?? 'general'));
+        $bodyMatch = trim((string)($payload['body_match'] ?? ''));
 
         if ($platformId <= 0 || $subjectLine === '') {
             return [
@@ -140,6 +141,16 @@ class EmailSubjectController
                 'body' => [
                     'success' => false,
                     'message' => 'Todos los campos son requeridos'
+                ]
+            ];
+        }
+
+        if ($this->emailSubjectRepository->isSpecialCategory($category) && $bodyMatch === '') {
+            return [
+                'code' => 400,
+                'body' => [
+                    'success' => false,
+                    'message' => 'Los asuntos especiales requieren el contenido del cuerpo del correo'
                 ]
             ];
         }
@@ -159,6 +170,7 @@ class EmailSubjectController
             'platform_id' => $platformId,
             'subject_line' => $subjectLine,
             'category' => $category,
+            'body_match' => $bodyMatch,
         ]);
 
         if ($subjectId) {
@@ -228,12 +240,21 @@ class EmailSubjectController
         $platformId = (int)$request->input('platform_id', 0);
         $subjectLine = trim($request->input('subject_line', ''));
         $category = $this->emailSubjectRepository->normalizeCategory((string)$request->input('category', 'general'));
+        $bodyMatch = trim((string)$request->input('body_match', ''));
 
         // Validaciones
         if ($id <= 0 || $platformId <= 0 || empty($subjectLine)) {
             json_response([
                 'success' => false,
                 'message' => 'Todos los campos son requeridos'
+            ], 400);
+            return;
+        }
+
+        if ($this->emailSubjectRepository->isSpecialCategory($category) && $bodyMatch === '') {
+            json_response([
+                'success' => false,
+                'message' => 'Los asuntos especiales requieren el contenido del cuerpo del correo'
             ], 400);
             return;
         }
@@ -263,6 +284,7 @@ class EmailSubjectController
             'platform_id' => $platformId,
             'subject_line' => $subjectLine,
             'category' => $category,
+            'body_match' => $bodyMatch,
         ];
 
         $updated = $this->emailSubjectRepository->update($id, $data);
@@ -316,6 +338,42 @@ class EmailSubjectController
                 'message' => 'Error al eliminar el asunto'
             ], 500);
         }
+    }
+
+    /**
+     * Listar emails con permiso can_view_special (para panel de asuntos especiales).
+     */
+    public function specialAccessList(Request $request): void
+    {
+        $repo = new \Gac\Repositories\UserAccessRepository();
+        $search = trim((string) $request->get('search', ''));
+        $rows = $repo->listSpecialViewAccess($search, 200);
+        json_response(['success' => true, 'data' => $rows], 200);
+    }
+
+    /**
+     * Activar/desactivar can_view_special para un email (todas sus filas).
+     */
+    public function specialAccessToggle(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+        $email = strtolower(trim((string) $request->input('email', '')));
+        $enabled = (int) $request->input('enabled', 0) === 1;
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            json_response(['success' => false, 'message' => 'Email inválido'], 400);
+            return;
+        }
+        $repo = new \Gac\Repositories\UserAccessRepository();
+        $ok = $repo->setCanViewSpecialByEmail($email, $enabled);
+        json_response([
+            'success' => $ok,
+            'message' => $ok
+                ? ($enabled ? 'Usuario autorizado para ver códigos especiales' : 'Permiso de especiales quitado')
+                : 'No se pudo actualizar el permiso',
+        ], $ok ? 200 : 500);
     }
 
     /**

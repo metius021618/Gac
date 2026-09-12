@@ -31,7 +31,14 @@ $can_delete_subject = function_exists('user_can_action') && user_can_action('reg
                         <td class="platform-cell">
                             <span class="platform-badge"><?= htmlspecialchars($subject['platform_display_name'] ?? $subject['platform_name']) ?></span>
                         </td>
-                        <td class="subject-cell"><?= htmlspecialchars($subject['subject_line']) ?></td>
+                        <td class="subject-cell">
+                            <?= htmlspecialchars($subject['subject_line']) ?>
+                            <?php if (!empty($subject['body_match'])): ?>
+                                <div class="subject-body-preview" title="<?= htmlspecialchars($subject['body_match']) ?>">
+                                    <?= htmlspecialchars(mb_strimwidth(preg_replace('/\s+/', ' ', (string) $subject['body_match']), 0, 80, '…')) ?>
+                                </div>
+                            <?php endif; ?>
+                        </td>
                         <td class="actions-cell">
                             <?php if ($can_edit_subject): ?>
                             <button type="button"
@@ -40,6 +47,7 @@ $can_delete_subject = function_exists('user_can_action') && user_can_action('reg
                                     data-platform-id="<?= $subject['platform_id'] ?>"
                                     data-subject-line="<?= htmlspecialchars($subject['subject_line']) ?>"
                                     data-category="<?= htmlspecialchars($subject['category'] ?? ($category_filter ?? 'general')) ?>"
+                                    data-body-match="<?= htmlspecialchars($subject['body_match'] ?? '') ?>"
                                     title="Editar">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>

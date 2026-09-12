@@ -81,6 +81,8 @@ class EmailSubjectRepository
                     es.platform_id,
                     es.subject_line,
                     es.category,
+                    es.body_match,
+                    es.special_action,
                     es.active,
                     es.created_at,
                     es.updated_at,
@@ -122,18 +124,19 @@ class EmailSubjectRepository
     }
 
     /**
-     * Normalizar categoría de asunto: general | modo_hogar | modo_viaje.
+     * Normalizar categoría: general | modo_hogar | modo_viaje | especial_leer | especial_no_leer.
      */
     public function normalizeCategory(?string $category): string
     {
         $c = strtolower(trim((string) $category));
-        if ($c === 'modo_viaje') {
-            return 'modo_viaje';
-        }
-        if ($c === 'modo_hogar') {
-            return 'modo_hogar';
-        }
-        return 'general';
+        $allowed = ['general', 'modo_hogar', 'modo_viaje', 'especial_leer', 'especial_no_leer'];
+        return in_array($c, $allowed, true) ? $c : 'general';
+    }
+
+    public function isSpecialCategory(string $category): bool
+    {
+        $c = $this->normalizeCategory($category);
+        return $c === 'especial_leer' || $c === 'especial_no_leer';
     }
 
     /**
@@ -205,6 +208,7 @@ class EmailSubjectRepository
                 FROM email_subjects es
                 INNER JOIN platforms p ON es.platform_id = p.id
                 WHERE es.active = 1 AND p.enabled = 1
+                  AND es.category IN ('general', 'modo_hogar', 'modo_viaje')
                 ORDER BY p.name, es.subject_line
             ");
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -243,6 +247,8 @@ class EmailSubjectRepository
                     es.platform_id,
                     es.subject_line,
                     es.category,
+                    es.body_match,
+                    es.special_action,
                     es.active,
                     es.created_at,
                     es.updated_at,
@@ -275,15 +281,26 @@ class EmailSubjectRepository
         try {
             $db = Database::getConnection();
             $category = $this->normalizeCategory($data['category'] ?? 'general');
+            $bodyMatch = $this->isSpecialCategory($category)
+                ? trim((string) ($data['body_match'] ?? ''))
+                : null;
+            $specialAction = null;
+            if ($category === 'especial_leer') {
+                $specialAction = 'leer';
+            } elseif ($category === 'especial_no_leer') {
+                $specialAction = 'no_leer';
+            }
             $stmt = $db->prepare("
-                INSERT INTO email_subjects (platform_id, subject_line, category, active)
-                VALUES (:platform_id, :subject_line, :category, 1)
+                INSERT INTO email_subjects (platform_id, subject_line, category, body_match, special_action, active)
+                VALUES (:platform_id, :subject_line, :category, :body_match, :special_action, 1)
             ");
             
             $stmt->execute([
                 ':platform_id' => $data['platform_id'],
                 ':subject_line' => $data['subject_line'],
                 ':category' => $category,
+                ':body_match' => $bodyMatch !== '' ? $bodyMatch : null,
+                ':special_action' => $specialAction,
             ]);
             
             return (int) $db->lastInsertId();
@@ -310,11 +327,22 @@ class EmailSubjectRepository
         try {
             $db = Database::getConnection();
             $category = $this->normalizeCategory($data['category'] ?? 'general');
+            $bodyMatch = $this->isSpecialCategory($category)
+                ? trim((string) ($data['body_match'] ?? ''))
+                : null;
+            $specialAction = null;
+            if ($category === 'especial_leer') {
+                $specialAction = 'leer';
+            } elseif ($category === 'especial_no_leer') {
+                $specialAction = 'no_leer';
+            }
             $stmt = $db->prepare("
                 UPDATE email_subjects
                 SET platform_id = :platform_id,
                     subject_line = :subject_line,
                     category = :category,
+                    body_match = :body_match,
+                    special_action = :special_action,
                     updated_at = NOW()
                 WHERE id = :id AND active = 1
             ");
@@ -324,6 +352,8 @@ class EmailSubjectRepository
                 ':platform_id' => $data['platform_id'],
                 ':subject_line' => $data['subject_line'],
                 ':category' => $category,
+                ':body_match' => $bodyMatch !== '' ? $bodyMatch : null,
+                ':special_action' => $specialAction,
             ]);
         } catch (PDOException $e) {
             error_log("Error al actualizar asunto de email: " . $e->getMessage());

@@ -19,28 +19,55 @@ $content = ob_start();
 
     <div class="admin-content">
         <?php $category_filter = $category_filter ?? 'general'; ?>
+        <?php
+        $is_special_tab = in_array($category_filter, ['especial_leer', 'especial_no_leer'], true);
+        $main_tab = $is_special_tab ? 'especiales' : $category_filter;
+        ?>
         <div class="subject-category-bar">
-            <div class="subject-category-switch" data-active="<?= htmlspecialchars($category_filter) ?>">
+            <div class="subject-category-switch subject-category-switch--4" data-active="<?= htmlspecialchars($main_tab) ?>">
                 <div class="subject-category-track" id="subjectCategoryTabs" role="tablist" aria-label="Categoría de asuntos">
                     <span class="subject-category-slider" aria-hidden="true"></span>
                     <a href="/admin/email-subjects?category=general"
-                       class="subject-category-option <?= $category_filter === 'general' ? 'is-active' : '' ?>"
+                       class="subject-category-option <?= $main_tab === 'general' ? 'is-active' : '' ?>"
                        data-category="general"
                        role="tab"
-                       aria-selected="<?= $category_filter === 'general' ? 'true' : 'false' ?>">Generales</a>
+                       aria-selected="<?= $main_tab === 'general' ? 'true' : 'false' ?>">Generales</a>
                     <a href="/admin/email-subjects?category=modo_hogar"
-                       class="subject-category-option <?= $category_filter === 'modo_hogar' ? 'is-active' : '' ?>"
+                       class="subject-category-option <?= $main_tab === 'modo_hogar' ? 'is-active' : '' ?>"
                        data-category="modo_hogar"
                        role="tab"
-                       aria-selected="<?= $category_filter === 'modo_hogar' ? 'true' : 'false' ?>">Código Temporal</a>
+                       aria-selected="<?= $main_tab === 'modo_hogar' ? 'true' : 'false' ?>">Código Temporal</a>
                     <a href="/admin/email-subjects?category=modo_viaje"
-                       class="subject-category-option <?= $category_filter === 'modo_viaje' ? 'is-active' : '' ?>"
+                       class="subject-category-option <?= $main_tab === 'modo_viaje' ? 'is-active' : '' ?>"
                        data-category="modo_viaje"
                        role="tab"
-                       aria-selected="<?= $category_filter === 'modo_viaje' ? 'true' : 'false' ?>">Actualizar Hogar</a>
+                       aria-selected="<?= $main_tab === 'modo_viaje' ? 'true' : 'false' ?>">Actualizar Hogar</a>
+                    <a href="/admin/email-subjects?category=especial_leer"
+                       class="subject-category-option <?= $main_tab === 'especiales' ? 'is-active' : '' ?>"
+                       data-category="especial_leer"
+                       role="tab"
+                       aria-selected="<?= $main_tab === 'especiales' ? 'true' : 'false' ?>">Asuntos especiales</a>
                 </div>
             </div>
         </div>
+
+        <?php if ($is_special_tab): ?>
+        <div class="subject-special-subbar">
+            <div class="subject-special-switch" data-active="<?= htmlspecialchars($category_filter) ?>">
+                <a href="/admin/email-subjects?category=especial_leer"
+                   class="subject-special-option <?= $category_filter === 'especial_leer' ? 'is-active' : '' ?>"
+                   data-category="especial_leer">Sí se leen</a>
+                <a href="/admin/email-subjects?category=especial_no_leer"
+                   class="subject-special-option <?= $category_filter === 'especial_no_leer' ? 'is-active' : '' ?>"
+                   data-category="especial_no_leer">No se leen</a>
+            </div>
+            <p class="subject-special-hint">
+                <?= $category_filter === 'especial_leer'
+                    ? 'Se guardan como código especial. Solo usuarios con permiso los ven en consulta.'
+                    : 'Se reconocen y se marcan procesados, pero no se guardan (ej. compras).' ?>
+            </p>
+        </div>
+        <?php endif; ?>
         <div class="table-controls">
             <div class="table-controls-left">
                 <div class="search-input-wrapper">
@@ -99,6 +126,19 @@ $content = ob_start();
 
         <!-- Tabla de asuntos -->
         <?php require base_path('views/admin/email_subjects/_table.php'); ?>
+
+        <?php if ($is_special_tab): ?>
+        <div class="special-access-panel" id="specialAccessPanel">
+            <h3 class="special-access-title">Usuarios que pueden ver códigos especiales</h3>
+            <p class="special-access-desc">Por defecto nadie ve asuntos especiales. Marca los correos autorizados.</p>
+            <div class="special-access-search-wrap">
+                <input type="text" id="specialAccessSearch" class="form-input" placeholder="Filtrar por email..." autocomplete="off">
+            </div>
+            <div id="specialAccessList" class="special-access-list">
+                <p class="empty-message">Cargando…</p>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -171,6 +211,21 @@ $content = ob_start();
                     >
                     <span class="form-error" id="modalSubjectLineError"></span>
                     <small class="form-help">Asunto del correo electrónico que se buscará para identificar la plataforma</small>
+                </div>
+
+                <div class="form-group" id="modalBodyMatchGroup" style="display: none;">
+                    <label for="modal_body_match" class="form-label">
+                        Contenido del cuerpo <span class="required">*</span>
+                    </label>
+                    <textarea
+                        id="modal_body_match"
+                        name="body_match"
+                        class="form-input"
+                        rows="5"
+                        placeholder="Pega un fragmento característico del cuerpo (ej. “finalizar una compra” o “cambiar la información de tu cuenta”)"
+                    ></textarea>
+                    <span class="form-error" id="modalBodyMatchError"></span>
+                    <small class="form-help">El cron compara este texto (normalizado) dentro del cuerpo del correo para distinguir emails con el mismo asunto.</small>
                 </div>
 
                 <div class="form-actions">

@@ -189,18 +189,22 @@ class CodeRepository
      * @param string|null $origin Solo códigos de este origen: 'gmail', 'imap' o null (cualquiera)
      * @return array|null Datos del último correo con tiempo transcurrido
      */
-    public function findLastEmail(int $platformId, string $recipientEmail, ?string $origin = null): ?array
+    public function findLastEmail(int $platformId, string $recipientEmail, ?string $origin = null, bool $excludeSpecial = false): ?array
     {
         try {
             $db = Database::getConnection();
             $originClause = '';
+            $specialClause = '';
             $params = [
                 'platform_id' => $platformId,
                 'recipient_email' => strtolower($recipientEmail)
             ];
-            if ($origin === 'gmail' || $origin === 'imap') {
+            if ($origin === 'gmail' || $origin === 'imap' || $origin === 'outlook') {
                 $originClause = ' AND c.origin = :origin';
                 $params['origin'] = $origin;
+            }
+            if ($excludeSpecial) {
+                $specialClause = ' AND COALESCE(c.is_special, 0) = 0';
             }
             // Preferir is_current = 1 (último OTP por cuenta+plataforma) si existe la columna
             $stmt = $db->prepare("
@@ -212,6 +216,7 @@ class CodeRepository
                     c.email_body,
                     c.received_at,
                     c.status,
+                    COALESCE(c.is_special, 0) AS is_special,
                     c.origin,
                     c.recipient_email,
                     TIMESTAMPDIFF(MINUTE, c.received_at, NOW()) as minutes_ago
@@ -219,6 +224,7 @@ class CodeRepository
                 WHERE c.platform_id = :platform_id
                   AND c.recipient_email = :recipient_email
                   {$originClause}
+                  {$specialClause}
                 ORDER BY (COALESCE(c.is_current, 0) = 1) DESC, c.received_at DESC, c.id DESC
                 LIMIT 1
             ");

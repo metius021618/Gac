@@ -123,6 +123,22 @@ class CodeService
             $lastEmail = null;
         }
 
+        // Opción A: si el último es especial y el usuario no tiene permiso → caer al último no especial
+        if ($lastEmail && (int) ($lastEmail['is_special'] ?? 0) === 1 && !$isMasterKeyUsed) {
+            $canSpecial = $this->userAccessRepository->canViewSpecial($userEmail, (int) $platform['id']);
+            if (!$canSpecial) {
+                @file_put_contents(
+                    $consultLogFile,
+                    date('Y-m-d H:i:s') . " [CONSULT] ESPECIAL_BLOQUEADO code_id=" . ($lastEmail['id'] ?? '') . " → buscando no especial\n",
+                    FILE_APPEND | LOCK_EX
+                );
+                $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $userEmail, $originFilter, true);
+                if ($lastEmail && strtolower(trim($lastEmail['recipient_email'] ?? '')) !== $userEmailLower) {
+                    $lastEmail = null;
+                }
+            }
+        }
+
         if ($lastEmail) {
             @file_put_contents($consultLogFile, date('Y-m-d H:i:s') . " [CONSULT] ENCONTRADO: code_id=" . ($lastEmail['id'] ?? '') . " origin=" . ($lastEmail['origin'] ?? '') . " recipient_email=" . ($lastEmail['recipient_email'] ?? '') . " received_at=" . ($lastEmail['received_at'] ?? '') . "\n", FILE_APPEND | LOCK_EX);
         } else {

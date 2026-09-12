@@ -152,7 +152,7 @@ class UserAccessRepository
             $db = Database::getConnection();
             
             $sql = "
-                SELECT id, email, password, platform_id, enabled, created_at, updated_at
+                SELECT id, email, password, platform_id, enabled, can_view_special, created_at, updated_at
                 FROM user_access
                 WHERE LOWER(TRIM(email)) = LOWER(TRIM(:email)) AND platform_id = :platform_id
                 LIMIT 1
@@ -168,6 +168,80 @@ class UserAccessRepository
         } catch (PDOException $e) {
             error_log("Error al buscar acceso de usuario: " . $e->getMessage());
             return null;
+        }
+    }
+
+    /**
+     * ¿Puede ver códigos de asuntos especiales? (fila email+plataforma).
+     */
+    public function canViewSpecial(string $email, int $platformId): bool
+    {
+        $access = $this->findByEmailAndPlatform($email, $platformId);
+        return $access
+            && (int) ($access['enabled'] ?? 0) === 1
+            && (int) ($access['can_view_special'] ?? 0) === 1;
+    }
+
+    /**
+     * Listar emails (distintos) con flag can_view_special para el panel admin.
+     * @return array<int, array{email:string,can_view_special:int,platforms:int}>
+     */
+    public function listSpecialViewAccess(string $search = '', int $limit = 200): array
+    {
+        try {
+            $db = Database::getConnection();
+            $params = [];
+            $where = 'WHERE ua.enabled = 1';
+            $searchTrim = trim($search);
+            if ($searchTrim !== '') {
+                $where .= ' AND LOWER(ua.email) LIKE CONCAT(\'%\', :q, \'%\')';
+                $params[':q'] = mb_strtolower($searchTrim);
+            }
+            $limit = max(1, min(500, $limit));
+            $sql = "
+                SELECT ua.email,
+                       MAX(COALESCE(ua.can_view_special, 0)) AS can_view_special,
+                       COUNT(*) AS platforms
+                FROM user_access ua
+                {$where}
+                GROUP BY ua.email
+                ORDER BY MAX(COALESCE(ua.can_view_special, 0)) DESC, ua.email ASC
+                LIMIT {$limit}
+            ";
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            foreach ($rows as &$row) {
+                $row['can_view_special'] = (int) ($row['can_view_special'] ?? 0);
+                $row['platforms'] = (int) ($row['platforms'] ?? 0);
+            }
+            unset($row);
+            return $rows;
+        } catch (PDOException $e) {
+            error_log('listSpecialViewAccess: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Activar/desactivar can_view_special en todas las filas de un email.
+     */
+    public function setCanViewSpecialByEmail(string $email, bool $enabled): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                UPDATE user_access
+                SET can_view_special = :flag, updated_at = NOW()
+                WHERE LOWER(TRIM(email)) = LOWER(TRIM(:email))
+            ");
+            return $stmt->execute([
+                ':flag' => $enabled ? 1 : 0,
+                ':email' => $email,
+            ]);
+        } catch (PDOException $e) {
+            error_log('setCanViewSpecialByEmail: ' . $e->getMessage());
+            return false;
         }
     }
 

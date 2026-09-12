@@ -205,6 +205,17 @@ def main():
                     received_at = email_data.get('date', '')
                     subject = email_data.get('subject', '')
                     email_body = email_data.get('body_html') or email_data.get('body_text') or email_data.get('body') or ''
+                    decision = filter_service.classify_email(email_data)
+                    action = decision.get('action')
+                    if action == EmailFilterService.ACTION_DISCARD:
+                        logger.info("  - Descartado (especial no_leer): asunto=%s → %s", subject[:50], recipient_email)
+                        continue
+                    if decision.get('platform'):
+                        platform = decision['platform']
+                        platform_obj = PlatformRepository.find_by_name(platform)
+                        if not platform_obj or not platform_obj.get('enabled'):
+                            logger.info("  - Saltado (plataforma %s no existe o deshabilitada): asunto=%s", platform, subject[:50])
+                            continue
                     if CodeRepository.email_record_exists(gaccount_id, email_from, recipient_email, subject, received_at):
                         if email_body and CodeRepository.update_email_body_by_email(
                             gaccount_id, email_from, recipient_email, subject, received_at, email_body
@@ -223,11 +234,17 @@ def main():
                         'received_at': received_at,
                         'origin': origin_from_recipient_email(recipient_email),
                         'recipient_email': recipient_email,
+                        'is_special': 1 if action == EmailFilterService.ACTION_SAVE_SPECIAL else 0,
                     }
                     code_id = CodeRepository.save(save_data)
                     if code_id:
                         records_saved += 1
-                        logger.info(f"  - ✓ Correo guardado: DE={email_from[:40]} → {recipient_email}")
+                        logger.info(
+                            "  - ✓ Correo guardado%s: DE=%s → %s",
+                            " (especial)" if save_data['is_special'] else "",
+                            email_from[:40],
+                            recipient_email,
+                        )
                     else:
                         logger.warning(f"  - ✗ Save falló (BD): asunto=%s → %s", subject[:50], recipient_email)
                 total_codes_saved += records_saved

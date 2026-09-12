@@ -1,21 +1,37 @@
-# Asuntos de correo: Generales, Código Temporal y Actualizar Hogar
+# Asuntos de correo: Generales, Código Temporal, Actualizar Hogar y Especiales
 
-En **Admin → Asuntos de correo** hay tres pestañas (en este orden):
+En **Admin → Asuntos de correo** hay cuatro pestañas:
 
 | Pestaña | `category` | Quién lo usa |
 |---------|------------|--------------|
 | Generales | `general` | Consulta normal de códigos por plataforma |
 | Código Temporal | `modo_hogar` | Tab “Código temporal” en `/hogar` |
 | Actualizar Hogar | `modo_viaje` | Tab “Actualizar hogar” en `/hogar` |
+| Asuntos especiales | `especial_leer` / `especial_no_leer` | Mismo asunto + cuerpo distinto |
 
-La UI pública es solo **`/hogar`** (cambiar de tab no cambia la URL). El POST a `/MViaje` sigue usándose internamente para la consulta de Actualizar Hogar.
+Dentro de **Asuntos especiales** hay dos subsecciones:
 
-El **cron** lee todos los asuntos activos (las tres categorías). Si agregas o cambias un asunto en Código Temporal o Actualizar Hogar, el lector lo toma en el siguiente ciclo.
+| Subsección | `category` | `special_action` | Comportamiento del cron |
+|------------|------------|------------------|-------------------------|
+| Sí se leen | `especial_leer` | `leer` | Guarda en `codes` con `is_special=1` |
+| No se leen | `especial_no_leer` | `no_leer` | No guarda; el historial Gmail avanza (no se relee) |
 
-La coincidencia es **exacta** (el asunto del correo debe ser igual al registrado).
+Cada regla especial exige **asunto exacto** + **fragmento de cuerpo** (`body_match`, normalizado HTML→texto).
 
-El asunto histórico `Tu código de acceso temporal de Netflix` se mueve a Código Temporal (`modo_hogar`) con:
+## Consulta (opción A)
+
+1. Se toma el último correo de la plataforma para el destinatario.
+2. Si es especial (`is_special=1`) y el usuario **no** tiene `user_access.can_view_special=1`, se muestra el último **no especial**.
+3. La clave maestra siempre puede ver especiales.
+4. Por defecto nadie tiene el check (panel bajo Asuntos especiales).
+
+## Migración / seed / prueba
 
 ```bash
-php scripts/migrate_email_subjects_modo_hogar.php
+python3 scripts/migrate_asuntos_especiales.py
+python3 scripts/seed_asuntos_especiales_netflix.py
+python3 scripts/test_asuntos_especiales_cron_sim.py
+python -m unittest cron.tests.test_asuntos_especiales_classify -v
 ```
+
+La UI pública de hogar/viaje no cambia: solo **`/hogar`**.
