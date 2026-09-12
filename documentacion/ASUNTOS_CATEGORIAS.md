@@ -35,3 +35,15 @@ python -m unittest cron.tests.test_asuntos_especiales_classify -v
 ```
 
 La UI pública de hogar/viaje no cambia: solo **`/hogar`**.
+
+## Validación end-to-end (sin enviar Gmail)
+
+Enviar un correo desde tu Gmail personal **no sirve** para esta prueba: el cron no detecta plataforma por el remitente, sino por el **asunto exacto** registrado (Netflix, Disney, etc.). Un mail tuyo no lleva esos asuntos.
+
+En el servidor:
+
+```bash
+python3 scripts/validate_asuntos_especiales_e2e.py
+```
+
+Simula compra (descarta), OTP normal (guarda) y cambio de cuenta (guarda especial), y valida el gating de consulta. Limpia las filas de prueba al terminar.
