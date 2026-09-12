@@ -96,7 +96,7 @@ def pick_email_account_id(cur) -> int:
     cur.execute(
         """
         SELECT id FROM email_accounts
-        WHERE enabled=1 AND account_type='gmail'
+        WHERE enabled=1 AND type='gmail'
         ORDER BY id ASC LIMIT 1
         """
     )
