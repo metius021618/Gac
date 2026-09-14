@@ -183,37 +183,43 @@ class UserAccessRepository
     }
 
     /**
-     * Listar emails (distintos) con flag can_view_special para el panel admin.
-     * @return array<int, array{email:string,can_view_special:int,platforms:int}>
+     * Listar usuarios (columna password / Usuario) con flag can_view_special.
+     * @return array<int, array{username:string,can_view_special:int,accounts:int}>
      */
     public function listSpecialViewAccess(string $search = '', int $limit = 200): array
     {
         try {
             $db = Database::getConnection();
             $params = [];
-            $where = 'WHERE ua.enabled = 1';
+            $where = "
+                WHERE ua.enabled = 1
+                  AND ua.password IS NOT NULL
+                  AND TRIM(ua.password) <> ''
+                  AND ua.password NOT IN ('Gmail (OAuth)', 'Outlook (OAuth)')
+            ";
             $searchTrim = trim($search);
             if ($searchTrim !== '') {
-                $where .= ' AND LOWER(ua.email) LIKE CONCAT(\'%\', :q, \'%\')';
+                $where .= ' AND LOWER(ua.password) LIKE CONCAT(\'%\', :q, \'%\')';
                 $params[':q'] = mb_strtolower($searchTrim);
             }
             $limit = max(1, min(500, $limit));
             $sql = "
-                SELECT ua.email,
+                SELECT ua.password AS username,
                        MAX(COALESCE(ua.can_view_special, 0)) AS can_view_special,
-                       COUNT(*) AS platforms
+                       COUNT(*) AS accounts
                 FROM user_access ua
                 {$where}
-                GROUP BY ua.email
-                ORDER BY MAX(COALESCE(ua.can_view_special, 0)) DESC, ua.email ASC
+                GROUP BY ua.password
+                ORDER BY MAX(COALESCE(ua.can_view_special, 0)) DESC, ua.password ASC
                 LIMIT {$limit}
             ";
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
             foreach ($rows as &$row) {
+                $row['username'] = (string) ($row['username'] ?? '');
                 $row['can_view_special'] = (int) ($row['can_view_special'] ?? 0);
-                $row['platforms'] = (int) ($row['platforms'] ?? 0);
+                $row['accounts'] = (int) ($row['accounts'] ?? 0);
             }
             unset($row);
             return $rows;
@@ -224,7 +230,34 @@ class UserAccessRepository
     }
 
     /**
-     * Activar/desactivar can_view_special en todas las filas de un email.
+     * Activar/desactivar can_view_special en todas las filas de un Usuario (password).
+     */
+    public function setCanViewSpecialByUsername(string $username, bool $enabled): bool
+    {
+        $username = trim($username);
+        if ($username === '') {
+            return false;
+        }
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                UPDATE user_access
+                SET can_view_special = :flag, updated_at = NOW()
+                WHERE password = :username
+                  AND password NOT IN ('Gmail (OAuth)', 'Outlook (OAuth)')
+            ");
+            return $stmt->execute([
+                ':flag' => $enabled ? 1 : 0,
+                ':username' => $username,
+            ]);
+        } catch (PDOException $e) {
+            error_log('setCanViewSpecialByUsername: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * @deprecated Usar setCanViewSpecialByUsername
      */
     public function setCanViewSpecialByEmail(string $email, bool $enabled): bool
     {

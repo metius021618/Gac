@@ -350,7 +350,7 @@ class EmailSubjectController
     }
 
     /**
-     * Listar emails con permiso can_view_special (para panel de asuntos especiales).
+     * Listar usuarios (columna Usuario) con permiso can_view_special.
      */
     public function specialAccessList(Request $request): void
     {
@@ -361,7 +361,7 @@ class EmailSubjectController
     }
 
     /**
-     * Activar/desactivar can_view_special para un email (todas sus filas).
+     * Activar/desactivar can_view_special para un Usuario (todas sus filas).
      */
     public function specialAccessToggle(Request $request): void
     {
@@ -369,14 +369,14 @@ class EmailSubjectController
             json_response(['success' => false, 'message' => 'Método no permitido'], 405);
             return;
         }
-        $email = strtolower(trim((string) $request->input('email', '')));
+        $username = trim((string) $request->input('username', ''));
         $enabled = (int) $request->input('enabled', 0) === 1;
-        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            json_response(['success' => false, 'message' => 'Email inválido'], 400);
+        if ($username === '' || strlen($username) < 2) {
+            json_response(['success' => false, 'message' => 'Usuario inválido'], 400);
             return;
         }
         $repo = new \Gac\Repositories\UserAccessRepository();
-        $ok = $repo->setCanViewSpecialByEmail($email, $enabled);
+        $ok = $repo->setCanViewSpecialByUsername($username, $enabled);
         json_response([
             'success' => $ok,
             'message' => $ok

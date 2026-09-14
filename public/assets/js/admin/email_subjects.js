@@ -96,13 +96,14 @@
         var subbar = document.getElementById('subjectSpecialSubbar');
         var panel = document.getElementById('specialAccessPanel');
         var special = isSpecialCategory(category);
+        var showUserPanel = category === 'especial_leer';
         if (subbar) {
             subbar.classList.toggle('is-hidden', !special);
             subbar.setAttribute('aria-hidden', special ? 'false' : 'true');
         }
         if (panel) {
-            panel.classList.toggle('is-hidden', !special);
-            panel.setAttribute('aria-hidden', special ? 'false' : 'true');
+            panel.classList.toggle('is-hidden', !showUserPanel);
+            panel.setAttribute('aria-hidden', showUserPanel ? 'false' : 'true');
         }
 
         var specialSwitch = document.getElementById('subjectSpecialSwitch');
@@ -126,9 +127,11 @@
         }
         syncBodyMatchVisibility();
 
-        if (special && typeof loadSpecialAccessFn === 'function' && !specialAccessLoaded) {
-            loadSpecialAccessFn('');
-            specialAccessLoaded = true;
+        if (showUserPanel && typeof loadSpecialAccessFn === 'function') {
+            if (!specialAccessLoaded) {
+                loadSpecialAccessFn('');
+                specialAccessLoaded = true;
+            }
         }
     }
 
@@ -262,11 +265,12 @@
                 return;
             }
             listEl.innerHTML = rows.map(function (row) {
+                var username = String(row.username || '');
                 var checked = Number(row.can_view_special) === 1 ? 'checked' : '';
                 return '<label class="special-access-row">'
-                    + '<input type="checkbox" data-email="' + String(row.email).replace(/"/g, '&quot;') + '" ' + checked + '>'
-                    + '<span class="special-access-email">' + String(row.email) + '</span>'
-                    + '<span class="special-access-meta">' + (row.platforms || 0) + ' plataforma(s)</span>'
+                    + '<input type="checkbox" data-username="' + username.replace(/"/g, '&quot;') + '" ' + checked + '>'
+                    + '<span class="special-access-email">' + username.replace(/</g, '&lt;') + '</span>'
+                    + '<span class="special-access-meta">' + (row.accounts || 0) + ' cuenta(s)</span>'
                     + '</label>';
             }).join('');
         }
@@ -286,9 +290,9 @@
         loadSpecialAccessFn = load;
 
         listEl.addEventListener('change', async function (e) {
-            var cb = e.target.closest('input[type="checkbox"][data-email]');
+            var cb = e.target.closest('input[type="checkbox"][data-username]');
             if (!cb) return;
-            var email = cb.getAttribute('data-email');
+            var username = cb.getAttribute('data-username');
             var enabled = cb.checked ? 1 : 0;
             cb.disabled = true;
             try {
@@ -298,7 +302,7 @@
                         'Content-Type': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
                     },
-                    body: JSON.stringify({ email: email, enabled: enabled })
+                    body: JSON.stringify({ username: username, enabled: enabled })
                 });
                 var data = await res.json();
                 if (!data.success) {
@@ -318,7 +322,7 @@
                 timer = setTimeout(function () { load(searchEl.value.trim()); }, 250);
             });
         }
-        if (isSpecialCategory(activeCategory)) {
+        if (activeCategory === 'especial_leer') {
             load('');
             specialAccessLoaded = true;
         }
