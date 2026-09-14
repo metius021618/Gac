@@ -35,17 +35,25 @@ try:
             CREATE TABLE email_subject_viewers (
                 id INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 email_subject_id INT UNSIGNED NOT NULL,
-                username VARCHAR(191) NOT NULL,
+                username VARCHAR(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci NOT NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 UNIQUE KEY uq_subject_username (email_subject_id, username),
                 KEY idx_esv_username (username),
                 KEY idx_esv_subject (email_subject_id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci
             """
         )
         print("CREATE email_subject_viewers")
-
+    else:
+        try:
+            cur.execute(
+                "ALTER TABLE email_subject_viewers "
+                "CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci"
+            )
+            print("ALIGN collations email_subject_viewers -> utf8mb4_spanish_ci")
+        except Exception as e:
+            print("COLLATION align skip:", e)
     if not col_exists("codes", "special_subject_id"):
         cur.execute(
             "ALTER TABLE codes "

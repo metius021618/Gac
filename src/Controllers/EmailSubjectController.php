@@ -365,7 +365,7 @@ class EmailSubjectController
             return;
         }
         $search = trim((string) $request->get('search', ''));
-        $rows = $this->emailSubjectRepository->listViewersForSubject($subjectId, $search, 200);
+        $rows = $this->emailSubjectRepository->listViewersForSubject($subjectId, $search, 2000);
         json_response([
             'success' => true,
             'data' => $rows,

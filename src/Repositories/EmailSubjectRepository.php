@@ -608,7 +608,7 @@ class EmailSubjectRepository
         }
         try {
             $db = Database::getConnection();
-            $params = [':sid' => $subjectId];
+            $params = [];
             $where = "
                 WHERE ua.enabled = 1
                   AND ua.password IS NOT NULL
@@ -620,31 +620,49 @@ class EmailSubjectRepository
                 $where .= ' AND LOWER(ua.password) LIKE CONCAT(\'%\', :q, \'%\')';
                 $params[':q'] = mb_strtolower($searchTrim);
             }
-            $limit = max(1, min(500, $limit));
+            $limit = max(1, min(5000, $limit));
+            // Sin JOIN a viewers (evita Illegal mix of collations); se cruza en PHP.
             $sql = "
                 SELECT ua.password AS username,
-                       MAX(CASE WHEN v.id IS NOT NULL THEN 1 ELSE 0 END) AS can_view,
                        COUNT(DISTINCT ua.id) AS accounts
                 FROM user_access ua
-                LEFT JOIN email_subject_viewers v
-                       ON v.email_subject_id = :sid
-                      AND v.username = ua.password
                 {$where}
                 GROUP BY ua.password
-                ORDER BY MAX(CASE WHEN v.id IS NOT NULL THEN 1 ELSE 0 END) DESC, ua.password ASC
+                ORDER BY ua.password ASC
                 LIMIT {$limit}
             ";
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-            foreach ($rows as &$row) {
-                $row['username'] = (string) ($row['username'] ?? '');
-                $row['can_view'] = (int) ($row['can_view'] ?? 0);
-                $row['can_view_special'] = $row['can_view']; // compat UI
-                $row['accounts'] = (int) ($row['accounts'] ?? 0);
+
+            $allowed = [];
+            $vStmt = $db->prepare("
+                SELECT username FROM email_subject_viewers
+                WHERE email_subject_id = :sid
+            ");
+            $vStmt->execute([':sid' => $subjectId]);
+            foreach ($vStmt->fetchAll(PDO::FETCH_COLUMN) ?: [] as $u) {
+                $allowed[mb_strtolower(trim((string) $u))] = true;
             }
-            unset($row);
-            return $rows;
+
+            $out = [];
+            foreach ($rows as $row) {
+                $username = (string) ($row['username'] ?? '');
+                $can = isset($allowed[mb_strtolower(trim($username))]) ? 1 : 0;
+                $out[] = [
+                    'username' => $username,
+                    'can_view' => $can,
+                    'can_view_special' => $can,
+                    'accounts' => (int) ($row['accounts'] ?? 0),
+                ];
+            }
+            usort($out, static function ($a, $b) {
+                if ($a['can_view'] !== $b['can_view']) {
+                    return $b['can_view'] <=> $a['can_view'];
+                }
+                return strcasecmp($a['username'], $b['username']);
+            });
+            return $out;
         } catch (PDOException $e) {
             error_log('listViewersForSubject: ' . $e->getMessage());
             return [];
