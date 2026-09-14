@@ -24,50 +24,50 @@ $content = ob_start();
         $main_tab = $is_special_tab ? 'especiales' : $category_filter;
         ?>
         <div class="subject-category-bar">
-            <div class="subject-category-switch subject-category-switch--4" data-active="<?= htmlspecialchars($main_tab) ?>">
+            <div class="subject-category-switch subject-category-switch--4" data-active="<?= htmlspecialchars($main_tab) ?>" id="subjectCategorySwitch">
                 <div class="subject-category-track" id="subjectCategoryTabs" role="tablist" aria-label="Categoría de asuntos">
                     <span class="subject-category-slider" aria-hidden="true"></span>
-                    <a href="/admin/email-subjects?category=general"
+                    <button type="button"
                        class="subject-category-option <?= $main_tab === 'general' ? 'is-active' : '' ?>"
                        data-category="general"
                        role="tab"
-                       aria-selected="<?= $main_tab === 'general' ? 'true' : 'false' ?>">Generales</a>
-                    <a href="/admin/email-subjects?category=modo_hogar"
+                       aria-selected="<?= $main_tab === 'general' ? 'true' : 'false' ?>">Generales</button>
+                    <button type="button"
                        class="subject-category-option <?= $main_tab === 'modo_hogar' ? 'is-active' : '' ?>"
                        data-category="modo_hogar"
                        role="tab"
-                       aria-selected="<?= $main_tab === 'modo_hogar' ? 'true' : 'false' ?>">Código Temporal</a>
-                    <a href="/admin/email-subjects?category=modo_viaje"
+                       aria-selected="<?= $main_tab === 'modo_hogar' ? 'true' : 'false' ?>">Código Temporal</button>
+                    <button type="button"
                        class="subject-category-option <?= $main_tab === 'modo_viaje' ? 'is-active' : '' ?>"
                        data-category="modo_viaje"
                        role="tab"
-                       aria-selected="<?= $main_tab === 'modo_viaje' ? 'true' : 'false' ?>">Actualizar Hogar</a>
-                    <a href="/admin/email-subjects?category=especial_leer"
+                       aria-selected="<?= $main_tab === 'modo_viaje' ? 'true' : 'false' ?>">Actualizar Hogar</button>
+                    <button type="button"
                        class="subject-category-option <?= $main_tab === 'especiales' ? 'is-active' : '' ?>"
                        data-category="especial_leer"
+                       data-main="especiales"
                        role="tab"
-                       aria-selected="<?= $main_tab === 'especiales' ? 'true' : 'false' ?>">Asuntos especiales</a>
+                       aria-selected="<?= $main_tab === 'especiales' ? 'true' : 'false' ?>">Asuntos especiales</button>
                 </div>
             </div>
         </div>
 
-        <?php if ($is_special_tab): ?>
-        <div class="subject-special-subbar">
-            <div class="subject-special-switch" data-active="<?= htmlspecialchars($category_filter) ?>">
-                <a href="/admin/email-subjects?category=especial_leer"
-                   class="subject-special-option <?= $category_filter === 'especial_leer' ? 'is-active' : '' ?>"
-                   data-category="especial_leer">Sí se leen</a>
-                <a href="/admin/email-subjects?category=especial_no_leer"
+        <div class="subject-special-subbar<?= $is_special_tab ? '' : ' is-hidden' ?>" id="subjectSpecialSubbar" aria-hidden="<?= $is_special_tab ? 'false' : 'true' ?>">
+            <div class="subject-special-switch" id="subjectSpecialSwitch" data-active="<?= htmlspecialchars($is_special_tab ? $category_filter : 'especial_leer') ?>">
+                <button type="button"
+                   class="subject-special-option <?= (!$is_special_tab || $category_filter === 'especial_leer') ? 'is-active' : '' ?>"
+                   data-category="especial_leer">Sí se leen</button>
+                <button type="button"
                    class="subject-special-option <?= $category_filter === 'especial_no_leer' ? 'is-active' : '' ?>"
-                   data-category="especial_no_leer">No se leen</a>
+                   data-category="especial_no_leer">No se leen</button>
             </div>
-            <p class="subject-special-hint">
-                <?= $category_filter === 'especial_leer'
-                    ? 'Se guardan como código especial. Solo usuarios con permiso los ven en consulta.'
-                    : 'Se reconocen y se marcan procesados, pero no se guardan (ej. compras).' ?>
+            <p class="subject-special-hint" id="subjectSpecialHint">
+                <?= $category_filter === 'especial_no_leer'
+                    ? 'Se reconocen y se marcan procesados, pero no se guardan (ej. compras).'
+                    : 'Se guardan como código especial. Solo usuarios con permiso los ven en consulta.' ?>
             </p>
         </div>
-        <?php endif; ?>
+
         <div class="table-controls">
             <div class="table-controls-left">
                 <div class="search-input-wrapper">
@@ -125,10 +125,11 @@ $content = ob_start();
         </div>
 
         <!-- Tabla de asuntos -->
-        <?php require base_path('views/admin/email_subjects/_table.php'); ?>
+        <div id="subjectsTableHost" class="subjects-table-host">
+            <?php require base_path('views/admin/email_subjects/_table.php'); ?>
+        </div>
 
-        <?php if ($is_special_tab): ?>
-        <div class="special-access-panel" id="specialAccessPanel">
+        <div class="special-access-panel<?= $is_special_tab ? '' : ' is-hidden' ?>" id="specialAccessPanel" aria-hidden="<?= $is_special_tab ? 'false' : 'true' ?>">
             <h3 class="special-access-title">Usuarios que pueden ver códigos especiales</h3>
             <p class="special-access-desc">Por defecto nadie ve asuntos especiales. Marca los correos autorizados.</p>
             <div class="special-access-search-wrap">
@@ -138,7 +139,6 @@ $content = ob_start();
                 <p class="empty-message">Cargando…</p>
             </div>
         </div>
-        <?php endif; ?>
     </div>
 </div>
 

@@ -24,7 +24,14 @@
     const modalBodyMatchInput = document.getElementById('modal_body_match');
     const modalBodyMatchGroup = document.getElementById('modalBodyMatchGroup');
 
-    function getActiveCategory() {
+    function isSpecialCategory(c) {
+        return c === 'especial_leer' || c === 'especial_no_leer';
+    }
+
+    /** Categoría activa en memoria (sin recargar página) */
+    var activeCategory = (function () {
+        var params = new URLSearchParams(window.location.search);
+        var c = (params.get('category') || '').trim();
         var allowed = {
             general: true,
             modo_hogar: true,
@@ -32,31 +39,19 @@
             especial_leer: true,
             especial_no_leer: true
         };
-        function ok(c) {
-            c = (c || '').trim();
-            return allowed[c] ? c : '';
-        }
+        return allowed[c] ? c : 'general';
+    })();
+    var lastSpecialCategory = isSpecialCategory(activeCategory) ? activeCategory : 'especial_leer';
+    var categorySwitchBusy = false;
+    var specialAccessLoaded = false;
+    var loadSpecialAccessFn = null;
 
-        var params = new URLSearchParams(window.location.search);
-        var fromUrl = ok(params.get('category'));
-        if (fromUrl) return fromUrl;
-
-        var specialActive = document.querySelector('.subject-special-option.is-active');
-        var fromSpecial = ok(specialActive && specialActive.dataset.category);
-        if (fromSpecial) return fromSpecial;
-
-        var activeOpt = document.querySelector('.subject-category-option.is-active');
-        var fromOpt = ok(activeOpt && activeOpt.dataset.category);
-        if (fromOpt) return fromOpt;
-
-        var fromModal = ok(modalCategoryInput && modalCategoryInput.value);
-        if (fromModal) return fromModal;
-
-        return 'general';
+    function getActiveCategory() {
+        return activeCategory || 'general';
     }
 
-    function isSpecialCategory(c) {
-        return c === 'especial_leer' || c === 'especial_no_leer';
+    function mainTabKey(c) {
+        return isSpecialCategory(c) ? 'especiales' : c;
     }
 
     function syncBodyMatchVisibility() {
@@ -69,7 +64,7 @@
                 modalBodyMatchInput.setAttribute('required', 'required');
             } else {
                 modalBodyMatchInput.removeAttribute('required');
-                modalBodyMatchInput.value = '';
+                if (!show) modalBodyMatchInput.value = '';
             }
         }
     }
@@ -82,6 +77,105 @@
         if (c === 'especial_leer') return prefix + ' Asunto especial (sí se lee)';
         if (c === 'especial_no_leer') return prefix + ' Asunto especial (no se lee)';
         return prefix + ' Asunto';
+    }
+
+    function updateCategoryChrome(category) {
+        var root = document.getElementById('subjectCategorySwitch') || document.querySelector('.subject-category-switch');
+        var activeKey = mainTabKey(category);
+        if (root) {
+            root.setAttribute('data-active', activeKey);
+            root.querySelectorAll('.subject-category-option').forEach(function (o) {
+                var on = o.getAttribute('data-main') === 'especiales'
+                    ? activeKey === 'especiales'
+                    : o.getAttribute('data-category') === category;
+                o.classList.toggle('is-active', on);
+                o.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+        }
+
+        var subbar = document.getElementById('subjectSpecialSubbar');
+        var panel = document.getElementById('specialAccessPanel');
+        var special = isSpecialCategory(category);
+        if (subbar) {
+            subbar.classList.toggle('is-hidden', !special);
+            subbar.setAttribute('aria-hidden', special ? 'false' : 'true');
+        }
+        if (panel) {
+            panel.classList.toggle('is-hidden', !special);
+            panel.setAttribute('aria-hidden', special ? 'false' : 'true');
+        }
+
+        var specialSwitch = document.getElementById('subjectSpecialSwitch');
+        if (specialSwitch && special) {
+            specialSwitch.setAttribute('data-active', category);
+            specialSwitch.querySelectorAll('.subject-special-option').forEach(function (o) {
+                var on = o.getAttribute('data-category') === category;
+                o.classList.toggle('is-active', on);
+            });
+        }
+
+        var hint = document.getElementById('subjectSpecialHint');
+        if (hint && special) {
+            hint.textContent = category === 'especial_no_leer'
+                ? 'Se reconocen y se marcan procesados, pero no se guardan (ej. compras).'
+                : 'Se guardan como código especial. Solo usuarios con permiso los ven en consulta.';
+        }
+
+        if (modalCategoryInput) {
+            modalCategoryInput.value = category;
+        }
+        syncBodyMatchVisibility();
+
+        if (special && typeof loadSpecialAccessFn === 'function' && !specialAccessLoaded) {
+            loadSpecialAccessFn('');
+            specialAccessLoaded = true;
+        }
+    }
+
+    function switchCategory(category, opts) {
+        opts = opts || {};
+        var allowed = {
+            general: true,
+            modo_hogar: true,
+            modo_viaje: true,
+            especial_leer: true,
+            especial_no_leer: true
+        };
+        if (!allowed[category]) return;
+        if (category === activeCategory && !opts.force) return;
+        if (categorySwitchBusy) return;
+        categorySwitchBusy = true;
+
+        if (isSpecialCategory(category)) {
+            lastSpecialCategory = category;
+        }
+        activeCategory = category;
+        updateCategoryChrome(category);
+
+        var host = document.getElementById('subjectsTableHost');
+        if (host) host.classList.add('is-loading');
+
+        // Reset búsqueda al cambiar sección (más claro para el usuario)
+        if (searchInput && !opts.keepSearch) {
+            searchInput.value = '';
+            if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+        }
+
+        var done = function () {
+            categorySwitchBusy = false;
+            if (host) host.classList.remove('is-loading');
+        };
+
+        if (typeof runSearch === 'function') {
+            var maybePromise = runSearch(1);
+            if (maybePromise && typeof maybePromise.then === 'function') {
+                maybePromise.then(done).catch(done);
+            } else {
+                window.setTimeout(done, 350);
+            }
+        } else {
+            done();
+        }
     }
 
     /** Función de búsqueda (se asigna en initSearch, la usa la paginación) */
@@ -106,55 +200,53 @@
         }
 
         initCategorySwitch();
-        syncBodyMatchVisibility();
+        updateCategoryChrome(activeCategory);
         initSpecialAccessPanel();
     }
 
     /**
-     * Animación del slider Generales / Código Temporal / Actualizar Hogar antes de navegar.
+     * Slider + cambio de sección por AJAX (sin recargar).
      */
     function initCategorySwitch() {
-        var root = document.querySelector('.subject-category-switch');
-        if (!root) return;
-        var options = root.querySelectorAll('.subject-category-option');
-        var navigating = false;
-
-        options.forEach(function (opt) {
-            opt.addEventListener('click', function (e) {
-                var category = opt.getAttribute('data-category');
-                var href = opt.getAttribute('href');
-                if (!category || !href) return;
-
-                if (opt.classList.contains('is-active') || root.getAttribute('data-active') === category
-                    || (root.getAttribute('data-active') === 'especiales' && (category === 'especial_leer' || category === 'especial_no_leer'))) {
-                    if (opt.classList.contains('is-active')) {
-                        e.preventDefault();
+        var root = document.getElementById('subjectCategorySwitch') || document.querySelector('.subject-category-switch');
+        if (root) {
+            root.querySelectorAll('.subject-category-option').forEach(function (opt) {
+                opt.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var category = opt.getAttribute('data-category');
+                    if (opt.getAttribute('data-main') === 'especiales') {
+                        category = lastSpecialCategory || 'especial_leer';
+                    }
+                    if (!category) return;
+                    if (mainTabKey(category) === mainTabKey(activeCategory) && !isSpecialCategory(category)) {
                         return;
                     }
-                }
-
-                e.preventDefault();
-                if (navigating) return;
-                navigating = true;
-
-                var activeKey = (category === 'especial_leer' || category === 'especial_no_leer') ? 'especiales' : category;
-                root.setAttribute('data-active', activeKey);
-                options.forEach(function (o) {
-                    var oc = o.getAttribute('data-category');
-                    var on = oc === category || (activeKey === 'especiales' && (oc === 'especial_leer' || oc === 'especial_no_leer') && o.classList.contains('is-active'));
-                    if (activeKey === 'especiales') {
-                        on = (oc === 'especial_leer' || oc === 'especial_no_leer');
-                    } else {
-                        on = oc === category;
+                    if (opt.getAttribute('data-main') === 'especiales' && isSpecialCategory(activeCategory)) {
+                        return;
                     }
-                    o.classList.toggle('is-active', on);
-                    o.setAttribute('aria-selected', on ? 'true' : 'false');
+                    switchCategory(category);
                 });
-
-                window.setTimeout(function () {
-                    window.location.href = href;
-                }, 300);
             });
+        }
+
+        var specialSwitch = document.getElementById('subjectSpecialSwitch');
+        if (specialSwitch) {
+            specialSwitch.querySelectorAll('.subject-special-option').forEach(function (opt) {
+                opt.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var category = opt.getAttribute('data-category');
+                    if (!category || category === activeCategory) return;
+                    switchCategory(category);
+                });
+            });
+        }
+
+        window.addEventListener('popstate', function () {
+            var params = new URLSearchParams(window.location.search);
+            var c = (params.get('category') || 'general').trim();
+            if (c !== activeCategory) {
+                switchCategory(c, { force: true, keepSearch: true });
+            }
         });
     }
 
@@ -191,6 +283,8 @@
             }
         }
 
+        loadSpecialAccessFn = load;
+
         listEl.addEventListener('change', async function (e) {
             var cb = e.target.closest('input[type="checkbox"][data-email]');
             if (!cb) return;
@@ -224,7 +318,10 @@
                 timer = setTimeout(function () { load(searchEl.value.trim()); }, 250);
             });
         }
-        load('');
+        if (isSpecialCategory(activeCategory)) {
+            load('');
+            specialAccessLoaded = true;
+        }
     }
 
     /**
@@ -470,7 +567,7 @@
                     return { category: getActiveCategory() };
                 },
                 renderCallback: function(html) {
-                    window.SearchAJAX.updateTableContent(html);
+                    renderSubjectsTable(html);
                     emailSubjectsTable = document.getElementById('emailSubjectsTable');
                     if (emailSubjectsTable) initTable();
                     initPagination();
@@ -480,19 +577,33 @@
                 }
             });
             runSearch = function(page) {
-                window.SearchAJAX.performSearch(window.location.pathname, {
+                return window.SearchAJAX.performSearch(window.location.pathname, {
                     search: searchInput.value.trim(),
                     page: page || 1,
                     per_page: perPageSelect.value,
                     category: getActiveCategory()
                 }, function(html) {
-                    window.SearchAJAX.updateTableContent(html);
+                    renderSubjectsTable(html);
                     emailSubjectsTable = document.getElementById('emailSubjectsTable');
                     if (emailSubjectsTable) initTable();
                     initPagination();
                 });
             };
         }
+    }
+
+    function renderSubjectsTable(html) {
+        var temp = document.createElement('div');
+        temp.innerHTML = html;
+        var adminContent = temp.querySelector('.admin-content') || temp;
+        var host = document.getElementById('subjectsTableHost');
+        var table = adminContent.querySelector('.table-container');
+        var pag = adminContent.querySelector('.pagination-container');
+        if (host && table) {
+            host.innerHTML = table.outerHTML + (pag ? pag.outerHTML : '');
+            return;
+        }
+        window.SearchAJAX.updateTableContent(html);
     }
 
     /**

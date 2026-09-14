@@ -76,7 +76,8 @@
 }
 
 .subject-category-option,
-a.subject-category-option {
+a.subject-category-option,
+button.subject-category-option {
     position: relative;
     z-index: 1;
     display: flex;
@@ -98,17 +99,20 @@ a.subject-category-option {
     cursor: pointer;
     transition: color 0.25s ease;
     white-space: nowrap;
+    font-family: inherit;
 }
 
 .subject-category-option:hover,
-a.subject-category-option:hover {
+a.subject-category-option:hover,
+button.subject-category-option:hover {
     color: #ffffff !important;
     text-decoration: none !important;
     background: transparent !important;
 }
 
 .subject-category-option.is-active,
-a.subject-category-option.is-active {
+a.subject-category-option.is-active,
+button.subject-category-option.is-active {
     color: #ffffff !important;
 }
 
@@ -132,6 +136,17 @@ a.subject-category-option.is-active {
 .subject-special-subbar {
     margin: -0.75rem 0 1.5rem;
     text-align: center;
+    max-height: 120px;
+    opacity: 1;
+    overflow: hidden;
+    transition: opacity 0.25s ease, max-height 0.28s ease, margin 0.28s ease;
+}
+
+.subject-special-subbar.is-hidden {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+    pointer-events: none;
 }
 
 .subject-special-switch {
@@ -150,6 +165,10 @@ a.subject-category-option.is-active {
     text-decoration: none;
     font-size: 0.88rem;
     font-weight: 600;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
 }
 
 .subject-special-option.is-active {
@@ -164,11 +183,13 @@ a.subject-category-option.is-active {
     color: rgba(255, 255, 255, 0.65);
 }
 
-.subject-body-preview {
-    margin-top: 0.35rem;
-    font-size: 0.78rem;
-    color: rgba(255, 255, 255, 0.55);
-    font-weight: 400;
+.subjects-table-host {
+    transition: opacity 0.18s ease;
+}
+
+.subjects-table-host.is-loading {
+    opacity: 0.45;
+    pointer-events: none;
 }
 
 .special-access-panel {
@@ -177,6 +198,26 @@ a.subject-category-option.is-active {
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(255, 255, 255, 0.04);
+    transition: opacity 0.25s ease, max-height 0.3s ease;
+    max-height: 2000px;
+    overflow: hidden;
+}
+
+.special-access-panel.is-hidden {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+    pointer-events: none;
+}
+
+.subject-body-preview {
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: 400;
 }
 
 .special-access-title {
