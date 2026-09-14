@@ -386,6 +386,27 @@ class EmailSubjectController
     }
 
     /**
+     * Marcar o desmarcar todos los usuarios para códigos especiales.
+     */
+    public function specialAccessBulk(Request $request): void
+    {
+        if ($request->method() !== 'POST') {
+            json_response(['success' => false, 'message' => 'Método no permitido'], 405);
+            return;
+        }
+        $enabled = (int) $request->input('enabled', 0) === 1;
+        $search = trim((string) $request->input('search', ''));
+        $repo = new \Gac\Repositories\UserAccessRepository();
+        $ok = $repo->setCanViewSpecialForAll($enabled, $search);
+        json_response([
+            'success' => $ok,
+            'message' => $ok
+                ? ($enabled ? 'Todos los usuarios marcados' : 'Todos los usuarios desmarcados')
+                : 'No se pudo actualizar',
+        ], $ok ? 200 : 500);
+    }
+
+    /**
      * Renderizar vista
      */
     private function renderView(string $view, array $data = []): void

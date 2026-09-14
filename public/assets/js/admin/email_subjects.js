@@ -289,6 +289,46 @@
 
         loadSpecialAccessFn = load;
 
+        async function bulkSet(enabled) {
+            var markBtn = document.getElementById('specialAccessMarkAll');
+            var unmarkBtn = document.getElementById('specialAccessUnmarkAll');
+            if (markBtn) markBtn.disabled = true;
+            if (unmarkBtn) unmarkBtn.disabled = true;
+            try {
+                var res = await fetch('/admin/email-subjects/special-access/bulk', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        enabled: enabled ? 1 : 0,
+                        search: searchEl ? searchEl.value.trim() : ''
+                    })
+                });
+                var data = await res.json();
+                if (!data.success) {
+                    if (window.GAC) await window.GAC.error(data.message || 'No se pudo actualizar', 'Error');
+                    return;
+                }
+                await load(searchEl ? searchEl.value.trim() : '');
+            } catch (err) {
+                if (window.GAC) await window.GAC.error('Error de conexión', 'Error');
+            } finally {
+                if (markBtn) markBtn.disabled = false;
+                if (unmarkBtn) unmarkBtn.disabled = false;
+            }
+        }
+
+        var markAllBtn = document.getElementById('specialAccessMarkAll');
+        var unmarkAllBtn = document.getElementById('specialAccessUnmarkAll');
+        if (markAllBtn) {
+            markAllBtn.addEventListener('click', function () { bulkSet(true); });
+        }
+        if (unmarkAllBtn) {
+            unmarkAllBtn.addEventListener('click', function () { bulkSet(false); });
+        }
+
         listEl.addEventListener('change', async function (e) {
             var cb = e.target.closest('input[type="checkbox"][data-username]');
             if (!cb) return;

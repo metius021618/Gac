@@ -132,8 +132,14 @@ $content = ob_start();
         <div class="special-access-panel<?= ($category_filter === 'especial_leer') ? '' : ' is-hidden' ?>" id="specialAccessPanel" aria-hidden="<?= ($category_filter === 'especial_leer') ? 'false' : 'true' ?>">
             <h3 class="special-access-title">Usuarios que pueden ver códigos especiales</h3>
             <p class="special-access-desc">Por defecto nadie ve asuntos especiales. Marca los usuarios autorizados (columna Usuario de Lista de cuentas).</p>
-            <div class="special-access-search-wrap">
-                <input type="text" id="specialAccessSearch" class="form-input" placeholder="Filtrar por usuario..." autocomplete="off">
+            <div class="special-access-toolbar">
+                <div class="special-access-search-wrap">
+                    <input type="text" id="specialAccessSearch" class="form-input" placeholder="Filtrar por usuario..." autocomplete="off">
+                </div>
+                <div class="special-access-bulk">
+                    <button type="button" class="btn btn-secondary btn-sm" id="specialAccessMarkAll">Marcar todo</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="specialAccessUnmarkAll">Desmarcar todo</button>
+                </div>
             </div>
             <div id="specialAccessList" class="special-access-list">
                 <p class="empty-message">Cargando…</p>

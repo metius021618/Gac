@@ -257,6 +257,37 @@ class UserAccessRepository
     }
 
     /**
+     * Marcar/desmarcar can_view_special para todos los usuarios elegibles (opcional filtro).
+     */
+    public function setCanViewSpecialForAll(bool $enabled, string $search = ''): bool
+    {
+        try {
+            $db = Database::getConnection();
+            $params = [':flag' => $enabled ? 1 : 0];
+            $where = "
+                WHERE enabled = 1
+                  AND password IS NOT NULL
+                  AND TRIM(password) <> ''
+                  AND password NOT IN ('Gmail (OAuth)', 'Outlook (OAuth)')
+            ";
+            $searchTrim = trim($search);
+            if ($searchTrim !== '') {
+                $where .= ' AND LOWER(password) LIKE CONCAT(\'%\', :q, \'%\')';
+                $params[':q'] = mb_strtolower($searchTrim);
+            }
+            $stmt = $db->prepare("
+                UPDATE user_access
+                SET can_view_special = :flag, updated_at = NOW()
+                {$where}
+            ");
+            return $stmt->execute($params);
+        } catch (PDOException $e) {
+            error_log('setCanViewSpecialForAll: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * @deprecated Usar setCanViewSpecialByUsername
      */
     public function setCanViewSpecialByEmail(string $email, bool $enabled): bool
