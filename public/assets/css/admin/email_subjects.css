@@ -235,6 +235,7 @@ button.subject-category-option.is-active {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: space-between;
     gap: 0.75rem;
     margin-bottom: 0.75rem;
 }
@@ -249,6 +250,7 @@ button.subject-category-option.is-active {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+    margin-left: auto;
 }
 
 .special-access-bulk .btn-sm {
