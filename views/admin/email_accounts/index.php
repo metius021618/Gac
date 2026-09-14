@@ -101,13 +101,13 @@ elseif ($filter_date_from && $filter_date_to) $timeRangeLabel = 'Personalizado';
                     <div class="analisis-filter-dropdown" data-filter="plataforma" id="listaCuentasPlatformDropdown">
                         <span class="analisis-filter-label">Plataforma</span><span class="analisis-filter-sep"> - </span><span class="analisis-filter-value" id="listaCuentasPlatformValue"><?= htmlspecialchars($plataformaFilterLabel) ?></span>
                         <ul class="analisis-filter-menu">
-                            <li><a href="<?= $queryParamsLista(['platform_id' => '', 'page' => 1]) ?>">Todas</a></li>
+                            <li><a href="<?= $queryParamsLista(['platform_id' => '', 'page' => 1]) ?>" data-platform-id="">Todas</a></li>
                             <?php foreach ($platforms_list as $p):
                                 $pid = (int)($p['id'] ?? 0);
                                 $pname = htmlspecialchars($p['display_name'] ?? $p['name'] ?? '', ENT_QUOTES, 'UTF-8');
                                 if ($pname === '') continue;
                             ?>
-                                <li><a href="<?= $queryParamsLista(['platform_id' => $pid, 'page' => 1]) ?>"><?= $pname ?></a></li>
+                                <li><a href="<?= $queryParamsLista(['platform_id' => $pid, 'page' => 1]) ?>" data-platform-id="<?= $pid ?>"><?= $pname ?></a></li>
                             <?php endforeach; ?>
                         </ul>
                     </div>

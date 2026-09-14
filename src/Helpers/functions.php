@@ -11,8 +11,9 @@ if (!function_exists('gac_version')) {
      */
     function gac_version(): string
     {
-        // Bump para forzar recarga de CSS/JS en clientes con cache.
-        return defined('GAC_VERSION') ? GAC_VERSION : '2.0.7-especiales-btns-derecha';
+        // Bump el sufijo para forzar recarga de CSS/JS en clientes con cache.
+        $base = defined('GAC_VERSION') ? GAC_VERSION : '2.0.0';
+        return $base . '-platform-filter-label-v2';
     }
 }
 

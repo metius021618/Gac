@@ -69,29 +69,41 @@
         });
     }
 
+    function setListaCuentasPlatformLabel(label) {
+        var platformValue = document.getElementById('listaCuentasPlatformValue');
+        if (platformValue) {
+            platformValue.textContent = (label && String(label).trim()) ? String(label).trim() : 'Todas';
+        }
+    }
+
+    function platformIdFromLink(link) {
+        if (!link) return '';
+        if (link.hasAttribute('data-platform-id')) {
+            return String(link.getAttribute('data-platform-id') || '');
+        }
+        try {
+            return new URL(link.href, window.location.origin).searchParams.get('platform_id') || '';
+        } catch (err) {
+            return '';
+        }
+    }
+
     function updateFilterLabelsFromUrl() {
         var qs = new URLSearchParams(window.location.search);
         var platformId = qs.get('platform_id') || '';
-        var platformValue = document.getElementById('listaCuentasPlatformValue');
-        if (platformValue) {
-            var label = 'Todas';
-            if (platformId) {
-                var drop = document.getElementById('listaCuentasPlatformDropdown');
-                var links = drop ? drop.querySelectorAll('a[href]') : [];
-                for (var i = 0; i < links.length; i++) {
-                    try {
-                        var linkParams = new URL(links[i].href, window.location.origin).searchParams;
-                        if ((linkParams.get('platform_id') || '') === String(platformId)) {
-                            label = (links[i].textContent || '').trim() || 'Todas';
-                            break;
-                        }
-                    } catch (err) {
-                        // ignore invalid href
-                    }
+        var label = 'Todas';
+        if (platformId) {
+            var drop = document.getElementById('listaCuentasPlatformDropdown');
+            var links = drop ? drop.querySelectorAll('a[href]') : [];
+            for (var i = 0; i < links.length; i++) {
+                if (platformIdFromLink(links[i]) === String(platformId)) {
+                    label = (links[i].textContent || '').trim() || 'Todas';
+                    break;
                 }
             }
-            platformValue.textContent = label;
         }
+        setListaCuentasPlatformLabel(label);
+
         var timeValue = document.getElementById('listaCuentasTimeFilterValue');
         if (timeValue) {
             var tr = qs.get('time_range') || '';
@@ -129,7 +141,9 @@
 
             // Links "Todo" / "Todas" limpian esos params
             if (container.id === 'listaCuentasPlatformDropdown') {
-                overrides.platform_id = sp.get('platform_id') || '';
+                // Usar data-platform-id (exacto) para no confundir platform_id=1 con platform_id=10
+                overrides.platform_id = platformIdFromLink(link);
+                setListaCuentasPlatformLabel((link.textContent || '').trim() || 'Todas');
             }
             if (container.id === 'listaCuentasTimeFilterDropdown') {
                 overrides.date_from = sp.get('date_from') || '';
