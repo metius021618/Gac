@@ -15,12 +15,20 @@ use PDOException;
 
 class EmailSubjectRepository
 {
-    /** Último error: 'duplicate' si fue violación de unique_platform_subject */
+    /** Último error: 'duplicate' | 'cross_section' */
     private static string $lastError = '';
+
+    /** Mensaje legible del último conflicto de asunto */
+    private static string $lastConflictMessage = '';
 
     public static function getLastError(): string
     {
         return self::$lastError;
+    }
+
+    public static function getLastConflictMessage(): string
+    {
+        return self::$lastConflictMessage;
     }
 
     /**
@@ -137,6 +145,119 @@ class EmailSubjectRepository
     {
         $c = $this->normalizeCategory($category);
         return $c === 'especial_leer' || $c === 'especial_no_leer';
+    }
+
+    /**
+     * Sección de UI: general | modo_hogar | modo_viaje | especiales
+     * (especial_leer y especial_no_leer comparten la misma sección).
+     */
+    public function sectionKey(string $category): string
+    {
+        $c = $this->normalizeCategory($category);
+        if ($this->isSpecialCategory($c)) {
+            return 'especiales';
+        }
+        return $c;
+    }
+
+    public function sectionLabel(string $category): string
+    {
+        return match ($this->sectionKey($category)) {
+            'modo_hogar' => 'Código Temporal',
+            'modo_viaje' => 'Actualizar Hogar',
+            'especiales' => 'Asuntos especiales',
+            default => 'Generales',
+        };
+    }
+
+    /**
+     * Normalizar texto de asunto para comparar (trim, espacios, minúsculas).
+     */
+    public function normalizeSubjectLine(string $subjectLine): string
+    {
+        $s = trim($subjectLine);
+        $s = preg_replace('/\s+/u', ' ', $s) ?? $s;
+        return mb_strtolower($s);
+    }
+
+    /**
+     * ¿Hay conflicto al guardar/editar este asunto?
+     * - No se puede repetir el mismo asunto entre secciones distintas (misma plataforma).
+     * - En la misma sección no especial: no duplicar.
+     * - En especiales: mismo asunto OK si el body_match es distinto; mismo body → conflicto.
+     *
+     * @return array{type:string,existing_category:string,message:string}|null
+     */
+    public function findSaveConflict(int $platformId, string $subjectLine, string $category, ?string $bodyMatch = null, ?int $excludeId = null): ?array
+    {
+        $category = $this->normalizeCategory($category);
+        $needle = $this->normalizeSubjectLine($subjectLine);
+        if ($platformId <= 0 || $needle === '') {
+            return null;
+        }
+
+        try {
+            $db = Database::getConnection();
+            $sql = "
+                SELECT id, category, subject_line, body_match
+                FROM email_subjects
+                WHERE active = 1
+                  AND platform_id = :platform_id
+            ";
+            $params = [':platform_id' => $platformId];
+            if ($excludeId !== null && $excludeId > 0) {
+                $sql .= ' AND id <> :exclude_id';
+                $params[':exclude_id'] = $excludeId;
+            }
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (PDOException $e) {
+            error_log('findSaveConflict: ' . $e->getMessage());
+            return null;
+        }
+
+        $targetSection = $this->sectionKey($category);
+        $needleBody = $this->isSpecialCategory($category)
+            ? $this->normalizeSubjectLine((string) ($bodyMatch ?? ''))
+            : '';
+
+        foreach ($rows as $row) {
+            if ($this->normalizeSubjectLine((string) ($row['subject_line'] ?? '')) !== $needle) {
+                continue;
+            }
+            $existingCat = $this->normalizeCategory((string) ($row['category'] ?? 'general'));
+            $existingSection = $this->sectionKey($existingCat);
+
+            if ($existingSection !== $targetSection) {
+                $label = $this->sectionLabel($existingCat);
+                return [
+                    'type' => 'cross_section',
+                    'existing_category' => $existingCat,
+                    'message' => "Este asunto ya está en «{$label}». No puede repetirse en otra sección.",
+                ];
+            }
+
+            if ($targetSection !== 'especiales') {
+                $label = $this->sectionLabel($existingCat);
+                return [
+                    'type' => 'duplicate',
+                    'existing_category' => $existingCat,
+                    'message' => "Ya existe este asunto en «{$label}».",
+                ];
+            }
+
+            $existingBody = $this->normalizeSubjectLine((string) ($row['body_match'] ?? ''));
+            if ($needleBody !== '' && $existingBody !== '' && $needleBody === $existingBody) {
+                return [
+                    'type' => 'duplicate',
+                    'existing_category' => $existingCat,
+                    'message' => 'Ya existe un asunto especial con el mismo texto de asunto y cuerpo.',
+                ];
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -278,6 +399,7 @@ class EmailSubjectRepository
     public function save(array $data): int|false
     {
         self::$lastError = '';
+        self::$lastConflictMessage = '';
         try {
             $db = Database::getConnection();
             $category = $this->normalizeCategory($data['category'] ?? 'general');
@@ -290,6 +412,20 @@ class EmailSubjectRepository
             } elseif ($category === 'especial_no_leer') {
                 $specialAction = 'no_leer';
             }
+
+            $conflict = $this->findSaveConflict(
+                (int) $data['platform_id'],
+                (string) $data['subject_line'],
+                $category,
+                $bodyMatch,
+                null
+            );
+            if ($conflict) {
+                self::$lastError = $conflict['type'] === 'cross_section' ? 'cross_section' : 'duplicate';
+                self::$lastConflictMessage = $conflict['message'];
+                return false;
+            }
+
             $stmt = $db->prepare("
                 INSERT INTO email_subjects (platform_id, subject_line, category, body_match, special_action, active)
                 VALUES (:platform_id, :subject_line, :category, :body_match, :special_action, 1)
@@ -309,6 +445,7 @@ class EmailSubjectRepository
             $code = $e->getCode();
             if ($code === '23000' || strpos($msg, '1062') !== false || stripos($msg, 'Duplicate') !== false) {
                 self::$lastError = 'duplicate';
+                self::$lastConflictMessage = 'Ya existe un asunto con el mismo texto para esta plataforma.';
             }
             error_log("Error al guardar asunto de email: " . $msg);
             return false;
@@ -324,6 +461,8 @@ class EmailSubjectRepository
      */
     public function update(int $id, array $data): bool
     {
+        self::$lastError = '';
+        self::$lastConflictMessage = '';
         try {
             $db = Database::getConnection();
             $category = $this->normalizeCategory($data['category'] ?? 'general');
@@ -336,6 +475,20 @@ class EmailSubjectRepository
             } elseif ($category === 'especial_no_leer') {
                 $specialAction = 'no_leer';
             }
+
+            $conflict = $this->findSaveConflict(
+                (int) $data['platform_id'],
+                (string) $data['subject_line'],
+                $category,
+                $bodyMatch,
+                $id
+            );
+            if ($conflict) {
+                self::$lastError = $conflict['type'] === 'cross_section' ? 'cross_section' : 'duplicate';
+                self::$lastConflictMessage = $conflict['message'];
+                return false;
+            }
+
             $stmt = $db->prepare("
                 UPDATE email_subjects
                 SET platform_id = :platform_id,

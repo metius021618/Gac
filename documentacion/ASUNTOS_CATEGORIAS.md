@@ -25,6 +25,10 @@ Cada regla especial exige **asunto exacto** + **fragmento de cuerpo** (`body_mat
 3. La clave maestra siempre puede ver especiales.
 4. Por defecto nadie tiene el check (panel bajo Asuntos especiales).
 
+La coincidencia es **exacta** (el asunto del correo debe ser igual al registrado).
+
+**Un asunto no puede repetirse entre secciones** (misma plataforma): si está en Generales, no puede estar en Código Temporal, Actualizar Hogar ni Asuntos especiales (y viceversa). Dentro de Asuntos especiales sí puede repetirse el mismo texto de asunto si el **cuerpo** es distinto (leer vs no leer).
+
 ## Migración / seed / prueba
 
 ```bash

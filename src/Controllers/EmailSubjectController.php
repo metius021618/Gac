@@ -186,14 +186,18 @@ class EmailSubjectController
             ];
         }
 
-        $isDuplicate = EmailSubjectRepository::getLastError() === 'duplicate';
+        $err = EmailSubjectRepository::getLastError();
+        $msg = EmailSubjectRepository::getLastConflictMessage();
+        if ($msg === '') {
+            $msg = $err === 'cross_section' || $err === 'duplicate'
+                ? 'Ya existe un asunto con el mismo texto para esta plataforma.'
+                : 'Error al guardar el asunto.';
+        }
         return [
-            'code' => $isDuplicate ? 409 : 500,
+            'code' => ($err === 'duplicate' || $err === 'cross_section') ? 409 : 500,
             'body' => [
                 'success' => false,
-                'message' => $isDuplicate
-                    ? 'Ya existe un asunto con el mismo texto para esta plataforma.'
-                    : 'Error al guardar el asunto.'
+                'message' => $msg,
             ]
         ];
     }
@@ -295,10 +299,15 @@ class EmailSubjectController
                 'message' => 'Asunto actualizado correctamente'
             ], 200);
         } else {
+            $err = EmailSubjectRepository::getLastError();
+            $msg = EmailSubjectRepository::getLastConflictMessage();
+            if ($msg === '') {
+                $msg = 'Error al actualizar el asunto';
+            }
             json_response([
                 'success' => false,
-                'message' => 'Error al actualizar el asunto'
-            ], 500);
+                'message' => $msg
+            ], ($err === 'duplicate' || $err === 'cross_section') ? 409 : 500);
         }
     }
 
