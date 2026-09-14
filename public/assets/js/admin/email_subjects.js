@@ -120,7 +120,7 @@
         if (hint && special) {
             hint.textContent = category === 'especial_no_leer'
                 ? 'Se reconocen y se marcan procesados, pero no se guardan (ej. compras).'
-                : 'Se guardan como código especial. Solo usuarios autorizados por cada asunto los ven en consulta.';
+                : '';
         }
 
         if (modalCategoryInput) {

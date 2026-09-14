@@ -64,7 +64,7 @@ $content = ob_start();
             <p class="subject-special-hint" id="subjectSpecialHint">
                 <?= $category_filter === 'especial_no_leer'
                     ? 'Se reconocen y se marcan procesados, pero no se guardan (ej. compras).'
-                    : 'Se guardan como código especial. Solo usuarios con permiso los ven en consulta.' ?>
+                    : '' ?>
             </p>
         </div>
 
