@@ -115,28 +115,16 @@ class CodeService
         // Log: correo que recibimos en la consulta y correo/origen para el que buscamos
         @file_put_contents($consultLogFile, date('Y-m-d H:i:s') . " [CONSULT] correo_recibido=" . $userEmail . " → buscando_codigo_para_recipient=" . $userEmail . " origin_filtro=" . ($originFilter ?? 'cualquiera') . " platform=" . ($platform['display_name'] ?? $platformSlug) . " master_key=" . ($isMasterKeyUsed ? 'si' : 'no') . "\n", FILE_APPEND | LOCK_EX);
 
-        // Buscar el último correo para este usuario (recipient_email = userEmail). Solo ese correo, sin fallback a otra cuenta.
-        $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $userEmail, $originFilter);
+        // Buscar el último correo visible (especiales solo si el Usuario tiene permiso en ese asunto)
+        if ($isMasterKeyUsed) {
+            $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $userEmail, $originFilter);
+        } else {
+            $lastEmail = $this->codeRepository->findLastVisibleEmail($platform['id'], $userEmail, $username, $originFilter);
+        }
 
         // Nunca devolver un código de otro destinatario (por si hubiera algún fallo en BD o en otra ruta)
         if ($lastEmail && strtolower(trim($lastEmail['recipient_email'] ?? '')) !== $userEmailLower) {
             $lastEmail = null;
-        }
-
-        // Opción A: si el último es especial y el usuario no tiene permiso → caer al último no especial
-        if ($lastEmail && (int) ($lastEmail['is_special'] ?? 0) === 1 && !$isMasterKeyUsed) {
-            $canSpecial = $this->userAccessRepository->canViewSpecial($userEmail, (int) $platform['id']);
-            if (!$canSpecial) {
-                @file_put_contents(
-                    $consultLogFile,
-                    date('Y-m-d H:i:s') . " [CONSULT] ESPECIAL_BLOQUEADO code_id=" . ($lastEmail['id'] ?? '') . " → buscando no especial\n",
-                    FILE_APPEND | LOCK_EX
-                );
-                $lastEmail = $this->codeRepository->findLastEmail($platform['id'], $userEmail, $originFilter, true);
-                if ($lastEmail && strtolower(trim($lastEmail['recipient_email'] ?? '')) !== $userEmailLower) {
-                    $lastEmail = null;
-                }
-            }
         }
 
         if ($lastEmail) {

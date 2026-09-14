@@ -14,7 +14,7 @@ $can_delete_subject = function_exists('user_can_action') && user_can_action('reg
                 <th style="width: 60px;">ID</th>
                 <th>Plataforma</th>
                 <th>Asunto</th>
-                <th style="width: 150px;">Acciones</th>
+                <th style="width: 190px;">Acciones</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -40,13 +40,31 @@ $can_delete_subject = function_exists('user_can_action') && user_can_action('reg
                             <?php endif; ?>
                         </td>
                         <td class="actions-cell">
+                            <?php
+                            $rowCategory = $subject['category'] ?? ($category_filter ?? 'general');
+                            $showUsersBtn = $rowCategory === 'especial_leer';
+                            ?>
+                            <?php if ($showUsersBtn && $can_edit_subject): ?>
+                            <button type="button"
+                                    class="btn-icon btn-users"
+                                    data-id="<?= $subject['id'] ?>"
+                                    data-subject-line="<?= htmlspecialchars($subject['subject_line']) ?>"
+                                    title="Usuarios de este asunto">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </button>
+                            <?php endif; ?>
                             <?php if ($can_edit_subject): ?>
                             <button type="button"
                                     class="btn-icon btn-edit" 
                                     data-id="<?= $subject['id'] ?>"
                                     data-platform-id="<?= $subject['platform_id'] ?>"
                                     data-subject-line="<?= htmlspecialchars($subject['subject_line']) ?>"
-                                    data-category="<?= htmlspecialchars($subject['category'] ?? ($category_filter ?? 'general')) ?>"
+                                    data-category="<?= htmlspecialchars($rowCategory) ?>"
                                     data-body-match="<?= htmlspecialchars($subject['body_match'] ?? '') ?>"
                                     title="Editar">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

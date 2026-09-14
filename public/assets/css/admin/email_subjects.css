@@ -220,9 +220,30 @@ button.subject-category-option.is-active {
     font-weight: 400;
 }
 
+.special-access-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+}
+
 .special-access-title {
     margin: 0 0 0.35rem;
     font-size: 1.05rem;
+}
+
+.btn-icon.btn-users {
+    color: #38bdf8;
+}
+
+.btn-icon.btn-users:hover {
+    color: #7dd3fc;
+}
+
+.table-row.is-users-selected {
+    outline: 1px solid rgba(56, 189, 248, 0.45);
+    background: rgba(56, 189, 248, 0.08);
 }
 
 .special-access-desc {

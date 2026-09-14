@@ -217,6 +217,7 @@ class CodeRepository
                     c.received_at,
                     c.status,
                     COALESCE(c.is_special, 0) AS is_special,
+                    c.special_subject_id,
                     c.origin,
                     c.recipient_email,
                     TIMESTAMPDIFF(MINUTE, c.received_at, NOW()) as minutes_ago
@@ -248,6 +249,77 @@ class CodeRepository
         } catch (PDOException $e) {
             error_log("Error al buscar último correo: " . $e->getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Último correo visible para un usuario: normales + especiales autorizados para ese username.
+     */
+    public function findLastVisibleEmail(int $platformId, string $recipientEmail, string $username, ?string $origin = null): ?array
+    {
+        try {
+            $db = Database::getConnection();
+            $originClause = '';
+            $params = [
+                'platform_id' => $platformId,
+                'recipient_email' => strtolower($recipientEmail),
+                'username' => trim($username),
+            ];
+            if ($origin === 'gmail' || $origin === 'imap' || $origin === 'outlook') {
+                $originClause = ' AND c.origin = :origin';
+                $params['origin'] = $origin;
+            }
+            $stmt = $db->prepare("
+                SELECT 
+                    c.id,
+                    c.code,
+                    c.email_from,
+                    c.subject,
+                    c.email_body,
+                    c.received_at,
+                    c.status,
+                    COALESCE(c.is_special, 0) AS is_special,
+                    c.special_subject_id,
+                    c.origin,
+                    c.recipient_email,
+                    TIMESTAMPDIFF(MINUTE, c.received_at, NOW()) as minutes_ago
+                FROM codes c
+                WHERE c.platform_id = :platform_id
+                  AND c.recipient_email = :recipient_email
+                  {$originClause}
+                  AND (
+                    COALESCE(c.is_special, 0) = 0
+                    OR (
+                        c.special_subject_id IS NOT NULL
+                        AND EXISTS (
+                            SELECT 1 FROM email_subject_viewers v
+                            WHERE v.email_subject_id = c.special_subject_id
+                              AND LOWER(TRIM(v.username)) = LOWER(TRIM(:username))
+                        )
+                    )
+                  )
+                ORDER BY (COALESCE(c.is_current, 0) = 1) DESC, c.received_at DESC, c.id DESC
+                LIMIT 1
+            ");
+            $stmt->execute($params);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($result) {
+                $minutesAgo = (int) ($result['minutes_ago'] ?? 0);
+                if ($minutesAgo < 60) {
+                    $result['time_ago_text'] = "hace {$minutesAgo} minuto(s)";
+                } elseif ($minutesAgo < 1440) {
+                    $hoursAgo = (int) floor($minutesAgo / 60);
+                    $result['time_ago_text'] = "hace {$hoursAgo} hora(s)";
+                } else {
+                    $daysAgo = (int) floor($minutesAgo / 1440);
+                    $result['time_ago_text'] = "hace {$daysAgo} día(s)";
+                }
+            }
+            return $result ?: null;
+        } catch (PDOException $e) {
+            error_log('findLastVisibleEmail: ' . $e->getMessage());
+            // Fallback si la tabla/columna aún no existe
+            return $this->findLastEmail($platformId, $recipientEmail, $origin, true);
         }
     }
 

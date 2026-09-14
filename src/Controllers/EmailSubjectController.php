@@ -350,18 +350,35 @@ class EmailSubjectController
     }
 
     /**
-     * Listar usuarios (columna Usuario) con permiso can_view_special.
+     * Listar usuarios con permiso para un asunto especial concreto.
      */
     public function specialAccessList(Request $request): void
     {
-        $repo = new \Gac\Repositories\UserAccessRepository();
+        $subjectId = (int) $request->get('subject_id', 0);
+        if ($subjectId <= 0) {
+            json_response(['success' => false, 'message' => 'Asunto no indicado', 'data' => []], 400);
+            return;
+        }
+        $subject = $this->emailSubjectRepository->findById($subjectId);
+        if (!$subject || ($subject['category'] ?? '') !== 'especial_leer') {
+            json_response(['success' => false, 'message' => 'Asunto especial no encontrado', 'data' => []], 404);
+            return;
+        }
         $search = trim((string) $request->get('search', ''));
-        $rows = $repo->listSpecialViewAccess($search, 200);
-        json_response(['success' => true, 'data' => $rows], 200);
+        $rows = $this->emailSubjectRepository->listViewersForSubject($subjectId, $search, 200);
+        json_response([
+            'success' => true,
+            'data' => $rows,
+            'subject' => [
+                'id' => (int) $subject['id'],
+                'subject_line' => $subject['subject_line'] ?? '',
+                'platform_display_name' => $subject['platform_display_name'] ?? '',
+            ],
+        ], 200);
     }
 
     /**
-     * Activar/desactivar can_view_special para un Usuario (todas sus filas).
+     * Activar/desactivar un usuario para un asunto especial.
      */
     public function specialAccessToggle(Request $request): void
     {
@@ -369,24 +386,29 @@ class EmailSubjectController
             json_response(['success' => false, 'message' => 'Método no permitido'], 405);
             return;
         }
+        $subjectId = (int) $request->input('subject_id', 0);
         $username = trim((string) $request->input('username', ''));
         $enabled = (int) $request->input('enabled', 0) === 1;
-        if ($username === '' || strlen($username) < 2) {
-            json_response(['success' => false, 'message' => 'Usuario inválido'], 400);
+        if ($subjectId <= 0 || $username === '' || strlen($username) < 2) {
+            json_response(['success' => false, 'message' => 'Datos inválidos'], 400);
             return;
         }
-        $repo = new \Gac\Repositories\UserAccessRepository();
-        $ok = $repo->setCanViewSpecialByUsername($username, $enabled);
+        $subject = $this->emailSubjectRepository->findById($subjectId);
+        if (!$subject || ($subject['category'] ?? '') !== 'especial_leer') {
+            json_response(['success' => false, 'message' => 'Asunto especial no encontrado'], 404);
+            return;
+        }
+        $ok = $this->emailSubjectRepository->setSubjectViewer($subjectId, $username, $enabled);
         json_response([
             'success' => $ok,
             'message' => $ok
-                ? ($enabled ? 'Usuario autorizado para ver códigos especiales' : 'Permiso de especiales quitado')
+                ? ($enabled ? 'Usuario autorizado para este asunto' : 'Permiso quitado para este asunto')
                 : 'No se pudo actualizar el permiso',
         ], $ok ? 200 : 500);
     }
 
     /**
-     * Marcar o desmarcar todos los usuarios para códigos especiales.
+     * Marcar o desmarcar todos los usuarios para un asunto especial.
      */
     public function specialAccessBulk(Request $request): void
     {
@@ -394,14 +416,23 @@ class EmailSubjectController
             json_response(['success' => false, 'message' => 'Método no permitido'], 405);
             return;
         }
+        $subjectId = (int) $request->input('subject_id', 0);
         $enabled = (int) $request->input('enabled', 0) === 1;
         $search = trim((string) $request->input('search', ''));
-        $repo = new \Gac\Repositories\UserAccessRepository();
-        $ok = $repo->setCanViewSpecialForAll($enabled, $search);
+        if ($subjectId <= 0) {
+            json_response(['success' => false, 'message' => 'Asunto no indicado'], 400);
+            return;
+        }
+        $subject = $this->emailSubjectRepository->findById($subjectId);
+        if (!$subject || ($subject['category'] ?? '') !== 'especial_leer') {
+            json_response(['success' => false, 'message' => 'Asunto especial no encontrado'], 404);
+            return;
+        }
+        $ok = $this->emailSubjectRepository->setSubjectViewersBulk($subjectId, $enabled, $search);
         json_response([
             'success' => $ok,
             'message' => $ok
-                ? ($enabled ? 'Todos los usuarios marcados' : 'Todos los usuarios desmarcados')
+                ? ($enabled ? 'Todos los usuarios marcados para este asunto' : 'Todos los usuarios desmarcados para este asunto')
                 : 'No se pudo actualizar',
         ], $ok ? 200 : 500);
     }

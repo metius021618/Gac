@@ -29,10 +29,13 @@ La coincidencia es **exacta** (el asunto del correo debe ser igual al registrado
 
 **Un asunto no puede repetirse entre secciones** (misma plataforma): si está en Generales, no puede estar en Código Temporal, Actualizar Hogar ni Asuntos especiales (y viceversa). Dentro de Asuntos especiales sí puede repetirse el mismo texto de asunto si el **cuerpo** es distinto (leer vs no leer).
 
+**Permisos por asunto (Sí se leen):** cada asunto especial tiene su propia lista de Usuarios autorizados (ícono de usuarios al lado de Editar). La consulta solo muestra ese contenido si el Usuario de la consulta está autorizado para ese asunto concreto.
+
 ## Migración / seed / prueba
 
 ```bash
 python3 scripts/migrate_asuntos_especiales.py
+python3 scripts/migrate_especiales_por_asunto.py
 python3 scripts/seed_asuntos_especiales_netflix.py
 python3 scripts/test_asuntos_especiales_cron_sim.py
 python -m unittest cron.tests.test_asuntos_especiales_classify -v

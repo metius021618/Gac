@@ -161,6 +161,7 @@ def main():
                         'origin': 'outlook',
                         'recipient_email': recipient_email,
                         'is_special': 1 if action == EmailFilterService.ACTION_SAVE_SPECIAL else 0,
+                        'special_subject_id': (decision.get('special_rule') or {}).get('id') if action == EmailFilterService.ACTION_SAVE_SPECIAL else None,
                     }
                     code_id = CodeRepository.save(save_data)
                     if code_id:

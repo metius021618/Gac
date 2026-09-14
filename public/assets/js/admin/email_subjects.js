@@ -45,6 +45,8 @@
     var categorySwitchBusy = false;
     var specialAccessLoaded = false;
     var loadSpecialAccessFn = null;
+    var selectedSpecialSubjectId = 0;
+    var selectedSpecialSubjectLine = '';
 
     function getActiveCategory() {
         return activeCategory || 'general';
@@ -96,14 +98,13 @@
         var subbar = document.getElementById('subjectSpecialSubbar');
         var panel = document.getElementById('specialAccessPanel');
         var special = isSpecialCategory(category);
-        var showUserPanel = category === 'especial_leer';
         if (subbar) {
             subbar.classList.toggle('is-hidden', !special);
             subbar.setAttribute('aria-hidden', special ? 'false' : 'true');
         }
-        if (panel) {
-            panel.classList.toggle('is-hidden', !showUserPanel);
-            panel.setAttribute('aria-hidden', showUserPanel ? 'false' : 'true');
+        // El panel de usuarios solo se abre con el botón de usuarios (por asunto)
+        if (panel && category !== 'especial_leer') {
+            hideSpecialAccessPanel();
         }
 
         var specialSwitch = document.getElementById('subjectSpecialSwitch');
@@ -119,20 +120,56 @@
         if (hint && special) {
             hint.textContent = category === 'especial_no_leer'
                 ? 'Se reconocen y se marcan procesados, pero no se guardan (ej. compras).'
-                : 'Se guardan como código especial. Solo usuarios con permiso los ven en consulta.';
+                : 'Se guardan como código especial. Solo usuarios autorizados por cada asunto los ven en consulta.';
         }
 
         if (modalCategoryInput) {
             modalCategoryInput.value = category;
         }
         syncBodyMatchVisibility();
+    }
 
-        if (showUserPanel && typeof loadSpecialAccessFn === 'function') {
-            if (!specialAccessLoaded) {
-                loadSpecialAccessFn('');
-                specialAccessLoaded = true;
-            }
+    function hideSpecialAccessPanel() {
+        var panel = document.getElementById('specialAccessPanel');
+        if (panel) {
+            panel.classList.add('is-hidden');
+            panel.setAttribute('aria-hidden', 'true');
         }
+        selectedSpecialSubjectId = 0;
+        selectedSpecialSubjectLine = '';
+        document.querySelectorAll('.table-row.is-users-selected').forEach(function (row) {
+            row.classList.remove('is-users-selected');
+        });
+    }
+
+    function openSpecialAccessPanel(subjectId, subjectLine) {
+        subjectId = parseInt(subjectId, 10) || 0;
+        if (!subjectId) return;
+        selectedSpecialSubjectId = subjectId;
+        selectedSpecialSubjectLine = subjectLine || '';
+        var panel = document.getElementById('specialAccessPanel');
+        var label = document.getElementById('specialAccessSelectedLabel');
+        if (panel) {
+            panel.classList.remove('is-hidden');
+            panel.setAttribute('aria-hidden', 'false');
+        }
+        if (label) {
+            label.textContent = 'Asunto: ' + (selectedSpecialSubjectLine || ('#' + subjectId));
+        }
+        document.querySelectorAll('.table-row.is-users-selected').forEach(function (row) {
+            row.classList.remove('is-users-selected');
+        });
+        var activeRow = document.querySelector('.table-row[data-id="' + subjectId + '"]');
+        if (activeRow) activeRow.classList.add('is-users-selected');
+        if (typeof loadSpecialAccessFn === 'function') {
+            var searchEl = document.getElementById('specialAccessSearch');
+            loadSpecialAccessFn(searchEl ? searchEl.value.trim() : '');
+            specialAccessLoaded = true;
+        }
+        if (panel) {
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
     }
 
     function switchCategory(category, opts) {
@@ -258,6 +295,7 @@
         if (!listEl) return;
         var searchEl = document.getElementById('specialAccessSearch');
         var timer = null;
+        var closeBtn = document.getElementById('specialAccessClose');
 
         function render(rows) {
             if (!rows || !rows.length) {
@@ -266,7 +304,7 @@
             }
             listEl.innerHTML = rows.map(function (row) {
                 var username = String(row.username || '');
-                var checked = Number(row.can_view_special) === 1 ? 'checked' : '';
+                var checked = Number(row.can_view || row.can_view_special) === 1 ? 'checked' : '';
                 return '<label class="special-access-row">'
                     + '<input type="checkbox" data-username="' + username.replace(/"/g, '&quot;') + '" ' + checked + '>'
                     + '<span class="special-access-email">' + username.replace(/</g, '&lt;') + '</span>'
@@ -276,12 +314,25 @@
         }
 
         async function load(q) {
+            if (!selectedSpecialSubjectId) {
+                listEl.innerHTML = '<p class="empty-message">Selecciona un asunto…</p>';
+                return;
+            }
             try {
-                var url = '/admin/email-subjects/special-access?search=' + encodeURIComponent(q || '');
+                var url = '/admin/email-subjects/special-access?subject_id=' + encodeURIComponent(selectedSpecialSubjectId)
+                    + '&search=' + encodeURIComponent(q || '');
                 var res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                 var data = await res.json();
-                if (data.success) render(data.data || []);
-                else listEl.innerHTML = '<p class="empty-message">Error al cargar</p>';
+                if (data.success) {
+                    if (data.subject && data.subject.subject_line) {
+                        selectedSpecialSubjectLine = data.subject.subject_line;
+                        var label = document.getElementById('specialAccessSelectedLabel');
+                        if (label) label.textContent = 'Asunto: ' + selectedSpecialSubjectLine;
+                    }
+                    render(data.data || []);
+                } else {
+                    listEl.innerHTML = '<p class="empty-message">Error al cargar</p>';
+                }
             } catch (err) {
                 listEl.innerHTML = '<p class="empty-message">Error de conexión</p>';
             }
@@ -290,6 +341,7 @@
         loadSpecialAccessFn = load;
 
         async function bulkSet(enabled) {
+            if (!selectedSpecialSubjectId) return;
             var markBtn = document.getElementById('specialAccessMarkAll');
             var unmarkBtn = document.getElementById('specialAccessUnmarkAll');
             if (markBtn) markBtn.disabled = true;
@@ -302,6 +354,7 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: JSON.stringify({
+                        subject_id: selectedSpecialSubjectId,
                         enabled: enabled ? 1 : 0,
                         search: searchEl ? searchEl.value.trim() : ''
                     })
@@ -322,16 +375,13 @@
 
         var markAllBtn = document.getElementById('specialAccessMarkAll');
         var unmarkAllBtn = document.getElementById('specialAccessUnmarkAll');
-        if (markAllBtn) {
-            markAllBtn.addEventListener('click', function () { bulkSet(true); });
-        }
-        if (unmarkAllBtn) {
-            unmarkAllBtn.addEventListener('click', function () { bulkSet(false); });
-        }
+        if (markAllBtn) markAllBtn.addEventListener('click', function () { bulkSet(true); });
+        if (unmarkAllBtn) unmarkAllBtn.addEventListener('click', function () { bulkSet(false); });
+        if (closeBtn) closeBtn.addEventListener('click', hideSpecialAccessPanel);
 
         listEl.addEventListener('change', async function (e) {
             var cb = e.target.closest('input[type="checkbox"][data-username]');
-            if (!cb) return;
+            if (!cb || !selectedSpecialSubjectId) return;
             var username = cb.getAttribute('data-username');
             var enabled = cb.checked ? 1 : 0;
             cb.disabled = true;
@@ -342,7 +392,11 @@
                         'Content-Type': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
                     },
-                    body: JSON.stringify({ username: username, enabled: enabled })
+                    body: JSON.stringify({
+                        subject_id: selectedSpecialSubjectId,
+                        username: username,
+                        enabled: enabled
+                    })
                 });
                 var data = await res.json();
                 if (!data.success) {
@@ -361,10 +415,6 @@
                 clearTimeout(timer);
                 timer = setTimeout(function () { load(searchEl.value.trim()); }, 250);
             });
-        }
-        if (activeCategory === 'especial_leer') {
-            load('');
-            specialAccessLoaded = true;
         }
     }
 
@@ -564,6 +614,14 @@
      * Manejar clics en la tabla usando delegación de eventos
      */
     function handleTableClick(e) {
+        const usersBtn = e.target.closest('.btn-users');
+        if (usersBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            openSpecialAccessPanel(usersBtn.dataset.id, usersBtn.dataset.subjectLine || '');
+            return;
+        }
+
         // Botón de eliminar
         const deleteBtn = e.target.closest('.btn-delete');
         if (deleteBtn) {

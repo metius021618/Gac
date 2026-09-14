@@ -435,9 +435,10 @@ class CodeRepository:
                     origin,
                     status,
                     is_special,
+                    special_subject_id,
                     recipient_email
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, 'available', %s, %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, 'available', %s, %s, %s
                 )
             """, (
                 code_data['email_account_id'],
@@ -449,6 +450,7 @@ class CodeRepository:
                 received_at,
                 code_data.get('origin', 'imap'),
                 1 if code_data.get('is_special') else 0,
+                code_data.get('special_subject_id'),
                 code_data.get('recipient_email')
             ))
             
@@ -548,10 +550,10 @@ class CodeRepository:
             cursor.execute("""
                 INSERT INTO codes (
                     email_account_id, platform_id, code, email_from, subject, email_body,
-                    received_at, origin, status, is_special, recipient_email,
+                    received_at, origin, status, is_special, special_subject_id, recipient_email,
                     email_date, gmail_message_id, is_current
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, 'available', %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, 'available', %s, %s, %s,
                     %s, %s, 1
                 )
             """, (
@@ -559,6 +561,7 @@ class CodeRepository:
                 code_data['code'], code_data.get('email_from'), code_data.get('subject'),
                 code_data.get('email_body'), received_at, code_data.get('origin', 'gmail'),
                 1 if code_data.get('is_special') else 0,
+                code_data.get('special_subject_id'),
                 code_data.get('recipient_email'),
                 email_date, gmail_message_id
             ))

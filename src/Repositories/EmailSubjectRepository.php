@@ -596,4 +596,159 @@ class EmailSubjectRepository
             return ['error' => $e->getMessage()];
         }
     }
+
+    /**
+     * Listar usuarios (columna Usuario) con flag de acceso a un asunto especial concreto.
+     * @return array<int, array{username:string,can_view:int,accounts:int}>
+     */
+    public function listViewersForSubject(int $subjectId, string $search = '', int $limit = 200): array
+    {
+        if ($subjectId <= 0) {
+            return [];
+        }
+        try {
+            $db = Database::getConnection();
+            $params = [':sid' => $subjectId];
+            $where = "
+                WHERE ua.enabled = 1
+                  AND ua.password IS NOT NULL
+                  AND TRIM(ua.password) <> ''
+                  AND ua.password NOT IN ('Gmail (OAuth)', 'Outlook (OAuth)')
+            ";
+            $searchTrim = trim($search);
+            if ($searchTrim !== '') {
+                $where .= ' AND LOWER(ua.password) LIKE CONCAT(\'%\', :q, \'%\')';
+                $params[':q'] = mb_strtolower($searchTrim);
+            }
+            $limit = max(1, min(500, $limit));
+            $sql = "
+                SELECT ua.password AS username,
+                       MAX(CASE WHEN v.id IS NOT NULL THEN 1 ELSE 0 END) AS can_view,
+                       COUNT(DISTINCT ua.id) AS accounts
+                FROM user_access ua
+                LEFT JOIN email_subject_viewers v
+                       ON v.email_subject_id = :sid
+                      AND v.username = ua.password
+                {$where}
+                GROUP BY ua.password
+                ORDER BY MAX(CASE WHEN v.id IS NOT NULL THEN 1 ELSE 0 END) DESC, ua.password ASC
+                LIMIT {$limit}
+            ";
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            foreach ($rows as &$row) {
+                $row['username'] = (string) ($row['username'] ?? '');
+                $row['can_view'] = (int) ($row['can_view'] ?? 0);
+                $row['can_view_special'] = $row['can_view']; // compat UI
+                $row['accounts'] = (int) ($row['accounts'] ?? 0);
+            }
+            unset($row);
+            return $rows;
+        } catch (PDOException $e) {
+            error_log('listViewersForSubject: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function usernameCanViewSubject(int $subjectId, string $username): bool
+    {
+        $subjectId = (int) $subjectId;
+        $username = trim($username);
+        if ($subjectId <= 0 || $username === '') {
+            return false;
+        }
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("
+                SELECT 1 FROM email_subject_viewers
+                WHERE email_subject_id = :sid
+                  AND LOWER(TRIM(username)) = LOWER(TRIM(:username))
+                LIMIT 1
+            ");
+            $stmt->execute([':sid' => $subjectId, ':username' => $username]);
+            return (bool) $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log('usernameCanViewSubject: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function setSubjectViewer(int $subjectId, string $username, bool $enabled): bool
+    {
+        $subjectId = (int) $subjectId;
+        $username = trim($username);
+        if ($subjectId <= 0 || $username === '') {
+            return false;
+        }
+        try {
+            $db = Database::getConnection();
+            if ($enabled) {
+                $stmt = $db->prepare("
+                    INSERT IGNORE INTO email_subject_viewers (email_subject_id, username)
+                    VALUES (:sid, :username)
+                ");
+                return $stmt->execute([':sid' => $subjectId, ':username' => $username]);
+            }
+            $stmt = $db->prepare("
+                DELETE FROM email_subject_viewers
+                WHERE email_subject_id = :sid AND username = :username
+            ");
+            return $stmt->execute([':sid' => $subjectId, ':username' => $username]);
+        } catch (PDOException $e) {
+            error_log('setSubjectViewer: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function setSubjectViewersBulk(int $subjectId, bool $enabled, string $search = ''): bool
+    {
+        $subjectId = (int) $subjectId;
+        if ($subjectId <= 0) {
+            return false;
+        }
+        try {
+            $db = Database::getConnection();
+            $params = [];
+            $where = "
+                WHERE enabled = 1
+                  AND password IS NOT NULL
+                  AND TRIM(password) <> ''
+                  AND password NOT IN ('Gmail (OAuth)', 'Outlook (OAuth)')
+            ";
+            $searchTrim = trim($search);
+            if ($searchTrim !== '') {
+                $where .= ' AND LOWER(password) LIKE CONCAT(\'%\', :q, \'%\')';
+                $params[':q'] = mb_strtolower($searchTrim);
+            }
+            $stmt = $db->prepare("SELECT DISTINCT password AS username FROM user_access {$where}");
+            $stmt->execute($params);
+            $usernames = $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+
+            if ($enabled) {
+                $ins = $db->prepare("
+                    INSERT IGNORE INTO email_subject_viewers (email_subject_id, username)
+                    VALUES (:sid, :username)
+                ");
+                foreach ($usernames as $u) {
+                    $ins->execute([':sid' => $subjectId, ':username' => (string) $u]);
+                }
+                return true;
+            }
+
+            if ($usernames === []) {
+                return true;
+            }
+            $placeholders = implode(',', array_fill(0, count($usernames), '?'));
+            $del = $db->prepare("
+                DELETE FROM email_subject_viewers
+                WHERE email_subject_id = ?
+                  AND username IN ({$placeholders})
+            ");
+            return $del->execute(array_merge([$subjectId], array_map('strval', $usernames)));
+        } catch (PDOException $e) {
+            error_log('setSubjectViewersBulk: ' . $e->getMessage());
+            return false;
+        }
+    }
 }
