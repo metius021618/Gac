@@ -170,7 +170,6 @@
             panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     }
-    }
 
     function switchCategory(category, opts) {
         opts = opts || {};

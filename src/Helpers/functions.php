@@ -13,7 +13,7 @@ if (!function_exists('gac_version')) {
     {
         // Bump el sufijo para forzar recarga de CSS/JS en clientes con cache.
         $base = defined('GAC_VERSION') ? GAC_VERSION : '2.0.0';
-        return $base . '-especiales-por-asunto-v1';
+        return $base . '-asuntos-tabs-fix-v1';
     }
 }
 
